@@ -1,0 +1,110 @@
+# EasyGAD proposed .gitignore
+# This is a comparison candidate. The existing .gitignore is intentionally kept.
+
+# -----------------------------------------------------------------------------
+# Project datasets and generated training artifacts
+# -----------------------------------------------------------------------------
+
+# Keep optional documentation/placeholders under data/, but ignore real datasets.
+/data/*
+!/data/README.md
+!/data/.gitkeep
+
+# Local training checkpoints and generated experiment outputs.
+/checkpoints/
+/outputs/
+/runs/
+/ray_results/
+/wandb/
+/swanlog/
+
+# Hydra runtime metadata when generated outside an ignored output directory.
+.hydra/
+/multirun/
+
+# Common dataset/cache formats.
+*.parquet
+*.arrow
+*.feather
+
+# Model weights and training-state files.
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+pytorch_model*.bin
+model*.bin
+
+# -----------------------------------------------------------------------------
+# Python bytecode, tests, coverage, and tool caches
+# -----------------------------------------------------------------------------
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+.pytest_cache/
+.mypy_cache/
+.pyre/
+.pytype/
+.ruff_cache/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# -----------------------------------------------------------------------------
+# Distribution and packaging
+# -----------------------------------------------------------------------------
+
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# -----------------------------------------------------------------------------
+# Virtual environments, local configuration, and secrets
+# -----------------------------------------------------------------------------
+
+.env
+.env.*
+!.env.example
+.venv/
+env/
+venv/
+ENV/
+conda-meta/
+
+# -----------------------------------------------------------------------------
+# Notebooks, IDEs, editors, logs, and OS files
+# -----------------------------------------------------------------------------
+
+.ipynb_checkpoints/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+*.log
+/logs/
+
+.DS_Store
+Thumbs.db
+desktop.ini
