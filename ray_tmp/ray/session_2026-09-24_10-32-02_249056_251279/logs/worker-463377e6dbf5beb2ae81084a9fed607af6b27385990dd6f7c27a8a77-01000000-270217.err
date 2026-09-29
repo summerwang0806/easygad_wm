@@ -1,0 +1,78 @@
+:job_id:01000000
+/shared/wwx/EasyGAD/verl/__init__.py:18: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/_distutils_hack/__init__.py:53: UserWarning: Reliance on distutils from stdlib is deprecated. Users must rely on setuptools to provide the distutils module. Avoid importing distutils or import setuptools first, and avoid setting SETUPTOOLS_USE_DISTUTILS=stdlib. Register concerns at https://github.com/pypa/setuptools/issues/new?template=distutils-deprecation.yml
+  warnings.warn(
+:actor_name:WorkerDict
+[W924 10:32:50.471806025 ProcessGroupGloo.cpp:727] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+Flash Attention 2.0 only supports torch.float16 and torch.bfloat16 dtypes, but the current dype in Qwen2ForCausalLM is torch.float32. You should run training or inference using Automatic Mixed-Precision via the `with torch.autocast(device_type='torch_device'):` decorator, or load the model with the `torch_dtype` argument. Example: `model = AutoModel.from_pretrained("openai/whisper-tiny", attn_implementation="flash_attention_2", torch_dtype=torch.float16)`
+You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/_distutils_hack/__init__.py:53: UserWarning: Reliance on distutils from stdlib is deprecated. Users must rely on setuptools to provide the distutils module. Avoid importing distutils or import setuptools first, and avoid setting SETUPTOOLS_USE_DISTUTILS=stdlib. Register concerns at https://github.com/pypa/setuptools/issues/new?template=distutils-deprecation.yml
+  warnings.warn(
+[rank1]:[W924 10:33:26.472862391 ProcessGroupNCCL.cpp:1496] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[2026-09-24 10:33:26,954 E 270217 270217] logging.cc:113: Unhandled exception: N3c105ErrorE. what(): Trying to free a pointer not allocated here
+Exception raised from raw_delete at /pytorch/torch/csrc/cuda/CUDAPluggableAllocator.cpp:151 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x784a3c36c1b6 in /app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, char const*) + 0x68 (0x784a3c315b3f in /app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #2: torch::cuda::CUDAPluggableAllocator::CUDAPluggableAllocator::raw_delete(void*) + 0x1a7 (0x781e2e263667 in /app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: <unknown function> + 0x22b78 (0x784a3c76bb78 in /app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/lib/libc10_cuda.so)
+frame #4: <unknown function> + 0x2320e (0x784a3c76c20e in /app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/lib/libc10_cuda.so)
+frame #5: <unknown function> + 0x39b0d (0x784a3c782b0d in /app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/lib/libc10_cuda.so)
+frame #6: c10::cuda::MemPool::~MemPool() + 0x1b9 (0x784a3c76e329 in /app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/lib/libc10_cuda.so)
+frame #7: <unknown function> + 0xdf74f0 (0x781e817f74f0 in /app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/lib/libtorch_python.so)
+frame #8: <unknown function> + 0x516907 (0x781e80f16907 in /app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/lib/libtorch_python.so)
+frame #9: <unknown function> + 0x5174d1 (0x781e80f174d1 in /app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/lib/libtorch_python.so)
+frame #10: <unknown function> + 0x14e576 (0x5c57a7018576 in ray::WorkerDict)
+frame #11: <unknown function> + 0x127e02 (0x5c57a6ff1e02 in ray::WorkerDict)
+frame #12: <unknown function> + 0x128a87 (0x5c57a6ff2a87 in ray::WorkerDict)
+frame #13: <unknown function> + 0x128aed (0x5c57a6ff2aed in ray::WorkerDict)
+frame #14: <unknown function> + 0x14de20 (0x5c57a7017e20 in ray::WorkerDict)
+frame #15: <unknown function> + 0x1d368f (0x5c57a709d68f in ray::WorkerDict)
+frame #16: <unknown function> + 0x1f98b9 (0x5c57a70c38b9 in ray::WorkerDict)
+frame #17: <unknown function> + 0x11f2ed (0x5c57a6fe92ed in ray::WorkerDict)
+frame #18: <unknown function> + 0x20804c (0x5c57a70d204c in ray::WorkerDict)
+frame #19: Py_FinalizeEx + 0x150 (0x5c57a70d0830 in ray::WorkerDict)
+frame #20: Py_Exit + 0x8 (0x5c57a70d0b08 in ray::WorkerDict)
+frame #21: <unknown function> + 0x2038f9 (0x5c57a70cd8f9 in ray::WorkerDict)
+frame #22: PyErr_PrintEx + 0x11 (0x5c57a70cd8c1 in ray::WorkerDict)
+frame #23: _PyRun_SimpleFileObject + 0x1e8 (0x5c57a70c5968 in ray::WorkerDict)
+frame #24: _PyRun_AnyFileObject + 0x44 (0x5c57a70c5694 in ray::WorkerDict)
+frame #25: Py_RunMain + 0x371 (0x5c57a70c26a1 in ray::WorkerDict)
+frame #26: Py_BytesMain + 0x37 (0x5c57a7091bc7 in ray::WorkerDict)
+frame #27: <unknown function> + 0x29d90 (0x784b1b629d90 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #28: __libc_start_main + 0x80 (0x784b1b629e40 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #29: _start + 0x2e (0x5c57a7091ade in ray::WorkerDict)
+
+[2026-09-24 10:33:26,975 E 270217 270217] logging.cc:120: Stack trace: 
+ /app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/ray/_raylet.so(+0x13aa76a) [0x784b1a1aa76a] ray::operator<<()
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/ray/_raylet.so(+0x13adea2) [0x784b1a1adea2] ray::TerminateHandler()
+/shared/wwx/miniconda3/envs/wm/bin/../lib/libstdc++.so.6(+0xc2519) [0x784b18ccd519] __cxxabiv1::__terminate()
+/shared/wwx/miniconda3/envs/wm/bin/../lib/libstdc++.so.6(__cxa_call_terminate+0x2e) [0x784b18cc704c] __cxa_call_terminate
+/shared/wwx/miniconda3/envs/wm/bin/../lib/libstdc++.so.6(__gxx_personality_v0+0x72) [0x784b18ccce55] __gxx_personality_v0
+/shared/wwx/miniconda3/envs/wm/bin/../lib/libgcc_s.so.1(+0x16194) [0x784b1b4b1194] _Unwind_RaiseException_Phase2
+/shared/wwx/miniconda3/envs/wm/bin/../lib/libgcc_s.so.1(_Unwind_Resume+0x63) [0x784b1b4b176a] _Unwind_Resume
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/lib/libc10_cuda.so(+0x14524) [0x784a3c75d524] c10::cuda::MemPool::~MemPool()
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/lib/libtorch_python.so(+0xdf74f0) [0x781e817f74f0] pybind11::class_<>::dealloc()
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/lib/libtorch_python.so(+0x516907) [0x781e80f16907] pybind11::detail::clear_instance()
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/lib/libtorch_python.so(+0x5174d1) [0x781e80f174d1] pybind11_object_dealloc
+ray::WorkerDict(+0x14e576) [0x5c57a7018576] subtype_dealloc
+ray::WorkerDict(+0x127e02) [0x5c57a6ff1e02] tupledealloc
+ray::WorkerDict(+0x128a87) [0x5c57a6ff2a87] dict_dealloc
+ray::WorkerDict(+0x128aed) [0x5c57a6ff2aed] dict_dealloc
+ray::WorkerDict(+0x14de20) [0x5c57a7017e20] subtype_dealloc
+ray::WorkerDict(+0x1d368f) [0x5c57a709d68f] free_keys_object
+ray::WorkerDict(+0x1f98b9) [0x5c57a70c38b9] type_clear
+ray::WorkerDict(+0x11f2ed) [0x5c57a6fe92ed] gc_collect_main
+ray::WorkerDict(+0x20804c) [0x5c57a70d204c] _PyGC_CollectNoFail.isra.0
+ray::WorkerDict(Py_FinalizeEx+0x150) [0x5c57a70d0830] Py_FinalizeEx
+ray::WorkerDict(Py_Exit+0x8) [0x5c57a70d0b08] Py_Exit
+ray::WorkerDict(+0x2038f9) [0x5c57a70cd8f9] handle_system_exit
+ray::WorkerDict(PyErr_PrintEx+0x11) [0x5c57a70cd8c1] PyErr_PrintEx
+ray::WorkerDict(_PyRun_SimpleFileObject+0x1e8) [0x5c57a70c5968] _PyRun_SimpleFileObject
+ray::WorkerDict(_PyRun_AnyFileObject+0x44) [0x5c57a70c5694] _PyRun_AnyFileObject
+ray::WorkerDict(Py_RunMain+0x371) [0x5c57a70c26a1] Py_RunMain
+ray::WorkerDict(Py_BytesMain+0x37) [0x5c57a7091bc7] Py_BytesMain
+/lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x784b1b629d90]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80) [0x784b1b629e40] __libc_start_main
+ray::WorkerDict(_start+0x2e) [0x5c57a7091ade] _start
+

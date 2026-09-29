@@ -81,14 +81,81 @@ bash scripts/train/run_full_gad.sh \
 2. 合并checkpoint模型
 3. **GAD阶段**（4个epoch）- 对抗训练
 
+#### 本服务器 KGW 优化版（原始 1.5B 学生模型）
+
+资源受限时可使用下面两个优化脚本，均执行 **warmup 1 epoch + GAD 1 epoch**，使用 KGW 教师回答数据。初始 actor 是原始 `/shared/public_models/Qwen2.5-1.5B-Instruct`，不是已经微调的 SeqKD 基线；critic 默认从同一原始模型初始化独立骨干。以下示例使用两张空闲 GPU，先将 `<GPU_A>,<GPU_B>` 替换为实际编号。两种方案二选一；若都跑，请使用不同实验名。
+
+全参数 full（两卡显存足够时优先考虑）：
+
+```bash
+cd /shared/wwx/EasyGAD
+conda activate wm
+export CUDA_VISIBLE_DEVICES="<GPU_A>,<GPU_B>"
+bash scripts/train/run_full_gad_optimized.sh \
+  --model /shared/public_models/Qwen2.5-1.5B-Instruct \
+  --exp_name kgw_gad_full_2gpu_v1 --nnodes 1 --gpus_per_node 2
+```
+
+LoRA（更省显存，但不保证更快）：
+
+```bash
+cd /shared/wwx/EasyGAD
+conda activate wm
+export CUDA_VISIBLE_DEVICES="<GPU_A>,<GPU_B>"
+bash scripts/train/run_full_gad_lora_optimized.sh \
+  --model /shared/public_models/Qwen2.5-1.5B-Instruct \
+  --exp_name kgw_gad_lora_2gpu_v1 --nnodes 1 --gpus_per_node 2
+```
+
+单卡命令、2+3 号卡的受限配置、阶段输出和未验证事项见同目录的 [GAD 优化版运行说明](GAD_optimized_运行说明.md)。受限配置仍会占用其他任务的算力，须先协调；这两个优化脚本尚未经过完整 GAD 训练验证，1 epoch 是首轮实验设置，不代表最优轮数。
+
 #### 完整SeqKD训练
 
 ```bash
+# 人家的，不是我的
 bash scripts/train/run_full_seqkd.sh \
   --model /tmp/Qwen2.5-7B-Instruct \
   --exp_name gpt5-chat-filtered-7b-seqkd \
   --nnodes 1
 ```
+
+```bash
+# 咱自己路径，指定GPU
+CUDA_VISIBLE_DEVICES=1,2 \
+bash scripts/train/run_full_seqkd_optimized.sh \
+  --model /shared/public_models/Qwen2.5-1.5B-Instruct \
+  --exp_name te_old_st_Qwen2.5-1.5B-Instruct \
+  --nnodes 1
+
+CUDA_VISIBLE_DEVICES=1,2 \
+bash scripts/train/run_full_seqkd_optimized.sh \
+  --model /shared/public_models/Qwen2.5-0.5B \
+  --exp_name te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata \
+  --nnodes 1
+
+CUDA_VISIBLE_DEVICES=2 \
+bash scripts/train/run_full_seqkd_optimized.sh \
+  --model /shared/public_models/Qwen2.5-0.5B \
+  --exp_name te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata \
+  --nnodes 1 \
+  --gpus_per_node 1
+
+
+CUDA_VISIBLE_DEVICES=2,3 bash scripts/train/run_full_seqkd_optimized.sh   --model /shared/public_models/Qwen2.5-1.5B-Instruct   --exp_name te_Qwen2.5-14B_st_Qwen2.5-1.5B-Instruct_clean_FULL_SeqKD   --nnodes 1
+
+
+
+# lora 的
+CUDA_VISIBLE_DEVICES=1 \
+bash scripts/train/run_full_seqkd_lora_optimized.sh \
+  --model /shared/public_models/Qwen2.5-1.5B-Instruct \
+  --exp_name te_old_st_Qwen2.5-1.5B-Instruct_lora \
+  --nnodes 1
+
+
+
+```
+
 
 #### 仅GAD阶段训练
 

@@ -1,0 +1,60 @@
+{
+  "positive_class": "kgw",
+  "score": "z_score (higher means more likely watermarked)",
+  "num_kgw": 500,
+  "num_clean": 500,
+  "auroc": 0.7526300000000007,
+  "best_f1": {
+    "threshold": -0.8687219087128831,
+    "fpr": 0.778,
+    "tpr": 0.952,
+    "precision": 0.5502890173410404,
+    "f1": 0.6974358974358974,
+    "tp": 476,
+    "fp": 389,
+    "tn": 111,
+    "fn": 24
+  },
+  "at_target_tpr": {
+    "1%": {
+      "threshold": 6.111041448575431,
+      "fpr": 0.0,
+      "tpr": 0.01,
+      "precision": 1.0,
+      "f1": 0.019801980198019802,
+      "tp": 5,
+      "fp": 0,
+      "tn": 500,
+      "fn": 495,
+      "target_tpr": 0.01
+    },
+    "5%": {
+      "threshold": 4.789474720713997,
+      "fpr": 0.0,
+      "tpr": 0.05,
+      "precision": 1.0,
+      "f1": 0.09523809523809523,
+      "tp": 25,
+      "fp": 0,
+      "tn": 500,
+      "fn": 475,
+      "target_tpr": 0.05
+    },
+    "10%": {
+      "threshold": 3.8604401609572414,
+      "fpr": 0.002,
+      "tpr": 0.1,
+      "precision": 0.9803921568627451,
+      "f1": 0.18148820326678766,
+      "tp": 50,
+      "fp": 1,
+      "tn": 499,
+      "fn": 450,
+      "target_tpr": 0.1
+    }
+  },
+  "note": "At a target TPR, the threshold is the highest empirical ROC threshold that reaches or exceeds the target; tied scores are kept together.",
+  "kgw_file": "/shared/wwx/EasyGAD/wm_test/kgw_student_dolly15k_test.jsonl",
+  "clean_file": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_1_5b_dolly15k_test.jsonl",
+  "output": "/shared/wwx/EasyGAD/wm_test/detection_metrics.json"
+}

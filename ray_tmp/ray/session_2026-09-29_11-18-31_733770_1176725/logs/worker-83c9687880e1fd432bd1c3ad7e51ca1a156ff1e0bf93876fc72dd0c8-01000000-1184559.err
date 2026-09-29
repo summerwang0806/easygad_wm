@@ -1,0 +1,15 @@
+:job_id:01000000
+/shared/wwx/EasyGAD/verl/__init__.py:18: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/_distutils_hack/__init__.py:53: UserWarning: Reliance on distutils from stdlib is deprecated. Users must rely on setuptools to provide the distutils module. Avoid importing distutils or import setuptools first, and avoid setting SETUPTOOLS_USE_DISTUTILS=stdlib. Register concerns at https://github.com/pypa/setuptools/issues/new?template=distutils-deprecation.yml
+  warnings.warn(
+:actor_name:TaskRunner
+DeprecationWarning: `ray.state.available_resources_per_node` is a private attribute and access will be removed in a future Ray version.
+*** SIGSEGV received at time=1790651925 on cpu 91 ***
+PC: @     0x748a20d1d7be  (unknown)  ray::gcs::TaskInfoAccessor::AsyncAddTaskEventData()
+    @     0x748a22842520       3680  (unknown)
+    @     0x748a20bfe975       1392  ray::core::worker::TaskEventBufferImpl::FlushEvents()
+    @     0x748a20b876ec       1488  ray::core::CoreWorker::Disconnect()
+    @     0x748a20b87a9d       1152  ray::core::CoreWorker::ForceExit()
+    @     0x748a20b87ecf       1680  ray::core::CoreWorker::HandleKillActor()
+    @     0x748a20b7f3d4        192  ray::rpc::ServerCallImpl<>::HandleRequestImpl()

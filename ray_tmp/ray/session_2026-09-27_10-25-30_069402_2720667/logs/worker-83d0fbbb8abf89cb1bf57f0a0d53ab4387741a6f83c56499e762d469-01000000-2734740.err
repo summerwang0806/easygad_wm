@@ -1,0 +1,40 @@
+:job_id:01000000
+:actor_name:WorkerGroupRegisterCenter
+*** SIGSEGV received at time=1790476158 on cpu 118 ***
+PC: @     0x7aec2f91d7be  (unknown)  ray::gcs::TaskInfoAccessor::AsyncAddTaskEventData()
+    @     0x7aec31642520       3680  (unknown)
+    @     0x7aec2f7fe975       1392  ray::core::worker::TaskEventBufferImpl::FlushEvents()
+    @     0x7aec2f7876ec       1488  ray::core::CoreWorker::Disconnect()
+    @     0x7aec2f787a9d       1152  ray::core::CoreWorker::ForceExit()
+    @     0x7aec2f787ecf       1680  ray::core::CoreWorker::HandleKillActor()
+    @     0x7aec2f77f3d4        192  ray::rpc::ServerCallImpl<>::HandleRequestImpl()
+    @     0x7aec2fb0cbc8       1168  EventTracker::RecordExecution()
+    @     0x7aec2faf0ffe         48  std::_Function_handler<>::_M_invoke()
+    @     0x7aec2faf1476        112  boost::asio::detail::completion_handler<>::do_complete()
+    @     0x7aec301b78db        128  boost::asio::detail::scheduler::do_run_one()
+    @     0x7aec301b9259        288  boost::asio::detail::scheduler::run()
+    @     0x7aec301b9962         96  boost::asio::io_context::run()
+    @     0x7aec2f6e00b1       1280  ray::core::CoreWorker::RunIOService()
+    @     0x7aec2fbfe4e0         64  thread_proxy
+    @     0x7aec31694ac3  (unknown)  (unknown)
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484: *** SIGSEGV received at time=1790476158 on cpu 118 ***
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484: PC: @     0x7aec2f91d7be  (unknown)  ray::gcs::TaskInfoAccessor::AsyncAddTaskEventData()
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484:     @     0x7aec31642520       3680  (unknown)
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484:     @     0x7aec2f7fe975       1392  ray::core::worker::TaskEventBufferImpl::FlushEvents()
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484:     @     0x7aec2f7876ec       1488  ray::core::CoreWorker::Disconnect()
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484:     @     0x7aec2f787a9d       1152  ray::core::CoreWorker::ForceExit()
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484:     @     0x7aec2f787ecf       1680  ray::core::CoreWorker::HandleKillActor()
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484:     @     0x7aec2f77f3d4        192  ray::rpc::ServerCallImpl<>::HandleRequestImpl()
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484:     @     0x7aec2fb0cbc8       1168  EventTracker::RecordExecution()
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484:     @     0x7aec2faf0ffe         48  std::_Function_handler<>::_M_invoke()
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484:     @     0x7aec2faf1476        112  boost::asio::detail::completion_handler<>::do_complete()
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484:     @     0x7aec301b78db        128  boost::asio::detail::scheduler::do_run_one()
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484:     @     0x7aec301b9259        288  boost::asio::detail::scheduler::run()
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484:     @     0x7aec301b9962         96  boost::asio::io_context::run()
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484:     @     0x7aec2f6e00b1       1280  ray::core::CoreWorker::RunIOService()
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484:     @     0x7aec2fbfe4e0         64  thread_proxy
+[2026-09-27 10:29:18,688 E 2734740 2734791] logging.cc:484:     @     0x7aec31694ac3  (unknown)  (unknown)
+Fatal Python error: Segmentation fault
+
+
+Extension modules: msgpack._cmsgpack, google._upb._message, psutil._psutil_linux, psutil._psutil_posix, setproctitle, yaml._yaml, charset_normalizer.md, charset_normalizer.cd, simplejson._speedups, requests.packages.charset_normalizer.md, requests.packages.chardet.md, requests.packages.charset_normalizer.cd, requests.packages.chardet.cd, uvloop.loop, ray._raylet, numpy.core._multiarray_umath, numpy.core._multiarray_tests, numpy.linalg._umath_linalg, numpy.fft._pocketfft_internal, numpy.random._common, numpy.random.bit_generator, numpy.random._bounded_integers, numpy.random._mt19937, numpy.random.mtrand, numpy.random._philox, numpy.random._pcg64, numpy.random._sfc64, numpy.random._generator, pyarrow.lib, pyarrow._json (total: 30)

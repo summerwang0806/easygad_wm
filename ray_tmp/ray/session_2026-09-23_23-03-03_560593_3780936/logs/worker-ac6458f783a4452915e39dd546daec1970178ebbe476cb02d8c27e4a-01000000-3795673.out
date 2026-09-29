@@ -1,0 +1,7 @@
+:job_id:01000000
+:actor_name:WorkerDict
+Monkey patch _flash_attention_forward in transformers.integrations.flash_attention
+Skipping monkey patch for Qwen2ForCausalLM as use_fused_kernels is False or fused_kernels_backend is torch
+WARNING 09-23 23:03:53 [utils.py:2522] Methods determine_num_available_blocks,device_config,get_cache_block_size_bytes,initialize_cache not implemented in <vllm.v1.worker.gpu_worker.Worker object at 0x76d23151fc10>
+WARNING 09-23 23:03:53 [topk_topp_sampler.py:69] FlashInfer is not available. Falling back to the PyTorch-native implementation of top-p & top-k sampling. For the best performance, please install FlashInfer.
+kwargs: {'n': 1, 'logprobs': 0, 'max_tokens': 1536, 'detokenize': False, 'temperature': 0.8, 'top_k': -1, 'top_p': 1, 'ignore_eos': False}

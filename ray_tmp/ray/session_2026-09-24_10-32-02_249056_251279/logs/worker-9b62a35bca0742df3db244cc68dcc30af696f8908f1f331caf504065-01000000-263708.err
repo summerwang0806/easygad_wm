@@ -1,0 +1,84 @@
+:job_id:01000000
+/shared/wwx/EasyGAD/verl/__init__.py:18: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/_distutils_hack/__init__.py:53: UserWarning: Reliance on distutils from stdlib is deprecated. Users must rely on setuptools to provide the distutils module. Avoid importing distutils or import setuptools first, and avoid setting SETUPTOOLS_USE_DISTUTILS=stdlib. Register concerns at https://github.com/pypa/setuptools/issues/new?template=distutils-deprecation.yml
+  warnings.warn(
+:actor_name:TaskRunner
+Generating train split: 0 examples [00:00, ? examples/s]Generating train split: 14511 examples [00:00, 116954.64 examples/s]Generating train split: 14511 examples [00:00, 116529.86 examples/s]
+Generating train split: 0 examples [00:00, ? examples/s]Generating train split: 500 examples [00:00, 39785.85 examples/s]
+DeprecationWarning: `ray.state.available_resources_per_node` is a private attribute and access will be removed in a future Ray version.
+WARNING:2026-09-24 10:32:31,227:Waiting for register center actor MNT0oW_register_center to be ready. Elapsed time: 0 seconds out of 300 seconds.
+Unhandled error (suppress with 'RAY_IGNORE_UNHANDLED_ERRORS=1'): [36mray::WorkerDict.actor_rollout_init_model()[39m (pid=270217, ip=10.107.6.60, actor_id=4a57bddb64a22c8c5a32793e01000000, repr=<verl.single_controller.ray.base.WorkerDict object at 0x781cea0a2ad0>)
+  File "/shared/wwx/EasyGAD/verl/single_controller/ray/base.py", line 663, in func
+    return getattr(self.worker_dict[key], name)(*args, **kwargs)
+  File "/shared/wwx/EasyGAD/verl/single_controller/base/decorator.py", line 665, in inner
+    return func(*args, **kwargs)
+  File "/shared/wwx/EasyGAD/verl/workers/fsdp_workers.py", line 558, in init_model
+    self.rollout, self.rollout_sharding_manager = self._build_rollout(trust_remote_code=self.config.model.get("trust_remote_code", False))
+  File "/shared/wwx/EasyGAD/verl/workers/fsdp_workers.py", line 431, in _build_rollout
+    rollout = vllm_rollout_cls(model_path=local_path, config=self.config.rollout, tokenizer=self.tokenizer, model_hf_config=self.actor_model_config, device_mesh=rollout_device_mesh, trust_remote_code=trust_remote_code, **lora_kwargs)
+  File "/shared/wwx/EasyGAD/verl/workers/rollout/vllm_rollout/vllm_rollout_spmd.py", line 209, in __init__
+    self.inference_engine = LLM(**vllm_kwargs)
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/utils.py", line 1161, in inner
+    return fn(*args, **kwargs)
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/entrypoints/llm.py", line 247, in __init__
+    self.llm_engine = LLMEngine.from_engine_args(
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/engine/llm_engine.py", line 510, in from_engine_args
+    return engine_cls.from_vllm_config(
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/v1/engine/llm_engine.py", line 112, in from_vllm_config
+    return cls(vllm_config=vllm_config,
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/v1/engine/llm_engine.py", line 92, in __init__
+    self.engine_core = EngineCoreClient.make_client(
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/v1/engine/core_client.py", line 75, in make_client
+    return InprocClient(vllm_config, executor_class, log_stats)
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/v1/engine/core_client.py", line 198, in __init__
+    self.engine_core = EngineCore(*args, **kwargs)
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/v1/engine/core.py", line 71, in __init__
+    self._initialize_kv_caches(vllm_config)
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/v1/engine/core.py", line 133, in _initialize_kv_caches
+    kv_cache_configs = [
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/v1/engine/core.py", line 134, in <listcomp>
+    get_kv_cache_config(vllm_config, kv_cache_spec_one_worker,
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/v1/core/kv_cache_utils.py", line 699, in get_kv_cache_config
+    check_enough_kv_cache_memory(vllm_config, kv_cache_spec, available_memory)
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/v1/core/kv_cache_utils.py", line 527, in check_enough_kv_cache_memory
+    raise ValueError("No available memory for the cache blocks. "
+ValueError: No available memory for the cache blocks. Try increasing `gpu_memory_utilization` when initializing the engine.
+*** SIGSEGV received at time=1790217205 on cpu 33 ***
+PC: @     0x70480031d7be  (unknown)  ray::gcs::TaskInfoAccessor::AsyncAddTaskEventData()
+    @     0x704802042520       3680  (unknown)
+    @     0x7048001fe975       1392  ray::core::worker::TaskEventBufferImpl::FlushEvents()
+    @     0x7048001876ec       1488  ray::core::CoreWorker::Disconnect()
+    @     0x704800187a9d       1152  ray::core::CoreWorker::ForceExit()
+    @     0x704800187ecf       1680  ray::core::CoreWorker::HandleKillActor()
+    @     0x70480017f3d4        192  ray::rpc::ServerCallImpl<>::HandleRequestImpl()
+    @     0x70480050cbc8       1168  EventTracker::RecordExecution()
+    @     0x7048004f0ffe         48  std::_Function_handler<>::_M_invoke()
+    @     0x7048004f1476        112  boost::asio::detail::completion_handler<>::do_complete()
+    @     0x704800bb78db        128  boost::asio::detail::scheduler::do_run_one()
+    @     0x704800bb9259        288  boost::asio::detail::scheduler::run()
+    @     0x704800bb9962         96  boost::asio::io_context::run()
+    @     0x7048000e00b1       1280  ray::core::CoreWorker::RunIOService()
+    @     0x7048005fe4e0         64  thread_proxy
+    @     0x704802094ac3  (unknown)  (unknown)
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484: *** SIGSEGV received at time=1790217205 on cpu 33 ***
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484: PC: @     0x70480031d7be  (unknown)  ray::gcs::TaskInfoAccessor::AsyncAddTaskEventData()
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484:     @     0x704802042520       3680  (unknown)
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484:     @     0x7048001fe975       1392  ray::core::worker::TaskEventBufferImpl::FlushEvents()
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484:     @     0x7048001876ec       1488  ray::core::CoreWorker::Disconnect()
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484:     @     0x704800187a9d       1152  ray::core::CoreWorker::ForceExit()
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484:     @     0x704800187ecf       1680  ray::core::CoreWorker::HandleKillActor()
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484:     @     0x70480017f3d4        192  ray::rpc::ServerCallImpl<>::HandleRequestImpl()
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484:     @     0x70480050cbc8       1168  EventTracker::RecordExecution()
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484:     @     0x7048004f0ffe         48  std::_Function_handler<>::_M_invoke()
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484:     @     0x7048004f1476        112  boost::asio::detail::completion_handler<>::do_complete()
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484:     @     0x704800bb78db        128  boost::asio::detail::scheduler::do_run_one()
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484:     @     0x704800bb9259        288  boost::asio::detail::scheduler::run()
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484:     @     0x704800bb9962         96  boost::asio::io_context::run()
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484:     @     0x7048000e00b1       1280  ray::core::CoreWorker::RunIOService()
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484:     @     0x7048005fe4e0         64  thread_proxy
+[2026-09-24 10:33:25,507 E 263708 263811] logging.cc:484:     @     0x704802094ac3  (unknown)  (unknown)
+Fatal Python error: Segmentation fault
+
+
+Extension modules: msgpack._cmsgpack, google._upb._message, psutil._psutil_linux, psutil._psutil_posix, setproctitle, yaml._yaml, charset_normalizer.md, charset_normalizer.cd, simplejson._speedups, requests.packages.charset_normalizer.md, requests.packages.chardet.md, requests.packages.charset_normalizer.cd, requests.packages.chardet.cd, uvloop.loop, ray._raylet, numpy.core._multiarray_umath, numpy.core._multiarray_tests, numpy.linalg._umath_linalg, numpy.fft._pocketfft_internal, numpy.random._common, numpy.random.bit_generator, numpy.random._bounded_integers, numpy.random._mt19937, numpy.random.mtrand, numpy.random._philox, numpy.random._pcg64, numpy.random._sfc64, numpy.random._generator, pyarrow.lib, pandas._libs.tslibs.ccalendar, pandas._libs.tslibs.np_datetime, pandas._libs.tslibs.dtypes, pandas._libs.tslibs.base, pandas._libs.tslibs.nattype, pandas._libs.tslibs.timezones, pandas._libs.tslibs.fields, pandas._libs.tslibs.timedeltas, pandas._libs.tslibs.tzconversion, pandas._libs.tslibs.timestamps, pandas._libs.properties, pandas._libs.tslibs.offsets, pandas._libs.tslibs.strptime, pandas._libs.tslibs.parsing, pandas._libs.tslibs.conversion, pandas._libs.tslibs.period, pandas._libs.tslibs.vectorized, pandas._libs.ops_dispatch, pandas._libs.missing, pandas._libs.hashtable, pandas._libs.algos, pandas._libs.interval, pandas._libs.lib, pyarrow._compute, pandas._libs.ops, pandas._libs.hashing, pandas._libs.arrays, pandas._libs.tslib, pandas._libs.sparse, pandas._libs.internals, pandas._libs.indexing, pandas._libs.index, pandas._libs.writers, pandas._libs.join, pandas._libs.window.aggregations, pandas._libs.window.indexers, pandas._libs.reshape, pandas._libs.groupby, pandas._libs.json, pandas._libs.parsers, pandas._libs.testing, torch._C, torch._C._dynamo.autograd_compiler, torch._C._dynamo.eval_frame, torch._C._dynamo.guards, torch._C._dynamo.utils, torch._C._fft, torch._C._linalg, torch._C._nested, torch._C._nn, torch._C._sparse, torch._C._special, markupsafe._speedups, PIL._imaging, scipy._lib._ccallback_c, scipy.sparse._sparsetools, _csparsetools, scipy.sparse._csparsetools, scipy.linalg._fblas, scipy.linalg._flapack, scipy.linalg.cython_lapack, scipy.linalg._cythonized_array_utils, scipy.linalg._solve_toeplitz, scipy.linalg._decomp_lu_cython, scipy.linalg._matfuncs_sqrtm_triu, scipy.linalg._matfuncs_expm, scipy.linalg._linalg_pythran, scipy.linalg.cython_blas, scipy.linalg._decomp_update, scipy.sparse.linalg._dsolve._superlu, scipy.sparse.linalg._eigen.arpack._arpack, scipy.sparse.linalg._propack._spropack, scipy.sparse.linalg._propack._dpropack, scipy.sparse.linalg._propack._cpropack, scipy.sparse.linalg._propack._zpropack, scipy.sparse.csgraph._tools, scipy.sparse.csgraph._shortest_path, scipy.sparse.csgraph._traversal, scipy.sparse.csgraph._min_spanning_tree, scipy.sparse.csgraph._flow, scipy.sparse.csgraph._matching, scipy.sparse.csgraph._reordering, scipy.spatial._ckdtree, scipy._lib.messagestream, scipy.spatial._qhull, scipy.spatial._voronoi, scipy.spatial._distance_wrap, scipy.spatial._hausdorff, scipy.special._ufuncs_cxx, scipy.special._ufuncs, scipy.special._specfun, scipy.special._comb, scipy.special._ellip_harm_2, scipy.spatial.transform._rotation, scipy.optimize._group_columns, scipy.optimize._trlib._trlib, scipy.optimize._lbfgsb, _moduleTNC, scipy.optimize._moduleTNC, scipy.optimize._cobyla, scipy.optimize._slsqp, scipy.optimize._minpack, scipy.optimize._lsq.givens_elimination, scipy.optimize._zeros, scipy.optimize._cython_nnls, scipy._lib._uarray._uarray, scipy.linalg._decomp_interpolative, scipy.optimize._bglu_dense, scipy.optimize._lsap, scipy.optimize._direct, scipy.integrate._odepack, scipy.integrate._quadpack, scipy.integrate._vode, scipy.integrate._dop, scipy.integrate._lsoda, scipy.interpolate._fitpack, scipy.interpolate._dfitpack, scipy.interpolate._dierckx, scipy.interpolate._ppoly, scipy.interpolate._interpnd, scipy.interpolate._rbfinterp_pythran, scipy.interpolate._rgi_cython, scipy.interpolate._bspl, scipy.special.cython_special, scipy.stats._stats, scipy.stats._sobol, scipy.stats._qmc_cy, scipy.stats._biasedurn, scipy.stats._stats_pythran, scipy.stats._levy_stable.levyst, scipy.stats._ansari_swilk_statistics, scipy.stats._mvn, scipy.stats._rcont.rcont, scipy.ndimage._nd_image, scipy.ndimage._rank_filter_1d, _ni_label, scipy.ndimage._ni_label, regex._regex, frozenlist._frozenlist, PIL._imagingft, pyarrow._json, msgspec._core, zmq.backend.cython._zmq, multidict._multidict, yarl._quoting_c, propcache._helpers_c, aiohttp._http_writer, aiohttp._http_parser, aiohttp._websocket.mask, aiohttp._websocket.reader_c, pyarrow._parquet, pyarrow._fs, pyarrow._azurefs, pyarrow._hdfs, pyarrow._gcsfs, pyarrow._s3fs, xxhash._xxhash, pyarrow._acero, pyarrow._csv, pyarrow._substrait, pyarrow._dataset, pyarrow._dataset_orc, pyarrow._parquet_encryption, pyarrow._dataset_parquet_encryption, pyarrow._dataset_parquet, scipy.io.matlab._mio_utils, scipy.io.matlab._streams, scipy.io.matlab._mio5_utils (total: 197)
