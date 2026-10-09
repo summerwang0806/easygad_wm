@@ -1064,6 +1064,12 @@ class RayPPOTrainer:
         # load checkpoint before doing anything
         self._load_checkpoint()
 
+        # A final checkpoint may be resumed after the stage has already finished.
+        # Do not consume another batch or advance beyond the configured step budget.
+        if self.global_steps >= self.total_training_steps and not self.config.trainer.get("val_only", False):
+            print(f"Training already completed at step {self.global_steps}/{self.total_training_steps}; skipping training.")
+            return
+
         # perform validation before training
         # currently, we only support validation using the reward_function.
         if self.val_reward_fn is not None and self.config.trainer.get("val_before_train", True):

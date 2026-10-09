@@ -1,15 +1,15 @@
 #!/bin/bash
 # Full GAD Training Pipeline - Warmup + GAD stages combined
 # This script runs the complete GAD training in one go
-# Usage: bash run_full_gad_optimized.sh --exp_name <name> --nnodes <num_nodes> [--model <original_student_path>] [--reward_model <critic_init_path>]
+# Usage: bash run_full_gad_optimized.sh --exp_name <name> --nnodes <num_nodes> [--resume] [--skip_warmup]
 set -o pipefail
 
 export NCCL_TIMEOUT=36000
 export TOKENIZERS_PARALLELISM=true
 export HYDRA_FULL_ERROR=1
-export CUDA_VISIBLE_DEVICES=1,3
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-1,3}"
 export VLLM_USE_V1=0
-export RAY_TMPDIR=/shared/wwx/EasyGAD/ray_tmp
+export RAY_TMPDIR="${RAY_TMPDIR:-/tmp/easygad-${USER:-user}}"
 
 
 export SWANLAB_PROJECT='easyGAD-wm'
@@ -49,12 +49,24 @@ GAD_N_SAMPLES=2
 CONSTRAINED_2GPU=False
 ENFORCE_EAGER=False
 GPU_MEMORY_OVERRIDE=""
+RESUME=False
+SKIP_WARMUP=False
+RESUME_MODE=disable
+RAY_NUM_CPUS=${RAY_NUM_CPUS:-8}
 # TRAIN_FILE=data/dolly15k_qwen2_5_14b_kgw_train.parquet
 # VAL_FILE=data/dolly15k_qwen2_5_14b_kgw_test.parquet
 TRAIN_FILE=data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet
 VAL_FILE=data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet
 
 while [[ $# -gt 0 ]]; do
+    case $1 in
+        --model|--reward_model|--exp_name|--nnodes|--warmup_epochs|--gad_epochs|--save_freq|--train_batch_size|--lr|--gpus_per_node|--gpu_memory_utilization|--work_dir|--test_freq|--ray_tmpdir|--ray_num_cpus)
+            if [ $# -lt 2 ] || [[ "$2" == --* ]]; then
+                echo "Error: $1 requires a value" >&2
+                exit 1
+            fi
+            ;;
+    esac
     case $1 in
         --model)
             MODEL_PATH="$2"
@@ -112,8 +124,26 @@ while [[ $# -gt 0 ]]; do
             TEST_FREQ="$2"
             shift 2
             ;;
+        --resume)
+            RESUME=True
+            RESUME_MODE=auto
+            shift
+            ;;
+        --skip_warmup)
+            SKIP_WARMUP=True
+            shift
+            ;;
+        --ray_tmpdir)
+            export RAY_TMPDIR="$2"
+            shift 2
+            ;;
+        --ray_num_cpus)
+            RAY_NUM_CPUS="$2"
+            shift 2
+            ;;
         *)
-            break
+            echo "Error: unknown argument: $1" >&2
+            exit 1
             ;;
     esac
 done
@@ -134,8 +164,16 @@ for required_path in "$MODEL_PATH/config.json" "$REWARD_MODEL_PATH/config.json" 
         exit 1
     fi
 done
-if ! timeout 30 swanlab verify; then
-    echo 'Error: SwanLab authentication or proxy failed. Keep the SSH -R 7890 tunnel open.' >&2
+if [ "$SKIP_WARMUP" = True ] && [ "$RESUME" != True ]; then
+    echo "Error: --skip_warmup requires --resume and an existing warmup checkpoint" >&2
+    exit 1
+fi
+if ! [[ "$RAY_NUM_CPUS" =~ ^[1-9][0-9]*$ ]]; then
+    echo "Error: --ray_num_cpus must be a positive integer" >&2
+    exit 1
+fi
+if [ "$NNODES" = 1 ] && [ "$RAY_NUM_CPUS" -lt "$((N_GPUS_PER_NODE + 1))" ]; then
+    echo "Error: --ray_num_cpus must be at least $((N_GPUS_PER_NODE + 1)) for $N_GPUS_PER_NODE GPUs and the Ray controller" >&2
     exit 1
 fi
 MAX_TOKENS_PER_GPU=8192
@@ -163,10 +201,63 @@ fi
 WORK_DIR=${WORK_BASE_DIR}/${EXP_NAME}
 WARMUP_WORK_DIR=${WORK_DIR}/warmup
 GAD_WORK_DIR=${WORK_DIR}/gad
-if [ -e "$WORK_DIR" ]; then
-    echo "Error: $WORK_DIR already exists; choose a new --exp_name"
+if [ -e "$WORK_DIR" ] && [ "$RESUME" != True ]; then
+    echo "Error: $WORK_DIR already exists; use --resume to continue, or choose a new --exp_name"
     exit 1
 fi
+if [ "$RESUME" = True ] && [ ! -d "$WORK_DIR" ]; then
+    echo "Error: --resume requires an existing experiment directory: $WORK_DIR" >&2
+    exit 1
+fi
+
+# The trainer writes this tracker after saving actor, critic and dataloader.
+# Do not select a newer global_step_* directory left by an interrupted save.
+find_saved_checkpoint() {
+    local stage_dir="$1" tracker step checkpoint
+    tracker="$stage_dir/latest_checkpointed_iteration.txt"
+    [ -f "$tracker" ] || return 0
+    step=$(< "$tracker")
+    if ! [[ "$step" =~ ^[0-9]+$ ]]; then
+        echo "Error: invalid checkpoint tracker: $tracker" >&2
+        return 1
+    fi
+    checkpoint="$stage_dir/global_step_$step"
+    if [ ! -d "$checkpoint/actor" ] || [ ! -d "$checkpoint/critic" ] || [ ! -f "$checkpoint/data.pt" ]; then
+        echo "Error: incomplete checkpoint recorded by $tracker: $checkpoint (actor, critic and data.pt are required)" >&2
+        return 1
+    fi
+    echo "$checkpoint"
+}
+
+if [ "$RESUME" = True ]; then
+    WARMUP_CHECKPOINT=$(find_saved_checkpoint "$WARMUP_WORK_DIR") || exit 1
+    GAD_CHECKPOINT=$(find_saved_checkpoint "$GAD_WORK_DIR") || exit 1
+    if [ -f "$WARMUP_WORK_DIR/.stage_completed" ] || [ -n "$GAD_CHECKPOINT" ]; then
+        SKIP_WARMUP=True
+    fi
+    if [ "$SKIP_WARMUP" = True ] && [ -z "$WARMUP_CHECKPOINT" ]; then
+        echo "Error: skipping warmup requires a saved warmup checkpoint in $WARMUP_WORK_DIR" >&2
+        exit 1
+    fi
+    if [ -n "$GAD_CHECKPOINT" ]; then
+        echo "Resuming GAD from: $GAD_CHECKPOINT"
+    elif [ "$SKIP_WARMUP" != True ]; then
+        echo "Resuming warmup from: ${WARMUP_CHECKPOINT:-no saved checkpoint; restarting warmup}"
+    fi
+fi
+
+if ! mkdir -p "$RAY_TMPDIR"; then
+    echo "Error: cannot create Ray temporary directory: $RAY_TMPDIR" >&2
+    exit 1
+fi
+if ! timeout 30 swanlab verify; then
+    echo 'Error: SwanLab authentication failed. Check SwanLab login and network settings.' >&2
+    exit 1
+fi
+
+report_ray_logs() {
+    echo "If Ray failed to start, inspect the agent and raylet logs in: $RAY_TMPDIR/ray/session_latest/logs/" >&2
+}
 echo "=============================================="
 echo "Starting Full GAD Training Pipeline"
 echo "Model: $MODEL_PATH"
@@ -174,6 +265,9 @@ echo "Reward Model: $REWARD_MODEL_PATH"
 echo "Experiment Name: $EXP_NAME"
 echo "Nodes: $NNODES"
 echo "Work Directory: $WORK_DIR"
+echo "CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
+echo "Resume mode: $RESUME_MODE; skip warmup: $SKIP_WARMUP"
+echo "Ray temporary directory: $RAY_TMPDIR; CPUs: $RAY_NUM_CPUS"
 echo "GPU profile: constrained_2gpu=$CONSTRAINED_2GPU, vLLM fraction=$GPU_MEMORY_UTILIZATION, actor offload=$ACTOR_OFFLOAD, eager=$ENFORCE_EAGER"
 echo "=============================================="
 
@@ -185,6 +279,7 @@ echo "=============================================="
 echo "Stage 1: Warmup Phase"
 echo "=============================================="
 
+if [ "$SKIP_WARMUP" != True ]; then
 python3 -m verl.trainer.main_ppo \
     algorithm.adv_estimator=grpo \
     trainer.training_stage=warmup \
@@ -240,15 +335,20 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.rollout.enforce_eager=${ENFORCE_EAGER} \
     actor_rollout_ref.rollout.free_cache_engine=False \
     trainer.default_local_dir=${WARMUP_WORK_DIR} \
-    trainer.resume_mode=disable
+    trainer.resume_mode=${RESUME_MODE} \
+    ray_init.num_cpus=${RAY_NUM_CPUS}
 
 # Check if warmup succeeded
 if [ $? -ne 0 ]; then
     echo "Error: Warmup stage failed!"
+    report_ray_logs
     exit 1
 fi
 
 echo "Warmup stage completed successfully!"
+else
+    echo "Skipping completed warmup; using checkpoint: $WARMUP_CHECKPOINT"
+fi
 
 # ============================================
 # Prepare models for GAD stage
@@ -258,38 +358,49 @@ echo "=============================================="
 echo "Preparing models for GAD stage..."
 echo "=============================================="
 
-# Find the latest checkpoint from warmup
-WARMUP_CHECKPOINT=$(ls -d ${WARMUP_WORK_DIR}/global_step_* 2>/dev/null | sort -V | tail -1)
+# Find the latest checkpoint whose save completed.
+WARMUP_CHECKPOINT=$(find_saved_checkpoint "$WARMUP_WORK_DIR") || exit 1
 if [ -z "$WARMUP_CHECKPOINT" ]; then
     echo "Error: No warmup checkpoint found!"
     exit 1
 fi
-RESUME_STEP=$(basename $WARMUP_CHECKPOINT | sed 's/global_step_//')
+RESUME_STEP=${WARMUP_CHECKPOINT##*/global_step_}
+printf '%s\n' "$RESUME_STEP" > "$WARMUP_WORK_DIR/.stage_completed" || exit 1
 echo "Using warmup checkpoint: $WARMUP_CHECKPOINT (step $RESUME_STEP)"
 
 # Merge actor model
+# Reuse completed HF exports; an interrupted merge has no completion marker.
+# Legacy runs have no marker, so they are safely merged once on the first resume.
+prepare_model() {
+    local checkpoint_dir="$1" hf_dir="$1/huggingface" marker="$1/huggingface/.merge_completed"
+    if [ -f "$marker" ] && [ -f "$hf_dir/config.json" ] && \
+        { [ -f "$hf_dir/model.safetensors" ] || [ -f "$hf_dir/model.safetensors.index.json" ] || \
+          [ -f "$hf_dir/pytorch_model.bin" ] || [ -f "$hf_dir/pytorch_model.bin.index.json" ]; }; then
+        echo "Reusing merged model: $hf_dir"
+        return 0
+    fi
+    mkdir -p "$hf_dir" || return 1
+    find "$checkpoint_dir/" -maxdepth 1 -type f ! -name "*.pt" -exec cp {} "$hf_dir/" \; || return 1
+    python3 tools/merge_model2hf.py --local_dir "$checkpoint_dir" || return 1
+    touch "$marker"
+}
+
 ACTOR_MODEL_PATH=${WARMUP_CHECKPOINT}/actor/huggingface
-mkdir -p ${ACTOR_MODEL_PATH}
-find ${WARMUP_CHECKPOINT}/actor/ -maxdepth 1 -type f ! -name "*.pt" -exec cp {} ${ACTOR_MODEL_PATH}/ \;
-python3 tools/merge_model2hf.py --local_dir ${WARMUP_CHECKPOINT}/actor
-if [ $? -ne 0 ]; then
+if ! prepare_model "$WARMUP_CHECKPOINT/actor"; then
     echo "Error: Failed to merge actor model!"
     exit 1
 fi
 echo "Actor model prepared at: ${ACTOR_MODEL_PATH}"
-ls ${ACTOR_MODEL_PATH}
+ls "$ACTOR_MODEL_PATH"
 
 # Merge critic model
 CRITIC_MODEL_PATH=${WARMUP_CHECKPOINT}/critic/huggingface
-mkdir -p ${CRITIC_MODEL_PATH}
-find ${WARMUP_CHECKPOINT}/critic/ -maxdepth 1 -type f ! -name "*.pt" -exec cp {} ${CRITIC_MODEL_PATH}/ \;
-python3 tools/merge_model2hf.py --local_dir ${WARMUP_CHECKPOINT}/critic
-if [ $? -ne 0 ]; then
+if ! prepare_model "$WARMUP_CHECKPOINT/critic"; then
     echo "Error: Failed to merge critic model!"
     exit 1
 fi
 echo "Critic model prepared at: ${CRITIC_MODEL_PATH}"
-ls ${CRITIC_MODEL_PATH}
+ls "$CRITIC_MODEL_PATH"
 
 # ============================================
 # Stage 2: GAD - Main Adversarial Training
@@ -355,7 +466,8 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.rollout.enforce_eager=${ENFORCE_EAGER} \
     actor_rollout_ref.rollout.free_cache_engine=False \
     trainer.default_local_dir=${GAD_WORK_DIR} \
-    trainer.resume_mode=disable
+    trainer.resume_mode=${RESUME_MODE} \
+    ray_init.num_cpus=${RAY_NUM_CPUS}
 
 if [ $? -eq 0 ]; then
     echo ""
@@ -365,5 +477,6 @@ if [ $? -eq 0 ]; then
     echo "=============================================="
 else
     echo "Error: GAD stage failed!"
+    report_ray_logs
     exit 1
 fi
