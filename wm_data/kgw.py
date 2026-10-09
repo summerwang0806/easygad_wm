@@ -8,6 +8,7 @@ vocabulary becomes the green list, and ``delta`` is added to those logits.
 from __future__ import annotations
 
 import math
+from collections import Counter, OrderedDict, defaultdict
 from dataclasses import dataclass
 
 import torch
@@ -82,13 +83,19 @@ def kgw_score(
     config: KGWConfig,
     max_tokens: int | None = None,
     device: str | torch.device | None = None,
-) -> dict[str, float | int]:
+    include_deduplicated: bool = False,
+    greenlist_cache: OrderedDict | None = None,
+) -> dict[str, float | int | None]:
     """Return green-token count, fraction, and one-sided KGW z-score."""
 
     processor = KGWLogitsProcessor(vocab_size=vocab_size, config=config)
     tokens = generated_token_ids[:max_tokens] if max_tokens else generated_token_ids
     if not tokens:
-        return {"num_tokens": 0, "green_tokens": 0, "green_fraction": 0.0, "z_score": 0.0}
+        result = {"num_tokens": 0, "green_tokens": 0, "green_fraction": 0.0, "z_score": 0.0}
+        if include_deduplicated:
+            result.update(p_value=None, dedup_num_tokens=0, dedup_green_tokens=0,
+                          dedup_green_fraction=0.0, dedup_z_score=None, dedup_p_value=None)
+        return result
 
     # torch CPU and CUDA generators intentionally use different algorithms.
     # Detection must therefore reproduce the CUDA green lists used at generation.
@@ -99,19 +106,63 @@ def kgw_score(
 
     previous = prompt_token_ids[-1] if prompt_token_ids else tokens[0]
     green_count = 0
-    for token_id in tokens:
-        green_ids = processor._greenlist(previous, device)
-        if bool((green_ids == int(token_id)).any()):
-            green_count += 1
-        previous = int(token_id)
+    if include_deduplicated:
+        # Count unique (context, next-token) pairs, not unique individual tokens.
+        # This keeps the raw score identical while avoiding repeated CUDA work.
+        pairs = Counter()
+        for token_id in tokens:
+            pairs[(int(previous), int(token_id))] += 1
+            previous = int(token_id)
+        by_context = defaultdict(list)
+        for context, token in pairs:
+            by_context[context].append(token)
+        dedup_green_count = 0
+        for context, next_tokens in by_context.items():
+            key = (vocab_size, config.gamma, config.hash_key, str(device), context)
+            mask = greenlist_cache.get(key) if greenlist_cache is not None else None
+            if mask is None:
+                mask = torch.zeros(vocab_size, dtype=torch.bool, device=device)
+                mask[processor._greenlist(context, device)] = True
+                if greenlist_cache is not None:
+                    greenlist_cache[key] = mask
+                    # About 39 MB for Qwen's vocabulary; no model is loaded.
+                    if len(greenlist_cache) > 256:
+                        greenlist_cache.popitem(last=False)
+            elif greenlist_cache is not None:
+                greenlist_cache.move_to_end(key)
+            flags = mask[torch.tensor(next_tokens, dtype=torch.long, device=device)].tolist()
+            for token, is_green in zip(next_tokens, flags):
+                if is_green:
+                    green_count += pairs[(context, token)]
+                    dedup_green_count += 1
+    else:
+        for token_id in tokens:
+            green_ids = processor._greenlist(previous, device)
+            if bool((green_ids == int(token_id)).any()):
+                green_count += 1
+            previous = int(token_id)
 
     n = len(tokens)
     expected = config.gamma * n
     variance = n * config.gamma * (1.0 - config.gamma)
     z_score = (green_count - expected) / math.sqrt(variance)
-    return {
+    result = {
         "num_tokens": n,
         "green_tokens": green_count,
         "green_fraction": green_count / n,
         "z_score": z_score,
     }
+    if include_deduplicated:
+        dedup_n = len(pairs)
+        dedup_z = (dedup_green_count - config.gamma * dedup_n) / math.sqrt(
+            dedup_n * config.gamma * (1.0 - config.gamma)
+        )
+        result.update(
+            p_value=0.5 * math.erfc(z_score / math.sqrt(2.0)),
+            dedup_num_tokens=dedup_n,
+            dedup_green_tokens=dedup_green_count,
+            dedup_green_fraction=dedup_green_count / dedup_n,
+            dedup_z_score=dedup_z,
+            dedup_p_value=0.5 * math.erfc(dedup_z / math.sqrt(2.0)),
+        )
+    return result

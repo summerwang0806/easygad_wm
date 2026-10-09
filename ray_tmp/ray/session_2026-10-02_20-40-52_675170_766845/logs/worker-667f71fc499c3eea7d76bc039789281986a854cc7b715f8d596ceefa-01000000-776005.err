@@ -1,0 +1,85 @@
+:job_id:01000000
+/shared/wwx/EasyGAD/verl/__init__.py:18: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/_distutils_hack/__init__.py:53: UserWarning: Reliance on distutils from stdlib is deprecated. Users must rely on setuptools to provide the distutils module. Avoid importing distutils or import setuptools first, and avoid setting SETUPTOOLS_USE_DISTUTILS=stdlib. Register concerns at https://github.com/pypa/setuptools/issues/new?template=distutils-deprecation.yml
+  warnings.warn(
+:actor_name:WorkerDict
+[W1002 20:41:16.082249690 ProcessGroupGloo.cpp:727] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+Flash Attention 2.0 only supports torch.float16 and torch.bfloat16 dtypes, but the current dype in Qwen2ForCausalLM is torch.float32. You should run training or inference using Automatic Mixed-Precision via the `with torch.autocast(device_type='torch_device'):` decorator, or load the model with the `torch_dtype` argument. Example: `model = AutoModel.from_pretrained("openai/whisper-tiny", attn_implementation="flash_attention_2", torch_dtype=torch.float16)`
+You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/distributed/fsdp/_init_utils.py:444: UserWarning: FSDP is switching to use `NO_SHARD` instead of ShardingStrategy.FULL_SHARD since the world size is 1.
+  warnings.warn(
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/_distutils_hack/__init__.py:53: UserWarning: Reliance on distutils from stdlib is deprecated. Users must rely on setuptools to provide the distutils module. Avoid importing distutils or import setuptools first, and avoid setting SETUPTOOLS_USE_DISTUTILS=stdlib. Register concerns at https://github.com/pypa/setuptools/issues/new?template=distutils-deprecation.yml
+  warnings.warn(
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/distributed/fsdp/fully_sharded_data_parallel.py:690: FutureWarning: FSDP.state_dict_type() and FSDP.set_state_dict_type() are being deprecated. Please use APIs, get_state_dict() and set_state_dict(), which can support different parallelisms, FSDP1, FSDP2, DDP. API doc: https://pytorch.org/docs/stable/distributed.checkpoint.html#torch.distributed.checkpoint.state_dict.get_state_dict .Tutorial: https://pytorch.org/tutorials/recipes/distributed_checkpoint_recipe.html .
+  warnings.warn(
+INFO:2026-10-02 21:30:58,792:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_500/actor/model_world_size_1_rank_0.pt
+INFO:2026-10-02 21:31:02,929:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_500/actor/optim_world_size_1_rank_0.pt
+INFO:2026-10-02 21:31:02,930:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_500/actor/extra_state_world_size_1_rank_0.pt
+INFO:2026-10-02 21:31:03,094:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_500/actor
+INFO:2026-10-02 22:11:07,419:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_1000/actor/model_world_size_1_rank_0.pt
+INFO:2026-10-02 22:11:12,164:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_1000/actor/optim_world_size_1_rank_0.pt
+INFO:2026-10-02 22:11:12,165:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_1000/actor/extra_state_world_size_1_rank_0.pt
+INFO:2026-10-02 22:11:12,347:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_1000/actor
+INFO:2026-10-02 22:51:22,459:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_1500/actor/model_world_size_1_rank_0.pt
+INFO:2026-10-02 22:51:27,035:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_1500/actor/optim_world_size_1_rank_0.pt
+INFO:2026-10-02 22:51:27,036:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_1500/actor/extra_state_world_size_1_rank_0.pt
+INFO:2026-10-02 22:51:27,198:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_1500/actor
+INFO:2026-10-02 23:34:24,245:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_2000/actor/model_world_size_1_rank_0.pt
+INFO:2026-10-02 23:34:28,409:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_2000/actor/optim_world_size_1_rank_0.pt
+INFO:2026-10-02 23:34:28,411:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_2000/actor/extra_state_world_size_1_rank_0.pt
+INFO:2026-10-02 23:34:28,571:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_2000/actor
+INFO:2026-10-03 00:15:55,728:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_2500/actor/model_world_size_1_rank_0.pt
+INFO:2026-10-03 00:15:59,887:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_2500/actor/optim_world_size_1_rank_0.pt
+INFO:2026-10-03 00:15:59,888:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_2500/actor/extra_state_world_size_1_rank_0.pt
+INFO:2026-10-03 00:16:00,068:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_2500/actor
+INFO:2026-10-03 00:56:49,568:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_3000/actor/model_world_size_1_rank_0.pt
+INFO:2026-10-03 00:56:53,726:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_3000/actor/optim_world_size_1_rank_0.pt
+INFO:2026-10-03 00:56:53,728:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_3000/actor/extra_state_world_size_1_rank_0.pt
+INFO:2026-10-03 00:56:53,868:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_3000/actor
+INFO:2026-10-03 01:37:27,882:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_3500/actor/model_world_size_1_rank_0.pt
+INFO:2026-10-03 01:37:32,100:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_3500/actor/optim_world_size_1_rank_0.pt
+INFO:2026-10-03 01:37:32,101:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_3500/actor/extra_state_world_size_1_rank_0.pt
+INFO:2026-10-03 01:37:32,300:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_3500/actor
+INFO:2026-10-03 01:53:34,515:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_3626/actor/model_world_size_1_rank_0.pt
+INFO:2026-10-03 01:53:38,699:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_3626/actor/optim_world_size_1_rank_0.pt
+INFO:2026-10-03 01:53:38,700:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_3626/actor/extra_state_world_size_1_rank_0.pt
+INFO:2026-10-03 01:53:38,849:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_3626/actor
+*** SIGSEGV received at time=1790963620 on cpu 9 ***
+PC: @     0x7569c911d7be  (unknown)  ray::gcs::TaskInfoAccessor::AsyncAddTaskEventData()
+    @     0x7569cac42520       3680  (unknown)
+    @     0x7569c8ffe975       1392  ray::core::worker::TaskEventBufferImpl::FlushEvents()
+    @     0x7569c8f876ec       1488  ray::core::CoreWorker::Disconnect()
+    @     0x7569c8f87a9d       1152  ray::core::CoreWorker::ForceExit()
+    @     0x7569c8f87ecf       1680  ray::core::CoreWorker::HandleKillActor()
+    @     0x7569c8f7f3d4        192  ray::rpc::ServerCallImpl<>::HandleRequestImpl()
+    @     0x7569c930cbc8       1168  EventTracker::RecordExecution()
+    @     0x7569c92f0ffe         48  std::_Function_handler<>::_M_invoke()
+    @     0x7569c92f1476        112  boost::asio::detail::completion_handler<>::do_complete()
+    @     0x7569c99b78db        128  boost::asio::detail::scheduler::do_run_one()
+    @     0x7569c99b9259        288  boost::asio::detail::scheduler::run()
+    @     0x7569c99b9962         96  boost::asio::io_context::run()
+    @     0x7569c8ee00b1       1280  ray::core::CoreWorker::RunIOService()
+    @     0x7569c93fe4e0         64  thread_proxy
+    @     0x7569cac94ac3  (unknown)  (unknown)
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484: *** SIGSEGV received at time=1790963620 on cpu 9 ***
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484: PC: @     0x7569c911d7be  (unknown)  ray::gcs::TaskInfoAccessor::AsyncAddTaskEventData()
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484:     @     0x7569cac42520       3680  (unknown)
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484:     @     0x7569c8ffe975       1392  ray::core::worker::TaskEventBufferImpl::FlushEvents()
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484:     @     0x7569c8f876ec       1488  ray::core::CoreWorker::Disconnect()
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484:     @     0x7569c8f87a9d       1152  ray::core::CoreWorker::ForceExit()
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484:     @     0x7569c8f87ecf       1680  ray::core::CoreWorker::HandleKillActor()
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484:     @     0x7569c8f7f3d4        192  ray::rpc::ServerCallImpl<>::HandleRequestImpl()
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484:     @     0x7569c930cbc8       1168  EventTracker::RecordExecution()
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484:     @     0x7569c92f0ffe         48  std::_Function_handler<>::_M_invoke()
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484:     @     0x7569c92f1476        112  boost::asio::detail::completion_handler<>::do_complete()
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484:     @     0x7569c99b78db        128  boost::asio::detail::scheduler::do_run_one()
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484:     @     0x7569c99b9259        288  boost::asio::detail::scheduler::run()
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484:     @     0x7569c99b9962         96  boost::asio::io_context::run()
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484:     @     0x7569c8ee00b1       1280  ray::core::CoreWorker::RunIOService()
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484:     @     0x7569c93fe4e0         64  thread_proxy
+[2026-10-03 01:53:40,166 E 776005 776072] logging.cc:484:     @     0x7569cac94ac3  (unknown)  (unknown)
+Fatal Python error: Segmentation fault
+
+
+Extension modules: msgpack._cmsgpack, google._upb._message, psutil._psutil_linux, psutil._psutil_posix, setproctitle, yaml._yaml, charset_normalizer.md, charset_normalizer.cd, simplejson._speedups, requests.packages.charset_normalizer.md, requests.packages.chardet.md, requests.packages.charset_normalizer.cd, requests.packages.chardet.cd, uvloop.loop, ray._raylet, numpy.core._multiarray_umath, numpy.core._multiarray_tests, numpy.linalg._umath_linalg, numpy.fft._pocketfft_internal, numpy.random._common, numpy.random.bit_generator, numpy.random._bounded_integers, numpy.random._mt19937, numpy.random.mtrand, numpy.random._philox, numpy.random._pcg64, numpy.random._sfc64, numpy.random._generator, pyarrow.lib, pandas._libs.tslibs.ccalendar, pandas._libs.tslibs.np_datetime, pandas._libs.tslibs.dtypes, pandas._libs.tslibs.base, pandas._libs.tslibs.nattype, pandas._libs.tslibs.timezones, pandas._libs.tslibs.fields, pandas._libs.tslibs.timedeltas, pandas._libs.tslibs.tzconversion, pandas._libs.tslibs.timestamps, pandas._libs.properties, pandas._libs.tslibs.offsets, pandas._libs.tslibs.strptime, pandas._libs.tslibs.parsing, pandas._libs.tslibs.conversion, pandas._libs.tslibs.period, pandas._libs.tslibs.vectorized, pandas._libs.ops_dispatch, pandas._libs.missing, pandas._libs.hashtable, pandas._libs.algos, pandas._libs.interval, pandas._libs.lib, pyarrow._compute, pandas._libs.ops, pandas._libs.hashing, pandas._libs.arrays, pandas._libs.tslib, pandas._libs.sparse, pandas._libs.internals, pandas._libs.indexing, pandas._libs.index, pandas._libs.writers, pandas._libs.join, pandas._libs.window.aggregations, pandas._libs.window.indexers, pandas._libs.reshape, pandas._libs.groupby, pandas._libs.json, pandas._libs.parsers, pandas._libs.testing, torch._C, torch._C._dynamo.autograd_compiler, torch._C._dynamo.eval_frame, torch._C._dynamo.guards, torch._C._dynamo.utils, torch._C._fft, torch._C._linalg, torch._C._nested, torch._C._nn, torch._C._sparse, torch._C._special, markupsafe._speedups, PIL._imaging, PIL._imagingft, scipy._lib._ccallback_c, scipy.linalg._fblas, scipy.linalg._flapack, scipy.linalg.cython_lapack, scipy.linalg._cythonized_array_utils, scipy.linalg._solve_toeplitz, scipy.linalg._decomp_lu_cython, scipy.linalg._matfuncs_sqrtm_triu, scipy.linalg._matfuncs_expm, scipy.linalg._linalg_pythran, scipy.linalg.cython_blas, scipy.linalg._decomp_update, scipy.sparse._sparsetools, _csparsetools, scipy.sparse._csparsetools, scipy.sparse.linalg._dsolve._superlu, scipy.sparse.linalg._eigen.arpack._arpack, scipy.sparse.linalg._propack._spropack, scipy.sparse.linalg._propack._dpropack, scipy.sparse.linalg._propack._cpropack, scipy.sparse.linalg._propack._zpropack, scipy.sparse.csgraph._tools, scipy.sparse.csgraph._shortest_path, scipy.sparse.csgraph._traversal, scipy.sparse.csgraph._min_spanning_tree, scipy.sparse.csgraph._flow, scipy.sparse.csgraph._matching, scipy.sparse.csgraph._reordering, scipy.optimize._group_columns, scipy._lib.messagestream, scipy.optimize._trlib._trlib, scipy.optimize._lbfgsb, _moduleTNC, scipy.optimize._moduleTNC, scipy.optimize._cobyla, scipy.optimize._slsqp, scipy.optimize._minpack, scipy.optimize._lsq.givens_elimination, scipy.optimize._zeros, scipy.optimize._cython_nnls, scipy._lib._uarray._uarray, scipy.special._ufuncs_cxx, scipy.special._ufuncs, scipy.special._specfun, scipy.special._comb, scipy.special._ellip_harm_2, scipy.linalg._decomp_interpolative, scipy.optimize._bglu_dense, scipy.optimize._lsap, scipy.spatial._ckdtree, scipy.spatial._qhull, scipy.spatial._voronoi, scipy.spatial._distance_wrap, scipy.spatial._hausdorff, scipy.spatial.transform._rotation, scipy.optimize._direct, frozenlist._frozenlist, pyarrow._json, regex._regex, zmq.backend.cython._zmq, msgspec._core, multidict._multidict, yarl._quoting_c, propcache._helpers_c, aiohttp._http_writer, aiohttp._http_parser, aiohttp._websocket.mask, aiohttp._websocket.reader_c, vllm.cumem_allocator, numba.core.typeconv._typeconv, numba._helperlib, numba._dynfunc, numba._dispatcher, numba.core.typing.builtins.itertools, numba.cpython.builtins.math, numba.core.runtime._nrt_python, numba.np.ufunc._internal, numba.experimental.jitclass._box, cuda_utils, __triton_launcher (total: 164)

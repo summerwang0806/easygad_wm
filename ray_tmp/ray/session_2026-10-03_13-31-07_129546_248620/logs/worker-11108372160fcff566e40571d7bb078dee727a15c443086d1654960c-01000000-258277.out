@@ -1,0 +1,44 @@
+:job_id:01000000
+:actor_name:WorkerDict
+Model config after override: Qwen2Config {
+  "architectures": [
+    "Qwen2ForCausalLM"
+  ],
+  "attention_dropout": 0.0,
+  "eos_token_id": 151643,
+  "hidden_act": "silu",
+  "hidden_size": 896,
+  "initializer_range": 0.02,
+  "intermediate_size": 4864,
+  "max_position_embeddings": 32768,
+  "max_window_layers": 24,
+  "model_type": "qwen2",
+  "num_attention_heads": 14,
+  "num_hidden_layers": 24,
+  "num_key_value_heads": 2,
+  "pad_token_id": 151643,
+  "rms_norm_eps": 1e-06,
+  "rope_scaling": null,
+  "rope_theta": 1000000.0,
+  "sliding_window": 32768,
+  "tie_word_embeddings": true,
+  "torch_dtype": "bfloat16",
+  "transformers_version": "4.51.3",
+  "use_cache": true,
+  "use_mrope": false,
+  "use_sliding_window": false,
+  "vocab_size": 151936
+}
+
+Monkey patch _flash_attention_forward in transformers.integrations.flash_attention
+Skipping monkey patch for Qwen2ForCausalLM as use_fused_kernels is False or fused_kernels_backend is torch
+Qwen2ForCausalLM contains 494.03M parameters
+wrap_policy: functools.partial(<function _or_policy at 0x768f23b83130>, policies=[functools.partial(<function transformer_auto_wrap_policy at 0x768f23b83010>, transformer_layer_cls={<class 'transformers.models.qwen2.modeling_qwen2.Qwen2DecoderLayer'>})])
+NCCL version 2.21.5+cuda12.4
+Total steps: 7252, num_warmup_steps: 0
+Actor use_remove_padding=True
+Actor use_fused_kernels=False
+WARNING 10-03 13:31:56 [utils.py:2522] Methods determine_num_available_blocks,device_config,get_cache_block_size_bytes,initialize_cache not implemented in <vllm.v1.worker.gpu_worker.Worker object at 0x768e48119cc0>
+WARNING 10-03 13:31:56 [topk_topp_sampler.py:69] FlashInfer is not available. Falling back to the PyTorch-native implementation of top-p & top-k sampling. For the best performance, please install FlashInfer.
+kwargs: {'n': 1, 'logprobs': 0, 'max_tokens': 1536, 'detokenize': False, 'temperature': 0.8, 'top_k': -1, 'top_p': 1, 'ignore_eos': False}
+WARNING 10-03 13:34:40 [block_pool.py:252] Failed to reset prefix cache because some blocks (15) are not freed yet

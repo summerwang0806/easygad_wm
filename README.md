@@ -94,6 +94,13 @@ export CUDA_VISIBLE_DEVICES="<GPU_A>,<GPU_B>"
 bash scripts/train/run_full_gad_optimized.sh \
   --model /shared/public_models/Qwen2.5-1.5B-Instruct \
   --exp_name kgw_gad_full_2gpu_v1 --nnodes 1 --gpus_per_node 2
+
+export CUDA_VISIBLE_DEVICES="<GPU_A>,<GPU_B>"
+bash scripts/train/run_full_gad_optimized.sh \
+  --model /shared/public_models/Qwen2.5-1.5B-Instruct \
+  --exp_name kgw_gad_full_2gpu_v1 --nnodes 1 --gpus_per_node 2
+
+
 ```
 
 LoRA（更省显存，但不保证更快）：
@@ -127,11 +134,21 @@ bash scripts/train/run_full_seqkd_optimized.sh \
   --exp_name te_old_st_Qwen2.5-1.5B-Instruct \
   --nnodes 1
 
-CUDA_VISIBLE_DEVICES=1,2 \
+CUDA_VISIBLE_DEVICES=2,3 \
 bash scripts/train/run_full_seqkd_optimized.sh \
   --model /shared/public_models/Qwen2.5-0.5B \
-  --exp_name te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata \
+  --exp_name te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new \
   --nnodes 1
+
+
+
+CUDA_VISIBLE_DEVICES=1,2 \
+bash scripts/train/run_full_gad_optimized.sh \
+  --model /shared/public_models/Qwen2.5-0.5B \
+  --exp_name te_old_st_Qwen2.5-0.5B_gamma0.5_delta3 \
+  --nnodes 1
+
+
 
 CUDA_VISIBLE_DEVICES=2 \
 bash scripts/train/run_full_seqkd_optimized.sh \

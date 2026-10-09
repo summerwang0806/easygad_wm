@@ -48,7 +48,7 @@ CUDA_VISIBLE_DEVICES=0,1,2 python wm_data/generate_clean.py \
   --output data/dolly15k_qwen2_5_14b_clean_train.parquet \
   --num-gpus 3
 
-CUDA_VISIBLE_DEVICES=1,2 python wm_data/generate_clean.py \
+CUDA_VISIBLE_DEVICES=2,3 python wm_data/generate_clean.py \
   --input data/dolly15k_test.parquet \
   --output data/dolly15k_qwen2_5_0.5b_clean_test.parquet \
   --num-gpus 2
@@ -96,6 +96,16 @@ CUDA_VISIBLE_DEVICES=0,1,2 python wm_data/generate_kgw.py \
   --gamma 0.25 \
   --delta 2.0 \
   --hash-key 15485863
+
+
+CUDA_VISIBLE_DEVICES=2,3 python wm_data/generate_kgw.py \
+  --input data/dolly15k_test.parquet \
+  --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet \
+  --num-gpus 2 \
+  --gamma 0.5 \
+  --delta 3.0 \
+  --hash-key 15485863
+
 
 ```
 

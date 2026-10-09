@@ -1,0 +1,41 @@
+:job_id:01000000
+/shared/wwx/EasyGAD/verl/__init__.py:18: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/_distutils_hack/__init__.py:53: UserWarning: Reliance on distutils from stdlib is deprecated. Users must rely on setuptools to provide the distutils module. Avoid importing distutils or import setuptools first, and avoid setting SETUPTOOLS_USE_DISTUTILS=stdlib. Register concerns at https://github.com/pypa/setuptools/issues/new?template=distutils-deprecation.yml
+  warnings.warn(
+:actor_name:WorkerDict
+[W1003 20:01:23.126138612 ProcessGroupGloo.cpp:727] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+Flash Attention 2.0 only supports torch.float16 and torch.bfloat16 dtypes, but the current dype in Qwen2ForCausalLM is torch.float32. You should run training or inference using Automatic Mixed-Precision via the `with torch.autocast(device_type='torch_device'):` decorator, or load the model with the `torch_dtype` argument. Example: `model = AutoModel.from_pretrained("openai/whisper-tiny", attn_implementation="flash_attention_2", torch_dtype=torch.float16)`
+You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/_distutils_hack/__init__.py:53: UserWarning: Reliance on distutils from stdlib is deprecated. Users must rely on setuptools to provide the distutils module. Avoid importing distutils or import setuptools first, and avoid setting SETUPTOOLS_USE_DISTUTILS=stdlib. Register concerns at https://github.com/pypa/setuptools/issues/new?template=distutils-deprecation.yml
+  warnings.warn(
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/distributed/fsdp/fully_sharded_data_parallel.py:690: FutureWarning: FSDP.state_dict_type() and FSDP.set_state_dict_type() are being deprecated. Please use APIs, get_state_dict() and set_state_dict(), which can support different parallelisms, FSDP1, FSDP2, DDP. API doc: https://pytorch.org/docs/stable/distributed.checkpoint.html#torch.distributed.checkpoint.state_dict.get_state_dict .Tutorial: https://pytorch.org/tutorials/recipes/distributed_checkpoint_recipe.html .
+  warnings.warn(
+INFO:2026-10-03 20:02:23,131:[Rank 1] Loaded model from /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_4000/actor/model_world_size_2_rank_1.pt
+INFO:2026-10-03 20:02:24,715:[Rank 1] Loaded optimizer from /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_4000/actor/optim_world_size_2_rank_1.pt
+INFO:2026-10-03 20:02:24,719:[Rank 1] Loaded rng from /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_4000/actor/extra_state_world_size_2_rank_1.pt
+INFO:2026-10-03 20:02:24,720:[Rank 1] Loaded lr_scheduler from /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_4000/actor/extra_state_world_size_2_rank_1.pt
+INFO:2026-10-03 20:50:43,732:[Rank 1] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_4500/actor/model_world_size_2_rank_1.pt
+INFO:2026-10-03 20:50:46,217:[Rank 1] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_4500/actor/optim_world_size_2_rank_1.pt
+INFO:2026-10-03 20:50:46,219:[Rank 1] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_4500/actor/extra_state_world_size_2_rank_1.pt
+INFO:2026-10-03 21:32:43,801:[Rank 1] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_5000/actor/model_world_size_2_rank_1.pt
+INFO:2026-10-03 21:32:46,072:[Rank 1] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_5000/actor/optim_world_size_2_rank_1.pt
+INFO:2026-10-03 21:32:46,073:[Rank 1] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_5000/actor/extra_state_world_size_2_rank_1.pt
+INFO:2026-10-03 22:13:14,841:[Rank 1] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_5500/actor/model_world_size_2_rank_1.pt
+INFO:2026-10-03 22:13:17,060:[Rank 1] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_5500/actor/optim_world_size_2_rank_1.pt
+INFO:2026-10-03 22:13:17,062:[Rank 1] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_5500/actor/extra_state_world_size_2_rank_1.pt
+INFO:2026-10-03 22:52:51,651:[Rank 1] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_6000/actor/model_world_size_2_rank_1.pt
+INFO:2026-10-03 22:52:54,065:[Rank 1] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_6000/actor/optim_world_size_2_rank_1.pt
+INFO:2026-10-03 22:52:54,066:[Rank 1] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_6000/actor/extra_state_world_size_2_rank_1.pt
+INFO:2026-10-03 23:33:13,149:[Rank 1] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_6500/actor/model_world_size_2_rank_1.pt
+INFO:2026-10-03 23:33:15,526:[Rank 1] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_6500/actor/optim_world_size_2_rank_1.pt
+INFO:2026-10-03 23:33:15,527:[Rank 1] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_6500/actor/extra_state_world_size_2_rank_1.pt
+INFO:2026-10-04 00:15:16,311:[Rank 1] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_7000/actor/model_world_size_2_rank_1.pt
+INFO:2026-10-04 00:15:18,580:[Rank 1] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_7000/actor/optim_world_size_2_rank_1.pt
+INFO:2026-10-04 00:15:18,582:[Rank 1] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_7000/actor/extra_state_world_size_2_rank_1.pt
+INFO:2026-10-04 00:56:18,942:[Rank 1] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_7500/actor/model_world_size_2_rank_1.pt
+INFO:2026-10-04 00:56:21,217:[Rank 1] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_7500/actor/optim_world_size_2_rank_1.pt
+INFO:2026-10-04 00:56:21,219:[Rank 1] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_7500/actor/extra_state_world_size_2_rank_1.pt
+INFO:2026-10-04 01:38:37,330:[Rank 1] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_8000/actor/model_world_size_2_rank_1.pt
+INFO:2026-10-04 01:38:39,486:[Rank 1] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_8000/actor/optim_world_size_2_rank_1.pt
+INFO:2026-10-04 01:38:39,487:[Rank 1] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_8000/actor/extra_state_world_size_2_rank_1.pt

@@ -1,193 +1,236 @@
-# EasyGAD 文本质量评测：原始 0.5B / warmup / GAD
+# 文本质量评测使用说明
 
-本目录只读取已经生成的文本，不加载学生模型，不使用 GPU、Ray 或 SwanLab，不改变 checkpoint。
-评测默认裁判为你选择的 **GPT-4o**。需要单独的模型 API 密钥，SwanLab 密钥不能用在这里。
-Python 3.10+，只使用标准库，无需 pip 安装评测依赖。
+本目录评估已经生成的回答，比较 SeqKD、warmup、GAD 和原始学生模型的文本质量。当前默认使用 **GPT-5.5 中转 API 裁判 + Dolly 测试题对应的原始人工回答**。
 
-服务器 `/app/wwx/EasyGAD` 实际指向 `/shared/wwx/EasyGAD`，两个路径访问的是同一份项目。
+每次只评测一个 JSONL 文件，手动换文件名评测下一份。每份文件有自己的结果目录和 SwanLab 实验，不会自动合并四个模型。不加载学生模型，不使用 GPU 或 Ray，也不修改训练 checkpoint。
 
-## 文件
+## 1. 快速开始
 
-- `evaluate_quality.py`：数据检查、参考回答生成、双顺序评分、缓存、汇总和置信区间。
-- `run_quality.sh`：启动包装脚本，默认只检查，不调用 API。
-- `test_evaluate_quality.py`：模拟接口的离线测试，不使用真实密钥或外部网络。
-
-## 默认读取的已有结果
-
-| 标签 | 项目根目录下的文件 |
-|---|---|
-| base | `wm_test/base_qwen2_5_0_5b_dolly15k_test.jsonl` |
-| warmup | `wm_test/kgw_warmup_qwen2_5_0_5b_dolly15k_test.jsonl` |
-| gad | `wm_test/kgw_gad_qwen2_5_0_5b_dolly15k_test.jsonl` |
-
-每行需有 `id`、`prompt`（消息列表或文本）和 `answer`。直接兼容 `generate_compare_score.py` 的输出。
-模型文件顺序可以不同：按 ID 对齐；但 ID 集合、同题 prompt 必须一致，不会静默取交集。
-`generation` 参数不一致默认报错；确实要比较不同设置时显式加 `--allow-generation-mismatch` 并如实报告。
-若所有文件都没有 `generation` 字段，无法自动确认生成参数，需自行核对。
-源文件里的水印分数、KGW 标签和模型路径不会交给裁判。
-
-## 模式及指标
-
-### paper：论文式参考回答评分（默认）
-
-为每个问题生成一份 GPT-4o 参考回答，固定缓存，然后分别比较各模型回答与该参考。
-裁判给 helpfulness、relevance、accuracy、detail 和 overall 各 1～10 分。
-每次比较都交换 A/B 顺序再评一次，将结果映射回原模型后汇总。
-
-每条样本的相对分数是两个顺序下 `100 * 模型overall / (模型overall + 参考overall)` 的平均，最后再对样本取平均。
-50 表示模型与参考评分相等，**不是 50% 正确率**。
-输出每个模型的相对分数、分维度均值、95% bootstrap 区间，以及相同问题上模型之间的相对分差。
-模型间分差是分别对同一参考评分后的配对差值，不等同于直接两模型对战胜率。
-
-采用原论文的参考回答比较与归一化公式；增加了 JSON 输出、细分维度、双顺序和缓存，
-而且当前文件的生成温度为 0.7，论文最新版使用贪心生成。因此这是**论文式评测扩展，不是原论文结果的严格复现**。
-裁判和参考回答都不是真实事实验证器，需要人工抽样核查；裁判为自己生成的参考打分也可能有偏差。
-
-### pairwise：直接检验 GAD 是否比 warmup 更好
-
-默认比较 `gad:warmup`，不生成参考回答，裁判看匿名 A/B 回答，交换顺序各评分一次。
-按两次评分平均后的 overall 比较，输出 GAD 胜率、平率、warmup 胜率、overall 分差、
-胜率+半平率及其区间、两次展示顺序的结论一致率。
-平局是两份回答平均 overall 相等，并非把平局算作 GAD 胜利。顺序一致率低时要人工复核。
-
-这更直接回答本次 warmup→GAD 是否改善质量。论文式评分与直接对战结果必须分开报告。
-字符数、token 数和空回答数量只是描述性指标，不证明质量提升。
-bootstrap 区间按 prompt 重采样，不覆盖裁判系统误差、训练随机种子或参考回答偏差。
-
-## 第一步：无费用检查
+以下 Bash 命令在服务器执行，均以项目根目录为起点：
 
 ```bash
 cd /app/wwx/EasyGAD
 conda activate wm
-bash text_quality/run_quality.sh
 ```
 
-默认不写结果、不发请求、不需要 API 密钥。三模型各 500 条时 paper 上限为 3500 次逻辑调用：
-500 次参考回答 + 3 模型 × 500 条 × 2 个顺序。成功缓存可减少后续调用，重试会增加实际调用。
-pairwise 的 GAD/warmup 全量是 1000 次逻辑调用。两种模式请使用不同输出目录。
-
-## 第二步：设置 API 密钥与网络
+服务器上 `/app/wwx/EasyGAD` 与 `/shared/wwx/EasyGAD` 指向同一项目。若当前终端没有 `conda` 命令，可改用：
 
 ```bash
-read -rsp 'OpenAI API key: ' OPENAI_API_KEY
-echo
-export OPENAI_API_KEY
-export OPENAI_BASE_URL=https://api.openai.com/v1
+source /app/wwx/miniconda3/bin/activate wm
 ```
 
-上述方式不把密钥写进 shell 历史或报告。若使用自己的兼容服务，将 `OPENAI_BASE_URL` 改为其 `/v1` 地址；
-但服务必须真实提供你选择的 GPT-4o，脚本不会验证服务商是否替换了模型。
-默认严格 JSON Schema；兼容服务不支持时可显式改 `--response-format json_object`，不自动降级或换模型。
-如使用 GPT-4o 固定快照，所有试跑和全量命令统一加 `--judge-model <实际可访问的快照名>`，新型号使用新结果目录。
+### 网络与代理
 
-如果服务器不能直连，先在本地代理运行且监听 56734 的前提下，建立并保持 SSH 隧道：
+需要通过本地代理联网时，先确保 Windows 本地代理监听 `127.0.0.1:56734`，在 Windows PowerShell 建立 SSH 隧道并保持窗口开启：
 
 ```powershell
-ssh -R 7890:127.0.0.1:56734 -p 3389 wwx@10.107.6.60
+ssh -F NUL -o ExitOnForwardFailure=yes -R 127.0.0.1:7890:127.0.0.1:56734 -p 3389 wwx@10.107.6.60
 ```
 
-在服务器同一终端设置代理；不需要代理时不要设置这些变量：
+然后在运行评测的服务器终端设置：
 
 ```bash
 export http_proxy=http://127.0.0.1:7890
 export https_proxy=http://127.0.0.1:7890
-export HTTP_PROXY="$http_proxy"
-export HTTPS_PROXY="$https_proxy"
-export NO_PROXY=127.0.0.1,localhost
-export no_proxy="$NO_PROXY"
+export no_proxy=127.0.0.1,localhost
 ```
 
-**加 `--run-api` 会将题目、回答发送到所配置的服务，可能产生费用。这里没有替你实际运行 API。**
-密钥有效性、账户余额、模型权限和代理可达性需要你运行时验证；ChatGPT 界面登录不代替这里的 API 密钥。
+每个新终端都需要重新设置代理变量。隧道存在不代表本地代理正在工作；服务器能直接访问服务时可以不用代理。
 
-## 第三步：先试 5 条（需要真实 API，会产生费用）
-
-论文式模式，默认三个模型，计划 35 次逻辑调用：
+### 第一步：只检查，不调用 API
 
 ```bash
-bash text_quality/run_quality.sh --mode paper --limit 5 \
-  --output-dir text_quality/results/paper_gpt4o \
-  --run-api --max-api-calls 100
+bash text_quality/run_quality.sh \
+  --input-file wm_test/kgw_gad_qwen2_5_0_5b_dolly15k_test.jsonl
 ```
 
-或直接对战，计划 10 次逻辑调用：
+检查输入、参考匹配和输出配置；不会评分、创建 SwanLab 实验或写结果。正常会看到 `Aligned 500 IDs`、`selected 500` 和 `CHECK ONLY`。脚本必须指定 `--input-file`，不能空参数启动。
+
+### 第二步：先评测 5 条
 
 ```bash
-bash text_quality/run_quality.sh --mode pairwise --pair gad:warmup --limit 5 \
-  --output-dir text_quality/results/pairwise_gpt4o \
+bash text_quality/run_quality.sh \
+  --input-file wm_test/kgw_gad_qwen2_5_0_5b_dolly15k_test.jsonl \
+  --limit 5 --concurrency 8 \
   --run-api --max-api-calls 30
 ```
 
-API 调用数量不是 token 或金额预算；长题、长回答、重试均会影响费用。先检查小样本评分和账单，再决定全量。
-达到预算会保存已有成功结果并以退出码 2 结束，不自动突破预算。
+`--run-api` 才会真正提交题目、模型回答和人工参考给中转站，可能产生费用。5 条正常需要 10 次评分请求，预算 30 为失败重试留余量。
 
-## 第四步：确认后全量 500 条
-
-不指定 `--limit`，会读取全部 500 条；与 5 条试跑使用同目录、同设置，已完成的请求不会重复计费：
+### 第三步：全量评测 500 条
 
 ```bash
-# 论文式三模型比较
-bash text_quality/run_quality.sh --mode paper \
-  --output-dir text_quality/results/paper_gpt4o \
-  --run-api --max-api-calls 4000
-
-# 或：GAD 与 warmup 直接盲评
-bash text_quality/run_quality.sh --mode pairwise --pair gad:warmup \
-  --output-dir text_quality/results/pairwise_gpt4o \
-  --run-api --max-api-calls 1200
+bash text_quality/run_quality.sh \
+  --input-file wm_test/kgw_gad_qwen2_5_0_5b_dolly15k_test.jsonl \
+  --concurrency 4 --run-api --max-api-calls 1500
 ```
 
-预算是每次启动的请求上限（包括失败请求和重试），第二次启动会重新计算本次预算。
-再次执行相同命令即可续跑；更改输入文件、裁判、endpoint、模式或评分设置必须使用新目录。
-如果只想比较 warmup/GAD，不含 base，可重复传入两次 `--model` 覆盖默认三个文件：
+不指定 `--limit` 就评测全文件。500 条正常需要 **1000 次评分请求**：每条交换回答顺序评分两次，不生成参考回答。与试跑保持同一配置、同一结果目录，已有成功缓存会复用。
+
+### 手动换文件
+
+只修改上面命令的 `--input-file`，其余参数可以保持不变：
+
+| 待评模型 | `--input-file` 的值 |
+|---|---|
+| SeqKD | `wm_test/kgw_seqKD_full_kgwdata_qwen2_5_0_5b_dolly15k_test.jsonl` |
+| warmup | `wm_test/kgw_warmup_qwen2_5_0_5b_dolly15k_test.jsonl` |
+| GAD | `wm_test/kgw_gad_qwen2_5_0_5b_dolly15k_test.jsonl` |
+| 原始学生模型 | `wm_test/base_qwen2_5_0_5b_dolly15k_test.jsonl` |
+
+输入每行需要 `id`、`prompt` 和 `answer`，兼容 `wm_test/generate_compare_score.py` 的输出。`prompt` 可以是消息列表或文本；ID 不能重复，问题必须与参考文件中对应 ID 的完整 prompt 匹配。
+
+## 2. 参考回答来自哪里？
+
+固定读取 `text_quality/references/dolly_human_500.jsonl`，来源是原始 Dolly 数据的人工 `response`，不是 GPT-5.5 新生成的回答，也不是 KGW 教师生成回答。
+
+准备工具核对了原始数据、`data/dolly15k_test.parquet` 和四份模型输出的 ID、instruction、context 与答案。在这份基础 test parquet 中，字段虽然叫 `teacher_response`，其内容已核验为 Dolly 原始人工回答；不能仅凭字段名换成 KGW 数据中的同名字段。
+
+服务器已准备好参考文件。需要重新核验时运行：
 
 ```bash
-bash text_quality/run_quality.sh --mode paper \
-  --model warmup=wm_test/kgw_warmup_qwen2_5_0_5b_dolly15k_test.jsonl \
-  --model gad=wm_test/kgw_gad_qwen2_5_0_5b_dolly15k_test.jsonl \
-  --output-dir text_quality/results/paper_two_models
+python text_quality/prepare_dolly_references.py
 ```
 
-上面仍是无费用检查；真正运行时另加 `--run-api` 和足够的预算。
-可用 `--reference-file references.jsonl` 提供现成参考（id/prompt/answer），必须逐 ID 匹配问题并使用新输出目录。
+这一步不调用 API、不使用 GPU，但依赖服务器已有的 `datasets` 和 `pyarrow`，且会读取四份模型文件做一致性检查。已有参考文件若内容一致则只核验；不一致会报错，不覆盖旧文件。
 
-## 看结果与重新汇总
+评测时参考缺失或问题不匹配会停止，不会自动退回 API 生成参考。人工回答也可能有遗漏或错误，不视为唯一正确答案。
 
-输出目录中有：
+## 3. 评分逻辑与指标含义
 
-- `report.md`：可直接阅读的比较表、完整性说明、置信区间。
-- `metrics.json`：机器可读的质量指标、覆盖率、分维度评分、配对差值。
-- `per_sample.jsonl`：每题两次顺序评分和简短理由，方便人工复核。
-- `references.jsonl`：paper 模式的固定参考回答。
-- `cache.jsonl`：已成功请求的缓存、实际返回模型 ID、token 用量；不要删除它后重新运行。
-- `errors.jsonl`：失败请求的类型（若有），失败样本不会按 0 分加入平均。
-- `manifest.json`：输入与评测设置指纹，无 API 密钥。
+默认 `paper` 模式：把待评回答和人工参考作为匿名 A/B 给裁判，分别打分，再交换顺序重新评分。裁判不会收到模型名称、水印标签、checkpoint 路径或水印 z-score。
+
+五个维度均为 1～10 分：
+
+| 维度 | 含义 |
+|---|---|
+| `helpfulness` | 是否有效帮助用户完成任务 |
+| `relevance` | 是否切题、遵循题目要求 |
+| `accuracy` | 内容是否准确 |
+| `detail` | 细节是否充分且适当，不等于越长越好 |
+| `overall` | 总体质量判断 |
+
+两次评分映射回原回答后取平均。每条题目的相对分数为：
+
+```text
+每个顺序的相对分数 = 100 × 模型 overall / (模型 overall + 参考 overall)
+该题相对分数 = 两个顺序的相对分数平均
+最终相对分数 = 所有有效题目的相对分数平均
+```
+
+50 表示评分上与参考持平，**不是 50% 正确率**。参考不强制给 10 分。报告还包含分维度均值、胜/平/负比例、顺序一致率和按题目 bootstrap 的 95% 置信区间。
+
+这里的胜率是“模型回答对人工参考”的胜率，不是 GAD 对 warmup 的直接对战胜率。每份文件单独运行时也不会自动生成跨模型配对分差。
+
+### 如何比较模型？
+
+四份文件用相同题目、生成设置、裁判和参考分别评测后，比较完整报告中的 `overall`、相对分数、分维度评分与覆盖率，并抽查逐题理由。少量样本或区间重叠时，不宜只凭均分断言显著提升。
+
+文本质量与水印能力需要分别报告：本目录的裁判评分衡量内容质量；KGW 的 AUROC、TPR@FPR 衡量水印可检测性；训练中的 ROUGE-L 衡量与参考文本的词序重合，不能替代这些指标。证明 GAD 有用，应展示水印能力改善以及文本质量的变化或保持情况，不能只看训练奖励。
+
+当前 GPT-5.5 裁判与人工参考设置不等于论文 GPT-4o 设置的严格复现，分数不能直接与论文数值比较。置信区间不覆盖裁判偏差或训练随机种子差异；已用于训练验证、选 checkpoint 的测试题也不能当作完全独立的最终测试集。
+
+## 4. 并发、预算与常用参数
+
+| 参数 | 作用 |
+|---|---|
+| `--input-file 路径` | 必填，每次只评测这一份文件 |
+| `--limit 5` | 只评测排序后前 5 个 ID；省略则全量 |
+| `--concurrency 8` | 并行处理题目，上限为 8 个在途请求；API 默认 4 |
+| `--run-api` | 真正调用 API；省略则仅检查 |
+| `--max-api-calls 1500` | 本次启动的实际请求上限，包含失败请求和重试 |
+| `--timeout 90` | 单次请求超时秒数，默认 90 |
+| `--retries 2` | 失败后的最大重试次数，默认 2 |
+| `--output-dir 路径` | 覆盖自动结果目录；不同配置不要混用目录 |
+| `--live-interval 15` | 实时快照更新间隔秒数，默认 15 |
+| `--swanlab-mode disabled` | 关闭云端记录；也可选 `cloud` 或 `offline` |
+| `--summary-only` | 只从已有缓存重建报告，不调用裁判 |
+
+API 裁判不使用 CUDA，增加显卡数量不会提速。并发不减少请求数量或费用；频繁遇到 429 时先降低到 4 或 2。
+
+粗略耗时为 `未缓存请求数 × 平均请求耗时 ÷ 并发数`，还要加限流、重试和收尾时间。例如 1000 次请求、平均 20 秒、8 并发，理想约 42 分钟；这不是完成时间保证，应以小样本测速为准。
+
+1500 是请求次数上限，不是 token 或金额预算，也不保证足够完成所有重试。达到预算会保存已完成结果，以退出码 2 结束；再次启动可继续。
+
+## 5. API 与 SwanLab 配置
+
+`run_quality.sh` 已配置中转地址 `http://43.159.131.189:8080/v1`、Responses 接口、`gpt-5.5`、推理强度 `low`、`store=false` 和最多 4096 输出 token。密钥从 `text_quality/.relay_api.key` 读取，不需要修改 Codex 设置。
+
+密钥文件已被 Git 忽略，不要放入报告或命令行参数。更换服务可追加 `--base-url`、`--judge-model`、`--api-key-file`，并使用新的输出目录。当前 HTTP 地址会明文传输密钥和文本；`store=false` 不能保证中转站不记录。程序保留返回的模型标识，但不能独立验证中转站实际使用的模型。
+
+### SwanLab 实时记录
+
+脚本默认开启云端记录，项目为 `easyGAD-wm`，每份输入对应独立实验，启动时会输出实验链接。
+
+SwanLab 密钥与裁判 API 密钥不是同一个。脚本读取 `scripts/train/run_full_gad_optimized.sh` 中已有的字面量 `SWANLAB_API_KEY`，不会执行训练脚本。也可通过环境变量 `SWANLAB_API_KEY` 或 `--swanlab-key-file` 覆盖。
+
+记录内容包括累计质量评分、有效样本数、覆盖率、顺序一致率、请求进度、耗时和粗估 ETA。默认约每 15 秒更新，结束时强制更新；均分仅纳入完成两次顺序评分的题目。
+
+同一输出目录续跑会使用 `swanlab_state.json` 中的实验 ID，接着追加云端曲线。不要随意删除这个文件或更换同目录的项目、workspace。云端连接异常会警告，本地评测缓存和实时记录仍保留。服务器环境已有 `tqdm` 与 `swanlab`；无费用检查不会创建实验。
+
+## 6. 结果位置与实时查看
+
+默认目录规则：`text_quality/results/<输入文件名去掉.jsonl>__api_gpt-5.5/`。
+
+例如 GAD 写入 `text_quality/results/kgw_gad_qwen2_5_0_5b_dolly15k_test__api_gpt-5.5/`：
 
 ```bash
-# 不调用 API，仅从已有缓存重建报告；模式和目录要与原运行一致
-bash text_quality/run_quality.sh --mode paper \
-  --output-dir text_quality/results/paper_gpt4o --summary-only
+# 最终报告或最近一次汇总
+cat text_quality/results/kgw_gad_qwen2_5_0_5b_dolly15k_test__api_gpt-5.5/report.md
+# 运行中的最新进度与累计评分
+cat text_quality/results/kgw_gad_qwen2_5_0_5b_dolly15k_test__api_gpt-5.5/live_status.json
+# 最近的实时历史
+tail -n 1 text_quality/results/kgw_gad_qwen2_5_0_5b_dolly15k_test__api_gpt-5.5/live_metrics.jsonl
 ```
 
-`complete=false` 或有效样本少于 500 时，结果是部分评测，不要直接与完整评测比较。
-异常强制退出若留下 `.evaluation.lock`，先确认其中 PID 对应的任务已结束，才可手动移除本目录的锁；不要停止其他同学的进程。
-报告没有“GAD 一定更好”的预设，允许结果为退化、持平或不确定。
+| 文件 | 内容与保存方式 |
+|---|---|
+| `report.md`、`metrics.json` | 最新报告与机器可读指标，续跑后更新 |
+| `per_sample.jsonl` | 最新逐题结果、评分与简短理由 |
+| `references.jsonl` | 本次使用的人工参考 |
+| `cache.jsonl` | 成功且有效的请求结果，追加写，用于断点续跑 |
+| `errors.jsonl` | 错误日志，追加写（发生错误时） |
+| `manifest.json` | 输入及评分配置指纹，不含密钥 |
+| `results_index.jsonl` | 每次结束/汇总的运行索引，追加写 |
+| `runs/<run_id>/` | 各次报告与指标快照，后续运行不覆盖 |
+| `live_status.json` | 最新实时快照 |
+| `live_metrics.jsonl` | 实时指标历史，追加写 |
+| `swanlab_state.json`、`swanlog/` | 云端续跑状态及 SDK 日志 |
 
-现有 Dolly 测试集已用于训练期验证和挑模型，可先做探索性质量比较；正式结论应另留未参与模型选择的测试问题。
-本次 0.5B 模型不能与此前 1.5B SeqKD 直接作公平模型对照。
-水印 AUROC、TPR@FPR 应独立报告，本目录不把水印 z-score 当作内容质量。
+顶层文件是“最新视图”，历史结果通过追加索引和独立快照保留。`complete=false` 或有效题目不足 500 表示部分评测，不能当作完整结果。失败或只完成一次顺序的题目不会按 0 分加入均值。
 
-## 离线测试
+## 7. 中断续跑与重新汇总
+
+按一次 Ctrl+C 会停止发起新请求，等待在途请求返回或超时，保存已有结果。不要连续强制中断。每次有效请求成功后即追加保存缓存；强制杀进程可能来不及写最终报告，但已保存缓存仍可复用。
+
+再次执行原命令即可续跑。输入、标签、参考、裁判、地址和评分配置要保持一致；并发与本次请求预算可以调整，`--limit 5` 也可以去掉扩展到全量。更换输入内容或评分设置应使用新结果目录。
+
+仅从缓存重新汇总、完全关闭网络记录：
+
+```bash
+bash text_quality/run_quality.sh \
+  --input-file wm_test/kgw_gad_qwen2_5_0_5b_dolly15k_test.jsonl \
+  --summary-only --swanlab-mode disabled
+```
+
+这会更新最新报告并追加一次汇总索引，不是新的独立实验。不要加 `--run-api`，也不要删除缓存。若原运行指定了 `--output-dir` 或其他评分设置，汇总命令要同样指定。
+
+不能同时启动两个进程写同一结果目录。异常退出留下 `.evaluation.lock` 时，先确认锁中的 PID 对应任务已结束，才处理自己这个目录的残留锁；不要停止其他人的进程。
+
+## 8. 常见问题与代码入口
+
+- 参考匹配失败：核对 ID、prompt 和 context，使用对应 test 数据生成的回答，不要跳过检查。
+- 网络超时：检查本地代理、SSH 隧道和当前终端的代理变量；不要先增加重试堆积请求。
+- 401/403：核对裁判 API 密钥、余额与模型权限；SwanLab 密钥不能用来调用裁判。
+- 429：降低 `--concurrency`，稍后从缓存续跑。
+- 输出目录配置不匹配：使用新目录，不要删除旧索引或修改 manifest 强行复用。
+- JSON 格式不支持：默认严格 JSON Schema；兼容服务可显式使用 `--response-format json_object`，使用新的结果目录，不会自动降级。
+
+代码入口：`evaluate_quality.py`（评测、缓存、汇总）、`run_quality.sh`（当前默认启动脚本）、`prepare_dolly_references.py`（参考核验）、`live_monitor.py`（进度与 SwanLab）。本地 GPU 裁判保留在 `run_local_quality.sh` / `local_judge.py`，是显式可选工具，不是本文默认流程。
+
+离线测试与脚本语法检查，不调用真实裁判：
 
 ```bash
 python -m unittest discover -s text_quality -p 'test_*.py' -v
 bash -n text_quality/run_quality.sh
 ```
-
-测试使用模拟裁判，并没有验证真实 API 可达性或 GPT-4o 判断是否正确。
-
-## 依据
-
-- GAD 论文最新版 §3.1、附录 A.3：https://arxiv.org/html/2511.10643v3
-- API Structured Outputs：https://developers.openai.com/api/docs/guides/structured-outputs
-- GPT-4o 模型接口说明：https://developers.openai.com/api/docs/models/gpt-4o

@@ -1,0 +1,57 @@
+{
+  "model": "Qwen2.5-0.5B with inference-time KGW",
+  "n": 500,
+  "auroc": 0.8970139999999984,
+  "tpr_at_fpr": {
+    "1%": {
+      "threshold": 20.669129072660834,
+      "fpr": 0.01,
+      "tpr": 0.144,
+      "precision": 0.935064935064935,
+      "f1": 0.24956672443674174,
+      "tp": 72,
+      "fp": 5,
+      "tn": 495,
+      "fn": 428,
+      "target_fpr": 0.01
+    },
+    "5%": {
+      "threshold": 3.3606722016672235,
+      "fpr": 0.05,
+      "tpr": 0.622,
+      "precision": 0.9255952380952381,
+      "f1": 0.7440191387559809,
+      "tp": 311,
+      "fp": 25,
+      "tn": 475,
+      "fn": 189,
+      "target_fpr": 0.05
+    },
+    "10%": {
+      "threshold": 2.060488785479727,
+      "fpr": 0.1,
+      "tpr": 0.782,
+      "precision": 0.8866213151927438,
+      "f1": 0.8310308182784272,
+      "tp": 391,
+      "fp": 50,
+      "tn": 450,
+      "fn": 109,
+      "target_fpr": 0.1
+    }
+  },
+  "rouge_l_clean_teacher_mean": 0.2057077169636262,
+  "severe_repetition_count": 101,
+  "severe_repetition_fraction": 0.202,
+  "p_value_raw_mean": 0.06263128920211979,
+  "p_value_dedup_mean": 0.05878397557949076,
+  "sources_sha256": {
+    "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_0.5b_kgw_test.parquet": "d899c7097fb06010d4ef1b89211184dd06edaa72e1b16551550ef95cc600535f",
+    "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet": "72baa80098525f22402cbaf3a97659bf41534008724f98981b16a04cccc222ef",
+    "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_0.5b_kgw_test_kgw_scores.jsonl": "18eaf4ef99b2cc2f9836d47ea3d62ac3b0ade42fc4fab3b2d38e17279419c228",
+    "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_0.5b_clean_test_kgw_scores.jsonl": "7eafaca2b9e53779935e330534019110ec6d276f7d113ed7bb86d0ae942114c0"
+  },
+  "rouge_method": "rouge-score RougeScorer(['rougeL'], use_stemmer=True), mean per-answer F1, ID-aligned clean 14B teacher",
+  "repetition_method": "1 - unique adjacent token pairs / all adjacent token pairs > 0.5, full answer, Qwen0.5B tokenizer",
+  "p_value_method": "mean per-answer single-sided normal p, saved scored token span, raw and unique context-token pairs"
+}

@@ -2,7 +2,18 @@
 # Full SeqKD Training Pipeline - Knowledge Distillation via SFT on Teacher Responses
 # This script runs the complete SeqKD training in one go
 # Usage: bash run_full_seqkd.sh --model <model_path> --exp_name <name> --nnodes <num_nodes>
-set -x
+# Keep credentials out of shell tracing.
+set -o pipefail
+# NCCL P2P on GPU 2+3 hangs on this host; SHM transport passed the short test.
+# Set NCCL_P2P_DISABLE=0 explicitly to retest the native transport.
+export NCCL_P2P_DISABLE="${NCCL_P2P_DISABLE:-1}"
+export CUDA_DEVICE_ORDER="${CUDA_DEVICE_ORDER:-PCI_BUS_ID}"
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0,3}"
+export RAY_TMPDIR="${RAY_TMPDIR:-/shared/wwx/EasyGAD/ray_tmp}"
+mkdir -p "$RAY_TMPDIR"
+IFS=',' read -r -a SELECTED_GPUS <<< "$CUDA_VISIBLE_DEVICES"
+N_GPUS_PER_NODE=${#SELECTED_GPUS[@]}
+EXTRA_OVERRIDES=()
 
 export NCCL_TIMEOUT=36000
 export TOKENIZERS_PARALLELISM=true
@@ -12,17 +23,19 @@ export SWANLAB_MODE='cloud'
 export HYDRA_FULL_ERROR=1
 
 # Default values
-TOTAL_EPOCHS=1
+TOTAL_EPOCHS=5
 SAVE_FREQ=500
 TEST_FREQ=500
 TRAIN_BATCH_SIZE=8
 VAL_BATCH_SIZE=8
 MAX_PROMPT_LENGTH=2048
 MAX_RESPONSE_LENGTH=1536
-LR=5e-6
+# LR=5e-6
+LR=1e-6
 TEMPERATURE=0.8
 N_SAMPLES=1
-CRITIC_WARMUP=0
+# CRITIC_WARMUP=0
+CRITIC_WARMUP=10
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -42,6 +55,10 @@ while [[ $# -gt 0 ]]; do
             TOTAL_EPOCHS="$2"
             shift 2
             ;;
+        --gpus_per_node)
+            N_GPUS_PER_NODE="$2"
+            shift 2
+            ;;
         --save_freq)
             SAVE_FREQ="$2"
             shift 2
@@ -58,8 +75,14 @@ while [[ $# -gt 0 ]]; do
             CRITIC_WARMUP="$2"
             shift 2
             ;;
-        *)
+        --)
+            shift
+            EXTRA_OVERRIDES=("$@")
             break
+            ;;
+        *)
+            echo "Error: unknown argument: $1 (put Hydra overrides after --)"
+            exit 2
             ;;
     esac
 done
@@ -71,6 +94,15 @@ fi
 
 WORK_DIR=checkpoints/${EXP_NAME}
 echo "=============================================="
+if ! [[ "$N_GPUS_PER_NODE" =~ ^[1-9][0-9]*$ ]] || (( N_GPUS_PER_NODE > ${#SELECTED_GPUS[@]} )); then
+    echo "Error: --gpus_per_node must be positive and <= the visible GPU count"
+    exit 2
+fi
+if (( TRAIN_BATCH_SIZE % N_GPUS_PER_NODE != 0 )); then
+    echo "Error: train_batch_size must be divisible by gpus_per_node"
+    exit 2
+fi
+echo "GPUs: $CUDA_VISIBLE_DEVICES; GPUs/node: $N_GPUS_PER_NODE; NCCL_P2P_DISABLE=$NCCL_P2P_DISABLE"
 echo "Starting Full SeqKD Training Pipeline"
 echo "Model: $MODEL_PATH"
 echo "Experiment Name: $EXP_NAME"
@@ -126,7 +158,7 @@ python3 -m verl.trainer.main_ppo \
     trainer.logger=['console','swanlab'] \
     trainer.project_name=${SWANLAB_PROJECT} \
     trainer.experiment_name=${EXP_NAME} \
-    trainer.n_gpus_per_node=1 \
+    trainer.n_gpus_per_node=${N_GPUS_PER_NODE} \
     trainer.nnodes=${NNODES} \
     trainer.save_freq=${SAVE_FREQ} \
     trainer.test_freq=${TEST_FREQ} \
@@ -134,7 +166,8 @@ python3 -m verl.trainer.main_ppo \
     trainer.total_epochs=${TOTAL_EPOCHS} \
     actor_rollout_ref.rollout.enforce_eager=False \
     actor_rollout_ref.rollout.free_cache_engine=False \
-    trainer.default_local_dir=${WORK_DIR}
+    trainer.default_local_dir=${WORK_DIR} \
+    "${EXTRA_OVERRIDES[@]}"
 
 if [ $? -eq 0 ]; then
     echo ""

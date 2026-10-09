@@ -1,0 +1,95 @@
+:job_id:01000000
+/shared/wwx/EasyGAD/verl/__init__.py:18: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/_distutils_hack/__init__.py:53: UserWarning: Reliance on distutils from stdlib is deprecated. Users must rely on setuptools to provide the distutils module. Avoid importing distutils or import setuptools first, and avoid setting SETUPTOOLS_USE_DISTUTILS=stdlib. Register concerns at https://github.com/pypa/setuptools/issues/new?template=distutils-deprecation.yml
+  warnings.warn(
+:actor_name:WorkerDict
+[W1003 20:01:23.132972817 ProcessGroupGloo.cpp:727] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+Flash Attention 2.0 only supports torch.float16 and torch.bfloat16 dtypes, but the current dype in Qwen2ForCausalLM is torch.float32. You should run training or inference using Automatic Mixed-Precision via the `with torch.autocast(device_type='torch_device'):` decorator, or load the model with the `torch_dtype` argument. Example: `model = AutoModel.from_pretrained("openai/whisper-tiny", attn_implementation="flash_attention_2", torch_dtype=torch.float16)`
+You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/_distutils_hack/__init__.py:53: UserWarning: Reliance on distutils from stdlib is deprecated. Users must rely on setuptools to provide the distutils module. Avoid importing distutils or import setuptools first, and avoid setting SETUPTOOLS_USE_DISTUTILS=stdlib. Register concerns at https://github.com/pypa/setuptools/issues/new?template=distutils-deprecation.yml
+  warnings.warn(
+/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/distributed/fsdp/fully_sharded_data_parallel.py:690: FutureWarning: FSDP.state_dict_type() and FSDP.set_state_dict_type() are being deprecated. Please use APIs, get_state_dict() and set_state_dict(), which can support different parallelisms, FSDP1, FSDP2, DDP. API doc: https://pytorch.org/docs/stable/distributed.checkpoint.html#torch.distributed.checkpoint.state_dict.get_state_dict .Tutorial: https://pytorch.org/tutorials/recipes/distributed_checkpoint_recipe.html .
+  warnings.warn(
+INFO:2026-10-03 20:02:23,131:[Rank 0] Loaded model from /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_4000/actor/model_world_size_2_rank_0.pt
+INFO:2026-10-03 20:02:24,614:[Rank 0] Loaded optimizer from /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_4000/actor/optim_world_size_2_rank_0.pt
+INFO:2026-10-03 20:02:24,640:[Rank 0] Loaded rng from /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_4000/actor/extra_state_world_size_2_rank_0.pt
+INFO:2026-10-03 20:02:24,641:[Rank 0] Loaded lr_scheduler from /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_4000/actor/extra_state_world_size_2_rank_0.pt
+INFO:2026-10-03 20:50:43,568:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_4500/actor/model_world_size_2_rank_0.pt
+INFO:2026-10-03 20:50:45,805:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_4500/actor/optim_world_size_2_rank_0.pt
+INFO:2026-10-03 20:50:45,806:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_4500/actor/extra_state_world_size_2_rank_0.pt
+INFO:2026-10-03 20:50:45,985:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_4500/actor
+INFO:2026-10-03 21:32:43,796:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_5000/actor/model_world_size_2_rank_0.pt
+INFO:2026-10-03 21:32:46,139:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_5000/actor/optim_world_size_2_rank_0.pt
+INFO:2026-10-03 21:32:46,140:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_5000/actor/extra_state_world_size_2_rank_0.pt
+INFO:2026-10-03 21:32:46,308:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_5000/actor
+INFO:2026-10-03 22:13:14,876:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_5500/actor/model_world_size_2_rank_0.pt
+INFO:2026-10-03 22:13:17,198:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_5500/actor/optim_world_size_2_rank_0.pt
+INFO:2026-10-03 22:13:17,200:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_5500/actor/extra_state_world_size_2_rank_0.pt
+INFO:2026-10-03 22:13:17,395:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_5500/actor
+INFO:2026-10-03 22:52:51,735:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_6000/actor/model_world_size_2_rank_0.pt
+INFO:2026-10-03 22:52:53,920:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_6000/actor/optim_world_size_2_rank_0.pt
+INFO:2026-10-03 22:52:53,921:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_6000/actor/extra_state_world_size_2_rank_0.pt
+INFO:2026-10-03 22:52:54,119:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_6000/actor
+INFO:2026-10-03 23:33:13,046:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_6500/actor/model_world_size_2_rank_0.pt
+INFO:2026-10-03 23:33:15,214:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_6500/actor/optim_world_size_2_rank_0.pt
+INFO:2026-10-03 23:33:15,215:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_6500/actor/extra_state_world_size_2_rank_0.pt
+INFO:2026-10-03 23:33:15,455:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_6500/actor
+INFO:2026-10-04 00:15:16,334:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_7000/actor/model_world_size_2_rank_0.pt
+INFO:2026-10-04 00:15:18,471:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_7000/actor/optim_world_size_2_rank_0.pt
+INFO:2026-10-04 00:15:18,473:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_7000/actor/extra_state_world_size_2_rank_0.pt
+INFO:2026-10-04 00:15:18,659:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_7000/actor
+INFO:2026-10-04 00:56:18,621:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_7500/actor/model_world_size_2_rank_0.pt
+INFO:2026-10-04 00:56:20,904:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_7500/actor/optim_world_size_2_rank_0.pt
+INFO:2026-10-04 00:56:20,905:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_7500/actor/extra_state_world_size_2_rank_0.pt
+INFO:2026-10-04 00:56:21,089:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_7500/actor
+INFO:2026-10-04 01:38:37,328:[Rank 0] Saved model to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_8000/actor/model_world_size_2_rank_0.pt
+INFO:2026-10-04 01:38:39,479:[Rank 0] Saved optim to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_8000/actor/optim_world_size_2_rank_0.pt
+INFO:2026-10-04 01:38:39,480:[Rank 0] Saved extra_state to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_8000/actor/extra_state_world_size_2_rank_0.pt
+INFO:2026-10-04 01:38:39,666:[Rank 0] Saved model config and tokenizer class to /shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_8000/actor
+Fatal Python error: none_dealloc: deallocating None
+Python runtime state: initialized
+
+Thread 0x00007e7ae1eff640 (most recent call first):
+  <no Python frame>
+
+Thread 0x00007e7aed8fb640 (most recent call first):
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/threading.py", line 324 in wait
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/threading.py", line 607 in wait
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/tqdm/_monitor.py", line 69 in run
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/threading.py", line 1016 in _bootstrap_inner
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/threading.py", line 973 in _bootstrap
+
+Thread 0x00007e7aee7fc640 (most recent call first):
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/usage/usage_lib.py", line 229 in _report_continous_usage
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/usage/usage_lib.py", line 164 in _report_usage_worker
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/threading.py", line 953 in run
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/threading.py", line 1016 in _bootstrap_inner
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/threading.py", line 973 in _bootstrap
+
+Thread 0x00007e7b858ae640 (most recent call first):
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/_inductor/compile_worker/subproc_pool.py", line 53 in _recv_msg
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/torch/_inductor/compile_worker/subproc_pool.py", line 161 in _read_thread
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/threading.py", line 953 in run
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/threading.py", line 1016 in _bootstrap_inner
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/threading.py", line 973 in _bootstrap
+
+Current thread 0x00007eaa82684740 (most recent call first):
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/executor/executor_base.py", line 206 in sleep
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/v1/engine/core.py", line 268 in sleep
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/v1/engine/core_client.py", line 220 in sleep
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/v1/engine/llm_engine.py", line 245 in sleep
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/vllm/entrypoints/llm.py", line 1254 in sleep
+  File "/shared/wwx/EasyGAD/verl/workers/sharding_manager/fsdp_vllm.py", line 217 in __exit__
+  File "/shared/wwx/EasyGAD/verl/utils/debug/performance.py", line 88 in log
+  File "/shared/wwx/EasyGAD/verl/utils/debug/performance.py", line 78 in f
+  File "/shared/wwx/EasyGAD/verl/workers/fsdp_workers.py", line 668 in _generate_sequences_impl
+  File "/shared/wwx/EasyGAD/verl/workers/fsdp_workers.py", line 649 in generate_sequences
+  File "/shared/wwx/EasyGAD/verl/single_controller/base/decorator.py", line 665 in inner
+  File "/shared/wwx/EasyGAD/verl/single_controller/ray/base.py", line 663 in func
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/ray/util/tracing/tracing_helper.py", line 463 in _resume_span
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/ray/_private/function_manager.py", line 696 in actor_method_executor
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/ray/_private/worker.py", line 935 in main_loop
+  File "/app/wwx/miniconda3/envs/wm/lib/python3.10/site-packages/ray/_private/workers/default_worker.py", line 297 in <module>
+
+Extension modules: msgpack._cmsgpack, google._upb._message, psutil._psutil_linux, psutil._psutil_posix, setproctitle, yaml._yaml, charset_normalizer.md, charset_normalizer.cd, simplejson._speedups, requests.packages.charset_normalizer.md, requests.packages.chardet.md, requests.packages.charset_normalizer.cd, requests.packages.chardet.cd, uvloop.loop, ray._raylet, numpy.core._multiarray_umath, numpy.core._multiarray_tests, numpy.linalg._umath_linalg, numpy.fft._pocketfft_internal, numpy.random._common, numpy.random.bit_generator, numpy.random._bounded_integers, numpy.random._mt19937, numpy.random.mtrand, numpy.random._philox, numpy.random._pcg64, numpy.random._sfc64, numpy.random._generator, pyarrow.lib, pandas._libs.tslibs.ccalendar, pandas._libs.tslibs.np_datetime, pandas._libs.tslibs.dtypes, pandas._libs.tslibs.base, pandas._libs.tslibs.nattype, pandas._libs.tslibs.timezones, pandas._libs.tslibs.fields, pandas._libs.tslibs.timedeltas, pandas._libs.tslibs.tzconversion, pandas._libs.tslibs.timestamps, pandas._libs.properties, pandas._libs.tslibs.offsets, pandas._libs.tslibs.strptime, pandas._libs.tslibs.parsing, pandas._libs.tslibs.conversion, pandas._libs.tslibs.period, pandas._libs.tslibs.vectorized, pandas._libs.ops_dispatch, pandas._libs.missing, pandas._libs.hashtable, pandas._libs.algos, pandas._libs.interval, pandas._libs.lib, pyarrow._compute, pandas._libs.ops, pandas._libs.hashing, pandas._libs.arrays, pandas._libs.tslib, pandas._libs.sparse, pandas._libs.internals, pandas._libs.indexing, pandas._libs.index, pandas._libs.writers, pandas._libs.join, pandas._libs.window.aggregations, pandas._libs.window.indexers, pandas._libs.reshape, pandas._libs.groupby, pandas._libs.json, pandas._libs.parsers, pandas._libs.testing, torch._C, torch._C._dynamo.autograd_compiler, torch._C._dynamo.eval_frame, torch._C._dynamo.guards, torch._C._dynamo.utils, torch._C._fft, torch._C._linalg, torch._C._nested, torch._C._nn, torch._C._sparse, torch._C._special, markupsafe._speedups, PIL._imaging, PIL._imagingft, scipy._lib._ccallback_c, scipy.linalg._fblas, scipy.linalg._flapack, scipy.linalg.cython_lapack, scipy.linalg._cythonized_array_utils, scipy.linalg._solve_toeplitz, scipy.linalg._decomp_lu_cython, scipy.linalg._matfuncs_sqrtm_triu, scipy.linalg._matfuncs_expm, scipy.linalg._linalg_pythran, scipy.linalg.cython_blas, scipy.linalg._decomp_update, scipy.sparse._sparsetools, _csparsetools, scipy.sparse._csparsetools, scipy.sparse.linalg._dsolve._superlu, scipy.sparse.linalg._eigen.arpack._arpack, scipy.sparse.linalg._propack._spropack, scipy.sparse.linalg._propack._dpropack, scipy.sparse.linalg._propack._cpropack, scipy.sparse.linalg._propack._zpropack, scipy.sparse.csgraph._tools, scipy.sparse.csgraph._shortest_path, scipy.sparse.csgraph._traversal, scipy.sparse.csgraph._min_spanning_tree, scipy.sparse.csgraph._flow, scipy.sparse.csgraph._matching, scipy.sparse.csgraph._reordering, scipy.optimize._group_columns, scipy._lib.messagestream, scipy.optimize._trlib._trlib, scipy.optimize._lbfgsb, _moduleTNC, scipy.optimize._moduleTNC, scipy.optimize._cobyla, scipy.optimize._slsqp, scipy.optimize._minpack, scipy.optimize._lsq.givens_elimination, scipy.optimize._zeros, scipy.optimize._cython_nnls, scipy._lib._uarray._uarray, scipy.special._ufuncs_cxx, scipy.special._ufuncs, scipy.special._specfun, scipy.special._comb, scipy.special._ellip_harm_2, scipy.linalg._decomp_interpolative, scipy.optimize._bglu_dense, scipy.optimize._lsap, scipy.spatial._ckdtree, scipy.spatial._qhull, scipy.spatial._voronoi, scipy.spatial._distance_wrap, scipy.spatial._hausdorff, scipy.spatial.transform._rotation, scipy.optimize._direct, frozenlist._frozenlist, pyarrow._json, regex._regex, zmq.backend.cython._zmq, msgspec._core, multidict._multidict, yarl._quoting_c, propcache._helpers_c, aiohttp._http_writer, aiohttp._http_parser, aiohttp._websocket.mask, aiohttp._websocket.reader_c, vllm.cumem_allocator, numba.core.typeconv._typeconv, numba._helperlib, numba._dynfunc, numba._dispatcher, numba.core.typing.builtins.itertools, numba.cpython.builtins.math, numba.core.runtime._nrt_python, numba.np.ufunc._internal, numba.experimental.jitclass._box, cuda_utils, __triton_launcher (total: 164)

@@ -38,6 +38,8 @@ TRAIN_BATCH_SIZE=8
 VAL_BATCH_SIZE=8
 MAX_PROMPT_LENGTH=2048
 MAX_RESPONSE_LENGTH=1536
+# LR_warmup=5e-6
+LR_warmup=1e-6
 LR=1e-6
 CRITIC_LR=1e-5
 KL_COEF=0.001
@@ -47,8 +49,10 @@ GAD_N_SAMPLES=2
 CONSTRAINED_2GPU=False
 ENFORCE_EAGER=False
 GPU_MEMORY_OVERRIDE=""
-TRAIN_FILE=data/dolly15k_qwen2_5_14b_kgw_train.parquet
-VAL_FILE=data/dolly15k_qwen2_5_14b_kgw_test.parquet
+# TRAIN_FILE=data/dolly15k_qwen2_5_14b_kgw_train.parquet
+# VAL_FILE=data/dolly15k_qwen2_5_14b_kgw_test.parquet
+TRAIN_FILE=data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet
+VAL_FILE=data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -193,7 +197,7 @@ python3 -m verl.trainer.main_ppo \
     data.max_response_length=${MAX_RESPONSE_LENGTH} \
     data.truncation=right \
     actor_rollout_ref.model.path=${MODEL_PATH} \
-    actor_rollout_ref.actor.optim.lr=${LR} \
+    actor_rollout_ref.actor.optim.lr=${LR_warmup} \
     actor_rollout_ref.actor.grad_clip=0.2 \
     actor_rollout_ref.model.use_remove_padding=True \
     actor_rollout_ref.actor.ppo_mini_batch_size=${TRAIN_BATCH_SIZE} \

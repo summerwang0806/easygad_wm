@@ -11,6 +11,7 @@ import argparse
 import gc
 import json
 import os
+from collections import OrderedDict
 from pathlib import Path
 from typing import Any
 
@@ -32,13 +33,26 @@ DEFAULT_INPUT = ROOT / "data/dolly15k_test.parquet"
 #     "checkpoints/kgw_gad_05b_14b_full/"
 #     "warmup/global_step_1813/actor/huggingface"
 # )
+# DEFAULT_STUDENT = ROOT / (
+#     "checkpoints/kgw_gad_05b_14b_full/gad/global_step_1500/actor/huggingface"
+# )
+
 DEFAULT_STUDENT = ROOT / (
-    "checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata/global_step_1813/actor/huggingface"
+    # "checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_3626/actor/huggingface"
+    # "checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch2_new/global_step_2000/actor/huggingface"
+    # "checkpoints/te_old_st_Qwen2.5-0.5B_SeqKD_kgwdata_epoch5/global_step_5500/actor/huggingface"
+    # "checkpoints/kgw_gad_05b_kgwwarmup_cleangad_control/gad/global_step_1813/actor/huggingface"
+    # "checkpoints/kgw_gad_05b_kgwwarmup_cleangad_control/warmup/global_step_1813/actor/huggingface"
+    # "checkpoints/kgw_gad_05b_cleanwarmup_kgwgad_control/gad/global_step_1813/actor/huggingface"
+    # "checkpoints/kgw_gad_05b_cleanwarmup_kgwgad_control/warmup/global_step_1813/actor/huggingface"
+    # "checkpoints/gad_05b_cleanwarmup_cleangad_control/gad/global_step_1813/actor/huggingface"
+    # "checkpoints/gad_05b_cleanwarmup_cleangad_control/warmup/global_step_1813/actor/huggingface"
+    "checkpoints/te_old_st_Qwen2.5-0.5B_2warmup/warmup/global_step_3626/actor/huggingface"
 )
 
 
 DEFAULT_BASE = Path("/shared/public_models/Qwen2.5-0.5B")
-DEFAULT_STUDENT_OUTPUT = ROOT / "wm_test/kgw_seqKD_full_kgwdata_qwen2_5_0_5b_dolly15k_test.jsonl"
+DEFAULT_STUDENT_OUTPUT = ROOT / "wm_test/kgwwarmup_kgwgad_warmup2_qwen2_5_0_5b_dolly15k_test.jsonl"
 DEFAULT_BASE_OUTPUT = ROOT / "wm_test/base_qwen2_5_0_5b_dolly15k_test.jsonl"
 
 
@@ -83,6 +97,8 @@ def run_model(
 ) -> None:
     from vllm import LLM, SamplingParams
     from wm_data.kgw import KGWConfig, kgw_score
+
+    greenlist_cache = OrderedDict()
 
     if output_path.exists() and not args.overwrite:
         raise FileExistsError(f"{output_path} exists; pass --overwrite to replace it")
@@ -138,6 +154,8 @@ def run_model(
                             gamma=args.gamma, delta=args.delta, hash_key=args.hash_key
                         ),
                         device="cuda",
+                        include_deduplicated=True,
+                        greenlist_cache=greenlist_cache,
                     )
                     record = {
                         "id": row["id"],
@@ -154,11 +172,13 @@ def run_model(
                             "hash_key": args.hash_key,
                             "seeding": "simple_1 (hash_key * previous_token_id)",
                             "detection_threshold_z": 4.0,
+                            "deduplication": "unique (previous_token_id, token_id) pairs",
                         },
                         "generation": {
                             "temperature": args.temperature,
                             "top_p": args.top_p,
                             "max_new_tokens": args.max_new_tokens,
+                            "max_prompt_tokens": args.max_prompt_tokens,
                             "seed": args.seed + start + offset,
                             "kgw_enabled_during_generation": False,
                         },
