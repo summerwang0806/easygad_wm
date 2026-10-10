@@ -512,6 +512,11 @@ def validate_output_paths(input_path: Path, output_path: Path, checkpoint_path: 
 
 def publish_new_file(temporary: Path, destination: Path) -> None:
     """Publish a complete file atomically without replacing an existing file."""
+    if os.name == "nt":
+        # Windows rename atomically refuses an existing destination. Hard-link
+        # creation is unavailable in some local sandbox filesystems.
+        os.rename(temporary, destination)
+        return
     # Hard links are same-filesystem atomic and fail if the target already
     # exists, unlike os.replace. The temporary is always in this directory.
     os.link(temporary, destination)
@@ -543,7 +548,8 @@ def write_final_outputs(source, responses: list[str], records: dict[int, dict], 
     audit_temp = None
     try:
         pq.write_table(result, parquet_temp, compression="zstd")
-        with parquet_temp.open("rb") as handle:
+        # Windows fsync needs a writable descriptor for the newly written file.
+        with parquet_temp.open("r+b") as handle:
             os.fsync(handle.fileno())
         reread = pq.read_table(parquet_temp)
         if reread.num_rows != source.num_rows or not reread.schema.equals(source.schema, check_metadata=True):
@@ -580,6 +586,14 @@ def write_final_outputs(source, responses: list[str], records: dict[int, dict], 
             "paraphrase_mode": "whole_response",
             "model_card": DIPPER_MODEL_CARD,
         }
+        # A separate targeted entrypoint can reuse the durable data writer.
+        # Ordinary UP does not supply attack metadata and keeps its old contract.
+        attack = meta["model"].get("attack")
+        if attack is not None:
+            if attack.get("method") != "targeted_dipper_paraphrasing":
+                raise ValueError("unsupported attack method for the Dipper data writer")
+            report.update(method=attack["method"], input_sha256=meta["input"]["sha256"], attack=attack)
+            report["parameter_provenance"] = "ACL inverse watermark formula with explicit cross-tokenizer text projection; project adaptation, not an exact reproduction of unpublished TP code"
         attempted = {(r["row_index"], r["attempt"]): r for r in [*rejected, *records.values()] if r["attempt"] > 0}
         all_windows = [window for record in attempted.values() for window in record.get("windows", [])]
         report["response_input_checks"] = len(all_windows)
@@ -617,8 +631,16 @@ def write_final_outputs(source, responses: list[str], records: dict[int, dict], 
 
 def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConfig, tokenizer, generator_factory: Callable,
                      identity: dict, *, resume: bool = False, checkpoint_path: Path | None = None, audit_path: Path | None = None,
-                     sentence_splitter: Callable | None = None) -> dict:
-    """Testable orchestration; fake generators/tokenizers require no torch or GPU."""
+                     sentence_splitter: Callable | None = None, prepare_fn: Callable | None = None,
+                     candidate_issues_fn: Callable | None = None, validate_audit_fn: Callable | None = None,
+                     metadata_builder: Callable | None = None, final_writer: Callable | None = None,
+                     checkpoint_loader: Callable | None = None) -> dict:
+    """Durable row orchestration with explicit model-specific contracts.
+
+    The defaults retain the Dipper UP/backup TP behavior. A causal student TP
+    supplies its own preparation, validation, metadata and persistence adapters
+    and never invokes the default sentence splitter or T5 budget checks.
+    """
     started = time.monotonic()
     config.validate()
     input_path, output_path = input_path.resolve(), output_path.resolve()
@@ -627,25 +649,36 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
     validate_output_paths(input_path, output_path, checkpoint_path, audit_path, resume)
     source = read_source(input_path)
     values, ids = source["teacher_response"].to_pylist(), source["id"].to_pylist()
-    splitter = sentence_splitter or load_sentence_splitter()
-    prepared = [prepare_response(tokenizer, value, config, splitter) for value in values]
-    meta = {
-        "kind": "meta", "format_version": FORMAT_VERSION,
-        "input": {"path": str(input_path), "sha256": file_sha256(input_path), "rows": source.num_rows,
-                  "schema_sha256": hashlib.sha256(source.schema.serialize().to_pybytes()).hexdigest()},
-        "model": identity, "config": asdict(config),
-        "input_template_sha256": text_sha256(INPUT_TEMPLATE),
-        "segmentation_sha256": text_sha256(canonical_json([[window["text"] for window in row["windows"]] for row in prepared])),
-        "sentence_splitter_resources": getattr(splitter, "resource_identity", {}),
-        "generation_contract": {"architecture": "T5_encoder_decoder", "paraphrase_mode": "whole_response",
-                                "inputs_per_response": 1, "initial_prefix": "", "rolling_prefix": False,
-                                "sentence_splitter": "nltk.sent_tokenize", "language": "english", "do_sample": True,
-                                "top_k_zero_equivalent_to_author_example_none": True, "decoder_max_length_includes_start_token": True},
-    }
+    candidate_issues = candidate_issues_fn or response_issues
+    validate_audit = validate_audit_fn or validate_window_audit
+    load_progress = checkpoint_loader or load_checkpoint
+    write_outputs = final_writer or write_final_outputs
+    if prepare_fn is None:
+        splitter = sentence_splitter or load_sentence_splitter()
+        prepared = [prepare_response(tokenizer, value, config, splitter) for value in values]
+    else:
+        splitter = None
+        prepared = [prepare_fn(tokenizer, value, config) for value in values]
+    if metadata_builder is None:
+        meta = {
+            "kind": "meta", "format_version": FORMAT_VERSION,
+            "input": {"path": str(input_path), "sha256": file_sha256(input_path), "rows": source.num_rows,
+                      "schema_sha256": hashlib.sha256(source.schema.serialize().to_pybytes()).hexdigest()},
+            "model": identity, "config": asdict(config),
+            "input_template_sha256": text_sha256(INPUT_TEMPLATE),
+            "segmentation_sha256": text_sha256(canonical_json([[window["text"] for window in row["windows"]] for row in prepared])),
+            "sentence_splitter_resources": getattr(splitter, "resource_identity", {}),
+            "generation_contract": {"architecture": "T5_encoder_decoder", "paraphrase_mode": "whole_response",
+                                    "inputs_per_response": 1, "initial_prefix": "", "rolling_prefix": False,
+                                    "sentence_splitter": "nltk.sent_tokenize", "language": "english", "do_sample": True,
+                                    "top_k_zero_equivalent_to_author_example_none": True, "decoder_max_length_includes_start_token": True},
+        }
+    else:
+        meta = metadata_builder(input_path, source, identity, config, prepared)
     meta["fingerprint"] = text_sha256(canonical_json(meta))
     over_budget = [(index, info["issues"]) for index, info in enumerate(prepared) if info["issues"]]
     if over_budget and config.on_failure == "error":
-        raise ValueError(f"{len(over_budget)} complete source responses exceed the encoder budget; examples: {over_budget[:10]}. "
+        raise ValueError(f"{len(over_budget)} complete source responses exceed the input budget; examples: {over_budget[:10]}. "
                          "Review --max-input-tokens; whole-response mode never falls back to chunks. No source text is truncated.")
     print(f"[preflight] rows={source.num_rows}, maximum source tokens={max(p['source_tokens'] for p in prepared)}, "
           f"maximum complete response input={max(p['prompt_tokens'] for p in prepared)}, "
@@ -653,14 +686,14 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
     with checkpoint_lock(checkpoint_path):
         # Recheck after obtaining the lock to avoid two writers racing at startup.
         validate_output_paths(input_path, output_path, checkpoint_path, audit_path, resume)
-        complete, attempts_done, rejected = load_checkpoint(checkpoint_path, meta, values, ids) if resume else ({}, {}, [])
+        complete, attempts_done, rejected = load_progress(checkpoint_path, meta, values, ids) if resume else ({}, {}, [])
         for index, record in complete.items():
             if any(record.get(key) != prepared[index][key] for key in ("prompt_tokens", "source_tokens")):
                 raise ValueError(f"checkpoint token counts differ at row {index}")
             if record["status"] == "ok":
                 candidate = GeneratedResponse(record["paraphrase"], record["finish_reason"], record["output_tokens"],
                                               record.get("windows", []), record.get("generation_issues", []))
-                if response_issues(candidate, values[index], config) or validate_window_audit(candidate, prepared[index], tokenizer, config, index, record["attempt"]):
+                if candidate_issues(candidate, values[index], config) or validate_audit(candidate, prepared[index], tokenizer, config, index, record["attempt"]):
                     raise ValueError(f"invalid accepted window audit at row {index}")
         if audit_path.exists():
             validate_orphan_audit(audit_path, output_path, meta, source.num_rows, len(complete))
@@ -718,8 +751,8 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                             if not isinstance(candidate, GeneratedResponse):
                                 raise RuntimeError(f"invalid backend response for row {index}")
                             seen.add(index)
-                            issues = response_issues(candidate, values[index], config)
-                            issues.extend(validate_window_audit(candidate, prepared[index], tokenizer, config, index, attempt))
+                            issues = candidate_issues(candidate, values[index], config)
+                            issues.extend(validate_audit(candidate, prepared[index], tokenizer, config, index, attempt))
                             issues = list(dict.fromkeys(issues))
                             info = prepared[index]
                             record = {"kind": "result", "row_index": index, "id": ids[index], "source_sha256": text_sha256(values[index]),
@@ -764,12 +797,12 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
             raise AssertionError("cannot finalize a partial dataset")
         if file_sha256(input_path) != meta["input"]["sha256"]:
             raise RuntimeError("input parquet changed during generation; finalization refused")
-        return write_final_outputs(source, [complete[i]["paraphrase"] for i in range(source.num_rows)], complete, rejected,
-                                   output_path, audit_path, meta, started, resume=resume)
+        return write_outputs(source, [complete[i]["paraphrase"] for i in range(source.num_rows)], complete, rejected,
+                             output_path, audit_path, meta, started, resume=resume)
 
 
 class DipperGenerator:
-    def __init__(self, model: str, config: GenerationConfig, tokenizer):
+    def __init__(self, model: str, config: GenerationConfig, tokenizer, *, logits_processor=None):
         import torch
         from transformers import T5ForConditionalGeneration
         if not torch.cuda.is_available() or torch.cuda.device_count() != 1:
@@ -777,6 +810,7 @@ class DipperGenerator:
         if config.dtype == "bfloat16" and not torch.cuda.is_bf16_supported():
             raise RuntimeError("the selected GPU does not support bfloat16")
         self.torch, self.tokenizer, self.config = torch, tokenizer, config
+        self.logits_processor = logits_processor
         dtype = torch.float32 if config.dtype == "float32" else torch.bfloat16
         self.model = T5ForConditionalGeneration.from_pretrained(model, torch_dtype=dtype, local_files_only=True).to("cuda:0").eval()
 
@@ -787,8 +821,9 @@ class DipperGenerator:
         if inputs["input_ids"].shape[1] > self.config.max_input_tokens:
             raise RuntimeError("Dipper tokenizer input exceeded its prechecked encoder budget")
         with torch.inference_mode():
+            extra = {"logits_processor": [self.logits_processor]} if getattr(self, "logits_processor", None) is not None else {}
             sequences = self.model.generate(**inputs, do_sample=True, top_p=self.config.top_p, top_k=0,
-                                            temperature=self.config.temperature, max_length=self.config.max_output_length)
+                                            temperature=self.config.temperature, max_length=self.config.max_output_length, **extra)
         # T5 returns decoder sequences, including its initial start token. There
         # is no encoder prompt in the output to slice away as in causal models.
         tokens = sequences[0].tolist()

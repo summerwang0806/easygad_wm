@@ -74,3 +74,25 @@ seeding = simple_1：根据前一个 token 的 ID 和 hash_key 生成绿名单
 ```
 
 项目现有的固定检测阈值是 `z_score >= 4.0)。可用学生模型中达到阈值的回答数除以 500 计算水印存活率；同时查看基座模型达到阈值的比例，作为误报对照。建议也保留并比较原始 z-score，而不只报告阈值后的比例。
+
+## WN 生成与检测
+
+先按 [TP / WN 运行步骤](../baseline_acl/TP_WN_BASELINE.md) 得到参考学生 W 和规则，再从项目根目录运行。将 `NNN` 换成实际 checkpoint 步数，`W` 必须是已合并的模型目录。
+
+```bash
+W=checkpoints/kgw_reference/gad/global_step_NNN/actor/huggingface
+RULES=data/acl_estimated_rules.json
+TEST=data/dolly15k_qwen2_5_14b_kgw_test.parquet
+
+# CPU 预检
+python wm_test/generate_wn_score.py \
+  --student-model "$W" --rules "$RULES" --input "$TEST" \
+  --output wm_test/student_wn.jsonl --preflight
+
+# 生成回答并计算 KGW 分数
+VLLM_USE_V1=0 CUDA_VISIBLE_DEVICES=1 python wm_test/generate_wn_score.py \
+  --student-model "$W" --rules "$RULES" --input "$TEST" \
+  --output wm_test/student_wn.jsonl --strength 2.5
+```
+
+小规模试跑加 `--limit 8`；无偏置对照改为 `--strength 0 --output wm_test/student_wn_off.jsonl`。结果评估用下文的 `python wm_test/evaluate_compare_metrics.py`，设置 `--kgw-file wm_test/student_wn.jsonl` 和对应基座结果的 `--clean-file`。

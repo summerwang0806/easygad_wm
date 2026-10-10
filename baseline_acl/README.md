@@ -58,3 +58,5 @@ CUDA_VISIBLE_DEVICES=1,3 bash scripts/train/run_full_gad_up_kgw_optimized.sh \
 - CPU 检查与模拟测试不代表真实 GPU 改写或训练已跑通。
 
 详细参数、恢复与故障说明见 [UP_BASELINE.md](../UP_BASELINE.md)。
+
+TP / WN 按顺序运行的命令见 [TP_WN_BASELINE.md](TP_WN_BASELINE.md)，测试生成入口在 `wm_test`。
