@@ -48,12 +48,13 @@ DEFAULT_STUDENT = ROOT / (
     # "checkpoints/gad_05b_cleanwarmup_cleangad_control/warmup/global_step_1813/actor/huggingface"
     # "checkpoints/te_old_st_Qwen2.5-0.5B_2warmup/warmup/global_step_3626/actor/huggingface"
     # "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad/global_step_1813/actor/huggingface"
-    "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813/actor/huggingface"
+    # "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813/actor/huggingface"
+    "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad/global_step_1813/actor/huggingface"
 )
 
 
 DEFAULT_BASE = Path("/shared/public_models/Qwen2.5-0.5B")
-DEFAULT_STUDENT_OUTPUT = ROOT / "wm_test/kgwwarmup_kgwgad_warmup_gamma0.5_delta3_qwen2_5_0_5b_dolly15k_test.jsonl"
+DEFAULT_STUDENT_OUTPUT = ROOT / "wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta3_qwen2_5_0_5b_dolly15k_test.jsonl"
 DEFAULT_BASE_OUTPUT = ROOT / "wm_test/base_qwen2_5_0_5b_dolly15k_test.jsonl"
 
 
@@ -72,7 +73,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--temperature", type=float, default=0.7)
     parser.add_argument("--top-p", type=float, default=0.9)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--gpu-memory-utilization", type=float, default=0.5,
+    parser.add_argument("--gpu-memory-utilization", type=float, default=0.4,
                         help="Fraction of total GPU memory reserved by vLLM (default: 0.20)")
     parser.add_argument("--gamma", type=float, required=True,
                         help="KGW detector green fraction; explicitly match the training watermark")
