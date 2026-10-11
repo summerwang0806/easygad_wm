@@ -64,7 +64,7 @@ python baseline_acl/paraphrase_up.py \
 
 inspect 只检查 Parquet；preflight 只加载小 tokenizer 和 NLTK，检查**每条完整回答及控制码**是否超出 encoder 输入预算，不加载 Dipper 权重、不占 GPU。超长会报错，不会静默截断，也不会自动退回三句窗口；实际生成仍会再次检查完整输入及输出长度。
 
-原训练集 **14,511 行**，验证集 500 行。只替换 teacher_response，保留问题、ID、顺序、其余列和 schema/metadata。按作者用法归一化空白、分句、拼接，因此换行/排版可能改变；正式实验应抽查数字、事实、列表和代码，不能假定改写天然保真。
+原训练集 **14,511 行**，验证集 500 行。保留行只替换 teacher_response，问题、ID、顺序、其余列和 schema/metadata 均保持；`--on-failure drop` 会删去重试耗尽的整条样本。按作者用法归一化空白、分句、拼接，因此换行/排版可能改变；正式实验应抽查数字、事实、列表和代码，不能假定改写天然保真。
 
 ## 3. Dipper 普通改写
 
@@ -91,11 +91,11 @@ CUDA_VISIBLE_DEVICES=1,3 python baseline_acl/paraphrase_up.py \
 
 旧的 `--engine`、`--gpu-memory-utilization` 等 Qwen/vLLM 参数，以及三句版本的 `--window-size` 均不再适用。Dipper 使用 Transformers T5 encoder-decoder；训练阶段的 vLLM 显存设置是另一件事，保持原样。整条回答的 encoder 和 decoder 序列可能更长，显存与运行时间不能直接沿用旧三句版本的估计。
 
-输出：完整 Parquet、`<output>.progress.jsonl`、`<output>.audit.json`。全部行成功才发布最终 Parquet；中断后加 `--resume`，成功行不重做。模型、tokenizer、分句资源、整条改写模式、实际精度、参数和输入均纳入指纹。GPU 数量可在续跑时改变，精度和其他具体改写参数必须保持一致；例如旧 FP32 断点应显式选择 `--dtype float32`。保留 v3 格式，可续用参数与输入匹配的既有整条断点，**不能续用旧 Qwen 或三句滚动断点**。跨 GPU 型号或硬件环境不保证逐位相同。
+输出：最终 Parquet、`<output>.progress.jsonl`、`<output>.audit.json`。全部源行处理完成才发布 Parquet；开启 `drop` 时最终行数减去失败删行数。中断后加 `--resume`，成功行不重做。模型、tokenizer、分句资源、整条改写模式、实际精度、参数和输入均纳入指纹。GPU 数量可在续跑时改变，精度和其他具体改写参数必须保持一致；例如旧 FP32 断点应显式选择 `--dtype float32`。保留 v3 格式，可续用参数与输入匹配的既有整条断点，**不能续用旧 Qwen 或三句滚动断点**。跨 GPU 型号或硬件环境不保证逐位相同。
 
 默认输出文件名保持不变，便于后续训练入口读取。如果该位置已有旧 Qwen/三句结果或不匹配的 progress/audit，不要覆盖或混接；请选择新的 --output 文件名，并在两个训练命令中都用 --up_train_file 指向新文件。匹配的 v3 整条断点可直接续跑。也可自行确认后将本实验的旧文件移到备份目录，再使用默认路径；不要移动其他同学的文件。
 
-默认失败时停止，不丢行、不偷偷补原文。次数耗尽后，可在原命令加 `--resume --max-attempts 3` 续跑：保留成功行，失败行使用新的采样 seed；3 是包括旧尝试在内的累计上限，后续续跑须保持该上限或继续增加。上限变更追加记录到原断点，不改旧记录。这是工程异常重试，不是 ACL 公布的超参；其他改写参数或精度变化需新输出名。`--on-failure keep-original` 会混入未改写回答，正式纯 UP 实验不建议开启。
+默认失败时停止。次数耗尽后，可在原命令加 `--resume --max-attempts 3 --on-failure drop` 续跑：保留成功行，失败行使用新的采样 seed；累计三次仍失败就删除整条样本并继续，不把空回答写入训练集。删行 ID、源行号、尝试次数和原因保存在审计 JSON，训练前自动核对原始输入与输出哈希、保留行及删行记录。后续续跑保持这三个参数。重试上限和失败处理策略的变更追加到原断点，不改旧记录；旧 `error` 策略可以显式切换为 `drop`。这是工程异常处理，不是 ACL 公布的超参；其他改写参数或精度变化需新输出名。`--on-failure keep-original` 会混入未改写回答，正式纯 UP 实验不建议开启。
 
 ## 4. 两组训练（各阶段 1 epoch）
 

@@ -736,6 +736,132 @@ class ParquetTests(unittest.TestCase):
         self.assertEqual(report["rejected_generation_attempts"], 1)
         self.assertEqual(report["rejected_attempt_reasons"]["length_limit"], 1)
 
+    def test_drop_after_three_attempts_omits_entire_row_and_continues(self):
+        generator = FakeGenerator({1: GeneratedResponse("", "stop", 2)})
+        report = self.run_job(generator, config=replace(self.config, on_failure="drop"))
+        self.assertEqual(generator.attempt_calls, [(0, 1), (1, 1), (1, 2), (1, 3), (2, 1)])
+        output = pq.read_table(self.output)
+        self.assertEqual(output["id"].to_pylist(), ["source-0", "source-2"])
+        self.assertEqual(output["teacher_response"].to_pylist(),
+                         ["An edited response for row 0.", "An edited response for row 2."])
+        retained = self.table.take(pa.array([0, 2], type=pa.int64()))
+        self.assertTrue(output.schema.equals(self.schema, check_metadata=True))
+        for name in self.schema.names:
+            if name != "teacher_response":
+                self.assertTrue(output[name].equals(retained[name]), name)
+        self.assertEqual(report["rows"], 2)
+        self.assertEqual(report["source_rows"], 3)
+        self.assertEqual(report["processed_rows"], 3)
+        self.assertEqual(report["status_counts"], {"ok": 2, "dropped": 1})
+        self.assertEqual(report["dropped_rows"], [1])
+        self.assertEqual(report["dropped_ids"], ["source-1"])
+        self.assertEqual(report["dropped_records"][0]["attempt"], 3)
+        self.assertIn("empty_output", report["dropped_records"][0]["issues"])
+        self.assertEqual(report["rejected_generation_attempts"], 3)
+        self.assertEqual(report["changed_teacher_responses"], 2)
+        self.assertEqual(file_sha256(self.source), report["metadata"]["input"]["sha256"])
+        # The real training gate must accept the generated subset and sidecar.
+        from baseline_acl.validate_up_data import main as validate_training
+        validation_path = self.root / "kgw_test.parquet"
+        validation = self.table.slice(0, 1).set_column(0, self.schema.field(0), pa.array(["held-out-id"]))
+        pq.write_table(validation, validation_path)
+        with patch("sys.argv", ["validate_up_data", "--original_train_file", str(self.source),
+                                "--up_train_file", str(self.output), "--val_file", str(validation_path)]):
+            self.assertEqual(validate_training(), 0)
+
+    def test_streaming_drop_preserves_other_worker_results(self):
+        generator = FakeStreamingGenerator({0: GeneratedResponse("", "stop", 2)})
+        report = self.run_job(generator, config=replace(self.config, on_failure="drop"))
+        self.assertTrue(generator.closed)
+        self.assertEqual(generator.scheduled, [[0, 1, 2], [0], [0]])
+        self.assertEqual(report["dropped_rows"], [0])
+        self.assertEqual(pq.read_table(self.output)["id"].to_pylist(), ["source-1", "source-2"])
+
+    def test_resume_can_drop_an_already_exhausted_row_without_a_fourth_attempt(self):
+        with self.assertRaisesRegex(RuntimeError, "exhausted 3 attempts"):
+            self.run_job(FakeGenerator({0: GeneratedResponse("", "stop", 2)}))
+        original_bytes = self.checkpoint.read_bytes()
+        resumed = FakeGenerator()
+        report = self.run_job(resumed, resume=True, config=replace(self.config, on_failure="drop"))
+        self.assertEqual(resumed.attempt_calls, [(1, 1), (2, 1)])
+        self.assertTrue(self.checkpoint.read_bytes().startswith(original_bytes))
+        self.assertEqual(report["dropped_rows"], [0])
+        self.assertEqual(report["dropped_records"][0]["attempt"], 3)
+        self.assertEqual(self.checkpoint_records()[3]["kind"], "resume_policy")
+
+    def test_resume_from_old_one_attempt_checkpoint_can_retry_then_drop(self):
+        with self.assertRaisesRegex(RuntimeError, "exhausted 1 attempts"):
+            self.run_job(FakeStreamingGenerator({1: GeneratedResponse("", "stop", 2)}, order=[2, 0, 1]),
+                         config=replace(self.config, max_attempts=1))
+        original_bytes = self.checkpoint.read_bytes()
+        resumed = FakeStreamingGenerator({1: GeneratedResponse("", "stop", 2)})
+        report = self.run_job(resumed, resume=True, config=replace(self.config, on_failure="drop"))
+        self.assertEqual(resumed.attempt_calls, [(1, 2), (1, 3)])
+        self.assertTrue(self.checkpoint.read_bytes().startswith(original_bytes))
+        self.assertEqual(report["status_counts"], {"ok": 2, "dropped": 1})
+
+    def test_interrupted_drop_record_is_recovered_and_cannot_be_forged(self):
+        from baseline_acl.paraphrase_up import append_record
+        def fail_drop(handle, record):
+            if record["kind"] == "drop":
+                raise OSError("simulated drop write interruption")
+            append_record(handle, record)
+        config = replace(self.config, on_failure="drop")
+        with patch("baseline_acl.paraphrase_up.append_record", side_effect=fail_drop):
+            with self.assertRaisesRegex(OSError, "drop write interruption"):
+                self.run_job(FakeGenerator({0: GeneratedResponse("", "stop", 2)}), config=config)
+        resumed = FakeGenerator(crash_on_attempts={(1, 1)})
+        with self.assertRaisesRegex(RuntimeError, "simulated interruption"):
+            self.run_job(resumed, resume=True, config=config)
+        self.assertEqual(resumed.attempt_calls, [(1, 1)])
+        saved = self.checkpoint.read_text(encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "after rows have been dropped"):
+            self.run_job(FakeGenerator(), resume=True, config=replace(config, max_attempts=5))
+        self.assertEqual(self.checkpoint.read_text(encoding="utf-8"), saved)
+        lines = saved.splitlines()
+        record = json.loads(lines[-1])
+        self.assertEqual(record["kind"], "drop")
+        record["issues"] = ["forged reason"]
+        lines[-1] = json.dumps(record)
+        self.checkpoint.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "invalid dropped checkpoint"):
+            self.run_job(FakeGenerator(), resume=True, config=config)
+        self.checkpoint.write_text(saved, encoding="utf-8")
+        finished = FakeGenerator()
+        self.run_job(finished, resume=True, config=config)
+        self.assertEqual(finished.attempt_calls, [(1, 1), (2, 1)])
+
+    def test_all_dropped_rows_never_publish_empty_training_data(self):
+        generator = FakeStreamingGenerator({i: GeneratedResponse("", "stop", 2) for i in range(3)})
+        with self.assertRaisesRegex(RuntimeError, "empty training dataset"):
+            self.run_job(generator, config=replace(self.config, on_failure="drop"))
+        self.assertTrue(generator.closed)
+        self.assertFalse(self.output.exists())
+        self.assertFalse(self.audit.exists())
+
+    def test_drop_mode_does_not_drop_over_budget_sources_without_generation(self):
+        generator = FakeGenerator()
+        with self.assertRaisesRegex(ValueError, "No source text is truncated"):
+            self.run_job(generator, config=replace(self.config, on_failure="drop", max_input_tokens=2))
+        self.assertEqual(generator.calls, [])
+        self.assertFalse(self.checkpoint.exists())
+
+    def test_drop_audit_recovers_interrupted_final_publication(self):
+        def fail_publication(temporary, destination):
+            if destination == self.output:
+                raise OSError("simulated publication interruption")
+            publish_new_file(temporary, destination)
+        config = replace(self.config, on_failure="drop")
+        with patch("baseline_acl.paraphrase_up.publish_new_file", side_effect=fail_publication):
+            with self.assertRaisesRegex(OSError, "publication interruption"):
+                self.run_job(FakeGenerator({0: GeneratedResponse("", "stop", 2)}), config=config)
+        before = self.audit.read_bytes()
+        resumed = FakeGenerator()
+        self.run_job(resumed, resume=True, config=config)
+        self.assertEqual(resumed.calls, [])
+        self.assertEqual(self.audit.read_bytes(), before)
+        self.assertEqual(pq.read_table(self.output).num_rows, 2)
+
     def test_resume_increases_exhausted_retry_limit_without_rewriting_successes(self):
         original_config = replace(self.config, max_attempts=1)
         failed = FakeStreamingGenerator({1: GeneratedResponse("", "stop", 2)}, order=[2, 0, 1])
@@ -766,9 +892,29 @@ class ParquetTests(unittest.TestCase):
         self.assertEqual(report["status_counts"], {"ok": 3})
         self.assertEqual(report["rejected_generation_attempts"], 1)
         self.assertEqual(report["metadata"]["config"]["max_attempts"], 3)
+        attempts = [record for record in self.checkpoint_records() if record.get("row_index") == 1]
+        self.assertEqual([record["attempt"] for record in attempts], [1, 2])
+        self.assertNotEqual(attempts[0]["seed"], attempts[1]["seed"])
         self.assertTrue(pq.read_table(self.output).schema.equals(self.schema, check_metadata=True))
         self.assertEqual(pq.read_table(self.output)["teacher_response"].to_pylist(),
                          [f"An edited response for row {i}." for i in range(3)])
+
+    def test_resume_can_increase_retry_limit_again_after_another_exhaustion(self):
+        always_empty = {0: GeneratedResponse("", "stop", 2)}
+        with self.assertRaisesRegex(RuntimeError, "exhausted 1 attempts"):
+            self.run_job(FakeGenerator(always_empty), config=replace(self.config, max_attempts=1))
+        with self.assertRaisesRegex(RuntimeError, "exhausted 3 attempts"):
+            self.run_job(FakeGenerator(always_empty), resume=True)
+        original_bytes = self.checkpoint.read_bytes()
+        resumed = FakeGenerator()
+        report = self.run_job(resumed, resume=True, config=replace(self.config, max_attempts=5))
+        self.assertEqual(resumed.attempt_calls, [(0, 4), (1, 1), (2, 1)])
+        self.assertTrue(self.checkpoint.read_bytes().startswith(original_bytes))
+        updates = [record for record in self.checkpoint_records() if record["kind"] == "retry_limit"]
+        self.assertEqual([record["metadata"]["config"]["max_attempts"] for record in updates], [3, 5])
+        self.assertEqual(updates[1]["previous_fingerprint"], updates[0]["metadata"]["fingerprint"])
+        self.assertEqual(report["rejected_generation_attempts"], 3)
+        self.assertEqual(report["status_counts"], {"ok": 3})
 
     def test_retry_increase_still_rejects_generation_model_and_input_drift(self):
         with self.assertRaisesRegex(RuntimeError, "exhausted 1 attempts"):

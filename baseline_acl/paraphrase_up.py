@@ -77,8 +77,8 @@ class GenerationConfig:
             raise ValueError("temperature must be finite and positive")
         if not math.isfinite(self.top_p) or not 0 < self.top_p <= 1:
             raise ValueError("top p must be in (0, 1]")
-        if self.on_failure not in ("error", "keep-original"):
-            raise ValueError("on failure must be error or keep-original")
+        if self.on_failure not in ("error", "keep-original", "drop"):
+            raise ValueError("on failure must be error, keep-original or drop")
         if self.max_attempts < 1:
             raise ValueError("max attempts must be positive")
         if self.seed < 0:
@@ -452,26 +452,35 @@ def append_record(handle, record: dict) -> None:
 
 
 def validate_resume_metadata(previous: dict, requested: dict) -> None:
-    """Only an increased retry limit may differ from a durable UP contract."""
+    """Allow more retries and explicit dropping without changing generation."""
     if previous == requested:
         return
     previous_config = previous.get("config", {})
     previous_limit = previous_config.get("max_attempts")
     requested_limit = requested.get("config", {}).get("max_attempts")
+    previous_policy = previous_config.get("on_failure")
+    requested_policy = requested.get("config", {}).get("on_failure")
     original = {key: value for key, value in previous.items() if key != "fingerprint"}
-    compatible = {**original, "config": {**previous_config, "max_attempts": requested_limit}}
+    compatible = {**original, "config": {**previous_config, "max_attempts": requested_limit, "on_failure": requested_policy}}
     compatible["fingerprint"] = text_sha256(canonical_json(compatible))
     if (type(previous_limit) is not int or type(requested_limit) is not int
-            or previous_limit < 1 or requested_limit <= previous_limit
+            or previous_limit < 1 or requested_limit < previous_limit
+            or previous_policy != requested_policy and (previous_policy, requested_policy) != ("error", "drop")
             or previous.get("fingerprint") != text_sha256(canonical_json(original))
             or compatible != requested):
-        raise ValueError("checkpoint fingerprint differs from input/model/config; only increasing --max-attempts is allowed on resume")
+        raise ValueError("checkpoint fingerprint differs from input/model/config; resume permits more attempts or --on-failure error to drop only")
+
+
+def dropped_record(failure: dict) -> dict:
+    """Durable disposition of an already recorded exhausted generation."""
+    return {**failure, "kind": "drop", "status": "dropped"}
 
 
 def _read_checkpoint(path: Path, expected_meta: dict, source_values: list[str], ids: list) -> tuple[dict[int, dict], dict[int, int], list[dict], dict]:
     complete = {}
     attempts = {}
     rejected = []
+    last_failures = {}
     config = GenerationConfig(**expected_meta["config"])
     # A crash can leave an incomplete final JSONL write. Only this final tail is
     # recoverable; malformed complete lines or duplicate successful rows fail.
@@ -488,16 +497,20 @@ def _read_checkpoint(path: Path, expected_meta: dict, source_values: list[str], 
         lines.pop()
     for line_number, line in enumerate(lines[1:], 2):
         entry = json.loads(line)
-        if entry.get("kind") == "retry_limit":
+        if entry.get("kind") in ("retry_limit", "resume_policy"):
             updated = entry.get("metadata")
             if (not isinstance(updated, dict) or entry.get("previous_fingerprint") != active_meta["fingerprint"]
-                    or updated.get("config", {}).get("max_attempts") == active_meta["config"]["max_attempts"]):
+                    or updated == active_meta
+                    or entry["kind"] == "retry_limit" and updated.get("config", {}).get("on_failure") != active_meta["config"]["on_failure"]):
                 raise ValueError(f"invalid retry limit update at line {line_number}")
             validate_resume_metadata(active_meta, updated)
+            if (any(record["status"] == "dropped" for record in complete.values())
+                    and updated["config"]["max_attempts"] != active_meta["config"]["max_attempts"]):
+                raise ValueError("cannot increase --max-attempts after rows have been dropped")
             validate_resume_metadata(updated, expected_meta)
             active_meta = updated
             continue
-        if entry.get("kind") not in ("result", "failure"):
+        if entry.get("kind") not in ("result", "failure", "drop"):
             raise ValueError(f"invalid checkpoint record kind at line {line_number}")
         index = entry.get("row_index")
         if not isinstance(index, int) or not 0 <= index < len(source_values):
@@ -506,6 +519,14 @@ def _read_checkpoint(path: Path, expected_meta: dict, source_values: list[str], 
             raise ValueError(f"checkpoint source mismatch at row {index}")
         if index in complete:
             raise ValueError(f"checkpoint has an attempt after completed row {index}")
+        if entry["kind"] == "drop":
+            failure = last_failures.get(index)
+            if (active_meta["config"]["on_failure"] != "drop" or failure is None
+                    or failure["attempt"] != active_meta["config"]["max_attempts"]
+                    or entry != dropped_record(failure)):
+                raise ValueError(f"unauthorized or invalid dropped checkpoint row {index}")
+            complete[index] = entry
+            continue
         attempt = entry.get("attempt")
         if entry.get("status") == "fallback" and entry.get("finish_reason") == "not_generated":
             if attempt != 0 or entry.get("seed") is not None or index in attempts:
@@ -521,17 +542,21 @@ def _read_checkpoint(path: Path, expected_meta: dict, source_values: list[str], 
         if entry["kind"] == "failure":
             if entry.get("status") != "rejected" or not entry.get("issues"):
                 raise ValueError(f"invalid rejected checkpoint attempt at row {index}")
+            last_failures[index] = entry
             continue
         if entry.get("status") not in ("ok", "fallback") or not isinstance(entry.get("paraphrase"), str) or not entry["paraphrase"].strip():
             raise ValueError(f"invalid completed checkpoint row {index}")
         if entry["status"] == "fallback":
-            if expected_meta["config"]["on_failure"] != "keep-original" or entry["paraphrase"] != source_values[index] or not entry.get("issues"):
+            if active_meta["config"]["on_failure"] != "keep-original" or entry["paraphrase"] != source_values[index] or not entry.get("issues"):
                 raise ValueError(f"unauthorized/invalid fallback at row {index}")
         else:
             candidate = GeneratedResponse(entry["paraphrase"], entry.get("finish_reason"), entry.get("output_tokens"))
             if entry.get("issues") or response_issues(candidate, source_values[index], config):
                 raise ValueError(f"invalid accepted generation at checkpoint row {index}")
         complete[index] = entry
+    if (any(record["status"] == "dropped" for record in complete.values())
+            and active_meta["config"]["max_attempts"] != config.max_attempts):
+        raise ValueError("cannot increase --max-attempts after rows have been dropped; resume with the same retry limit")
     if repair_size is not None:
         with path.open("r+b") as handle:
             handle.truncate(repair_size)
@@ -584,7 +609,9 @@ def validate_orphan_audit(audit_path: Path, output_path: Path, meta: dict, total
     """An audit-only publication is recoverable solely from a complete matching job."""
     report = json.loads(audit_path.read_text(encoding="utf-8"))
     if (complete_rows != total_rows or not report.get("complete") or report.get("metadata") != meta
-            or report.get("output") != str(output_path.resolve()) or report.get("rows") != total_rows
+            or report.get("output") != str(output_path.resolve()) or report.get("source_rows", report.get("rows")) != total_rows
+            or type(report.get("rows")) is not int or not 0 < report["rows"] <= total_rows
+            or report.get("dropped_count", 0) != total_rows - report["rows"]
             or report.get("processed_rows") != total_rows):
         raise FileExistsError(f"existing audit does not match a complete checkpoint; refusing to replace {audit_path}")
     return report
@@ -594,8 +621,14 @@ def write_final_outputs(source, responses: list[str], records: dict[int, dict], 
     import pyarrow as pa
     import pyarrow.parquet as pq
 
+    dropped = sorted(i for i, record in records.items() if record["status"] == "dropped")
+    dropped_set = set(dropped)
+    retained = [i for i in range(source.num_rows) if i not in dropped_set]
+    if not retained:
+        raise RuntimeError("all source rows were dropped; refusing to publish an empty training dataset")
+    kept_source = source.take(pa.array(retained, type=pa.int64()))
     index = source.schema.get_field_index("teacher_response")
-    result = source.set_column(index, source.schema.field(index), pa.array(responses, type=source.schema.field(index).type))
+    result = kept_source.set_column(index, source.schema.field(index), pa.array(responses, type=source.schema.field(index).type))
     if not result.schema.equals(source.schema, check_metadata=True):
         raise AssertionError("replacement changed the original Arrow schema or metadata")
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -609,13 +642,13 @@ def write_final_outputs(source, responses: list[str], records: dict[int, dict], 
         with parquet_temp.open("r+b") as handle:
             os.fsync(handle.fileno())
         reread = pq.read_table(parquet_temp)
-        if reread.num_rows != source.num_rows or not reread.schema.equals(source.schema, check_metadata=True):
+        if reread.num_rows != kept_source.num_rows or not reread.schema.equals(source.schema, check_metadata=True):
             raise AssertionError("written parquet row count/schema/metadata differs from source")
         unchanged = {}
         for name in source.schema.names:
             if name == "teacher_response":
                 continue
-            unchanged[name] = reread[name].equals(source[name])
+            unchanged[name] = reread[name].equals(kept_source[name])
             if not unchanged[name]:
                 raise AssertionError(f"written parquet changed protected column {name}")
         if reread["teacher_response"].to_pylist() != responses:
@@ -626,14 +659,14 @@ def write_final_outputs(source, responses: list[str], records: dict[int, dict], 
         report = {
             "format_version": FORMAT_VERSION, "complete": True, "method": "ordinary_untargeted_dipper_paraphrasing",
             "metadata": meta, "output": str(output_path.resolve()), "output_sha256": file_sha256(parquet_temp),
-            "rows": source.num_rows, "processed_rows": len(records),
+            "rows": kept_source.num_rows, "processed_rows": len(records),
             "status_counts": dict(statuses), "fallback_rows": sorted(i for i, r in records.items() if r["status"] == "fallback"),
             "fallback_reasons": dict(Counter(issue for r in records.values() if r["status"] == "fallback" for issue in r["issues"])),
             "finish_reasons": dict(Counter(str(r["finish_reason"]) for r in records.values())),
             "accepted_attempts": dict(Counter(str(r["attempt"]) for r in records.values())),
             "rejected_generation_attempts": len(rejected),
             "rejected_attempt_reasons": dict(Counter(issue for r in rejected for issue in r["issues"])),
-            "changed_teacher_responses": sum(left != right for left, right in zip(original, responses, strict=True)),
+            "changed_teacher_responses": sum(left != right for left, right in zip(kept_source["teacher_response"].to_pylist(), responses, strict=True)),
             "identical_accepted_responses": sum(r["status"] == "ok" and r["paraphrase"] == original[i] for i, r in records.items()),
             "schema_and_metadata_equal": True, "row_order_and_ids_equal": True, "protected_columns_equal": unchanged,
             "output_tokens": {"min": min(output_tokens), "max": max(output_tokens), "mean": sum(output_tokens) / len(output_tokens)} if output_tokens else None,
@@ -643,6 +676,11 @@ def write_final_outputs(source, responses: list[str], records: dict[int, dict], 
             "paraphrase_mode": "whole_response",
             "model_card": DIPPER_MODEL_CARD,
         }
+        if meta["config"]["on_failure"] == "drop":
+            report.update(source_rows=source.num_rows, dropped_count=len(dropped), dropped_rows=dropped,
+                          dropped_ids=[records[i]["id"] for i in dropped],
+                          dropped_records=[{key: records[i][key] for key in ("row_index", "id", "attempt", "issues", "source_sha256")} for i in dropped],
+                          row_order_and_ids_equal=not dropped, retained_row_order_and_ids_equal=True)
         # A separate targeted entrypoint can reuse the durable data writer.
         # Ordinary UP does not supply attack metadata and keeps its old contract.
         attack = meta["model"].get("attack")
@@ -678,7 +716,7 @@ def write_final_outputs(source, responses: list[str], records: dict[int, dict], 
             publish_new_file(audit_temp, audit_path)
             audit_temp = None
         publish_new_file(parquet_temp, output_path)
-        print(f"[done] {output_path}: {source.num_rows} rows; audit: {audit_path}", flush=True)
+        print(f"[done] {output_path}: {kept_source.num_rows} rows, dropped={len(dropped)}; audit: {audit_path}", flush=True)
         return report
     finally:
         parquet_temp.unlink(missing_ok=True)
@@ -733,7 +771,7 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
         meta = metadata_builder(input_path, source, identity, config, prepared)
     meta["fingerprint"] = text_sha256(canonical_json(meta))
     over_budget = [(index, info["issues"]) for index, info in enumerate(prepared) if info["issues"]]
-    if over_budget and config.on_failure == "error":
+    if over_budget and config.on_failure != "keep-original":
         raise ValueError(f"{len(over_budget)} complete source responses exceed the input budget; examples: {over_budget[:10]}. "
                          "Review --max-input-tokens; whole-response mode never falls back to chunks. No source text is truncated.")
     print(f"[preflight] rows={source.num_rows}, maximum source tokens={max(p['source_tokens'] for p in prepared)}, "
@@ -746,7 +784,8 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
         if resume and checkpoint_loader is None:
             complete, attempts_done, rejected, saved_meta = _read_checkpoint(checkpoint_path, meta, values, ids)
             if saved_meta != meta:
-                retry_update = {"kind": "retry_limit", "previous_fingerprint": saved_meta["fingerprint"], "metadata": meta}
+                kind = "retry_limit" if saved_meta["config"]["on_failure"] == config.on_failure else "resume_policy"
+                retry_update = {"kind": kind, "previous_fingerprint": saved_meta["fingerprint"], "metadata": meta}
         elif resume:
             complete, attempts_done, rejected = checkpoint_loader(checkpoint_path, meta, values, ids)
         else:
@@ -766,7 +805,7 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                 append_record(handle, meta)
             elif retry_update is not None:
                 append_record(handle, retry_update)
-                print(f"[resume] increased retry limit to {config.max_attempts}; completed rows are retained", flush=True)
+                print(f"[resume] max_attempts={config.max_attempts}, on_failure={config.on_failure}; completed rows are retained", flush=True)
             print(f"[resume] accepted {len(complete)}/{source.num_rows} completed rows", flush=True)
             pending = []
             for index, info in enumerate(prepared):
@@ -782,6 +821,15 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                 else:
                     pending.append(index)
             exhausted = [i for i in pending if attempts_done.get(i, 0) >= config.max_attempts]
+            if exhausted and config.on_failure == "drop":
+                last_failures = {record["row_index"]: record for record in rejected}
+                for index in exhausted:
+                    record = dropped_record(last_failures[index])
+                    append_record(handle, record)
+                    complete[index] = record
+                    print(f"[drop] row_index={index}, attempts={record['attempt']}, issues={record['issues']}", flush=True)
+                pending = [i for i in pending if i not in complete]
+                exhausted = []
             if exhausted:
                 raise RuntimeError(f"rows already exhausted --max-attempts={config.max_attempts}: {exhausted[:20]}; "
                                    "no final training parquet was written. Review failures before increasing the retry limit.")
@@ -833,13 +881,18 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                                     record["status"], record["paraphrase"] = "fallback", values[index]
                                 else:
                                     record["kind"], record["status"] = "failure", "rejected"
-                                    if attempt >= config.max_attempts:
+                                    if attempt >= config.max_attempts and config.on_failure != "drop":
                                         terminal_failures.append((index, issues))
-                                    else:
+                                    elif attempt < config.max_attempts:
                                         retries.append(index)
                                 rejected.append(record)
                             append_record(handle, record)
                             attempts_done[index] = attempt
+                            if record["kind"] == "failure" and attempt >= config.max_attempts and config.on_failure == "drop":
+                                record = dropped_record(record)
+                                append_record(handle, record)
+                                complete[index] = record
+                                print(f"[drop] row_index={index}, attempts={attempt}, issues={issues}", flush=True)
                             if record["kind"] == "result":
                                 complete[index] = record
                             if streaming and (len(complete) % 20 == 0 or issues or len(complete) == source.num_rows):
@@ -864,7 +917,7 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
             raise AssertionError("cannot finalize a partial dataset")
         if file_sha256(input_path) != meta["input"]["sha256"]:
             raise RuntimeError("input parquet changed during generation; finalization refused")
-        return write_outputs(source, [complete[i]["paraphrase"] for i in range(source.num_rows)], complete, rejected,
+        return write_outputs(source, [complete[i]["paraphrase"] for i in range(source.num_rows) if complete[i]["status"] != "dropped"], complete, rejected,
                              output_path, audit_path, meta, started, resume=resume)
 
 
@@ -931,8 +984,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--top-p", type=float, default=0.75)
     parser.add_argument("--top-k", type=int, choices=(0,), default=0, help="Disable top-k, equivalent to the author's top_k=None")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--on-failure", choices=("error", "keep-original"), default="error",
-                        help="Explicit opt-in to retain and audit originals for rejected/budget-exceeding rows")
+    parser.add_argument("--on-failure", choices=("error", "keep-original", "drop"), default="error",
+                        help="After retry exhaustion: stop, retain original, or omit and audit the failed row")
     parser.add_argument("--max-attempts", type=int, default=1, help="Total attempts per row, including prior attempts; may be increased with --resume")
     parser.add_argument("--resume", action="store_true", help="Reuse completed checkpoint rows; generation parameters must match, retry limit may increase")
     modes = parser.add_mutually_exclusive_group()
