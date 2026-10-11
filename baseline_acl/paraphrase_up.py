@@ -162,6 +162,38 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def dipper_weight_source(directory: str | Path) -> tuple[bool, Path]:
+    """Validate only the weight source that Transformers will load.
+
+    A directory may retain both safetensors and legacy PyTorch indices while
+    containing only one set of shards. Prefer safetensors, without requiring
+    the unused legacy shards or silently falling back from a broken safe set.
+    """
+    model_path = Path(directory).expanduser()
+    for filename, use_safetensors in (
+        ("model.safetensors", True),
+        ("model.safetensors.index.json", True),
+        ("pytorch_model.bin", False),
+        ("pytorch_model.bin.index.json", False),
+    ):
+        source = model_path / filename
+        if not source.is_file():
+            continue
+        if filename.endswith(".index.json"):
+            index = json.loads(source.read_text(encoding="utf-8"))
+            weight_map = index.get("weight_map") if isinstance(index, dict) else None
+            if not isinstance(weight_map, dict) or not weight_map:
+                raise ValueError(f"Dipper weight index has no valid weight_map: {source}")
+            shards = list(weight_map.values())
+            if any(not isinstance(shard, str) or not shard for shard in shards):
+                raise ValueError(f"Dipper weight index has an invalid shard name: {source}")
+            for shard in sorted(set(shards)):
+                if not (model_path / shard).is_file():
+                    raise FileNotFoundError(f"Dipper weight shard is missing: {model_path / shard}")
+        return use_safetensors, source
+    raise FileNotFoundError(f"Dipper weights are missing from {model_path}; --preflight needs only tokenizer assets")
+
+
 def asset_identity(directory: str, *, weights_required: bool = False) -> dict:
     """Fingerprint configs/tokenizer bytes and the local weight file manifest.
 
@@ -193,13 +225,7 @@ def asset_identity(directory: str, *, weights_required: bool = False) -> dict:
         config_path = model_path / "config.json"
         if not config_path.is_file() or json.loads(config_path.read_text(encoding="utf-8")).get("model_type") != "t5":
             raise ValueError(f"Dipper requires a local model with config.json model_type=t5: {model_path}")
-        if not any(entry["name"].endswith((".bin", ".safetensors")) for entry in identity["files"]):
-            raise FileNotFoundError(f"Dipper weights are missing from {model_path}; --preflight needs only tokenizer assets")
-        for path in model_path.glob("*.index.json"):
-            index = json.loads(path.read_text(encoding="utf-8"))
-            for shard in set(index.get("weight_map", {}).values()):
-                if not (model_path / shard).is_file():
-                    raise FileNotFoundError(f"Dipper weight shard is missing: {model_path / shard}")
+        dipper_weight_source(model_path)
     return identity
 
 
@@ -803,6 +829,7 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
 
 class DipperGenerator:
     def __init__(self, model: str, config: GenerationConfig, tokenizer, *, logits_processor=None):
+        use_safetensors, _ = dipper_weight_source(model)
         import torch
         from transformers import T5ForConditionalGeneration
         if not torch.cuda.is_available() or torch.cuda.device_count() != 1:
@@ -812,7 +839,9 @@ class DipperGenerator:
         self.torch, self.tokenizer, self.config = torch, tokenizer, config
         self.logits_processor = logits_processor
         dtype = torch.float32 if config.dtype == "float32" else torch.bfloat16
-        self.model = T5ForConditionalGeneration.from_pretrained(model, torch_dtype=dtype, local_files_only=True).to("cuda:0").eval()
+        self.model = T5ForConditionalGeneration.from_pretrained(
+            model, torch_dtype=dtype, local_files_only=True,
+            use_safetensors=use_safetensors).to("cuda:0").eval()
 
     def generate_window(self, prompt: str, seed: int) -> GeneratedResponse:
         torch = self.torch

@@ -8,6 +8,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import statistics
 import sys
 from collections import OrderedDict
@@ -32,7 +33,7 @@ TARGET_FPRS = (0.01, 0.05, 0.10)
 P_VALUE_SCHEMA = "kgw-single-sided-unique-bigram-v1"
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--kgw-file", type=Path, default=DEFAULT_KGW)
     parser.add_argument("--clean-file", type=Path, default=DEFAULT_CLEAN)
@@ -55,7 +56,7 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_REPORT,
         help="Append each run to this Markdown history document",
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def load_scores(path: Path, expected_label: str, expected_flag: bool) -> dict[str, float]:
@@ -94,6 +95,98 @@ def load_scores(path: Path, expected_label: str, expected_flag: bool) -> dict[st
     if not scores:
         raise ValueError(f"no scores found in {path}")
     return scores
+
+
+def load_detection_config(path: Path, check_names: bool = True) -> dict[str, Any]:
+    """Validate the detector that produced the saved scores, without loading CUDA."""
+    config = None
+    with path.open("r", encoding="utf-8") as handle:
+        for line_no, line in enumerate(handle, 1):
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if not isinstance(row, dict):
+                raise ValueError(f"KGW record must be an object at {path}:{line_no}")
+            metadata = row.get("kgw", {})
+            if not isinstance(metadata, dict):
+                raise ValueError(f"KGW detector metadata must be an object at {path}:{line_no}")
+            try:
+                raw_key = metadata["hash_key"]
+                current = {
+                    "gamma": float(metadata["gamma"]), "delta": float(metadata["delta"]),
+                    "hash_key": int(raw_key),
+                    "seeding": metadata.get("seeding", "simple_1 (hash_key * previous_token_id)"),
+                }
+            except (KeyError, TypeError, ValueError, OverflowError) as error:
+                raise ValueError(f"Missing or invalid KGW detector metadata at {path}:{line_no}") from error
+            if (not math.isfinite(current["gamma"]) or not 0 < current["gamma"] < 1
+                    or not math.isfinite(current["delta"]) or current["delta"] <= 0
+                    or isinstance(raw_key, bool) or current["hash_key"] != raw_key or current["hash_key"] <= 0
+                    or not isinstance(current["seeding"], str) or not current["seeding"]):
+                raise ValueError(f"Invalid KGW detector parameters at {path}:{line_no}: {current}")
+            if config is None:
+                config = current
+            elif current != config:
+                raise ValueError(f"Mixed KGW detector parameters inside {path}:{line_no}")
+
+            # Catch edited metadata attached to scores that were never recomputed.
+            try:
+                n, green, z = int(row["num_tokens"]), int(row["green_tokens"]), float(row["z_score"])
+            except (KeyError, TypeError, ValueError, OverflowError) as error:
+                raise ValueError(f"Missing KGW token counts or score at {path}:{line_no}") from error
+            if (isinstance(row["num_tokens"], bool) or isinstance(row["green_tokens"], bool)
+                    or n != row["num_tokens"] or green != row["green_tokens"] or n < 0 or not 0 <= green <= n):
+                raise ValueError(f"Invalid KGW token counts at {path}:{line_no}")
+            gamma = current["gamma"]
+            expected_z = (green - gamma * n) / math.sqrt(n * gamma * (1 - gamma)) if n else 0.0
+            if not math.isfinite(z) or not math.isclose(z, expected_z, rel_tol=1e-8, abs_tol=1e-8):
+                raise ValueError(
+                    f"Saved z_score is inconsistent with KGW metadata at {path}:{line_no}. "
+                    "Re-score the saved prompt/answer; editing gamma alone does not rebuild green lists."
+                )
+            if check_names:
+                names = [str(path)]
+                # A deliberate rescore can change the detector without changing
+                # the model that originally produced the answers.
+                provenance = row.get("rescoring", {})
+                has_rescore_source = (
+                    isinstance(provenance, dict) and isinstance(provenance.get("source_path"), str)
+                    and isinstance(provenance.get("source_sha256"), str)
+                    and re.fullmatch(r"[0-9a-f]{64}", provenance["source_sha256"]) is not None
+                )
+                if not has_rescore_source:
+                    names.append(str(row.get("model_path", "")))
+                for name in names:
+                    tags = re.findall(r"gamma([0-9]+(?:\.[0-9]+)?)_delta([0-9]+(?:\.[0-9]+)?)", name)
+                    if tags:
+                        tagged_gamma, tagged_delta = map(float, tags[-1])
+                        if (not math.isclose(tagged_gamma, gamma)
+                                or not math.isclose(tagged_delta, current["delta"])):
+                            raise ValueError(
+                                f"Watermark name declares gamma={tagged_gamma}, delta={tagged_delta}, "
+                                f"but saved detector used gamma={gamma}, delta={current['delta']} "
+                                f"at {path}:{line_no}. Re-score BOTH student and clean answers with "
+                                "wm_test/rescore_compare_scores.py before evaluating this experiment."
+                            )
+    if config is None:
+        raise ValueError(f"No KGW records found in {path}")
+    return config
+
+
+def validate_detector_pair(kgw_path: Path, clean_path: Path) -> dict[str, Any]:
+    positive = load_detection_config(kgw_path)
+    negative = load_detection_config(clean_path)
+    # Delta is the generation logit bias; it is absent from the detection formula.
+    for key in ("gamma", "hash_key", "seeding"):
+        if positive[key] != negative[key]:
+            raise ValueError(
+                f"Student and clean detector {key} differ: {positive[key]!r} vs {negative[key]!r}. "
+                "Re-score BOTH files with the same gamma, key and tokenizer before computing AUROC."
+            )
+    return {
+        "gamma": positive["gamma"], "hash_key": positive["hash_key"], "seeding": positive["seeding"],
+        "delta_by_label": {"kgw": positive["delta"], "clean": negative["delta"]},
+    }
 
 
 def evaluate_reference_rouge(
@@ -195,7 +288,7 @@ class LegacyRescorer:
         self.tokenizers: dict[str, Any] = {}
         self.greenlist_cache = OrderedDict()
 
-    def score(self, row: dict[str, Any]) -> dict[str, Any]:
+    def score(self, row: dict[str, Any], config_override: dict[str, Any] | None = None) -> dict[str, Any]:
         import torch
         from transformers import AutoTokenizer
 
@@ -204,9 +297,9 @@ class LegacyRescorer:
 
         if not str(self.args.score_device).startswith("cuda") or not torch.cuda.is_available():
             raise RuntimeError(
-                "Old JSONL has no deduplicated scores. One-time rescoring requires CUDA "
+                "KGW rescoring requires CUDA "
                 "because CPU/CUDA KGW random generators differ. Use an available GPU "
-                "with CUDA_VISIBLE_DEVICES; later evaluations use the p-value cache."
+                "with CUDA_VISIBLE_DEVICES; later evaluations use the saved scores or p-value cache."
             )
         model_path = str(self.args.tokenizer or row.get("model_path", ""))
         if not model_path:
@@ -226,7 +319,7 @@ class LegacyRescorer:
         if len(prompt_ids) > limit:
             prompt = tokenizer.decode(prompt_ids[:limit], skip_special_tokens=False)
             prompt_ids = tokenizer.encode(prompt, add_special_tokens=False)
-        metadata = row.get("kgw", {})
+        metadata = config_override if config_override is not None else row.get("kgw", {})
         if not all(key in metadata for key in ("gamma", "delta", "hash_key")):
             raise ValueError("Legacy rescoring requires the original kgw gamma/delta/hash_key metadata")
         score = kgw_score(
@@ -238,7 +331,7 @@ class LegacyRescorer:
             device=self.args.score_device, include_deduplicated=True,
             greenlist_cache=self.greenlist_cache,
         )
-        if not math.isclose(float(score["z_score"]), float(row["z_score"]), abs_tol=1e-9, rel_tol=1e-9):
+        if config_override is None and not math.isclose(float(score["z_score"]), float(row["z_score"]), abs_tol=1e-9, rel_tol=1e-9):
             raise ValueError(
                 f"Raw z-score mismatch for {row['id']}: saved={row['z_score']}, "
                 f"rescored={score['z_score']}. Check tokenizer, prompt format/truncation, "
@@ -434,7 +527,9 @@ def main() -> None:
     args = parse_args()
     kgw = load_scores(args.kgw_file.resolve(), "kgw", True)
     clean = load_scores(args.clean_file.resolve(), "clean", False)
+    detector = validate_detector_pair(args.kgw_file.resolve(), args.clean_file.resolve())
     result = evaluate(clean, kgw)
+    result["detector_config"] = detector
     result["rouge_l_dolly"] = evaluate_dolly_rouge(
         args.kgw_file.resolve(), args.dolly_reference_file.resolve()
     )
@@ -463,6 +558,7 @@ def main() -> None:
         handle.write(f"\n## 评估记录：{timestamp}\n\n")
         handle.write(f"- 样本数：KGW {result['num_kgw']}，clean {result['num_clean']}\n")
         handle.write(f"- AUROC：{result['auroc']:.6f}\n")
+        handle.write(f"- 实际检测配置：`{json.dumps(detector, ensure_ascii=False)}`\n")
         rouge = result["rouge_l_dolly"]
         handle.write(
             f"- ROUGE-L（同批 {rouge['num_samples']} 条原始 Dolly 回答作参考）："
@@ -495,6 +591,7 @@ def main() -> None:
 
     print(f"KGW samples: {result['num_kgw']} | clean samples: {result['num_clean']}")
     print(f"AUROC: {result['auroc']:.6f}")
+    print(f"Detector config: {json.dumps(detector, ensure_ascii=False)}")
     rouge = result["rouge_l_dolly"]
     print(
         f"ROUGE-L（原始 Dolly 参考）: {rouge['mean']:.6f} "

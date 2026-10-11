@@ -15,7 +15,7 @@ from baseline_acl.paraphrase_up import (
     GeneratedResponse, GenerationConfig, file_sha256, inspect_source,
     generation_seed, parse_args, prepare_response, publish_new_file, response_issues,
     run_paraphrasing, validate_output_paths, render_dipper_input, paraphrase_windows, validate_window_audit,
-    preflight_source, asset_identity,
+    preflight_source, asset_identity, dipper_weight_source,
     load_sentence_splitter, DipperGenerator, FORMAT_VERSION,
     parse_visible_gpus, select_dtype, main,
 )
@@ -361,6 +361,80 @@ class PureUnitTests(unittest.TestCase):
             (root / "config.json").write_text(json.dumps({"model_type": "t5"}), encoding="utf-8")
             with self.assertRaisesRegex(FileNotFoundError, "weights are missing"):
                 asset_identity(str(root), weights_required=True)
+
+    def test_safetensors_download_accepts_unused_legacy_bin_index(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "config.json").write_text(json.dumps({"model_type": "t5"}), encoding="utf-8")
+            safe_index = root / "model.safetensors.index.json"
+            safe_index.write_text(json.dumps({"weight_map": {"layer": "model-00001-of-00001.safetensors"}}), encoding="utf-8")
+            (root / "model-00001-of-00001.safetensors").write_bytes(b"fake-safe-weights")
+            (root / "pytorch_model.bin.index.json").write_text(
+                json.dumps({"weight_map": {"layer": "missing-pytorch-model.bin"}}), encoding="utf-8")
+            self.assertEqual(dipper_weight_source(root), (True, safe_index))
+            identity = asset_identity(str(root), weights_required=True)
+            self.assertIn("model-00001-of-00001.safetensors", [item["name"] for item in identity["files"]])
+
+    def test_missing_selected_safe_shard_is_rejected_without_bin_fallback(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "config.json").write_text(json.dumps({"model_type": "t5"}), encoding="utf-8")
+            (root / "model.safetensors.index.json").write_text(
+                json.dumps({"weight_map": {"layer": "missing-model.safetensors"}}), encoding="utf-8")
+            (root / "pytorch_model.bin").write_bytes(b"complete-legacy-file")
+            with self.assertRaisesRegex(FileNotFoundError, "missing-model.safetensors"):
+                asset_identity(str(root), weights_required=True)
+
+    def test_weight_source_single_file_priority_and_bin_only_support(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "model.safetensors").write_bytes(b"fake-safe-weights")
+            (root / "model.safetensors.index.json").write_text("invalid unused JSON", encoding="utf-8")
+            self.assertEqual(dipper_weight_source(root), (True, root / "model.safetensors"))
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "pytorch_model.bin").write_bytes(b"fake-bin-weights")
+            (root / "pytorch_model.bin.index.json").write_text("invalid unused JSON", encoding="utf-8")
+            self.assertEqual(dipper_weight_source(root), (False, root / "pytorch_model.bin"))
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            index = root / "pytorch_model.bin.index.json"
+            index.write_text(json.dumps({"weight_map": {"layer": "pytorch_model-00001-of-00001.bin"}}), encoding="utf-8")
+            (root / "pytorch_model-00001-of-00001.bin").write_bytes(b"fake-bin-shard")
+            self.assertEqual(dipper_weight_source(root), (False, index))
+            (root / "pytorch_model-00001-of-00001.bin").unlink()
+            with self.assertRaisesRegex(FileNotFoundError, "pytorch_model-00001-of-00001.bin"):
+                dipper_weight_source(root)
+
+    def test_selected_weight_index_requires_nonempty_valid_shard_map(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for index in ([], {}, {"weight_map": {}}, {"weight_map": []},
+                          {"weight_map": {"layer": None}}, {"weight_map": {"layer": []}}):
+                with self.subTest(index=index):
+                    (root / "model.safetensors.index.json").write_text(json.dumps(index), encoding="utf-8")
+                    with self.assertRaises(ValueError):
+                        dipper_weight_source(root)
+
+    def test_dipper_loader_uses_the_validated_weight_format(self):
+        fake_torch = SimpleNamespace(
+            cuda=SimpleNamespace(is_available=lambda: True, device_count=lambda: 1),
+            float32="fp32")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for filename, expected_safe in (("model.safetensors", True), ("pytorch_model.bin", False)):
+                with self.subTest(filename=filename):
+                    (root / filename).write_bytes(b"fake-weights")
+                    model = SimpleNamespace(to=lambda device: SimpleNamespace(eval=lambda: "loaded-model"))
+                    from unittest.mock import Mock
+                    loader = Mock(return_value=model)
+                    fake_transformers = SimpleNamespace(T5ForConditionalGeneration=SimpleNamespace(from_pretrained=loader))
+                    with patch.dict(sys.modules, {"torch": fake_torch, "transformers": fake_transformers}):
+                        generator = DipperGenerator(str(root), GenerationConfig(), FakeTokenizer())
+                    self.assertEqual(generator.model, "loaded-model")
+                    self.assertIs(loader.call_args.kwargs["use_safetensors"], expected_safe)
+                    self.assertTrue(loader.call_args.kwargs["local_files_only"])
+                    (root / filename).unlink()
 
     def test_authoritative_punkt_directory_and_resource_fingerprints(self):
         fake = SimpleNamespace(data=SimpleNamespace(path=["unrelated global cache"]),

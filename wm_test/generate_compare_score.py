@@ -11,15 +11,14 @@ import argparse
 import gc
 import json
 import os
+import sys
 from collections import OrderedDict
 from pathlib import Path
 from typing import Any
 
-import pyarrow.parquet as pq
-import torch
-from transformers import AutoTokenizer
-
 ROOT = Path(__file__).resolve().parents[1]
+if __package__ in (None, ""):
+    sys.path.insert(0, str(ROOT))
 DEFAULT_INPUT = ROOT / "data/dolly15k_test.parquet"
 # DEFAULT_STUDENT = ROOT / (
 #     "checkpoints/te_Qwen2.5-14B_st_Qwen2.5-1.5B-Instruct_KGW_FULL_SeqKD/"
@@ -58,7 +57,7 @@ DEFAULT_STUDENT_OUTPUT = ROOT / "wm_test/kgwwarmup_kgwgad_warmup_gamma0.5_delta3
 DEFAULT_BASE_OUTPUT = ROOT / "wm_test/base_qwen2_5_0_5b_dolly15k_test.jsonl"
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--student-model", type=Path, default=DEFAULT_STUDENT)
@@ -74,12 +73,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--top-p", type=float, default=0.9)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--gpu-memory-utilization", type=float, default=0.75)
-    parser.add_argument("--gamma", type=float, default=0.25)
-    parser.add_argument("--delta", type=float, default=2.0)
+    parser.add_argument("--gamma", type=float, required=True,
+                        help="KGW detector green fraction; explicitly match the training watermark")
+    parser.add_argument("--delta", type=float, required=True,
+                        help="Training watermark logit bias, recorded as metadata; no inference watermark is applied")
     parser.add_argument("--hash-key", type=int, default=15_485_863)
     parser.add_argument("--overwrite", action="store_true",
                         help="Replace the two final output files")
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def render_prompt(tokenizer: Any, messages: list[dict[str, str]], max_tokens: int) -> str:
@@ -97,6 +98,8 @@ def run_model(
     *, model_path: Path, label: str, output_path: Path, rows: list[dict[str, Any]],
     tokenizer: Any, args: argparse.Namespace,
 ) -> None:
+    import torch
+
     from vllm import LLM, SamplingParams
     from wm_data.kgw import KGWConfig, kgw_score
 
@@ -203,6 +206,13 @@ def run_model(
 
 def main() -> None:
     args = parse_args()
+    import pyarrow.parquet as pq
+    import torch
+    from transformers import AutoTokenizer
+
+    from wm_data.kgw import KGWConfig
+
+    KGWConfig(gamma=args.gamma, delta=args.delta, hash_key=args.hash_key).validate()
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA is required: KGW scoring must use the same CUDA RNG as wm_data")
     if args.batch_size <= 0:
