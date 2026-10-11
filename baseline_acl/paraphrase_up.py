@@ -451,7 +451,24 @@ def append_record(handle, record: dict) -> None:
     os.fsync(handle.fileno())
 
 
-def load_checkpoint(path: Path, expected_meta: dict, source_values: list[str], ids: list) -> tuple[dict[int, dict], dict[int, int], list[dict]]:
+def validate_resume_metadata(previous: dict, requested: dict) -> None:
+    """Only an increased retry limit may differ from a durable UP contract."""
+    if previous == requested:
+        return
+    previous_config = previous.get("config", {})
+    previous_limit = previous_config.get("max_attempts")
+    requested_limit = requested.get("config", {}).get("max_attempts")
+    original = {key: value for key, value in previous.items() if key != "fingerprint"}
+    compatible = {**original, "config": {**previous_config, "max_attempts": requested_limit}}
+    compatible["fingerprint"] = text_sha256(canonical_json(compatible))
+    if (type(previous_limit) is not int or type(requested_limit) is not int
+            or previous_limit < 1 or requested_limit <= previous_limit
+            or previous.get("fingerprint") != text_sha256(canonical_json(original))
+            or compatible != requested):
+        raise ValueError("checkpoint fingerprint differs from input/model/config; only increasing --max-attempts is allowed on resume")
+
+
+def _read_checkpoint(path: Path, expected_meta: dict, source_values: list[str], ids: list) -> tuple[dict[int, dict], dict[int, int], list[dict], dict]:
     complete = {}
     attempts = {}
     rejected = []
@@ -463,14 +480,23 @@ def load_checkpoint(path: Path, expected_meta: dict, source_values: list[str], i
     if not lines or not lines[0].endswith(b"\n"):
         raise ValueError("checkpoint has no durable metadata header")
     header = json.loads(lines[0])
-    if header != expected_meta:
-        raise ValueError("checkpoint fingerprint differs from input/model/config; use a new output path")
+    validate_resume_metadata(header, expected_meta)
+    active_meta = header
     repair_size = None
     if not lines[-1].endswith(b"\n"):
         repair_size = sum(map(len, lines[:-1]))
         lines.pop()
     for line_number, line in enumerate(lines[1:], 2):
         entry = json.loads(line)
+        if entry.get("kind") == "retry_limit":
+            updated = entry.get("metadata")
+            if (not isinstance(updated, dict) or entry.get("previous_fingerprint") != active_meta["fingerprint"]
+                    or updated.get("config", {}).get("max_attempts") == active_meta["config"]["max_attempts"]):
+                raise ValueError(f"invalid retry limit update at line {line_number}")
+            validate_resume_metadata(active_meta, updated)
+            validate_resume_metadata(updated, expected_meta)
+            active_meta = updated
+            continue
         if entry.get("kind") not in ("result", "failure"):
             raise ValueError(f"invalid checkpoint record kind at line {line_number}")
         index = entry.get("row_index")
@@ -484,7 +510,7 @@ def load_checkpoint(path: Path, expected_meta: dict, source_values: list[str], i
         if entry.get("status") == "fallback" and entry.get("finish_reason") == "not_generated":
             if attempt != 0 or entry.get("seed") is not None or index in attempts:
                 raise ValueError(f"invalid budget fallback attempt at row {index}")
-        elif not isinstance(attempt, int) or not 1 <= attempt <= config.max_attempts or attempt != attempts.get(index, 0) + 1:
+        elif not isinstance(attempt, int) or not 1 <= attempt <= active_meta["config"]["max_attempts"] or attempt != attempts.get(index, 0) + 1:
             raise ValueError(f"nonsequential or invalid checkpoint attempt at row {index}")
         else:
             if entry.get("seed") != generation_seed(config.seed, index, attempt):
@@ -512,6 +538,11 @@ def load_checkpoint(path: Path, expected_meta: dict, source_values: list[str], i
             handle.flush()
             os.fsync(handle.fileno())
         print("[resume] discarded an incomplete final checkpoint line", flush=True)
+    return complete, attempts, rejected, active_meta
+
+
+def load_checkpoint(path: Path, expected_meta: dict, source_values: list[str], ids: list) -> tuple[dict[int, dict], dict[int, int], list[dict]]:
+    complete, attempts, rejected, _ = _read_checkpoint(path, expected_meta, source_values, ids)
     return complete, attempts, rejected
 
 
@@ -677,7 +708,6 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
     values, ids = source["teacher_response"].to_pylist(), source["id"].to_pylist()
     candidate_issues = candidate_issues_fn or response_issues
     validate_audit = validate_audit_fn or validate_window_audit
-    load_progress = checkpoint_loader or load_checkpoint
     write_outputs = final_writer or write_final_outputs
     if prepare_fn is None:
         splitter = sentence_splitter or load_sentence_splitter()
@@ -712,7 +742,15 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
     with checkpoint_lock(checkpoint_path):
         # Recheck after obtaining the lock to avoid two writers racing at startup.
         validate_output_paths(input_path, output_path, checkpoint_path, audit_path, resume)
-        complete, attempts_done, rejected = load_progress(checkpoint_path, meta, values, ids) if resume else ({}, {}, [])
+        retry_update = None
+        if resume and checkpoint_loader is None:
+            complete, attempts_done, rejected, saved_meta = _read_checkpoint(checkpoint_path, meta, values, ids)
+            if saved_meta != meta:
+                retry_update = {"kind": "retry_limit", "previous_fingerprint": saved_meta["fingerprint"], "metadata": meta}
+        elif resume:
+            complete, attempts_done, rejected = checkpoint_loader(checkpoint_path, meta, values, ids)
+        else:
+            complete, attempts_done, rejected = {}, {}, []
         for index, record in complete.items():
             if any(record.get(key) != prepared[index][key] for key in ("prompt_tokens", "source_tokens")):
                 raise ValueError(f"checkpoint token counts differ at row {index}")
@@ -726,6 +764,9 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
         with checkpoint_path.open("a" if resume else "x", encoding="utf-8", newline="\n") as handle:
             if not resume:
                 append_record(handle, meta)
+            elif retry_update is not None:
+                append_record(handle, retry_update)
+                print(f"[resume] increased retry limit to {config.max_attempts}; completed rows are retained", flush=True)
             print(f"[resume] accepted {len(complete)}/{source.num_rows} completed rows", flush=True)
             pending = []
             for index, info in enumerate(prepared):
@@ -743,7 +784,7 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
             exhausted = [i for i in pending if attempts_done.get(i, 0) >= config.max_attempts]
             if exhausted:
                 raise RuntimeError(f"rows already exhausted --max-attempts={config.max_attempts}: {exhausted[:20]}; "
-                                   "no final training parquet was written. Choose a new output/config after reviewing failures.")
+                                   "no final training parquet was written. Review failures before increasing the retry limit.")
             generator = generator_factory() if pending else None
             try:
                 streaming = callable(getattr(generator, "iter_generate", None))
@@ -892,8 +933,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--on-failure", choices=("error", "keep-original"), default="error",
                         help="Explicit opt-in to retain and audit originals for rejected/budget-exceeding rows")
-    parser.add_argument("--max-attempts", type=int, default=1, help="One ordinary attempt by default; explicit >1 enables engineering retries for invalid outputs")
-    parser.add_argument("--resume", action="store_true", help="Reuse completed checkpoint rows with matching fingerprint")
+    parser.add_argument("--max-attempts", type=int, default=1, help="Total attempts per row, including prior attempts; may be increased with --resume")
+    parser.add_argument("--resume", action="store_true", help="Reuse completed checkpoint rows; generation parameters must match, retry limit may increase")
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--inspect", action="store_true", help="Validate and report parquet only; no tokenizer, GPU or writes")
     modes.add_argument("--preflight", action="store_true", help="CPU tokenizer+NLTK whole-response budget report; no model weights, GPU or writes")

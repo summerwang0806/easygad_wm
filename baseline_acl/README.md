@@ -33,6 +33,15 @@ GPU 编号只写在 `CUDA_VISIBLE_DEVICES`；`--num-gpus` 可省略，显式值�
 
 父进程统一写有序 Parquet、进度 JSONL 和审计 JSON。中断加 `--resume`，可改变卡数，但精度和改写参数须匹配；兼容匹配的 v3 整条断点，不兼容旧三句断点。改写后需抽查。
 
+若报空输出或尝试次数耗尽，保留原断点，用下面命令续跑。成功行不重做，失败行换采样 seed 重试；`3` 是每条累计最多三次，后续续跑也带这两个参数。
+
+```bash
+CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_up.py \
+  --input data/dolly15k_qwen2_5_14b_kgw_train.parquet \
+  --output data/dolly15k_qwen2_5_14b_kgw_up_dipper_train.parquet \
+  --num-gpus 2 --resume --max-attempts 3
+```
+
 ## 3. 两组训练
 
 先完成改写，再依次运行；每组都是 Warmup 1 epoch + GAD 1 epoch。

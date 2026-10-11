@@ -736,6 +736,100 @@ class ParquetTests(unittest.TestCase):
         self.assertEqual(report["rejected_generation_attempts"], 1)
         self.assertEqual(report["rejected_attempt_reasons"]["length_limit"], 1)
 
+    def test_resume_increases_exhausted_retry_limit_without_rewriting_successes(self):
+        original_config = replace(self.config, max_attempts=1)
+        failed = FakeStreamingGenerator({1: GeneratedResponse("", "stop", 2)}, order=[2, 0, 1])
+        with self.assertRaisesRegex(RuntimeError, "exhausted 1 attempts"):
+            self.run_job(failed, config=original_config)
+        original_bytes = self.checkpoint.read_bytes()
+        successes = [record for record in self.checkpoint_records() if record["kind"] == "result"]
+        self.assertEqual([record["row_index"] for record in successes], [2, 0])
+
+        # A second interruption after the policy change must retain that change.
+        interrupted = FakeGenerator(crash_on_attempts={(1, 2)})
+        with self.assertRaisesRegex(RuntimeError, "simulated interruption"):
+            self.run_job(interrupted, resume=True)
+        self.assertTrue(self.checkpoint.read_bytes().startswith(original_bytes))
+        update = self.checkpoint_records()[-1]
+        self.assertEqual(update["kind"], "retry_limit")
+        self.assertEqual(update["metadata"]["config"]["max_attempts"], 3)
+        before = self.checkpoint.read_bytes()
+        with self.assertRaisesRegex(ValueError, "fingerprint"):
+            self.run_job(FakeGenerator(), resume=True, config=replace(self.config, max_attempts=2))
+        self.assertEqual(self.checkpoint.read_bytes(), before)
+
+        resumed = FakeStreamingGenerator()
+        report = self.run_job(resumed, resume=True)
+        self.assertEqual(resumed.attempt_calls, [(1, 2)])
+        self.assertEqual([record for record in self.checkpoint_records()
+                          if record["kind"] == "result" and record["row_index"] != 1], successes)
+        self.assertEqual(report["status_counts"], {"ok": 3})
+        self.assertEqual(report["rejected_generation_attempts"], 1)
+        self.assertEqual(report["metadata"]["config"]["max_attempts"], 3)
+        self.assertTrue(pq.read_table(self.output).schema.equals(self.schema, check_metadata=True))
+        self.assertEqual(pq.read_table(self.output)["teacher_response"].to_pylist(),
+                         [f"An edited response for row {i}." for i in range(3)])
+
+    def test_retry_increase_still_rejects_generation_model_and_input_drift(self):
+        with self.assertRaisesRegex(RuntimeError, "exhausted 1 attempts"):
+            self.run_job(FakeGenerator({0: GeneratedResponse("", "stop", 2)}),
+                         config=replace(self.config, max_attempts=1))
+        before = self.checkpoint.read_bytes()
+        for changed in (replace(self.config, temperature=0.7), replace(self.config, seed=43),
+                        replace(self.config, dtype="bfloat16"), replace(self.config, on_failure="keep-original")):
+            with self.subTest(config=changed):
+                generator = FakeGenerator()
+                with self.assertRaisesRegex(ValueError, "fingerprint"):
+                    self.run_job(generator, resume=True, config=changed)
+                self.assertEqual(generator.calls, [])
+                self.assertEqual(self.checkpoint.read_bytes(), before)
+        with self.assertRaisesRegex(ValueError, "fingerprint"):
+            run_paraphrasing(self.source, self.output, self.config, self.tokenizer, lambda: FakeGenerator(),
+                             {**self.identity, "revision": "changed"}, resume=True, sentence_splitter=one_sentence)
+        self.assertEqual(self.checkpoint.read_bytes(), before)
+        rows = list(self.rows)
+        rows[0] = {**rows[0], "teacher_response": "Changed source response."}
+        pq.write_table(pa.Table.from_pylist(rows, schema=self.schema), self.source)
+        with self.assertRaisesRegex(ValueError, "fingerprint"):
+            self.run_job(FakeGenerator(), resume=True)
+        self.assertEqual(self.checkpoint.read_bytes(), before)
+
+    def test_retry_limit_chain_and_attempt_order_are_verified(self):
+        with self.assertRaisesRegex(RuntimeError, "exhausted 1 attempts"):
+            self.run_job(FakeGenerator({0: GeneratedResponse("", "stop", 2)}),
+                         config=replace(self.config, max_attempts=1))
+        with self.assertRaisesRegex(RuntimeError, "simulated interruption"):
+            self.run_job(FakeGenerator(crash_on_attempts={(0, 2)}), resume=True)
+        saved = self.checkpoint.read_text(encoding="utf-8")
+        lines = saved.splitlines()
+        update = json.loads(lines[-1])
+        update["previous_fingerprint"] = "wrong predecessor"
+        lines[-1] = json.dumps(update)
+        self.checkpoint.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "invalid retry limit"):
+            self.run_job(FakeGenerator(), resume=True)
+
+        # An attempt over the old limit is invalid before the durable update.
+        self.checkpoint.write_text(saved, encoding="utf-8")
+        with self.assertRaisesRegex(RuntimeError, "simulated interruption"):
+            self.run_job(FakeGenerator(crash_on_attempts={(1, 1)}), resume=True)
+        lines = self.checkpoint.read_text(encoding="utf-8").splitlines()
+        lines[2], lines[3] = lines[3], lines[2]
+        self.checkpoint.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "invalid checkpoint attempt"):
+            self.run_job(FakeGenerator(), resume=True)
+
+    def test_retry_increase_rejects_completed_audit_without_mutating_checkpoint(self):
+        self.run_job(FakeGenerator(), config=replace(self.config, max_attempts=1))
+        self.output.rename(self.output.with_suffix(".saved.parquet"))
+        before_checkpoint, before_audit = self.checkpoint.read_bytes(), self.audit.read_bytes()
+        generator = FakeGenerator()
+        with self.assertRaisesRegex(FileExistsError, "does not match"):
+            self.run_job(generator, resume=True)
+        self.assertEqual(generator.calls, [])
+        self.assertEqual(self.checkpoint.read_bytes(), before_checkpoint)
+        self.assertEqual(self.audit.read_bytes(), before_audit)
+
     def test_resume_repairs_only_an_incomplete_tail(self):
         self.fail_after_first()
         with self.checkpoint.open("ab") as handle:
