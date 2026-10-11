@@ -72,7 +72,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--temperature", type=float, default=0.7)
     parser.add_argument("--top-p", type=float, default=0.9)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--gpu-memory-utilization", type=float, default=0.75)
+    parser.add_argument("--gpu-memory-utilization", type=float, default=0.5)
     parser.add_argument("--gamma", type=float, required=True,
                         help="KGW detector green fraction; explicitly match the training watermark")
     parser.add_argument("--delta", type=float, required=True,
