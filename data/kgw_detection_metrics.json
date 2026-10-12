@@ -1,0 +1,120 @@
+{
+  "metric_definition": {
+    "positive_class": "kgw",
+    "score": "z_score (larger means more likely watermarked)",
+    "tpr_at_fpr": "highest empirical TPR whose empirical FPR does not exceed the target",
+    "fixed_prediction": "watermarked if z_score >= 4.0"
+  },
+  "f1_threshold": 4.0,
+  "train": {
+    "split": "train",
+    "clean_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_train_kgw_scores.jsonl",
+    "kgw_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_kgw_train_kgw_scores.jsonl",
+    "num_clean": 14511,
+    "num_kgw": 14511,
+    "auroc": 0.8659162565436174,
+    "tpr_at_fpr": {
+      "1%": {
+        "target_fpr": 0.01,
+        "tpr": 0.5424850113706843,
+        "achieved_fpr": 0.009992419543794363,
+        "threshold": 3.0673986874718095,
+        "tp": 7872,
+        "fp": 145
+      },
+      "5%": {
+        "target_fpr": 0.05,
+        "tpr": 0.6522637998759562,
+        "achieved_fpr": 0.04989318448073875,
+        "threshold": 2.0947858730384064,
+        "tp": 9465,
+        "fp": 724
+      },
+      "10%": {
+        "target_fpr": 0.1,
+        "tpr": 0.7111157053269933,
+        "achieved_fpr": 0.0999931086761767,
+        "threshold": 1.6012815380508714,
+        "tp": 10319,
+        "fp": 1451
+      }
+    },
+    "f1_at_fixed_threshold": {
+      "threshold": 4.0,
+      "f1": 0.6152601266124043,
+      "precision": 0.994613727300708,
+      "recall_tpr": 0.4453862587002963,
+      "fpr": 0.00241196333815726,
+      "tp": 6463,
+      "fp": 35,
+      "tn": 14476,
+      "fn": 8048
+    },
+    "best_f1": {
+      "threshold": 1.3093073414159544,
+      "f1": 0.7896845632694689,
+      "precision": 0.8375183496870895,
+      "recall_tpr": 0.7470195024464199,
+      "fpr": 0.1449245400041348,
+      "tp": 10840,
+      "fp": 2103,
+      "fn": 3671
+    }
+  },
+  "test": {
+    "split": "test",
+    "clean_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test_kgw_scores.jsonl",
+    "kgw_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_kgw_test_kgw_scores.jsonl",
+    "num_clean": 500,
+    "num_kgw": 500,
+    "auroc": 0.877674,
+    "tpr_at_fpr": {
+      "1%": {
+        "target_fpr": 0.01,
+        "tpr": 0.602,
+        "achieved_fpr": 0.01,
+        "threshold": 2.9581092794268433,
+        "tp": 301,
+        "fp": 5
+      },
+      "5%": {
+        "target_fpr": 0.05,
+        "tpr": 0.692,
+        "achieved_fpr": 0.05,
+        "threshold": 2.036743812768723,
+        "tp": 346,
+        "fp": 25
+      },
+      "10%": {
+        "target_fpr": 0.1,
+        "tpr": 0.74,
+        "achieved_fpr": 0.096,
+        "threshold": 1.5491933384829668,
+        "tp": 370,
+        "fp": 48
+      }
+    },
+    "f1_at_fixed_threshold": {
+      "threshold": 4.0,
+      "f1": 0.6622162883845126,
+      "precision": 0.9959839357429718,
+      "recall_tpr": 0.496,
+      "fpr": 0.002,
+      "tp": 248,
+      "fp": 1,
+      "tn": 499,
+      "fn": 252
+    },
+    "best_f1": {
+      "threshold": 1.5132888984074686,
+      "f1": 0.8090614886731392,
+      "precision": 0.8782201405152225,
+      "recall_tpr": 0.75,
+      "fpr": 0.104,
+      "tp": 375,
+      "fp": 52,
+      "fn": 125
+    }
+  },
+  "output": "/shared/wwx/EasyGAD/data/kgw_detection_metrics.json"
+}

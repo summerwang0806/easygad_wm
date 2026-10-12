@@ -1,0 +1,212 @@
+{
+  "format_version": 3,
+  "complete": true,
+  "method": "ordinary_untargeted_dipper_paraphrasing",
+  "metadata": {
+    "kind": "meta",
+    "format_version": 3,
+    "input": {
+      "path": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_kgw_train.parquet",
+      "sha256": "3d292d904136c07b750cff3fd1017cd3d42607d955254d48a903b6a0f5b41a4a",
+      "rows": 14511,
+      "schema_sha256": "da196221caed012e3c6be1029799c45344eb77467d870144116fc8591ab2dee1"
+    },
+    "model": {
+      "model": {
+        "path": "/shared/wwx/EasyGAD/baseline_acl/models/dipper-paraphraser-xxl",
+        "files": [
+          {
+            "name": "config.json",
+            "size": 764,
+            "mtime_ns": 1791516526321416837,
+            "sha256": "4ca8b00925507693063c5fbdb85b8681159ec6e850ee97c6cf6527dbaa661196"
+          },
+          {
+            "name": "model-00001-of-00005.safetensors",
+            "size": 9452262328,
+            "mtime_ns": 1791636913805171536
+          },
+          {
+            "name": "model-00002-of-00005.safetensors",
+            "size": 9597007440,
+            "mtime_ns": 1791623911158093228
+          },
+          {
+            "name": "model-00003-of-00005.safetensors",
+            "size": 9955647024,
+            "mtime_ns": 1791638258617859111
+          },
+          {
+            "name": "model-00004-of-00005.safetensors",
+            "size": 9999712776,
+            "mtime_ns": 1791557669480423076
+          },
+          {
+            "name": "model-00005-of-00005.safetensors",
+            "size": 6063154240,
+            "mtime_ns": 1791558937398860341
+          },
+          {
+            "name": "model.safetensors.index.json",
+            "size": 53032,
+            "mtime_ns": 1791600175809267375,
+            "sha256": "bab7fd6107b34412f8575908370f29f44f433617a93d557e57b299d6ee688efe"
+          },
+          {
+            "name": "pytorch_model.bin.index.json",
+            "size": 50781,
+            "mtime_ns": 1791600179490225240,
+            "sha256": "d032ba92f923c9c8de32641e2edda138bbf2cfd01d014fd9a0397370afdbda47"
+          }
+        ]
+      },
+      "tokenizer": {
+        "path": "/shared/wwx/EasyGAD/baseline_acl/models/t5-v1_1-xxl-tokenizer",
+        "files": [
+          {
+            "name": "config.json",
+            "size": 593,
+            "mtime_ns": 1791516520327491355,
+            "sha256": "a58c2192a7166501ad2382c3d7ca3d694a1259b71a23a1925887e5afe7adcbd8"
+          },
+          {
+            "name": "special_tokens_map.json",
+            "size": 1786,
+            "mtime_ns": 1791516520214492760,
+            "sha256": "4720c0fddbe4c5991334f85ad7073d9bd0a294a8ba4641a2f8dab614ca825949"
+          },
+          {
+            "name": "spiece.model",
+            "size": 791656,
+            "mtime_ns": 1791516522975458434,
+            "sha256": "d60acb128cf7b7f2536e8f38a5b18a05535c9e14c7a355904270e15b0945ea86"
+          },
+          {
+            "name": "tokenizer_config.json",
+            "size": 1857,
+            "mtime_ns": 1791516522010470431,
+            "sha256": "b971dce1d2805c2a66da8657156e7114a30501c6ba602fc947c8bf607a3ead2d"
+          }
+        ],
+        "provenance": {
+          "repo_id": "google/t5-v1_1-xxl",
+          "revision": "3db67ab1af984cf10548a73467f0e5bca2aaaeb2"
+        }
+      },
+      "versions": {
+        "torch": "2.6.0",
+        "transformers": "4.51.3",
+        "nltk": "3.10.3",
+        "sentencepiece": "0.2.2",
+        "pyarrow": "19.0.1"
+      }
+    },
+    "config": {
+      "batch_size": 1,
+      "max_input_tokens": 4096,
+      "max_output_length": 4096,
+      "lex_diversity": 60,
+      "order_diversity": 0,
+      "top_p": 0.75,
+      "top_k": 0,
+      "temperature": 1.0,
+      "dtype": "bfloat16",
+      "seed": 42,
+      "on_failure": "drop",
+      "max_attempts": 3
+    },
+    "input_template_sha256": "50e5fc937b202c4a1122585e3747ed3f1b6cf0bda2916a9b33b9c2b157fbbe4c",
+    "segmentation_sha256": "a0c9a32b101e6eb862ef949b3e2fd791d7ca998b680dcb8d44f6017491f7c364",
+    "sentence_splitter_resources": {
+      "directory": "/shared/wwx/EasyGAD/baseline_acl/nltk_data",
+      "nltk_version": "3.10.3",
+      "english_punkt_tab": [
+        {
+          "name": "abbrev_types.txt",
+          "sha256": "92a3e070f43d9b4c5534758ca40ad7343b04e7e29bfe0c2eb658a39445a4f779"
+        },
+        {
+          "name": "collocations.tab",
+          "sha256": "8e2da1225e4dd2cc9dba261ee231ccb134859e21b46006e7f472c5ee269af0cf"
+        },
+        {
+          "name": "ortho_context.tab",
+          "sha256": "4bbcca25ed3d3f06c02402abf8419b9f033b8adc06e7b482eca4e45f81a5dc4c"
+        },
+        {
+          "name": "sent_starters.txt",
+          "sha256": "f3f8535483e1dba487241b764945168123bca3209a9645e59acd1225dc76edac"
+        }
+      ]
+    },
+    "generation_contract": {
+      "architecture": "T5_encoder_decoder",
+      "paraphrase_mode": "whole_response",
+      "inputs_per_response": 1,
+      "initial_prefix": "",
+      "rolling_prefix": false,
+      "sentence_splitter": "nltk.sent_tokenize",
+      "language": "english",
+      "do_sample": true,
+      "top_k_zero_equivalent_to_author_example_none": true,
+      "decoder_max_length_includes_start_token": true
+    },
+    "fingerprint": "ea81f1b93042c6f8a277dcc6c7de1a1f87eb9c14171a7eef72777af6f000512c"
+  },
+  "output": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_kgw_up_dipper_train.parquet",
+  "output_sha256": "c4f980e6b5f9b827c3d2232ecb2e84359d9eccc3d6acf850496317daf3e1f39c",
+  "rows": 14511,
+  "processed_rows": 14511,
+  "status_counts": {
+    "ok": 14511
+  },
+  "fallback_rows": [],
+  "fallback_reasons": {},
+  "finish_reasons": {
+    "stop": 14511
+  },
+  "accepted_attempts": {
+    "1": 14504,
+    "2": 7
+  },
+  "rejected_generation_attempts": 7,
+  "rejected_attempt_reasons": {
+    "empty_output": 3,
+    "full_response_generation_failure": 7,
+    "full_response_empty_output": 3,
+    "length_limit": 2,
+    "refusal": 2
+  },
+  "changed_teacher_responses": 14462,
+  "identical_accepted_responses": 49,
+  "schema_and_metadata_equal": true,
+  "row_order_and_ids_equal": true,
+  "protected_columns_equal": {
+    "id": true,
+    "content": true,
+    "category": true,
+    "grounded": true,
+    "flaw": true,
+    "agreement": true
+  },
+  "output_tokens": {
+    "min": 3,
+    "max": 1713,
+    "mean": 141.87237268279236
+  },
+  "duration_seconds": 23580.155,
+  "semantic_preservation": "Dipper paraphrasing; not an automatic factual equivalence guarantee",
+  "parameter_provenance": "Dipper author template/sampling with user-requested whole-response mode and enlarged decoder limit; full ACL paraphrasing hyperparameters were not disclosed",
+  "paraphrase_mode": "whole_response",
+  "model_card": "https://huggingface.co/kalpeshk2011/dipper-paraphraser-xxl",
+  "source_rows": 14511,
+  "dropped_count": 0,
+  "dropped_rows": [],
+  "dropped_ids": [],
+  "dropped_records": [],
+  "retained_row_order_and_ids_equal": true,
+  "response_input_checks": 14518,
+  "generated_response_attempts": 14518,
+  "max_encoder_input_tokens": 2149,
+  "max_decoder_sequence_length": 4096
+}

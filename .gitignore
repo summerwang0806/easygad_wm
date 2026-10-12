@@ -109,3 +109,14 @@ conda-meta/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+
+# 放行 data 里的数据文件
+!/data/*.parquet
+!/data/*.json
+!/data/*.jsonl
+
+# 但这些不传
+/data/lmsys_gpt5_chat_filtered_*.parquet
+/data/*.lock
+/data/*.progress.jsonl
