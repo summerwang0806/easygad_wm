@@ -21,9 +21,16 @@ python baseline_acl/paraphrase_up.py \
 ## 2. 改写训练集
 
 ```bash
+# 这个是0.25/2的kgw参数配置
 CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_up.py \
   --input data/dolly15k_qwen2_5_14b_kgw_train.parquet \
   --output data/dolly15k_qwen2_5_14b_kgw_up_dipper_train.parquet \
+  --num-gpus 2
+
+# 这个是0.5/3的kgw参数配置
+CUDA_VISIBLE_DEVICES=0,1 python baseline_acl/paraphrase_up.py \
+  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet \
+  --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet \
   --num-gpus 2
 ```
 
