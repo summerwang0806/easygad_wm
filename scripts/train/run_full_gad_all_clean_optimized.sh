@@ -51,6 +51,9 @@ GAD_N_SAMPLES=2
 CONSTRAINED_2GPU=False
 ENFORCE_EAGER=False
 GPU_MEMORY_OVERRIDE=""
+RESUME=False
+SKIP_WARMUP=False
+RESUME_MODE=disable
 WARMUP_TRAIN_FILE=data/dolly15k_qwen2_5_14b_clean_train.parquet
 GAD_TRAIN_FILE=data/dolly15k_qwen2_5_14b_clean_train.parquet
 # All-clean defaults include validation; use CLI overrides for a shared KGW reference.
@@ -116,6 +119,15 @@ while [[ $# -gt 0 ]]; do
             TEST_FREQ="$2"
             shift 2
             ;;
+        --resume)
+            RESUME=True
+            RESUME_MODE=auto
+            shift
+            ;;
+        --skip_warmup)
+            SKIP_WARMUP=True
+            shift
+            ;;
         --warmup_train_file) WARMUP_TRAIN_FILE="$2"; shift 2 ;;
         --gad_train_file) GAD_TRAIN_FILE="$2"; shift 2 ;;
         --warmup_val_file) WARMUP_VAL_FILE="$2"; shift 2 ;;
@@ -134,6 +146,10 @@ if [ -z "$EXP_NAME" ] || [ -z "$NNODES" ]; then
 fi
 # Initialize a separate critic backbone from the same original student model by default.
 REWARD_MODEL_PATH=${REWARD_MODEL_PATH:-$MODEL_PATH}
+if [ "$SKIP_WARMUP" = True ] && [ "$RESUME" != True ]; then
+    echo "Error: --skip_warmup requires --resume and an existing warmup checkpoint" >&2
+    exit 1
+fi
 if [ "$N_GPUS_PER_NODE" != 1 ] && [ "$N_GPUS_PER_NODE" != 2 ]; then
     echo "Error: --gpus_per_node must be 1 or 2"
     exit 1
@@ -174,9 +190,58 @@ fi
 WORK_DIR=${WORK_BASE_DIR}/${EXP_NAME}
 WARMUP_WORK_DIR=${WORK_DIR}/warmup
 GAD_WORK_DIR=${WORK_DIR}/gad
-if [ -e "$WORK_DIR" ]; then
-    echo "Error: $WORK_DIR already exists; choose a new --exp_name"
+if [ -e "$WORK_DIR" ] && [ "$RESUME" != True ]; then
+    echo "Error: $WORK_DIR already exists; use --resume to continue, or choose a new --exp_name"
     exit 1
+fi
+if [ "$RESUME" = True ] && [ ! -d "$WORK_DIR" ]; then
+    echo "Error: --resume requires an existing experiment directory: $WORK_DIR" >&2
+    exit 1
+fi
+
+# This tracker is written after actor, critic and dataloader have been saved.
+# A newer global_step_* directory may be an interrupted save; do not select it.
+find_saved_checkpoint() {
+    local stage_dir="$1" tracker step checkpoint
+    tracker="$stage_dir/latest_checkpointed_iteration.txt"
+    [ -f "$tracker" ] || return 0
+    step=$(< "$tracker")
+    if ! [[ "$step" =~ ^[0-9]+$ ]]; then
+        echo "Error: invalid checkpoint tracker: $tracker" >&2
+        return 1
+    fi
+    checkpoint="$stage_dir/global_step_$step"
+    if [ ! -d "$checkpoint/actor" ] || [ ! -d "$checkpoint/critic" ] || [ ! -f "$checkpoint/data.pt" ]; then
+        echo "Error: incomplete checkpoint recorded by $tracker: $checkpoint (actor, critic and data.pt are required)" >&2
+        return 1
+    fi
+    echo "$checkpoint"
+}
+
+if [ "$RESUME" = True ]; then
+    WARMUP_CHECKPOINT=$(find_saved_checkpoint "$WARMUP_WORK_DIR") || exit 1
+    GAD_CHECKPOINT=$(find_saved_checkpoint "$GAD_WORK_DIR") || exit 1
+    if [ -f "$WARMUP_WORK_DIR/.stage_completed" ]; then
+        COMPLETED_STEP=$(< "$WARMUP_WORK_DIR/.stage_completed")
+        if ! [[ "$COMPLETED_STEP" =~ ^[0-9]+$ ]] || [ -z "$WARMUP_CHECKPOINT" ] || \
+            [ "$COMPLETED_STEP" != "${WARMUP_CHECKPOINT##*/global_step_}" ]; then
+            echo "Error: invalid warmup completion marker: $WARMUP_WORK_DIR/.stage_completed (must match the saved checkpoint step)" >&2
+            exit 1
+        fi
+        SKIP_WARMUP=True
+    fi
+    if [ -n "$GAD_CHECKPOINT" ]; then
+        SKIP_WARMUP=True
+    fi
+    if [ "$SKIP_WARMUP" = True ] && [ -z "$WARMUP_CHECKPOINT" ]; then
+        echo "Error: skipping warmup requires a saved warmup checkpoint in $WARMUP_WORK_DIR" >&2
+        exit 1
+    fi
+    if [ -n "$GAD_CHECKPOINT" ]; then
+        echo "Resuming GAD from: $GAD_CHECKPOINT"
+    elif [ "$SKIP_WARMUP" != True ]; then
+        echo "Resuming warmup from: ${WARMUP_CHECKPOINT:-no saved checkpoint; restarting warmup}"
+    fi
 fi
 echo "=============================================="
 echo "Starting independent CLEAN Warmup -> CLEAN GAD pipeline"
@@ -185,6 +250,7 @@ echo "Reward Model: $REWARD_MODEL_PATH"
 echo "Experiment Name: $EXP_NAME"
 echo "Nodes: $NNODES"
 echo "Work Directory: $WORK_DIR"
+echo "Resume mode: $RESUME_MODE; skip warmup: $SKIP_WARMUP"
 echo "CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES; NCCL_P2P_DISABLE=$NCCL_P2P_DISABLE"
 echo "Warmup: train=$WARMUP_TRAIN_FILE; val=$WARMUP_VAL_FILE; epochs=$WARMUP_EPOCHS"
 echo "GAD: train=$GAD_TRAIN_FILE; val=$GAD_VAL_FILE; epochs=$GAD_EPOCHS"
@@ -209,6 +275,7 @@ echo "=============================================="
 echo "Stage 1: CLEAN Warmup Phase"
 echo "=============================================="
 
+if [ "$SKIP_WARMUP" != True ]; then
 python3 -m verl.trainer.main_ppo \
     algorithm.adv_estimator=grpo \
     trainer.training_stage=warmup \
@@ -264,7 +331,7 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.rollout.enforce_eager=${ENFORCE_EAGER} \
     actor_rollout_ref.rollout.free_cache_engine=False \
     trainer.default_local_dir=${WARMUP_WORK_DIR} \
-    trainer.resume_mode=disable
+    trainer.resume_mode=${RESUME_MODE}
 
 # Check if warmup succeeded
 if [ $? -ne 0 ]; then
@@ -273,6 +340,9 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Warmup stage completed successfully!"
+else
+    echo "Skipping completed warmup; using checkpoint: $WARMUP_CHECKPOINT"
+fi
 
 # ============================================
 # Prepare models for GAD stage
@@ -282,21 +352,35 @@ echo "=============================================="
 echo "Preparing models for GAD stage..."
 echo "=============================================="
 
-# Find the latest checkpoint from warmup
-WARMUP_CHECKPOINT=$(ls -d ${WARMUP_WORK_DIR}/global_step_* 2>/dev/null | sort -V | tail -1)
+# Find the latest checkpoint whose save completed.
+WARMUP_CHECKPOINT=$(find_saved_checkpoint "$WARMUP_WORK_DIR") || exit 1
 if [ -z "$WARMUP_CHECKPOINT" ]; then
     echo "Error: No warmup checkpoint found!"
     exit 1
 fi
-RESUME_STEP=$(basename $WARMUP_CHECKPOINT | sed 's/global_step_//')
+RESUME_STEP=${WARMUP_CHECKPOINT##*/global_step_}
+printf '%s\n' "$RESUME_STEP" > "$WARMUP_WORK_DIR/.stage_completed" || exit 1
 echo "Using warmup checkpoint: $WARMUP_CHECKPOINT (step $RESUME_STEP)"
+
+# Reuse completed exports. Legacy exports without markers are safely merged
+# once using the same CPU merger as the original pipeline.
+prepare_model() {
+    local checkpoint_dir="$1" hf_dir="$1/huggingface" marker="$1/huggingface/.merge_completed"
+    if [ -f "$marker" ] && [ -f "$hf_dir/config.json" ] && \
+        { [ -f "$hf_dir/model.safetensors" ] || [ -f "$hf_dir/model.safetensors.index.json" ] || \
+          [ -f "$hf_dir/pytorch_model.bin" ] || [ -f "$hf_dir/pytorch_model.bin.index.json" ]; }; then
+        echo "Reusing merged model: $hf_dir"
+        return 0
+    fi
+    mkdir -p "$hf_dir" || return 1
+    find "$checkpoint_dir/" -maxdepth 1 -type f ! -name "*.pt" -exec cp {} "$hf_dir/" \; || return 1
+    CUDA_VISIBLE_DEVICES="" python3 scripts/model_merger.py merge --backend fsdp --local_dir "$checkpoint_dir" --target_dir "$hf_dir" || return 1
+    touch "$marker"
+}
 
 # Merge actor model
 ACTOR_MODEL_PATH=${WARMUP_CHECKPOINT}/actor/huggingface
-mkdir -p ${ACTOR_MODEL_PATH}
-find ${WARMUP_CHECKPOINT}/actor/ -maxdepth 1 -type f ! -name "*.pt" -exec cp {} ${ACTOR_MODEL_PATH}/ \;
-CUDA_VISIBLE_DEVICES="" python3 scripts/model_merger.py merge --backend fsdp --local_dir "${WARMUP_CHECKPOINT}/actor" --target_dir "$ACTOR_MODEL_PATH"
-if [ $? -ne 0 ]; then
+if ! prepare_model "$WARMUP_CHECKPOINT/actor"; then
     echo "Error: Failed to merge actor model!"
     exit 1
 fi
@@ -305,10 +389,7 @@ ls ${ACTOR_MODEL_PATH}
 
 # Merge critic model
 CRITIC_MODEL_PATH=${WARMUP_CHECKPOINT}/critic/huggingface
-mkdir -p ${CRITIC_MODEL_PATH}
-find ${WARMUP_CHECKPOINT}/critic/ -maxdepth 1 -type f ! -name "*.pt" -exec cp {} ${CRITIC_MODEL_PATH}/ \;
-CUDA_VISIBLE_DEVICES="" python3 scripts/model_merger.py merge --backend fsdp --local_dir "${WARMUP_CHECKPOINT}/critic" --target_dir "$CRITIC_MODEL_PATH"
-if [ $? -ne 0 ]; then
+if ! prepare_model "$WARMUP_CHECKPOINT/critic"; then
     echo "Error: Failed to merge critic model!"
     exit 1
 fi
@@ -379,7 +460,7 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.rollout.enforce_eager=${ENFORCE_EAGER} \
     actor_rollout_ref.rollout.free_cache_engine=False \
     trainer.default_local_dir=${GAD_WORK_DIR} \
-    trainer.resume_mode=disable
+    trainer.resume_mode=${RESUME_MODE}
 
 if [ $? -eq 0 ]; then
     echo ""

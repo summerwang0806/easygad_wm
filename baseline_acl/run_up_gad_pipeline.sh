@@ -28,6 +28,7 @@ Options forwarded to the existing optimized full pipeline:
   --save_freq N                --test_freq N              --train_batch_size N
   --lr RATE                    --gpu_memory_utilization FRACTION
   --work_dir PATH              --constrained_2gpu         --dry_run
+  --resume                     --skip_warmup
   --warmup_epochs 1            --gad_epochs 1
   -h, --help
 
@@ -35,6 +36,9 @@ The experiment name defaults to kgw_up_dipper_up_1ep / kgw_up_dipper_kgw_1ep; nn
 to 1. Model, reward model and all other training settings inherit the existing
 run_full_gad_all_clean_optimized.sh defaults. Its work-directory collision
 checks and actor/critic checkpoint merging remain authoritative.
+Use --resume with the same experiment name after an interruption. A saved GAD
+checkpoint automatically skips warmup; --skip_warmup handles older completed
+warmup runs that have no completion marker or saved GAD checkpoint.
 
 CUDA_VISIBLE_DEVICES defaults to 1,3. For one GPU, set it to one available GPU
 and pass --gpus_per_node 1. The underlying pipeline checks the visible GPU count.
@@ -67,7 +71,7 @@ while [[ $# -gt 0 ]]; do
         --warmup_train_file|--gad_train_file|--warmup_val_file|--gad_val_file)
             fail "$OPTION is fixed by the branch; use --up_train_file, --kgw_train_file and --val_file."
             ;;
-        --branch|--up_train_file|--kgw_train_file|--val_file|--exp_name|--nnodes|--gpus_per_node|--warmup_epochs|--gad_epochs|--model|--reward_model|--save_freq|--test_freq|--train_batch_size|--lr|--gpu_memory_utilization|--work_dir|--constrained_2gpu|--dry_run)
+        --branch|--up_train_file|--kgw_train_file|--val_file|--exp_name|--nnodes|--gpus_per_node|--warmup_epochs|--gad_epochs|--model|--reward_model|--save_freq|--test_freq|--train_batch_size|--lr|--gpu_memory_utilization|--work_dir|--constrained_2gpu|--dry_run|--resume|--skip_warmup)
             ;;
         *)
             fail "Unknown option: $OPTION (see --help)."
@@ -99,7 +103,7 @@ while [[ $# -gt 0 ]]; do
             require_value "$@"; FORWARDED+=("$1" "$2"); shift 2 ;;
         --constrained_2gpu)
             CONSTRAINED_2GPU=true; FORWARDED+=("$1"); shift ;;
-        --dry_run)
+        --dry_run|--resume|--skip_warmup)
             FORWARDED+=("$1"); shift ;;
         *)
             fail "Unknown option: $OPTION (see --help)."

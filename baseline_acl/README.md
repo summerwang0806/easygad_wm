@@ -68,7 +68,7 @@ CUDA_VISIBLE_DEVICES=1,3 bash scripts/train/run_full_gad_up_kgw_optimized.sh \
 - 先选择空闲 GPU，不停止他人任务。
 - 改写默认 L60/O0、top_p=0.75，输入/输出上限均为 4096 token；跨硬件不保证逐位一致。
 - 失败只停止本次启动的改写 worker，不停止其他任务。
-- 单卡训练加 `--gpus_per_node 1`；重跑使用新实验名。
+- 单卡训练加 `--gpus_per_node 1`；中断后使用原实验名并加 `--resume`。已有 GAD 断点时自动跳过 Warmup；只有旧版已完成 Warmup、尚无 GAD 断点时，可再加 `--skip_warmup`。恢复时保持原 GPU 数量和训练配置；从头重跑使用新实验名。
 - CPU 检查与模拟测试不代表真实 GPU 改写或训练已跑通。
 
 详细参数、恢复与故障说明见 [UP_BASELINE.md](../UP_BASELINE.md)。

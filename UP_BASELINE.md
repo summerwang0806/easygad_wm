@@ -137,7 +137,7 @@ CUDA_VISIBLE_DEVICES=1,3 bash scripts/train/run_full_gad_up_kgw_optimized.sh \
 
 验证均保留原 KGW test；原学习率、batch、长度、critic warmup、显存设置和 SwanLab 不变。训练教师回答超过 1536 个学生 token 时仍按原加载器右截断。CPU 预检拒绝部分数据、ID/顺序错乱或其他字段变化。
 
-单卡训练需显式选一个卡并加 `--gpus_per_node 1`。重跑需新实验名，已有 checkpoint 不覆盖。
+单卡训练需显式选一个卡并加 `--gpus_per_node 1`。中断后使用原实验名并加 `--resume`，恢复模型、优化器、随机状态和数据进度；已有 GAD 断点时自动跳过 Warmup。旧版已完成 Warmup、尚无 GAD 断点时，可配合 `--resume --skip_warmup`。恢复时保持原 GPU 数量和训练配置；需要从头重跑时使用新实验名。
 
 ```text
 checkpoints/kgw_up_dipper_up_1ep/{warmup,gad}/global_step_*/{actor,critic}/
