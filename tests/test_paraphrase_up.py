@@ -171,6 +171,8 @@ class PureUnitTests(unittest.TestCase):
         self.assertTrue(args.inspect)
         self.assertIsNone(args.output)
         self.assertEqual(args.max_output_length, config.max_output_length)
+        self.assertEqual(args.max_attempts, 3)
+        self.assertEqual(args.on_failure, "drop")
         self.assertIn("dipper", args.model)
         self.assertIn("t5-v1_1-xxl", args.tokenizer)
         result = prepare_response(FakeTokenizer(), "The existing answer.", config, one_sentence)
@@ -554,6 +556,90 @@ class ParquetTests(unittest.TestCase):
         generator.config = config
         return run_paraphrasing(self.source, self.output, config, self.tokenizer,
                                lambda: generator, self.identity, sentence_splitter=one_sentence, **kwargs)
+
+    def run_cli(self, generator, *, identity=None, options=(), bf16_supported=True):
+        def make_generator(model, config, tokenizer_path, visible):
+            generator.config = config
+            return generator
+        fake_transformers = SimpleNamespace(T5Tokenizer=SimpleNamespace(from_pretrained=lambda *a, **k: self.tokenizer))
+        with patch.dict(sys.modules, {"transformers": fake_transformers}), \
+             patch.dict("os.environ", {"CUDA_VISIBLE_DEVICES": "1,2"}), \
+             patch("baseline_acl.paraphrase_up.asset_identity", return_value={}), \
+             patch("baseline_acl.paraphrase_up.model_identity", return_value=self.identity if identity is None else identity), \
+             patch("baseline_acl.paraphrase_up.load_sentence_splitter", return_value=one_sentence), \
+             patch("baseline_acl.paraphrase_up.probe_selected_gpus", return_value=[{"bf16_supported": bf16_supported}] * 2), \
+             patch("baseline_acl.dipper_parallel.ParallelDipperGenerator", side_effect=make_generator) as factory:
+            main(["--input", str(self.source), "--output", str(self.output), "--num-gpus", "2", *options])
+        return factory
+
+    def test_plain_cli_retries_three_times_and_drops_without_recovery_flags(self):
+        generator = FakeStreamingGenerator({1: GeneratedResponse("", "stop", 2)})
+        self.run_cli(generator)
+        self.assertEqual(generator.config.max_attempts, 3)
+        self.assertEqual(generator.config.on_failure, "drop")
+        self.assertEqual(generator.config.dtype, "bfloat16")
+        self.assertEqual([attempt for row, attempt in generator.attempt_calls if row == 1], [1, 2, 3])
+        self.assertEqual(pq.read_table(self.output)["id"].to_pylist(), ["source-0", "source-2"])
+        self.assertEqual(json.loads(self.audit.read_text(encoding="utf-8"))["dropped_rows"], [1])
+
+    def test_plain_cli_auto_resumes_old_checkpoint_and_preserves_precision_and_successes(self):
+        with self.assertRaisesRegex(RuntimeError, "exhausted 1 attempts"):
+            self.run_job(FakeStreamingGenerator({1: GeneratedResponse("", "stop", 2)}, order=[2, 0, 1]),
+                         config=replace(self.config, max_attempts=1))
+        before = self.checkpoint.read_bytes()
+        resumed = FakeStreamingGenerator({1: GeneratedResponse("", "stop", 2)})
+        self.run_cli(resumed)
+        self.assertEqual(resumed.config.dtype, "float32")
+        self.assertEqual(resumed.attempt_calls, [(1, 2), (1, 3)])
+        self.assertTrue(self.checkpoint.read_bytes().startswith(before))
+        self.assertEqual(pq.read_table(self.output)["id"].to_pylist(), ["source-0", "source-2"])
+
+    def test_plain_cli_auto_resumes_dropped_rows_without_resurrecting_them(self):
+        failed = FakeGenerator({0: GeneratedResponse("", "stop", 2)}, crash_on_attempts={(1, 1)})
+        with self.assertRaisesRegex(RuntimeError, "simulated interruption"):
+            self.run_job(failed, config=replace(self.config, on_failure="drop"))
+        before = self.checkpoint.read_bytes()
+        resumed = FakeStreamingGenerator()
+        self.run_cli(resumed)
+        self.assertEqual(resumed.attempt_calls, [(2, 1), (1, 1)])
+        self.assertTrue(self.checkpoint.read_bytes().startswith(before))
+        self.assertEqual(pq.read_table(self.output)["id"].to_pylist(), ["source-1", "source-2"])
+
+    def test_plain_cli_checkpoint_mismatch_never_accepts_or_overwrites_results(self):
+        self.fail_after_first()
+        before = self.checkpoint.read_bytes()
+        generator = FakeStreamingGenerator()
+        with self.assertRaisesRegex(ValueError, "fingerprint"):
+            self.run_cli(generator, identity={**self.identity, "revision": "changed"})
+        self.assertEqual(generator.calls, [])
+        self.assertEqual(self.checkpoint.read_bytes(), before)
+        self.assertFalse(self.output.exists())
+
+    def test_plain_cli_recovers_matching_audit_only_publication_automatically(self):
+        def fail_publication(temporary, destination):
+            if destination == self.output:
+                raise OSError("simulated publication interruption")
+            publish_new_file(temporary, destination)
+        with patch("baseline_acl.paraphrase_up.publish_new_file", side_effect=fail_publication):
+            with self.assertRaisesRegex(OSError, "publication interruption"):
+                self.run_cli(FakeStreamingGenerator({1: GeneratedResponse("", "stop", 2)}))
+        before = self.audit.read_bytes()
+        factory = self.run_cli(FakeStreamingGenerator())
+        factory.assert_not_called()
+        self.assertEqual(self.audit.read_bytes(), before)
+        self.assertEqual(pq.read_table(self.output).num_rows, 2)
+
+    def test_plain_cli_preserves_finished_output_and_explicit_resume_still_needs_checkpoint(self):
+        self.run_cli(FakeStreamingGenerator())
+        before = self.output.read_bytes()
+        with self.assertRaises(FileExistsError):
+            self.run_cli(FakeStreamingGenerator())
+        self.assertEqual(self.output.read_bytes(), before)
+        self.output.unlink()
+        self.audit.unlink()
+        self.checkpoint.unlink()
+        with self.assertRaisesRegex(FileNotFoundError, "existing checkpoint"):
+            self.run_cli(FakeStreamingGenerator(), options=("--resume",))
 
     def fail_after_first(self):
         bad = FakeGenerator({(1, 1): GeneratedResponse("unfinished text", "length", 511)}, crash_on_attempts={(1, 2)})

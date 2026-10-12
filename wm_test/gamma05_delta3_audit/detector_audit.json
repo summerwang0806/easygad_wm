@@ -1,0 +1,367 @@
+{
+  "formula_and_sidecar_audit": {
+    "checks": {
+      "warmup": {
+        "n": 500,
+        "unique_ids": 500,
+        "sidecar_n": 500,
+        "source_sha256": "d44811631ed0422e3e192caaa9eef90619eda4b97ea11140bac556a43d321755",
+        "configs": 1,
+        "generation_configs": 1,
+        "model_paths": [
+          "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813/actor/huggingface"
+        ],
+        "raw_p_mean": 0.2568766941040838,
+        "raw_p_median": 0.11947734263448269,
+        "dedup_p_mean": 0.2728097058772901,
+        "dedup_p_median": 0.1798872992415606,
+        "raw_p_le_01": 123,
+        "dedup_p_le_01": 52,
+        "raw_p_le_05": 196,
+        "dedup_p_le_05": 122,
+        "raw_n_median": 78.5,
+        "dedup_n_median": 57.0,
+        "length_at_limit": 84,
+        "unique_bigram_under_10pc": 64,
+        "error_counts": {
+          "sidecar_source_sha256": 500
+        },
+        "first_errors": [
+          [
+            "dolly-13384",
+            "sidecar_source_sha256"
+          ],
+          [
+            "dolly-10119",
+            "sidecar_source_sha256"
+          ],
+          [
+            "dolly-00423",
+            "sidecar_source_sha256"
+          ]
+        ],
+        "source_sha256_lf": "6da48f3516b6e28f6f6c61d0ef20550358d842b7d156e8aeaa3e0b5c4631eab8",
+        "sidecar_hashes": [
+          "6da48f3516b6e28f6f6c61d0ef20550358d842b7d156e8aeaa3e0b5c4631eab8"
+        ],
+        "sidecar_matches_after_lf_normalization": true,
+        "non_hash_error_count": 0
+      },
+      "gad": {
+        "n": 500,
+        "unique_ids": 500,
+        "sidecar_n": 500,
+        "source_sha256": "1b2b1bc0d54ce029234b391456a928c12fc586ca47aba225d074d58db1ef8a4f",
+        "configs": 1,
+        "generation_configs": 1,
+        "model_paths": [
+          "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad/global_step_1813/actor/huggingface"
+        ],
+        "raw_p_mean": 0.2683292607151813,
+        "raw_p_median": 2.6432295116347963e-14,
+        "dedup_p_mean": 0.25703808953358714,
+        "dedup_p_median": 0.19204412473692606,
+        "raw_p_le_01": 332,
+        "dedup_p_le_01": 40,
+        "raw_p_le_05": 340,
+        "dedup_p_le_05": 121,
+        "raw_n_median": 1536.0,
+        "dedup_n_median": 40.0,
+        "length_at_limit": 470,
+        "unique_bigram_under_10pc": 493,
+        "error_counts": {
+          "sidecar_source_sha256": 500
+        },
+        "first_errors": [
+          [
+            "dolly-13384",
+            "sidecar_source_sha256"
+          ],
+          [
+            "dolly-10119",
+            "sidecar_source_sha256"
+          ],
+          [
+            "dolly-00423",
+            "sidecar_source_sha256"
+          ]
+        ],
+        "source_sha256_lf": "1852a18bed8a763376551a1680b706b8ca521e6c4259be99da2409d5fc56ec0c",
+        "sidecar_hashes": [
+          "1852a18bed8a763376551a1680b706b8ca521e6c4259be99da2409d5fc56ec0c"
+        ],
+        "sidecar_matches_after_lf_normalization": true,
+        "non_hash_error_count": 0
+      },
+      "clean": {
+        "n": 500,
+        "unique_ids": 500,
+        "sidecar_n": 500,
+        "source_sha256": "6f1890cac06a4bd7b6c0845b298d1bcaedd52c5f63c268e873df727f75c9a961",
+        "configs": 1,
+        "generation_configs": 1,
+        "model_paths": [
+          "/shared/public_models/Qwen2.5-0.5B"
+        ],
+        "raw_p_mean": 0.5381206505070838,
+        "raw_p_median": 0.5715704145196637,
+        "dedup_p_mean": 0.5374177558749705,
+        "dedup_p_median": 0.5551540845432315,
+        "raw_p_le_01": 22,
+        "dedup_p_le_01": 5,
+        "raw_p_le_05": 54,
+        "dedup_p_le_05": 25,
+        "raw_n_median": 97.0,
+        "dedup_n_median": 80.0,
+        "length_at_limit": 66,
+        "unique_bigram_under_10pc": 33,
+        "error_counts": {
+          "sidecar_source_sha256": 500
+        },
+        "first_errors": [
+          [
+            "dolly-13384",
+            "sidecar_source_sha256"
+          ],
+          [
+            "dolly-10119",
+            "sidecar_source_sha256"
+          ],
+          [
+            "dolly-00423",
+            "sidecar_source_sha256"
+          ]
+        ],
+        "source_sha256_lf": "4afb4da23c181a6dd35ca58ac8573d80050cc669b092754504a85b636b65dc65",
+        "sidecar_hashes": [
+          "4afb4da23c181a6dd35ca58ac8573d80050cc669b092754504a85b636b65dc65"
+        ],
+        "sidecar_matches_after_lf_normalization": true,
+        "non_hash_error_count": 0
+      }
+    },
+    "cross_file": {
+      "warmup": {
+        "same_ids_order": true,
+        "same_prompts": true
+      },
+      "gad": {
+        "same_ids_order": true,
+        "same_prompts": true
+      },
+      "clean": {
+        "same_ids_order": true,
+        "same_prompts": true
+      }
+    },
+    "clean_rescore": {
+      "original_sha256": "2177d66a9b7df8dab9b86f56bbdf4ecab13d1b5e65f0a3c6ce30d9204215db67",
+      "all_provenance_sha_match": false,
+      "source_hashes": [
+        "ceb601ccb9d13522671dac5111954cd4dbd3e5cb6c0d0ef066d5d05275402d2c"
+      ],
+      "same_ids_prompts_answers_models_generations": true,
+      "num_tokens_match": true,
+      "gamma_half_green_ge_old_quarter_green": true,
+      "green_count_changed": 499,
+      "cuda_used": [
+        "cuda"
+      ],
+      "original_sha256_lf": "ceb601ccb9d13522671dac5111954cd4dbd3e5cb6c0d0ef066d5d05275402d2c",
+      "provenance_matches_after_lf_normalization": true
+    },
+    "error_counts": {
+      "sidecar_source_sha256": 1500
+    }
+  },
+  "independent_byte_bpe_audit": {
+    "tokenizerPath": "C:\\Users\\wenxin\\.cache\\huggingface\\hub\\models--Qwen--Qwen2.5-7B\\snapshots\\d149729398750b98c0af14eb82c78cfe92750796\\tokenizer.json",
+    "tokenizerSHA256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+    "vocabSize": 151643,
+    "addedTokens": 22,
+    "checks": {
+      "warmup": {
+        "n": 500,
+        "errorCount": 0,
+        "errors": [],
+        "maxPromptTokens": 5148,
+        "truncated": 3,
+        "truncatedRows": [
+          {
+            "id": "dolly-13565",
+            "originalTokens": 3532,
+            "renderedTokens": 2048,
+            "lastToken": 13
+          },
+          {
+            "id": "dolly-12659",
+            "originalTokens": 2065,
+            "renderedTokens": 2048,
+            "lastToken": 2355
+          },
+          {
+            "id": "dolly-13445",
+            "originalTokens": 5148,
+            "renderedTokens": 2048,
+            "lastToken": 279
+          }
+        ],
+        "overMaxRows": [],
+        "firstContexts": [
+          198,
+          13,
+          2355,
+          279
+        ],
+        "totalTokens": 172004,
+        "totalUnique": 39083
+      },
+      "gad": {
+        "n": 500,
+        "errorCount": 0,
+        "errors": [],
+        "maxPromptTokens": 5148,
+        "truncated": 3,
+        "truncatedRows": [
+          {
+            "id": "dolly-13565",
+            "originalTokens": 3532,
+            "renderedTokens": 2048,
+            "lastToken": 13
+          },
+          {
+            "id": "dolly-12659",
+            "originalTokens": 2065,
+            "renderedTokens": 2048,
+            "lastToken": 2355
+          },
+          {
+            "id": "dolly-13445",
+            "originalTokens": 5148,
+            "renderedTokens": 2048,
+            "lastToken": 279
+          }
+        ],
+        "overMaxRows": [
+          {
+            "id": "dolly-00303",
+            "retokenizedAnswerTokens": 1777,
+            "generationLimit": 1536
+          },
+          {
+            "id": "dolly-09930",
+            "retokenizedAnswerTokens": 1567,
+            "generationLimit": 1536
+          },
+          {
+            "id": "dolly-08541",
+            "retokenizedAnswerTokens": 1551,
+            "generationLimit": 1536
+          },
+          {
+            "id": "dolly-09228",
+            "retokenizedAnswerTokens": 1713,
+            "generationLimit": 1536
+          },
+          {
+            "id": "dolly-09334",
+            "retokenizedAnswerTokens": 1537,
+            "generationLimit": 1536
+          },
+          {
+            "id": "dolly-09288",
+            "retokenizedAnswerTokens": 1575,
+            "generationLimit": 1536
+          },
+          {
+            "id": "dolly-09439",
+            "retokenizedAnswerTokens": 1654,
+            "generationLimit": 1536
+          },
+          {
+            "id": "dolly-08268",
+            "retokenizedAnswerTokens": 1541,
+            "generationLimit": 1536
+          },
+          {
+            "id": "dolly-12034",
+            "retokenizedAnswerTokens": 1537,
+            "generationLimit": 1536
+          }
+        ],
+        "firstContexts": [
+          198,
+          13,
+          2355,
+          279
+        ],
+        "totalTokens": 752591,
+        "totalUnique": 22146
+      },
+      "clean": {
+        "n": 500,
+        "errorCount": 0,
+        "errors": [],
+        "maxPromptTokens": 5148,
+        "truncated": 3,
+        "truncatedRows": [
+          {
+            "id": "dolly-13565",
+            "originalTokens": 3532,
+            "renderedTokens": 2048,
+            "lastToken": 13
+          },
+          {
+            "id": "dolly-12659",
+            "originalTokens": 2065,
+            "renderedTokens": 2048,
+            "lastToken": 2355
+          },
+          {
+            "id": "dolly-13445",
+            "originalTokens": 5148,
+            "renderedTokens": 2048,
+            "lastToken": 279
+          }
+        ],
+        "overMaxRows": [
+          {
+            "id": "dolly-05628",
+            "retokenizedAnswerTokens": 1537,
+            "generationLimit": 1536
+          },
+          {
+            "id": "dolly-05634",
+            "retokenizedAnswerTokens": 1562,
+            "generationLimit": 1536
+          }
+        ],
+        "firstContexts": [
+          198,
+          13,
+          2355,
+          279
+        ],
+        "totalTokens": 159765,
+        "totalUnique": 51786
+      }
+    }
+  },
+  "verification_scope": [
+    "All 1500 saved raw and unique-bigram z, green_fraction and p values independently recalculated from counts",
+    "All 1500 sidecar ID, label, count, z and p fields match saved records",
+    "Sidecar source digests and clean-rescore provenance source digest match after CRLF to LF normalization",
+    "All 1500 visible-answer token counts and unique context-next-token pair counts independently match cached Qwen2.5-7B byte-BPE",
+    "All 500 IDs and prompts align in the same order across warmup, GAD and clean",
+    "All generation seeds equal 42 + row index and inference KGW is disabled"
+  ],
+  "limitations": [
+    "CUDA is unavailable, so actual CUDA randperm green-list memberships were not independently reconstructed",
+    "Training and generation checkpoints are remote Linux paths and cannot be inspected locally",
+    "No original generated token IDs, tokenizer hashes, torch/vLLM versions or runtime logs are saved in these student files",
+    "Independent BPE uses the compatible locally cached Qwen2.5-7B tokenizer, not the original 0.5B checkpoint tokenizer; all count checks match but identity is not proven",
+    "Both z and p use visible answer retokenization; p is a one-sided normal approximation and raw repeated-bigram observations are dependent",
+    "Three prompts per group lose the end of the prompt including assistant header because render_prompt retains the first 2048 tokens",
+    "Nine GAD and two clean visible answers retokenize beyond the 1536 generation cap; this confirms visible-text counts, not an actual vLLM cap violation"
+  ]
+}

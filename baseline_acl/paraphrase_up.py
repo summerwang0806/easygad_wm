@@ -60,6 +60,7 @@ class GenerationConfig:
     temperature: float = 1.0
     dtype: str = "float32"
     seed: int = 42
+    # Conservative shared-adapter defaults; the ordinary UP CLI selects 3/drop.
     on_failure: str = "error"
     max_attempts: int = 1
 
@@ -984,10 +985,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--top-p", type=float, default=0.75)
     parser.add_argument("--top-k", type=int, choices=(0,), default=0, help="Disable top-k, equivalent to the author's top_k=None")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--on-failure", choices=("error", "keep-original", "drop"), default="error",
-                        help="After retry exhaustion: stop, retain original, or omit and audit the failed row")
-    parser.add_argument("--max-attempts", type=int, default=1, help="Total attempts per row, including prior attempts; may be increased with --resume")
-    parser.add_argument("--resume", action="store_true", help="Reuse completed checkpoint rows; generation parameters must match, retry limit may increase")
+    parser.add_argument("--on-failure", choices=("error", "keep-original", "drop"), default="drop",
+                        help="Default: omit and audit failed rows after three attempts; error/keep-original are explicit overrides")
+    parser.add_argument("--max-attempts", type=int, default=3, help="Default: three total attempts per row, including prior attempts")
+    parser.add_argument("--resume", action="store_true", help="Optional: require an existing checkpoint; existing checkpoints are resumed automatically")
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--inspect", action="store_true", help="Validate and report parquet only; no tokenizer, GPU or writes")
     modes.add_argument("--preflight", action="store_true", help="CPU tokenizer+NLTK whole-response budget report; no model weights, GPU or writes")
@@ -1027,11 +1028,27 @@ def main(argv: list[str] | None = None) -> None:
         return
     checkpoint = args.checkpoint or args.output.with_suffix(args.output.suffix + ".progress.jsonl")
     audit = args.audit or args.output.with_suffix(args.output.suffix + ".audit.json")
-    validate_output_paths(args.input, args.output, checkpoint, audit, args.resume)
+    resume = args.resume or checkpoint.is_file()
+    validate_output_paths(args.input, args.output, checkpoint, audit, resume)
+    requested_dtype = args.dtype
+    if resume:
+        print(f"[resume] found checkpoint: {checkpoint}; reusing completed rows", flush=True)
+        if requested_dtype == "auto":
+            # Keep the original concrete precision even when the available GPU
+            # set changes; full checkpoint validation still happens below.
+            with checkpoint.open("rb") as handle:
+                header_line = handle.readline()
+            if not header_line.endswith(b"\n"):
+                raise ValueError("checkpoint has no durable metadata header")
+            header = json.loads(header_line)
+            saved_config = header.get("config") if isinstance(header, dict) else None
+            if not isinstance(saved_config, dict) or saved_config.get("dtype") not in ("float32", "bfloat16"):
+                raise ValueError("checkpoint has an invalid concrete dtype")
+            requested_dtype = saved_config["dtype"]
     visible = parse_visible_gpus(os.environ.get("CUDA_VISIBLE_DEVICES"), args.num_gpus)
     identity = model_identity(args.model, args.tokenizer)
     devices = probe_selected_gpus(visible)
-    config = replace(config, dtype=select_dtype(args.dtype, devices))
+    config = replace(config, dtype=select_dtype(requested_dtype, devices))
     print(f"[gpu-plan] count={len(visible)}, dtype={config.dtype}, selected={canonical_json(devices)}; "
           "one complete Dipper replica per GPU; VRAM is NOT pooled", flush=True)
     if __package__:
@@ -1040,7 +1057,7 @@ def main(argv: list[str] | None = None) -> None:
         from dipper_parallel import ParallelDipperGenerator
     factory = lambda: ParallelDipperGenerator(args.model, config, args.tokenizer, visible)
     run_paraphrasing(args.input, args.output, config, tokenizer, factory, identity,
-                     resume=args.resume, checkpoint_path=checkpoint, audit_path=audit, sentence_splitter=splitter)
+                     resume=resume, checkpoint_path=checkpoint, audit_path=audit, sentence_splitter=splitter)
 
 
 if __name__ == "__main__":

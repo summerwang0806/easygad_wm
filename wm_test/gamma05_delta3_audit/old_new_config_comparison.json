@@ -1,0 +1,355 @@
+{
+  "scope": "Old gamma=0.25 delta=2 kgw_gad_05b_14b_full versus new gamma=0.5 delta=3 te_old_st_Qwen2.5-0.5B_gamma0.5_delta3; audit of actual logs and resume behavior only.",
+  "generated_on_client_date": "2026-10-12",
+  "source_paths": {
+    "old_warmup": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\ray_tmp\\ray\\session_2026-09-27_11-52-47_976850_3025518\\logs\\worker-1afbc11fc6dd50d5c31a643866d57421807a9308ac744f3e06ef08f5-01000000-3033685.out",
+    "old_gad": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\ray_tmp\\ray\\session_2026-09-27_15-51-01_101879_3693581\\logs\\worker-12b379a8dfba1b8a22fde40f3e8b6648e8abdf7377fe03795f4dea58-01000000-3701905.out",
+    "new_warmup": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\ray_tmp\\ray\\session_2026-10-09_12-44-12_841737_1331653\\logs\\worker-fdd9ddaefda427b1bc07cc77adeee2697fa43636ee1a42bacd1fa8a2-01000000-1342387.out"
+  },
+  "comparison_method": "Parse the entire printed Hydra config from each log with ast.literal_eval; recursively compare all safe keys. Save only the difference list and explicit training whitelist, not full configs.",
+  "safe_leaf_counts": {
+    "old_warmup": 342,
+    "old_gad": 342,
+    "new_warmup": 342
+  },
+  "actual_old_new_warmup_differences": [
+    {
+      "key": "data.train_files",
+      "old_warmup": "data/dolly15k_qwen2_5_14b_kgw_train.parquet",
+      "new_warmup": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet"
+    },
+    {
+      "key": "data.val_files",
+      "old_warmup": "data/dolly15k_qwen2_5_14b_kgw_test.parquet",
+      "new_warmup": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet"
+    },
+    {
+      "key": "trainer.default_local_dir",
+      "old_warmup": "checkpoints/kgw_gad_05b_14b_full/warmup",
+      "new_warmup": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup"
+    },
+    {
+      "key": "trainer.experiment_name",
+      "old_warmup": "kgw_gad_05b_14b_full_warmup",
+      "new_warmup": "te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_warmup"
+    }
+  ],
+  "actual_whitelisted_configs": {
+    "old_warmup": {
+      "actor_rollout_ref.model.path": "/shared/public_models/Qwen2.5-0.5B",
+      "actor_rollout_ref.model.lora_rank": 0,
+      "actor_rollout_ref.model.enable_gradient_checkpointing": true,
+      "actor_rollout_ref.actor.optim.lr": 1e-06,
+      "actor_rollout_ref.actor.optim.weight_decay": 0.01,
+      "actor_rollout_ref.actor.optim.warmup_style": "constant",
+      "actor_rollout_ref.actor.ppo_mini_batch_size": 8,
+      "actor_rollout_ref.actor.ppo_epochs": 1,
+      "actor_rollout_ref.actor.ppo_max_token_len_per_gpu": 8192,
+      "actor_rollout_ref.actor.grad_clip": 0.2,
+      "actor_rollout_ref.actor.loss_agg_mode": "token-mean",
+      "actor_rollout_ref.actor.policy_loss.loss_mode": "vanilla",
+      "actor_rollout_ref.actor.policy_loss.clip_cov_ratio": 0.0002,
+      "actor_rollout_ref.actor.use_dynamic_bsz": true,
+      "actor_rollout_ref.actor.use_kl_loss": false,
+      "actor_rollout_ref.actor.entropy_coeff": 0.0,
+      "actor_rollout_ref.actor.fsdp_config.param_offload": false,
+      "actor_rollout_ref.actor.fsdp_config.optimizer_offload": false,
+      "actor_rollout_ref.rollout.n": 1,
+      "actor_rollout_ref.rollout.temperature": 0.8,
+      "actor_rollout_ref.rollout.top_p": 1,
+      "actor_rollout_ref.rollout.top_k": -1,
+      "actor_rollout_ref.rollout.ignore_eos": false,
+      "actor_rollout_ref.rollout.gpu_memory_utilization": 0.45,
+      "actor_rollout_ref.rollout.enforce_eager": false,
+      "actor_rollout_ref.rollout.val_kwargs.do_sample": false,
+      "actor_rollout_ref.rollout.val_kwargs.temperature": 0,
+      "actor_rollout_ref.rollout.val_kwargs.n": 1,
+      "critic.model.path": "/shared/public_models/Qwen2.5-0.5B",
+      "critic.model.tokenizer_path": "/shared/public_models/Qwen2.5-0.5B",
+      "critic.optim.lr": 1e-05,
+      "critic.optim.weight_decay": 0.01,
+      "critic.ppo_mini_batch_size": 8,
+      "critic.ppo_epochs": 1,
+      "critic.use_dynamic_bsz": true,
+      "critic.rollout_n": 1,
+      "critic.grad_clip": 0.2,
+      "critic.checkpoint.load_contents": [
+        "model",
+        "optimizer",
+        "extra"
+      ],
+      "critic.checkpoint.save_contents": [
+        "model",
+        "optimizer",
+        "extra"
+      ],
+      "actor_rollout_ref.actor.checkpoint.load_contents": [
+        "model",
+        "optimizer",
+        "extra"
+      ],
+      "actor_rollout_ref.actor.checkpoint.save_contents": [
+        "model",
+        "optimizer",
+        "extra"
+      ],
+      "algorithm.adv_estimator": "grpo",
+      "algorithm.norm_adv_by_std_in_grpo": true,
+      "algorithm.use_kl_in_reward": false,
+      "algorithm.kl_ctrl.kl_coef": 0.001,
+      "data.train_files": "data/dolly15k_qwen2_5_14b_kgw_train.parquet",
+      "data.val_files": "data/dolly15k_qwen2_5_14b_kgw_test.parquet",
+      "data.train_batch_size": 8,
+      "data.val_batch_size": 8,
+      "data.max_prompt_length": 2048,
+      "data.max_response_length": 1536,
+      "data.truncation": "right",
+      "data.shuffle": true,
+      "trainer.default_local_dir": "checkpoints/kgw_gad_05b_14b_full/warmup",
+      "trainer.experiment_name": "kgw_gad_05b_14b_full_warmup",
+      "trainer.training_stage": "warmup",
+      "trainer.total_epochs": 1,
+      "trainer.critic_warmup": 10,
+      "trainer.save_freq": 500,
+      "trainer.test_freq": 250,
+      "trainer.resume_mode": "disable",
+      "trainer.resume_from_path": null,
+      "trainer.n_gpus_per_node": 2,
+      "trainer.nnodes": 1,
+      "ray_init.num_cpus": null
+    },
+    "old_gad": {
+      "actor_rollout_ref.model.path": "checkpoints/kgw_gad_05b_14b_full/warmup/global_step_1813/actor/huggingface",
+      "actor_rollout_ref.model.lora_rank": 0,
+      "actor_rollout_ref.model.enable_gradient_checkpointing": true,
+      "actor_rollout_ref.actor.optim.lr": 1e-06,
+      "actor_rollout_ref.actor.optim.weight_decay": 0.01,
+      "actor_rollout_ref.actor.optim.warmup_style": "constant",
+      "actor_rollout_ref.actor.ppo_mini_batch_size": 8,
+      "actor_rollout_ref.actor.ppo_epochs": 1,
+      "actor_rollout_ref.actor.ppo_max_token_len_per_gpu": 8192,
+      "actor_rollout_ref.actor.grad_clip": 0.2,
+      "actor_rollout_ref.actor.loss_agg_mode": "token-mean",
+      "actor_rollout_ref.actor.policy_loss.loss_mode": "clip_cov",
+      "actor_rollout_ref.actor.policy_loss.clip_cov_ratio": 0.0002,
+      "actor_rollout_ref.actor.use_dynamic_bsz": true,
+      "actor_rollout_ref.actor.use_kl_loss": false,
+      "actor_rollout_ref.actor.entropy_coeff": 0.0,
+      "actor_rollout_ref.actor.fsdp_config.param_offload": false,
+      "actor_rollout_ref.actor.fsdp_config.optimizer_offload": false,
+      "actor_rollout_ref.rollout.n": 2,
+      "actor_rollout_ref.rollout.temperature": 0.8,
+      "actor_rollout_ref.rollout.top_p": 1,
+      "actor_rollout_ref.rollout.top_k": -1,
+      "actor_rollout_ref.rollout.ignore_eos": false,
+      "actor_rollout_ref.rollout.gpu_memory_utilization": 0.45,
+      "actor_rollout_ref.rollout.enforce_eager": false,
+      "actor_rollout_ref.rollout.val_kwargs.do_sample": false,
+      "actor_rollout_ref.rollout.val_kwargs.temperature": 0,
+      "actor_rollout_ref.rollout.val_kwargs.n": 1,
+      "critic.model.path": "checkpoints/kgw_gad_05b_14b_full/warmup/global_step_1813/critic/huggingface",
+      "critic.model.tokenizer_path": "checkpoints/kgw_gad_05b_14b_full/warmup/global_step_1813/actor/huggingface",
+      "critic.optim.lr": 1e-05,
+      "critic.optim.weight_decay": 0.01,
+      "critic.ppo_mini_batch_size": 8,
+      "critic.ppo_epochs": 1,
+      "critic.use_dynamic_bsz": true,
+      "critic.rollout_n": 2,
+      "critic.grad_clip": 0.2,
+      "critic.checkpoint.load_contents": [
+        "model",
+        "optimizer",
+        "extra"
+      ],
+      "critic.checkpoint.save_contents": [
+        "model",
+        "optimizer",
+        "extra"
+      ],
+      "actor_rollout_ref.actor.checkpoint.load_contents": [
+        "model",
+        "optimizer",
+        "extra"
+      ],
+      "actor_rollout_ref.actor.checkpoint.save_contents": [
+        "model",
+        "optimizer",
+        "extra"
+      ],
+      "algorithm.adv_estimator": "grpo",
+      "algorithm.norm_adv_by_std_in_grpo": true,
+      "algorithm.use_kl_in_reward": false,
+      "algorithm.kl_ctrl.kl_coef": 0.001,
+      "data.train_files": "data/dolly15k_qwen2_5_14b_kgw_train.parquet",
+      "data.val_files": "data/dolly15k_qwen2_5_14b_kgw_test.parquet",
+      "data.train_batch_size": 8,
+      "data.val_batch_size": 8,
+      "data.max_prompt_length": 2048,
+      "data.max_response_length": 1536,
+      "data.truncation": "right",
+      "data.shuffle": true,
+      "trainer.default_local_dir": "checkpoints/kgw_gad_05b_14b_full/gad",
+      "trainer.experiment_name": "kgw_gad_05b_14b_full_gad",
+      "trainer.training_stage": "gad",
+      "trainer.total_epochs": 1,
+      "trainer.critic_warmup": 0,
+      "trainer.save_freq": 500,
+      "trainer.test_freq": 250,
+      "trainer.resume_mode": "disable",
+      "trainer.resume_from_path": null,
+      "trainer.n_gpus_per_node": 2,
+      "trainer.nnodes": 1,
+      "ray_init.num_cpus": null
+    },
+    "new_warmup": {
+      "actor_rollout_ref.model.path": "/shared/public_models/Qwen2.5-0.5B",
+      "actor_rollout_ref.model.lora_rank": 0,
+      "actor_rollout_ref.model.enable_gradient_checkpointing": true,
+      "actor_rollout_ref.actor.optim.lr": 1e-06,
+      "actor_rollout_ref.actor.optim.weight_decay": 0.01,
+      "actor_rollout_ref.actor.optim.warmup_style": "constant",
+      "actor_rollout_ref.actor.ppo_mini_batch_size": 8,
+      "actor_rollout_ref.actor.ppo_epochs": 1,
+      "actor_rollout_ref.actor.ppo_max_token_len_per_gpu": 8192,
+      "actor_rollout_ref.actor.grad_clip": 0.2,
+      "actor_rollout_ref.actor.loss_agg_mode": "token-mean",
+      "actor_rollout_ref.actor.policy_loss.loss_mode": "vanilla",
+      "actor_rollout_ref.actor.policy_loss.clip_cov_ratio": 0.0002,
+      "actor_rollout_ref.actor.use_dynamic_bsz": true,
+      "actor_rollout_ref.actor.use_kl_loss": false,
+      "actor_rollout_ref.actor.entropy_coeff": 0.0,
+      "actor_rollout_ref.actor.fsdp_config.param_offload": false,
+      "actor_rollout_ref.actor.fsdp_config.optimizer_offload": false,
+      "actor_rollout_ref.rollout.n": 1,
+      "actor_rollout_ref.rollout.temperature": 0.8,
+      "actor_rollout_ref.rollout.top_p": 1,
+      "actor_rollout_ref.rollout.top_k": -1,
+      "actor_rollout_ref.rollout.ignore_eos": false,
+      "actor_rollout_ref.rollout.gpu_memory_utilization": 0.45,
+      "actor_rollout_ref.rollout.enforce_eager": false,
+      "actor_rollout_ref.rollout.val_kwargs.do_sample": false,
+      "actor_rollout_ref.rollout.val_kwargs.temperature": 0,
+      "actor_rollout_ref.rollout.val_kwargs.n": 1,
+      "critic.model.path": "/shared/public_models/Qwen2.5-0.5B",
+      "critic.model.tokenizer_path": "/shared/public_models/Qwen2.5-0.5B",
+      "critic.optim.lr": 1e-05,
+      "critic.optim.weight_decay": 0.01,
+      "critic.ppo_mini_batch_size": 8,
+      "critic.ppo_epochs": 1,
+      "critic.use_dynamic_bsz": true,
+      "critic.rollout_n": 1,
+      "critic.grad_clip": 0.2,
+      "critic.checkpoint.load_contents": [
+        "model",
+        "optimizer",
+        "extra"
+      ],
+      "critic.checkpoint.save_contents": [
+        "model",
+        "optimizer",
+        "extra"
+      ],
+      "actor_rollout_ref.actor.checkpoint.load_contents": [
+        "model",
+        "optimizer",
+        "extra"
+      ],
+      "actor_rollout_ref.actor.checkpoint.save_contents": [
+        "model",
+        "optimizer",
+        "extra"
+      ],
+      "algorithm.adv_estimator": "grpo",
+      "algorithm.norm_adv_by_std_in_grpo": true,
+      "algorithm.use_kl_in_reward": false,
+      "algorithm.kl_ctrl.kl_coef": 0.001,
+      "data.train_files": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet",
+      "data.val_files": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet",
+      "data.train_batch_size": 8,
+      "data.val_batch_size": 8,
+      "data.max_prompt_length": 2048,
+      "data.max_response_length": 1536,
+      "data.truncation": "right",
+      "data.shuffle": true,
+      "trainer.default_local_dir": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup",
+      "trainer.experiment_name": "te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_warmup",
+      "trainer.training_stage": "warmup",
+      "trainer.total_epochs": 1,
+      "trainer.critic_warmup": 10,
+      "trainer.save_freq": 500,
+      "trainer.test_freq": 250,
+      "trainer.resume_mode": "disable",
+      "trainer.resume_from_path": null,
+      "trainer.n_gpus_per_node": 2,
+      "trainer.nnodes": 1,
+      "ray_init.num_cpus": null
+    }
+  },
+  "new_gad_actual_config": null,
+  "new_gad_limit": "No local TaskRunner configuration or completed training log for this experiment GAD stage was found. Current output model_path alone does not prove actual resume state.",
+  "resume_scenarios": {
+    "no_gad_checkpoint": "GAD trainer searches its own /gad tracker; if absent it returns without loading checkpoint state, starts from selected warmup HF weights with fresh actor/critic optimizer and scheduler. It does not load warmup optimizer or data.pt.",
+    "gad_checkpoint_exists": "GAD trainer loads actor and critic from that /gad global_step plus optimizer, scheduler, RNG, and data.pt; warmup HF model used for initial construction is overwritten by GAD checkpoint state.",
+    "warmup_hf_export": "Current prepare_model exports actor and critic from the same selected warmup global_step. It reuses an existing export only with per-checkpoint .merge_completed marker and config plus weight file. No training operation occurs during merging.",
+    "physical_server_state_limit": "Actual new GAD checkpoint tracker, shard contents, merge markers and resumed run config are absent locally, so which scenario occurred and physical weight identity cannot be verified."
+  },
+  "git_attribution": {
+    "328b937_to_8d151db": "Train/validation filenames changed to gamma0.5_delta3; warmup LR became separate LR_warmup=1e-6 while old LR also equals1e-6. These changes predate resume support.",
+    "8d151db_to_a0aab6b": "Adds --resume/--skip_warmup, tracked checkpoint selection, stage/merge markers, Ray setup options, and completed-stage early return. Actor/critic algorithms and training hyperparameters were not changed by this resume diff.",
+    "existing_algorithm_settings": "KL omission, UID deduplication, critic objective, GRPO computation and policy loss are identical in the three tracked revisions; they were not introduced by this resume change.",
+    "cli_lr_scope": "Separate LR_warmup was introduced before resume support. Current --lr modifies LR for GAD, not LR_warmup. Actual old/new warmup logs both have actor lr=1e-6."
+  },
+  "code_evidence": {
+    "script": "scripts/train/run_full_gad_optimized.sh:215-247,362-398,424,444,469",
+    "trainer_save_load": "verl/trainer/ppo/ray_trainer.py:903-983,1064-1071",
+    "checkpoint_lookup": "verl/utils/checkpoint/checkpoint_manager.py:187-216",
+    "restore_optimizer_rng_scheduler": "verl/utils/checkpoint/fsdp_checkpoint_manager.py:109-134",
+    "hf_merge": "tools/merge_model2hf.py:95-118,143-162"
+  },
+  "old_training_completion_evidence": {
+    "warmup": "Old warmup log:336 training_stage=warmup;3883 checkpoint global_step_1813;3884 teacher SFT loss and final update.",
+    "gad": "Old GAD log:336 training_stage=gad;67 and175 selected warmup actor/critic HF;3883 checkpoint gad/global_step_1813;3884 PPO actor metrics and final update."
+  },
+  "unchanged_training_code_blob_evidence": {
+    "verl/workers/actor/dp_actor.py": {
+      "blobs": {
+        "328b937": "0b70ddf34d87da8a886f0aead77e2d685805ff7d",
+        "8d151db": "0b70ddf34d87da8a886f0aead77e2d685805ff7d",
+        "a0aab6b": "0b70ddf34d87da8a886f0aead77e2d685805ff7d"
+      },
+      "identical": true
+    },
+    "verl/workers/critic/dp_critic.py": {
+      "blobs": {
+        "328b937": "bdad8231d9d6b67628ab548f7772e695a352d547",
+        "8d151db": "bdad8231d9d6b67628ab548f7772e695a352d547",
+        "a0aab6b": "bdad8231d9d6b67628ab548f7772e695a352d547"
+      },
+      "identical": true
+    },
+    "verl/trainer/ppo/core_algos.py": {
+      "blobs": {
+        "328b937": "b53aaf4c4895913b535d4819a8b45c5f17f86c0d",
+        "8d151db": "b53aaf4c4895913b535d4819a8b45c5f17f86c0d",
+        "a0aab6b": "b53aaf4c4895913b535d4819a8b45c5f17f86c0d"
+      },
+      "identical": true
+    },
+    "verl/workers/fsdp_workers.py": {
+      "blobs": {
+        "328b937": "48d044971cdcb2b6f24bcde5867d44098de22637",
+        "8d151db": "48d044971cdcb2b6f24bcde5867d44098de22637",
+        "a0aab6b": "48d044971cdcb2b6f24bcde5867d44098de22637"
+      },
+      "identical": true
+    },
+    "tools/merge_model2hf.py": {
+      "blobs": {
+        "328b937": "8ce0cff265700c131fd5315ccd5351131652b76a",
+        "8d151db": "8ce0cff265700c131fd5315ccd5351131652b76a",
+        "a0aab6b": "8ce0cff265700c131fd5315ccd5351131652b76a"
+      },
+      "identical": true
+    }
+  }
+}

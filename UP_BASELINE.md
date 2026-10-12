@@ -18,9 +18,9 @@
 | decoder 输出 | max_length=4096，每条完整回答 | 整条改写的长度预算，区别于作者示例的每窗口 512 |
 | encoder 输入 | 最大 4096 token，超长报错 | 本项目安全边界，不静默截断 |
 | 精度 | 默认 auto；可显式 float32 / bfloat16 | auto 在所有选中卡均支持 BF16 时统一 BF16，否则统一 FP32；属于项目资源适配 |
-| 尝试次数 | 默认每条 1 次 | 不按水印或质量分数挑结果；可显式异常重试 |
+| 尝试次数 | 默认每条累计最多 3 次；失败耗尽时删行 | 仅重试空输出等生成异常，不按水印或质量分数挑结果 |
 
-内部控制码是 `100-diversity`，L60/O0 输入为 `lexical = 40, order = 100`，使用 `<sent> 完整回答 </sent>`，不是聊天模板。分句仅用于规范化和审计，不再控制每次改写的句数；每条回答只调用一次 Dipper（显式异常重试除外）。生成不使用 KGW 处理器、检测器、密钥或逆水印。是否洗净仍需事后检测。
+内部控制码是 `100-diversity`，L60/O0 输入为 `lexical = 40, order = 100`，使用 `<sent> 完整回答 </sent>`，不是聊天模板。分句仅用于规范化和审计，不再控制每次改写的句数；每条回答调用一次 Dipper，失败时最多重试两次。生成不使用 KGW 处理器、检测器、密钥或逆水印。是否洗净仍需事后检测。
 
 ## 1. 下载模型（CPU，不占 GPU）
 
@@ -64,23 +64,24 @@ python baseline_acl/paraphrase_up.py \
 
 inspect 只检查 Parquet；preflight 只加载小 tokenizer 和 NLTK，检查**每条完整回答及控制码**是否超出 encoder 输入预算，不加载 Dipper 权重、不占 GPU。超长会报错，不会静默截断，也不会自动退回三句窗口；实际生成仍会再次检查完整输入及输出长度。
 
-原训练集 **14,511 行**，验证集 500 行。保留行只替换 teacher_response，问题、ID、顺序、其余列和 schema/metadata 均保持；`--on-failure drop` 会删去重试耗尽的整条样本。按作者用法归一化空白、分句、拼接，因此换行/排版可能改变；正式实验应抽查数字、事实、列表和代码，不能假定改写天然保真。
+原训练集 **14,511 行**，验证集 500 行。保留行只替换 teacher_response，问题、ID、顺序、其余列和 schema/metadata 均保持；默认 `--on-failure drop` 会删去重试耗尽的整条样本。按作者用法归一化空白、分句、拼接，因此换行/排版可能改变；正式实验应抽查数字、事实、列表和代码，不能假定改写天然保真。
 
 ## 3. Dipper 普通改写
 
-GPU 编号只通过 `CUDA_VISIBLE_DEVICES` 选择，不提供 `--gpus` 编号参数。下面选择 1、3 号卡；不使用 0 号卡，运行前确认各卡显存空闲或已协调使用。
+GPU 编号只通过 `CUDA_VISIBLE_DEVICES` 选择，不提供 `--gpus` 编号参数。下面分别选择 1、2 号卡与 0、1 号卡，运行前确认各卡显存空闲或已协调使用。
 
 ```bash
-CUDA_VISIBLE_DEVICES=1,3 python baseline_acl/paraphrase_up.py \
+# KGW gamma=0.25, delta=2
+CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_up.py \
   --input data/dolly15k_qwen2_5_14b_kgw_train.parquet \
   --output data/dolly15k_qwen2_5_14b_kgw_up_dipper_train.parquet \
-  --model baseline_acl/models/dipper-paraphraser-xxl \
-  --tokenizer baseline_acl/models/t5-v1_1-xxl-tokenizer \
-  --num-gpus 2 --dtype auto \
-  --lex-diversity 60 --order-diversity 0 \
-  --top-p 0.75 --temperature 1.0 \
-  --max-output-length 4096 --max-input-tokens 4096 \
-  --max-attempts 1 --seed 42
+  --num-gpus 2
+
+# KGW gamma=0.5, delta=3
+CUDA_VISIBLE_DEVICES=0,1 python baseline_acl/paraphrase_up.py \
+  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet \
+  --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_train.parquet \
+  --num-gpus 2
 ```
 
 `--num-gpus` 可省略，默认使用环境中选中的卡数；若显式填写，必须与可见卡数完全一致。每张卡由一个独立进程加载完整 Dipper 副本，动态领取整条回答；这是数据并行，不是模型切分。父进程统一管理一个进度 JSONL、一个审计 JSON 和最终 Parquet，按原始行序汇总。`--batch-size` 不决定卡数，默认 1 仍可让多张卡工作。
@@ -91,11 +92,11 @@ CUDA_VISIBLE_DEVICES=1,3 python baseline_acl/paraphrase_up.py \
 
 旧的 `--engine`、`--gpu-memory-utilization` 等 Qwen/vLLM 参数，以及三句版本的 `--window-size` 均不再适用。Dipper 使用 Transformers T5 encoder-decoder；训练阶段的 vLLM 显存设置是另一件事，保持原样。整条回答的 encoder 和 decoder 序列可能更长，显存与运行时间不能直接沿用旧三句版本的估计。
 
-输出：最终 Parquet、`<output>.progress.jsonl`、`<output>.audit.json`。全部源行处理完成才发布 Parquet；开启 `drop` 时最终行数减去失败删行数。中断后加 `--resume`，成功行不重做。模型、tokenizer、分句资源、整条改写模式、实际精度、参数和输入均纳入指纹。GPU 数量可在续跑时改变，精度和其他具体改写参数必须保持一致；例如旧 FP32 断点应显式选择 `--dtype float32`。保留 v3 格式，可续用参数与输入匹配的既有整条断点，**不能续用旧 Qwen 或三句滚动断点**。跨 GPU 型号或硬件环境不保证逐位相同。
+输出：最终 Parquet、`<output>.progress.jsonl`、`<output>.audit.json`。全部源行处理完成才发布 Parquet，最终行数减去失败删行数。中断后重新运行同一命令会自动续跑，成功行不重做；`--resume` 仍可使用。模型、tokenizer、分句资源、整条改写模式、实际精度、参数和输入均纳入指纹。GPU 数量可在续跑时改变；默认 `--dtype auto` 在续跑时沿用断点记录的实际精度，选中的卡须支持该精度。显式精度和其他具体改写参数须匹配。保留 v3 格式，可续用参数与输入匹配的既有整条断点，**不能续用旧 Qwen 或三句滚动断点**。跨 GPU 型号或硬件环境不保证逐位相同。
 
 默认输出文件名保持不变，便于后续训练入口读取。如果该位置已有旧 Qwen/三句结果或不匹配的 progress/audit，不要覆盖或混接；请选择新的 --output 文件名，并在两个训练命令中都用 --up_train_file 指向新文件。匹配的 v3 整条断点可直接续跑。也可自行确认后将本实验的旧文件移到备份目录，再使用默认路径；不要移动其他同学的文件。
 
-默认失败时停止。次数耗尽后，可在原命令加 `--resume --max-attempts 3 --on-failure drop` 续跑：保留成功行，失败行使用新的采样 seed；累计三次仍失败就删除整条样本并继续，不把空回答写入训练集。删行 ID、源行号、尝试次数和原因保存在审计 JSON，训练前自动核对原始输入与输出哈希、保留行及删行记录。后续续跑保持这三个参数。重试上限和失败处理策略的变更追加到原断点，不改旧记录；旧 `error` 策略可以显式切换为 `drop`。这是工程异常处理，不是 ACL 公布的超参；其他改写参数或精度变化需新输出名。`--on-failure keep-original` 会混入未改写回答，正式纯 UP 实验不建议开启。
+默认 `--max-attempts 3 --on-failure drop`：失败行自动换采样 seed 重试，累计三次仍失败就删除整条样本并继续，不把空回答写入训练集。删行 ID、源行号、尝试次数和原因保存在审计 JSON，训练前自动核对原始输入与输出哈希、保留行及删行记录；请保留最终 Parquet 旁的 `.audit.json`。旧的单次尝试、失败即停断点也可用同一普通命令续跑，重试策略变更追加到原断点，不改旧记录。此策略是项目异常处理配置，不是 ACL 公布的超参。需要失败即停时可显式使用 `--max-attempts 1 --on-failure error`；`--on-failure keep-original` 会混入未改写回答，正式纯 UP 实验不建议开启。
 
 ## 4. 两组训练（各阶段 1 epoch）
 

@@ -30,7 +30,7 @@ CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_up.py \
 # 这个是0.5/3的kgw参数配置
 CUDA_VISIBLE_DEVICES=0,1 python baseline_acl/paraphrase_up.py \
   --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet \
-  --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet \
+  --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_train.parquet \
   --num-gpus 2
 ```
 
@@ -38,16 +38,7 @@ GPU 编号只写在 `CUDA_VISIBLE_DEVICES`；`--num-gpus` 可省略，显式值�
 
 默认 `--dtype auto`：所有选中卡都支持 BF16 时统一用 BF16，否则统一 FP32。可显式指定精度，不会自动退回 FP32；每卡均需足够空闲显存加载完整模型。
 
-父进程统一写有序 Parquet、进度 JSONL 和审计 JSON。中断加 `--resume`，可改变卡数，但精度和改写参数须匹配；兼容匹配的 v3 整条断点，不兼容旧三句断点。改写后需抽查。
-
-若报空输出或尝试次数耗尽，保留原断点，用下面命令续跑。成功行不重做，失败行换采样 seed 重试；累计三次仍失败，就删除整条样本并继续。删行 ID 和原因写入审计 JSON；训练会自动核对该文件。后续续跑也保留这三个参数。
-
-```bash
-CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_up.py \
-  --input data/dolly15k_qwen2_5_14b_kgw_train.parquet \
-  --output data/dolly15k_qwen2_5_14b_kgw_up_dipper_train.parquet \
-  --num-gpus 2 --resume --max-attempts 3 --on-failure drop
-```
+默认每条累计最多尝试三次，失败时换采样 seed；仍失败就删除整条样本并继续，不写空回答。若进程中断，重新运行同一条命令会自动读取断点、跳过成功行。保留输出旁的 `.progress.jsonl` 和 `.audit.json`，后续训练需用审计文件核对删行记录。最终 Parquet 已存在时不会覆盖。
 
 ## 3. 两组训练
 
@@ -67,7 +58,7 @@ CUDA_VISIBLE_DEVICES=1,3 bash scripts/train/run_full_gad_up_kgw_optimized.sh \
 
 ## 注意
 
-- 先确认 GPU 可用，不用 0 号卡，不停止他人任务。
+- 先选择空闲 GPU，不停止他人任务。
 - 改写默认 L60/O0、top_p=0.75，输入/输出上限均为 4096 token；跨硬件不保证逐位一致。
 - 失败只停止本次启动的改写 worker，不停止其他任务。
 - 单卡训练加 `--gpus_per_node 1`；重跑使用新实验名。
