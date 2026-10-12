@@ -4,23 +4,23 @@
 
 ## 与 baseline 的一致性
 
-[ACL 2025 论文 §4.1](https://aclanthology.org/2025.acl-long.648.pdf)明确使用 Dipper，但未公开 UP 的完整超参数，[官方仓库](https://github.com/THU-BPM/Watermark-Radioactivity-Attack#attack-pipeline)也只发布 WN。因此这里对齐 **Dipper 改写器与普通 UP 方法**，其余参数参考 [Dipper 作者示例](https://huggingface.co/kalpeshk2011/dipper-paraphraser-xxl#using-dipper)。按你的要求，本入口现在改为**每条教师回答的全部句子一次送入 Dipper**，不再使用作者示例的三句窗口；这是明确的项目适配，不声称逐项精确复现 ACL 原实验。
+[ACL 2025 论文 §4.1](https://aclanthology.org/2025.acl-long.648.pdf)明确使用 Dipper，但未公开 UP 的完整超参数，[官方仓库](https://github.com/THU-BPM/Watermark-Radioactivity-Attack#attack-pipeline)也只发布 WN。因此这里对齐 **Dipper 改写器与普通 UP 方法**，其余参数参考 [Dipper 作者示例](https://huggingface.co/kalpeshk2011/dipper-paraphraser-xxl#using-dipper)。本入口每条教师回答一次送入 Dipper，超过输入上限时截去尾部；不使用作者示例的三句窗口。这是本项目配置，不声称逐项精确复现 ACL 原实验。
 
 | 设置 | 本入口 | 参数出处/说明 |
 | --- | --- | --- |
 | 模型 | `kalpeshk2011/dipper-paraphraser-xxl` | 作者发布的完整上下文版本，11B T5 |
 | Tokenizer | `google/t5-v1_1-xxl` 的 T5Tokenizer | Dipper 官方用法 |
 | lexical / order diversity | 60 / 0 | 作者模型卡采样示例，并非 ACL 公布的参数 |
-| 改写范围 | NLTK 英文分句后，将本条回答全部句子拼接，一次改写 | 按你的要求适配；不按三句分组 |
+| 改写范围 | NLTK 英文分句后拼接，一次改写；超长截去尾部 | 按你的要求适配；不按三句分组 |
 | prefix | 始终为空 | 不使用滚动 prefix，不跨样本，不塞入原问题 |
 | 采样 | do_sample=True，top_p=0.75，禁用 top-k | 作者示例 |
 | temperature | 1.0 | 明确采用 Transformers 默认值，非 ACL 指定值 |
 | decoder 输出 | max_length=4096，每条完整回答 | 整条改写的长度预算，区别于作者示例的每窗口 512 |
-| encoder 输入 | 最大 4096 token，超长报错 | 本项目安全边界，不静默截断 |
+| encoder 输入 | 最大 4096 token，超长保留开头、截去尾部 | 包含完整控制模板和 EOS，记录截断审计 |
 | 精度 | 默认 auto；可显式 float32 / bfloat16 | auto 在所有选中卡均支持 BF16 时统一 BF16，否则统一 FP32；属于项目资源适配 |
 | 尝试次数 | 默认每条累计最多 3 次；失败耗尽时删行 | 仅重试空输出等生成异常，不按水印或质量分数挑结果 |
 
-内部控制码是 `100-diversity`，L60/O0 输入为 `lexical = 40, order = 100`，使用 `<sent> 完整回答 </sent>`，不是聊天模板。分句仅用于规范化和审计，不再控制每次改写的句数；每条回答调用一次 Dipper，失败时最多重试两次。生成不使用 KGW 处理器、检测器、密钥或逆水印。是否洗净仍需事后检测。
+内部控制码是 `100-diversity`，L60/O0 输入为 `lexical = 40, order = 100`，使用 `<sent> 回答文本 </sent>`。分句用于规范化和审计；每条回答调用一次 Dipper，失败时最多重试两次。生成不使用 KGW 处理器、检测器、密钥或逆水印。是否洗净仍需事后检测。
 
 ## 1. 下载模型（CPU，不占 GPU）
 
@@ -62,29 +62,33 @@ python baseline_acl/paraphrase_up.py \
   --input data/dolly15k_qwen2_5_14b_kgw_train.parquet --preflight
 ```
 
-inspect 只检查 Parquet；preflight 只加载小 tokenizer 和 NLTK，检查**每条完整回答及控制码**是否超出 encoder 输入预算，不加载 Dipper 权重、不占 GPU。超长会报错，不会静默截断，也不会自动退回三句窗口；实际生成仍会再次检查完整输入及输出长度。
+inspect 只检查 Parquet；preflight 只加载小 tokenizer 和 NLTK，不加载 Dipper 权重、不占 GPU。完整输入超过 encoder 预算时自动保留回答开头、截去尾部，保留完整控制模板和 EOS；预检显示截断条数及前后长度，正式运行把对应行号、ID、长度和文本哈希写入审计。未超长的回答与原流程一致，旧断点可继续使用。每条仍只调用一次 Dipper，不切成窗口；实际生成再次核对输入及输出长度。
 
 原训练集 **14,511 行**，验证集 500 行。保留行只替换 teacher_response，问题、ID、顺序、其余列和 schema/metadata 均保持；默认 `--on-failure drop` 会删去重试耗尽的整条样本。按作者用法归一化空白、分句、拼接，因此换行/排版可能改变；正式实验应抽查数字、事实、列表和代码，不能假定改写天然保真。
 
 ## 3. Dipper 普通改写
 
-GPU 编号只通过 `CUDA_VISIBLE_DEVICES` 选择，不提供 `--gpus` 编号参数。下面分别选择 1、2 号卡与 0、1 号卡，运行前确认各卡显存空闲或已协调使用。
+未设置 `CUDA_VISIBLE_DEVICES` 时，`--num-gpus 3` 自动按空闲显存选择 3 张卡并并行改写。
 
 ```bash
+unset CUDA_VISIBLE_DEVICES
+
 # KGW gamma=0.25, delta=2
-CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_up.py \
+python baseline_acl/paraphrase_up.py \
   --input data/dolly15k_qwen2_5_14b_kgw_train.parquet \
   --output data/dolly15k_qwen2_5_14b_kgw_up_dipper_train.parquet \
-  --num-gpus 2
+  --num-gpus 3
 
 # KGW gamma=0.5, delta=3
-CUDA_VISIBLE_DEVICES=0,1 python baseline_acl/paraphrase_up.py \
+python baseline_acl/paraphrase_up.py \
   --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet \
   --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_train.parquet \
-  --num-gpus 2
+  --num-gpus 3
 ```
 
-`--num-gpus` 可省略，默认使用环境中选中的卡数；若显式填写，必须与可见卡数完全一致。每张卡由一个独立进程加载完整 Dipper 副本，动态领取整条回答；这是数据并行，不是模型切分。父进程统一管理一个进度 JSONL、一个审计 JSON 和最终 Parquet，按原始行序汇总。`--batch-size` 不决定卡数，默认 1 仍可让多张卡工作。
+每张卡由一个独立进程加载完整 Dipper，动态领取回答，快卡领取更多样本。父进程统一管理断点、审计和最终 Parquet，按原始行序汇总。`--batch-size` 默认 1 即可；超长自动截断、三次失败删行的策略保持一致。
+
+自动模式省略 `--num-gpus` 时选 1 张卡。显存初筛估计每卡需至少 30000 MiB，FP32 需至少 50000 MiB；选卡后再次检查实际精度与显存，模型加载及生成仍可能受其他进程占用影响。无法找到指定数量时直接报错。手动选卡使用 `CUDA_VISIBLE_DEVICES=1,2,3`；显式卡数须匹配，省略则使用全部指定卡，不会自动加入其他卡。`--inspect`、`--preflight` 仍只使用 CPU。
 
 `--dtype auto` 先确定所有选中卡的能力：全部支持 BF16 则统一 BF16，否则统一 FP32。显式 `--dtype float32` 或 `--dtype bfloat16` 会严格执行；不支持或显存不足时失败，不自动切换精度。每卡都需要加载完整模型及推理状态，显存不能跨卡合并。单卡选择 `CUDA_VISIBLE_DEVICES=1`，命令加 `--dtype float32` 可保留作者示例默认精度；40GB 卡通常需 BF16，但仍须足够空闲显存。最终审计记录实际精度。
 

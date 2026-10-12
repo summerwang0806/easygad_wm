@@ -1,6 +1,6 @@
 # Dipper-UP 基线
 
-用 Dipper 改写 KGW 教师训练回答，再跑两组蒸馏实验。每条回答全部句子一次改写，只替换 `teacher_response`，不改问题和 test 数据。
+用 Dipper 改写 KGW 教师训练回答，再跑两组蒸馏实验。每条回答一次改写；输入超长时保留开头、截去尾部。只替换 `teacher_response`，不改问题和 test 数据。
 
 ACL 论文指定使用 Dipper，但未披露改写粒度；当前整篇模式是本项目配置，不是原论文已确认的设置。
 
@@ -18,23 +18,30 @@ python baseline_acl/paraphrase_up.py \
 
 模型约 45 GB；预检只用 CPU，不加载模型权重。
 
+默认完整输入上限为 4096 token（含 Dipper 模板和 EOS）。超长回答自动截断，预检显示截断条数，正式运行在 `.audit.json` 中记录行号和截断前后长度；未超长的回答沿用原流程，下面命令无需增加参数。
+
 ## 2. 改写训练集
 
 ```bash
+# 自动选择空闲 GPU；清除以前手动指定的卡号
+unset CUDA_VISIBLE_DEVICES
+
 # 这个是0.25/2的kgw参数配置
-CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_up.py \
+python baseline_acl/paraphrase_up.py \
   --input data/dolly15k_qwen2_5_14b_kgw_train.parquet \
   --output data/dolly15k_qwen2_5_14b_kgw_up_dipper_train.parquet \
-  --num-gpus 2
+  --num-gpus 3
 
 # 这个是0.5/3的kgw参数配置
-CUDA_VISIBLE_DEVICES=0,1 python baseline_acl/paraphrase_up.py \
+python baseline_acl/paraphrase_up.py \
   --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet \
   --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_train.parquet \
-  --num-gpus 2
+  --num-gpus 3
 ```
 
-GPU 编号只写在 `CUDA_VISIBLE_DEVICES`；`--num-gpus` 可省略，显式值须与可见卡数一致。每卡一个完整 Dipper，动态领取整条回答，不切分模型；`--batch-size` 不是 GPU 数，默认 1 即可。
+`--num-gpus 3` 自动按空闲显存选择 3 张卡，每卡一个完整 Dipper，动态领取回答；快卡会领取更多样本，最终按原始顺序输出。可改为其他卡数，省略默认自动选 1 张卡。`--batch-size` 默认 1 即可。
+
+要手动选卡，可在命令前加 `CUDA_VISIBLE_DEVICES=1,2,3`，此时 `--num-gpus` 必须匹配指定卡数（省略则使用全部指定卡）。自动选卡估计每卡至少需 30000 MiB 空闲显存，FP32 至少 50000 MiB；不足所需卡数时会报错，不会悄悄减少卡数。
 
 默认 `--dtype auto`：所有选中卡都支持 BF16 时统一用 BF16，否则统一 FP32。可显式指定精度，不会自动退回 FP32；每卡均需足够空闲显存加载完整模型。
 

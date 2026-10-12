@@ -34,7 +34,7 @@ clean 的原始 p≤0.05 误报率是 10.8%，去重后为 5.0%；p≤0.01 对�
 生成和训练环节仍需核实的事项：
 
 - 原教师 parquet、实际教师生成命令和模型 provenance 本地缺失。`wm_data/generate_teacher_data.py:47-49` 当前默认模型为 Qwen2.5-0.5B；README 中带 14b 文件名的 γ=0.5、δ=3 示例未显式设置 `--model`。这不证明本次教师用错，但仅凭 14b 文件名不能确认教师为 14B，应核对当时的 `--model` 命令或 parquet part 中 `kgw_detector` metadata。
-- 本地 warmup 实际日志证明用 Qwen2.5-0.5B、γ0.5δ3 名称的 train/test parquet 训练 1 epoch，并保存 global_step_1813。日志位置：`ray_tmp/ray/session_2026-10-09_12-44-12_841737_1331653/logs/worker-fdd9ddaefda427b1bc07cc77adeee2697fa43636ee1a42bacd1fa8a2-01000000-1342387.out`，模型行67，数据行213/218，阶段与epoch行334/336，完成与checkpoint行3889/3890。没有找到本次 GAD 的完整运行日志，当前只能核对采样文件中的 checkpoint 路径，无法重建实际训练配置与奖励轨迹。
+- warmup 实际日志证明用 Qwen2.5-0.5B、γ0.5δ3 名称的 train/test parquet 训练 1 epoch，并保存 global_step_1813。服务器后续返回的 `resume_audit.json` 也补齐成功 GAD 的实际配置：从当前 warmup 1813 actor/critic 权重初始化，日志 `Training from scratch`，训练从 step1 到1813。新旧 GAD 的全部 342 个安全配置字段已比较，只有预期数据/初始化/实验路径，以及恢复模式和 Ray CPU 数的差异；训练超参数一致。详细证据见同目录 `resume_config_comparison.md`、`server_gad_config_comparison.json`。
 - 代码中 warmup 对 teacher_response 做 SFT，GAD 对学生 rollout 做 PPO，脚本将 warmup actor/critic 导出并加载为 GAD 初始化。当前 GAD 脚本 `actor.use_kl_loss=False`，配置 `use_kl_in_reward=False`，阶段也关闭 reference；`KL_COEF=0.001` 本身不表示启用了 KL 约束。后续核对确认这些设置在旧实验也相同，未由断点恢复补丁引入，不能据此解释新旧结果差异；新旧对照以同目录 `resume_config_comparison.md` 为准。
 - 训练/测试拆分代码有固定 seed 的随机划分，但本地没有本次实际 train/test parquet，无法实证核对是否无 ID 重叠、教师样本参数是否混用。教师生成断点恢复对旧 part 主要检查行数/schema，若改变模型或γ后复用旧未完成输出目录，存在混合旧回答的可能；本次没有发生证据。
 - GAD 有 9 条可见回答重新编码后超过1536个 token，最大1777；clean 有2条，warmup没有。生成脚本确实设置 vLLM `max_tokens=1536`，检测用 `result.outputs[0].text` 重新编码，而未保存原输出 token IDs；因此目前不能把重编码后的数值认定为生成时上限失效，需保存原 token IDs/finish_reason 才能追查。

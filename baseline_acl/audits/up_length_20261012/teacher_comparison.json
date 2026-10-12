@@ -1,0 +1,716 @@
+{
+  "schema": "teacher-dataset-comparison-v1",
+  "script_sha256": "59dccedeee6af0675da8e777d843ac567ced80170a6b32b9a867f8af4712635e",
+  "datasets": {
+    "old_train": {
+      "path": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_train.parquet",
+      "status": "ok",
+      "file_sha256": "3d292d904136c07b750cff3fd1017cd3d42607d955254d48a903b6a0f5b41a4a",
+      "parquet_rows": 14511,
+      "schema": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "content",
+          "type": "list<element: struct<content: string, role: string>>",
+          "nullable": true
+        },
+        {
+          "name": "teacher_response",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "grounded",
+          "type": "bool",
+          "nullable": true
+        },
+        {
+          "name": "flaw",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "agreement",
+          "type": "bool",
+          "nullable": true
+        }
+      ],
+      "schema_metadata_keys": [
+        "huggingface"
+      ],
+      "rows": 14511,
+      "invalid_id_count": 0,
+      "unique_valid_id_count": 14511,
+      "duplicate_valid_id_extra_rows": 0,
+      "id_order_sha256": "f61abbcefd04717172f8d2b6f7d523bd907747782ec31ab243472754bfed479e",
+      "id_content_order_sha256": "b413cc33102e1aa028fdc6fa8b1e004561035d7fb545a2de84b591f483993fb1",
+      "id_content_sorted_sha256": "607ce4d1e82b1b1779764c0ea9d31412de8d0ac219f578a71065bd2dbf829145",
+      "teacher_responses": {
+        "non_string_count": 0,
+        "empty_or_whitespace_count": 0,
+        "nonempty_count": 14511,
+        "unique_nonempty_exact_text_count": 14492,
+        "duplicate_nonempty_extra_rows": 19,
+        "max_identical_nonempty_response_frequency": 3,
+        "character_lengths": {
+          "n": 14511,
+          "mean": 1002.8926331748329,
+          "min": 4,
+          "p05": 81.0,
+          "p25": 324.0,
+          "median": 732.0,
+          "p75": 1559.0,
+          "p95": 2540.0,
+          "max": 7156
+        },
+        "english_alphanumeric_word_lengths": {
+          "n": 14511,
+          "mean": 158.0225346289022,
+          "min": 1,
+          "p05": 13.0,
+          "p25": 53.0,
+          "median": 118.0,
+          "p75": 246.0,
+          "p95": 395.0,
+          "max": 1381
+        },
+        "simple_text_repetition": {
+          "method": "lowercase text, extract ASCII [a-z0-9]+ words, then 1 - unique word 4-grams / all word 4-grams",
+          "warning": "Not tokenizer repetition and not the severe token-bigram statistic in the result table.",
+          "valid_answers_with_at_least_four_words": 14486,
+          "repeated_word4_fraction": {
+            "n": 14486,
+            "mean": 0.01334196805776808,
+            "min": 0.0,
+            "p05": 0.0,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.013605442176870763,
+            "p95": 0.06214936573164195,
+            "max": 0.9615877080665813
+          },
+          "word4_fraction_gt_0_5_count": 9,
+          "word4_fraction_gt_0_5_fraction_of_all_rows": 0.0006202191440975812
+        }
+      },
+      "generation_metadata": {
+        "status": "missing",
+        "parts_directory": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_train.parquet.parts",
+        "parts_directory_exists": false,
+        "candidate_score_parquet_count": 0,
+        "score_parquet_metadata_examined": 0,
+        "parameter_values": {},
+        "records": [
+          {
+            "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_train.parquet",
+            "kind": "parquet_schema.kgw_detector",
+            "status": "missing",
+            "parameters": {}
+          },
+          {
+            "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_train.parquet.metadata.json",
+            "kind": "metadata_sidecar",
+            "status": "missing"
+          }
+        ],
+        "limitations": [
+          "No teacher identity is inferred from a dataset filename.",
+          "Recorded model paths do not prove immutable model weights or tokenizer versions.",
+          "The generator normally preserves source schema in final teacher Parquet and may delete parts after completion.",
+          "Only the first four score-part metadata records are inspected."
+        ]
+      }
+    },
+    "new_train": {
+      "path": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet",
+      "status": "ok",
+      "file_sha256": "ff5e5b827bd9d5bd20eeeaf2f4dfc2cc5fbed68204e23836e5507b3e8fac7cb6",
+      "parquet_rows": 14511,
+      "schema": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "content",
+          "type": "list<element: struct<content: string, role: string>>",
+          "nullable": true
+        },
+        {
+          "name": "teacher_response",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "grounded",
+          "type": "bool",
+          "nullable": true
+        },
+        {
+          "name": "flaw",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "agreement",
+          "type": "bool",
+          "nullable": true
+        }
+      ],
+      "schema_metadata_keys": [
+        "huggingface"
+      ],
+      "rows": 14511,
+      "invalid_id_count": 0,
+      "unique_valid_id_count": 14511,
+      "duplicate_valid_id_extra_rows": 0,
+      "id_order_sha256": "f61abbcefd04717172f8d2b6f7d523bd907747782ec31ab243472754bfed479e",
+      "id_content_order_sha256": "b413cc33102e1aa028fdc6fa8b1e004561035d7fb545a2de84b591f483993fb1",
+      "id_content_sorted_sha256": "607ce4d1e82b1b1779764c0ea9d31412de8d0ac219f578a71065bd2dbf829145",
+      "teacher_responses": {
+        "non_string_count": 0,
+        "empty_or_whitespace_count": 0,
+        "nonempty_count": 14511,
+        "unique_nonempty_exact_text_count": 14489,
+        "duplicate_nonempty_extra_rows": 22,
+        "max_identical_nonempty_response_frequency": 6,
+        "character_lengths": {
+          "n": 14511,
+          "mean": 1809.457997381297,
+          "min": 1,
+          "p05": 58.0,
+          "p25": 171.0,
+          "median": 408.0,
+          "p75": 2017.0,
+          "p95": 7638.0,
+          "max": 18301
+        },
+        "english_alphanumeric_word_lengths": {
+          "n": 14511,
+          "mean": 276.5145751498863,
+          "min": 0,
+          "p05": 10.0,
+          "p25": 29.0,
+          "median": 67.0,
+          "p75": 290.0,
+          "p95": 1249.0,
+          "max": 1536
+        },
+        "simple_text_repetition": {
+          "method": "lowercase text, extract ASCII [a-z0-9]+ words, then 1 - unique word 4-grams / all word 4-grams",
+          "warning": "Not tokenizer repetition and not the severe token-bigram statistic in the result table.",
+          "valid_answers_with_at_least_four_words": 14458,
+          "repeated_word4_fraction": {
+            "n": 14458,
+            "mean": 0.2296772810751146,
+            "min": 0.0,
+            "p05": 0.0,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.3432614555256065,
+            "p95": 0.9595518905446253,
+            "max": 0.9986928104575163
+          },
+          "word4_fraction_gt_0_5_count": 3308,
+          "word4_fraction_gt_0_5_fraction_of_all_rows": 0.2279649920749776
+        }
+      },
+      "generation_metadata": {
+        "status": "missing",
+        "parts_directory": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet.parts",
+        "parts_directory_exists": false,
+        "candidate_score_parquet_count": 0,
+        "score_parquet_metadata_examined": 0,
+        "parameter_values": {},
+        "records": [
+          {
+            "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet",
+            "kind": "parquet_schema.kgw_detector",
+            "status": "missing",
+            "parameters": {}
+          },
+          {
+            "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet.metadata.json",
+            "kind": "metadata_sidecar",
+            "status": "missing"
+          }
+        ],
+        "limitations": [
+          "No teacher identity is inferred from a dataset filename.",
+          "Recorded model paths do not prove immutable model weights or tokenizer versions.",
+          "The generator normally preserves source schema in final teacher Parquet and may delete parts after completion.",
+          "Only the first four score-part metadata records are inspected."
+        ]
+      }
+    },
+    "old_test": {
+      "path": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_test.parquet",
+      "status": "ok",
+      "file_sha256": "5768d9ddaa431953939115a23ade8f42f5a7384b8215cc581ceac66a2c8282d1",
+      "parquet_rows": 500,
+      "schema": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "content",
+          "type": "list<element: struct<content: string, role: string>>",
+          "nullable": true
+        },
+        {
+          "name": "teacher_response",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "grounded",
+          "type": "bool",
+          "nullable": true
+        },
+        {
+          "name": "flaw",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "agreement",
+          "type": "bool",
+          "nullable": true
+        }
+      ],
+      "schema_metadata_keys": [
+        "huggingface"
+      ],
+      "rows": 500,
+      "invalid_id_count": 0,
+      "unique_valid_id_count": 500,
+      "duplicate_valid_id_extra_rows": 0,
+      "id_order_sha256": "4552d85a5c8499aa4e8b493c97f2810b53eef2de3f517eb7fbd2cc1a71601b72",
+      "id_content_order_sha256": "d39223c20c1c54599667ca668124a944b345b65eaba047e9a47aab47f504923c",
+      "id_content_sorted_sha256": "e52f2c6b413e9b5ad0471148155925f29896400671e16a985e4da911f5bdddac",
+      "teacher_responses": {
+        "non_string_count": 0,
+        "empty_or_whitespace_count": 0,
+        "nonempty_count": 500,
+        "unique_nonempty_exact_text_count": 500,
+        "duplicate_nonempty_extra_rows": 0,
+        "max_identical_nonempty_response_frequency": 1,
+        "character_lengths": {
+          "n": 500,
+          "mean": 1064.914,
+          "min": 29,
+          "p05": 110.0,
+          "p25": 374.75,
+          "median": 837.0,
+          "p75": 1638.75,
+          "p95": 2591.149999999997,
+          "max": 5201
+        },
+        "english_alphanumeric_word_lengths": {
+          "n": 500,
+          "mean": 167.922,
+          "min": 3,
+          "p05": 17.0,
+          "p25": 63.0,
+          "median": 135.0,
+          "p75": 259.0,
+          "p95": 409.1999999999998,
+          "max": 909
+        },
+        "simple_text_repetition": {
+          "method": "lowercase text, extract ASCII [a-z0-9]+ words, then 1 - unique word 4-grams / all word 4-grams",
+          "warning": "Not tokenizer repetition and not the severe token-bigram statistic in the result table.",
+          "valid_answers_with_at_least_four_words": 499,
+          "repeated_word4_fraction": {
+            "n": 499,
+            "mean": 0.014650577692974308,
+            "min": 0.0,
+            "p05": 0.0,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0153941199370356,
+            "p95": 0.06710526315789471,
+            "max": 0.3774834437086093
+          },
+          "word4_fraction_gt_0_5_count": 0,
+          "word4_fraction_gt_0_5_fraction_of_all_rows": 0.0
+        }
+      },
+      "generation_metadata": {
+        "status": "missing",
+        "parts_directory": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_test.parquet.parts",
+        "parts_directory_exists": false,
+        "candidate_score_parquet_count": 0,
+        "score_parquet_metadata_examined": 0,
+        "parameter_values": {},
+        "records": [
+          {
+            "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_test.parquet",
+            "kind": "parquet_schema.kgw_detector",
+            "status": "missing",
+            "parameters": {}
+          },
+          {
+            "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_test.parquet.metadata.json",
+            "kind": "metadata_sidecar",
+            "status": "missing"
+          }
+        ],
+        "limitations": [
+          "No teacher identity is inferred from a dataset filename.",
+          "Recorded model paths do not prove immutable model weights or tokenizer versions.",
+          "The generator normally preserves source schema in final teacher Parquet and may delete parts after completion.",
+          "Only the first four score-part metadata records are inspected."
+        ]
+      }
+    },
+    "new_test": {
+      "path": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet",
+      "status": "ok",
+      "file_sha256": "72b107d9f86b42cf229ed0c1e4f156a4dd42cc206451cff854ffa760aa1f02d0",
+      "parquet_rows": 500,
+      "schema": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "content",
+          "type": "list<element: struct<content: string, role: string>>",
+          "nullable": true
+        },
+        {
+          "name": "teacher_response",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "grounded",
+          "type": "bool",
+          "nullable": true
+        },
+        {
+          "name": "flaw",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "agreement",
+          "type": "bool",
+          "nullable": true
+        }
+      ],
+      "schema_metadata_keys": [
+        "huggingface"
+      ],
+      "rows": 500,
+      "invalid_id_count": 0,
+      "unique_valid_id_count": 500,
+      "duplicate_valid_id_extra_rows": 0,
+      "id_order_sha256": "4552d85a5c8499aa4e8b493c97f2810b53eef2de3f517eb7fbd2cc1a71601b72",
+      "id_content_order_sha256": "d39223c20c1c54599667ca668124a944b345b65eaba047e9a47aab47f504923c",
+      "id_content_sorted_sha256": "e52f2c6b413e9b5ad0471148155925f29896400671e16a985e4da911f5bdddac",
+      "teacher_responses": {
+        "non_string_count": 0,
+        "empty_or_whitespace_count": 0,
+        "nonempty_count": 500,
+        "unique_nonempty_exact_text_count": 500,
+        "duplicate_nonempty_extra_rows": 0,
+        "max_identical_nonempty_response_frequency": 1,
+        "character_lengths": {
+          "n": 500,
+          "mean": 2042.918,
+          "min": 7,
+          "p05": 61.0,
+          "p25": 193.75,
+          "median": 472.5,
+          "p75": 3120.0,
+          "p95": 7789.699999999999,
+          "max": 11460
+        },
+        "english_alphanumeric_word_lengths": {
+          "n": 500,
+          "mean": 306.99,
+          "min": 1,
+          "p05": 10.950000000000003,
+          "p25": 31.75,
+          "median": 79.0,
+          "p75": 423.25,
+          "p95": 1253.1999999999998,
+          "max": 1534
+        },
+        "simple_text_repetition": {
+          "method": "lowercase text, extract ASCII [a-z0-9]+ words, then 1 - unique word 4-grams / all word 4-grams",
+          "warning": "Not tokenizer repetition and not the severe token-bigram statistic in the result table.",
+          "valid_answers_with_at_least_four_words": 497,
+          "repeated_word4_fraction": {
+            "n": 497,
+            "mean": 0.2534183542923583,
+            "min": 0.0,
+            "p05": 0.0,
+            "p25": 0.0,
+            "median": 0.018867924528301883,
+            "p75": 0.5316455696202531,
+            "p95": 0.9697059075273146,
+            "max": 0.9941324392288349
+          },
+          "word4_fraction_gt_0_5_count": 126,
+          "word4_fraction_gt_0_5_fraction_of_all_rows": 0.252
+        }
+      },
+      "generation_metadata": {
+        "status": "missing",
+        "parts_directory": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet.parts",
+        "parts_directory_exists": false,
+        "candidate_score_parquet_count": 0,
+        "score_parquet_metadata_examined": 0,
+        "parameter_values": {},
+        "records": [
+          {
+            "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet",
+            "kind": "parquet_schema.kgw_detector",
+            "status": "missing",
+            "parameters": {}
+          },
+          {
+            "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet.metadata.json",
+            "kind": "metadata_sidecar",
+            "status": "missing"
+          }
+        ],
+        "limitations": [
+          "No teacher identity is inferred from a dataset filename.",
+          "Recorded model paths do not prove immutable model weights or tokenizer versions.",
+          "The generator normally preserves source schema in final teacher Parquet and may delete parts after completion.",
+          "Only the first four score-part metadata records are inspected."
+        ]
+      }
+    }
+  },
+  "comparisons": {
+    "train": {
+      "status": "ok",
+      "same_valid_id_set": true,
+      "old_only_id_count": 0,
+      "new_only_id_count": 0,
+      "same_id_order": true,
+      "same_schema_without_metadata": true,
+      "same_schema_including_metadata": true,
+      "common_valid_ids": 14511,
+      "content_alignment_status": "checked_by_id",
+      "content_mismatch_count": 0,
+      "first_content_mismatch_ids": [],
+      "all_id_aligned_content_equal": true,
+      "same_exact_teacher_response_count": 21,
+      "same_exact_teacher_response_fraction_of_common_ids": 0.001447178002894356,
+      "generation_parameter_comparison": {
+        "chat_template_sha256": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "delta": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "gamma": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "hash_key": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "input": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "max_new_tokens": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "max_prompt_tokens": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "model": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "seed": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "seeding": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "temperature": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "top_k": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "top_p": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "watermark": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        }
+      }
+    },
+    "test": {
+      "status": "ok",
+      "same_valid_id_set": true,
+      "old_only_id_count": 0,
+      "new_only_id_count": 0,
+      "same_id_order": true,
+      "same_schema_without_metadata": true,
+      "same_schema_including_metadata": true,
+      "common_valid_ids": 500,
+      "content_alignment_status": "checked_by_id",
+      "content_mismatch_count": 0,
+      "first_content_mismatch_ids": [],
+      "all_id_aligned_content_equal": true,
+      "same_exact_teacher_response_count": 0,
+      "same_exact_teacher_response_fraction_of_common_ids": 0.0,
+      "generation_parameter_comparison": {
+        "chat_template_sha256": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "delta": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "gamma": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "hash_key": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "input": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "max_new_tokens": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "max_prompt_tokens": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "model": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "seed": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "seeding": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "temperature": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "top_k": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "top_p": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        },
+        "watermark": {
+          "status": "missing",
+          "old_values": [],
+          "new_values": []
+        }
+      }
+    }
+  },
+  "train_test_disjointness": {
+    "old": {
+      "status": "checked",
+      "overlap_id_count": 0,
+      "disjoint": true,
+      "all_ids_valid_and_unique": true
+    },
+    "new": {
+      "status": "checked",
+      "overlap_id_count": 0,
+      "disjoint": true,
+      "all_ids_valid_and_unique": true
+    }
+  },
+  "limitations": [
+    "Only summaries and short problem IDs are exported; no teacher response or prompt text is exported.",
+    "English word 4-gram repetition is a text diagnostic, not the tokenizer metric in the experiment table.",
+    "Missing generation metadata cannot establish that gamma and delta were the only changes.",
+    "This audit does not load models, prove weight identity, or reproduce watermark generation."
+  ]
+}

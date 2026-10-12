@@ -1,0 +1,415 @@
+{
+  "scope": "Exact comparison of every safe Hydra config field for old gamma0.25 delta2 and new gamma0.5 delta3; server resume evidence audit only.",
+  "source_report_path": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\resume_audit.json",
+  "source_report_sha256": "a9e92e1fa3b0bd93fba0bfb0a0d0f212160c903fb25dc3ec81bf2fabe36c249e",
+  "comparison_method": "Use collect_resume_audit.inspect_log and its flat_safe parser for old complete logs; compare the complete actual_config_safe maps supplied in resume_audit.json. No collect_resume_audit.main execution. Save only safe differences, focused evidence, and source hashes.",
+  "comparisons": {
+    "warmup": {
+      "old_log_path": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\ray_tmp\\ray\\session_2026-09-27_11-52-47_976850_3025518\\logs\\worker-1afbc11fc6dd50d5c31a643866d57421807a9308ac744f3e06ef08f5-01000000-3033685.out",
+      "new_server_log_path": "/shared/wwx/EasyGAD/ray_tmp/ray/session_2026-10-09_12-44-12_841737_1331653/logs/worker-fdd9ddaefda427b1bc07cc77adeee2697fa43636ee1a42bacd1fa8a2-01000000-1342387.out",
+      "old_safe_leaf_count": 342,
+      "new_safe_leaf_count": 342,
+      "all_safe_keys_compared": true,
+      "difference_count": 4,
+      "equal_key_count": 338,
+      "differences": [
+        {
+          "key": "data.train_files",
+          "old": "data/dolly15k_qwen2_5_14b_kgw_train.parquet",
+          "new": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet",
+          "old_key_exists": true,
+          "new_key_exists": true
+        },
+        {
+          "key": "data.val_files",
+          "old": "data/dolly15k_qwen2_5_14b_kgw_test.parquet",
+          "new": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet",
+          "old_key_exists": true,
+          "new_key_exists": true
+        },
+        {
+          "key": "trainer.default_local_dir",
+          "old": "checkpoints/kgw_gad_05b_14b_full/warmup",
+          "new": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup",
+          "old_key_exists": true,
+          "new_key_exists": true
+        },
+        {
+          "key": "trainer.experiment_name",
+          "old": "kgw_gad_05b_14b_full_warmup",
+          "new": "te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_warmup",
+          "old_key_exists": true,
+          "new_key_exists": true
+        }
+      ]
+    },
+    "gad": {
+      "old_log_path": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\ray_tmp\\ray\\session_2026-09-27_15-51-01_101879_3693581\\logs\\worker-12b379a8dfba1b8a22fde40f3e8b6648e8abdf7377fe03795f4dea58-01000000-3701905.out",
+      "new_server_log_path": "/tmp/easygad-wwx/ray/session_2026-10-10_10-37-55_080570_642631/logs/worker-fa3e63716174a0aa78d8a9011ff47206dbaa52519d833b6b3cd61980-01000000-644781.out",
+      "old_safe_leaf_count": 342,
+      "new_safe_leaf_count": 342,
+      "all_safe_keys_compared": true,
+      "difference_count": 10,
+      "equal_key_count": 332,
+      "differences": [
+        {
+          "key": "actor_rollout_ref.model.path",
+          "old": "checkpoints/kgw_gad_05b_14b_full/warmup/global_step_1813/actor/huggingface",
+          "new": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813/actor/huggingface",
+          "old_key_exists": true,
+          "new_key_exists": true
+        },
+        {
+          "key": "critic.model.path",
+          "old": "checkpoints/kgw_gad_05b_14b_full/warmup/global_step_1813/critic/huggingface",
+          "new": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813/critic/huggingface",
+          "old_key_exists": true,
+          "new_key_exists": true
+        },
+        {
+          "key": "critic.model.tokenizer_path",
+          "old": "checkpoints/kgw_gad_05b_14b_full/warmup/global_step_1813/actor/huggingface",
+          "new": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813/actor/huggingface",
+          "old_key_exists": true,
+          "new_key_exists": true
+        },
+        {
+          "key": "data.train_files",
+          "old": "data/dolly15k_qwen2_5_14b_kgw_train.parquet",
+          "new": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet",
+          "old_key_exists": true,
+          "new_key_exists": true
+        },
+        {
+          "key": "data.val_files",
+          "old": "data/dolly15k_qwen2_5_14b_kgw_test.parquet",
+          "new": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet",
+          "old_key_exists": true,
+          "new_key_exists": true
+        },
+        {
+          "key": "ray_init.num_cpus",
+          "old": null,
+          "new": 8,
+          "old_key_exists": true,
+          "new_key_exists": true
+        },
+        {
+          "key": "reward_model.model.input_tokenizer",
+          "old": "checkpoints/kgw_gad_05b_14b_full/warmup/global_step_1813/actor/huggingface",
+          "new": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813/actor/huggingface",
+          "old_key_exists": true,
+          "new_key_exists": true
+        },
+        {
+          "key": "trainer.default_local_dir",
+          "old": "checkpoints/kgw_gad_05b_14b_full/gad",
+          "new": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad",
+          "old_key_exists": true,
+          "new_key_exists": true
+        },
+        {
+          "key": "trainer.experiment_name",
+          "old": "kgw_gad_05b_14b_full_gad",
+          "new": "te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_gad",
+          "old_key_exists": true,
+          "new_key_exists": true
+        },
+        {
+          "key": "trainer.resume_mode",
+          "old": "disable",
+          "new": "auto",
+          "old_key_exists": true,
+          "new_key_exists": true
+        }
+      ]
+    }
+  },
+  "focused_actual_settings": {
+    "warmup": {
+      "old": {
+        "actor_rollout_ref.model.path": "/shared/public_models/Qwen2.5-0.5B",
+        "critic.model.path": "/shared/public_models/Qwen2.5-0.5B",
+        "critic.model.tokenizer_path": "/shared/public_models/Qwen2.5-0.5B",
+        "actor_rollout_ref.actor.optim.lr": 1e-06,
+        "critic.optim.lr": 1e-05,
+        "data.train_batch_size": 8,
+        "actor_rollout_ref.actor.ppo_mini_batch_size": 8,
+        "actor_rollout_ref.rollout.n": 1,
+        "actor_rollout_ref.rollout.temperature": 0.8,
+        "trainer.total_epochs": 1,
+        "trainer.training_stage": "warmup",
+        "trainer.resume_mode": "disable",
+        "trainer.resume_from_path": null,
+        "ray_init.num_cpus": null,
+        "trainer.n_gpus_per_node": 2,
+        "trainer.nnodes": 1,
+        "actor_rollout_ref.actor.use_kl_loss": false,
+        "algorithm.use_kl_in_reward": false,
+        "actor_rollout_ref.actor.entropy_coeff": 0.0,
+        "actor_rollout_ref.actor.policy_loss.loss_mode": "vanilla"
+      },
+      "new": {
+        "actor_rollout_ref.model.path": "/shared/public_models/Qwen2.5-0.5B",
+        "critic.model.path": "/shared/public_models/Qwen2.5-0.5B",
+        "critic.model.tokenizer_path": "/shared/public_models/Qwen2.5-0.5B",
+        "actor_rollout_ref.actor.optim.lr": 1e-06,
+        "critic.optim.lr": 1e-05,
+        "data.train_batch_size": 8,
+        "actor_rollout_ref.actor.ppo_mini_batch_size": 8,
+        "actor_rollout_ref.rollout.n": 1,
+        "actor_rollout_ref.rollout.temperature": 0.8,
+        "trainer.total_epochs": 1,
+        "trainer.training_stage": "warmup",
+        "trainer.resume_mode": "disable",
+        "trainer.resume_from_path": null,
+        "ray_init.num_cpus": null,
+        "trainer.n_gpus_per_node": 2,
+        "trainer.nnodes": 1,
+        "actor_rollout_ref.actor.use_kl_loss": false,
+        "algorithm.use_kl_in_reward": false,
+        "actor_rollout_ref.actor.entropy_coeff": 0.0,
+        "actor_rollout_ref.actor.policy_loss.loss_mode": "vanilla"
+      }
+    },
+    "gad": {
+      "old": {
+        "actor_rollout_ref.model.path": "checkpoints/kgw_gad_05b_14b_full/warmup/global_step_1813/actor/huggingface",
+        "critic.model.path": "checkpoints/kgw_gad_05b_14b_full/warmup/global_step_1813/critic/huggingface",
+        "critic.model.tokenizer_path": "checkpoints/kgw_gad_05b_14b_full/warmup/global_step_1813/actor/huggingface",
+        "actor_rollout_ref.actor.optim.lr": 1e-06,
+        "critic.optim.lr": 1e-05,
+        "data.train_batch_size": 8,
+        "actor_rollout_ref.actor.ppo_mini_batch_size": 8,
+        "actor_rollout_ref.rollout.n": 2,
+        "actor_rollout_ref.rollout.temperature": 0.8,
+        "trainer.total_epochs": 1,
+        "trainer.training_stage": "gad",
+        "trainer.resume_mode": "disable",
+        "trainer.resume_from_path": null,
+        "ray_init.num_cpus": null,
+        "trainer.n_gpus_per_node": 2,
+        "trainer.nnodes": 1,
+        "actor_rollout_ref.actor.use_kl_loss": false,
+        "algorithm.use_kl_in_reward": false,
+        "actor_rollout_ref.actor.entropy_coeff": 0.0,
+        "actor_rollout_ref.actor.policy_loss.loss_mode": "clip_cov"
+      },
+      "new": {
+        "actor_rollout_ref.model.path": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813/actor/huggingface",
+        "critic.model.path": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813/critic/huggingface",
+        "critic.model.tokenizer_path": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813/actor/huggingface",
+        "actor_rollout_ref.actor.optim.lr": 1e-06,
+        "critic.optim.lr": 1e-05,
+        "data.train_batch_size": 8,
+        "actor_rollout_ref.actor.ppo_mini_batch_size": 8,
+        "actor_rollout_ref.rollout.n": 2,
+        "actor_rollout_ref.rollout.temperature": 0.8,
+        "trainer.total_epochs": 1,
+        "trainer.training_stage": "gad",
+        "trainer.resume_mode": "auto",
+        "trainer.resume_from_path": null,
+        "ray_init.num_cpus": 8,
+        "trainer.n_gpus_per_node": 2,
+        "trainer.nnodes": 1,
+        "actor_rollout_ref.actor.use_kl_loss": false,
+        "algorithm.use_kl_in_reward": false,
+        "actor_rollout_ref.actor.entropy_coeff": 0.0,
+        "actor_rollout_ref.actor.policy_loss.loss_mode": "clip_cov"
+      }
+    }
+  },
+  "server_training_evidence": {
+    "warmup": {
+      "events": [
+        {
+          "line": 354,
+          "text": "Total training steps: 1813"
+        },
+        {
+          "line": 1433,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_500"
+        },
+        {
+          "line": 2314,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1000"
+        },
+        {
+          "line": 3197,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1500"
+        },
+        {
+          "line": 3889,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813"
+        }
+      ],
+      "first_train_step": {
+        "line": 555,
+        "step": 1
+      },
+      "last_train_steps": [
+        {
+          "line": 3699,
+          "step": 1812
+        },
+        {
+          "line": 3890,
+          "step": 1813
+        }
+      ]
+    },
+    "gad": {
+      "events": [
+        {
+          "line": 354,
+          "text": "Total training steps: 1813"
+        },
+        {
+          "line": 365,
+          "text": "Training from scratch"
+        },
+        {
+          "line": 1443,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad/global_step_500"
+        },
+        {
+          "line": 2322,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad/global_step_1000"
+        },
+        {
+          "line": 3201,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad/global_step_1500"
+        },
+        {
+          "line": 3893,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad/global_step_1813"
+        }
+      ],
+      "first_train_step": {
+        "line": 559,
+        "step": 1
+      },
+      "last_train_steps": [
+        {
+          "line": 3703,
+          "step": 1812
+        },
+        {
+          "line": 3894,
+          "step": 1813
+        }
+      ]
+    }
+  },
+  "checkpoint_metadata_safe": {
+    "warmup": {
+      "tracker": "1813",
+      "stage_completed": "1813",
+      "selected_checkpoint": "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813",
+      "data_pt_exists": true,
+      "checkpoint_directories": [
+        "global_step_500",
+        "global_step_1000",
+        "global_step_1500",
+        "global_step_1813"
+      ],
+      "merge_completed": {
+        "actor": true,
+        "critic": true
+      },
+      "selected_checkpoint_state_file_names": [
+        "data.pt",
+        "actor/model_world_size_2_rank_0.pt",
+        "actor/optim_world_size_2_rank_0.pt",
+        "actor/optim_world_size_2_rank_1.pt",
+        "actor/model_world_size_2_rank_1.pt",
+        "actor/extra_state_world_size_2_rank_1.pt",
+        "actor/extra_state_world_size_2_rank_0.pt",
+        "critic/model_world_size_2_rank_0.pt",
+        "critic/optim_world_size_2_rank_0.pt",
+        "critic/optim_world_size_2_rank_1.pt",
+        "critic/model_world_size_2_rank_1.pt",
+        "critic/extra_state_world_size_2_rank_1.pt",
+        "critic/extra_state_world_size_2_rank_0.pt"
+      ]
+    },
+    "gad": {
+      "tracker": "1813",
+      "stage_completed": null,
+      "selected_checkpoint": "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad/global_step_1813",
+      "data_pt_exists": true,
+      "checkpoint_directories": [
+        "global_step_500",
+        "global_step_1000",
+        "global_step_1500",
+        "global_step_1813"
+      ],
+      "merge_completed": {
+        "actor": false,
+        "critic": false
+      },
+      "selected_checkpoint_state_file_names": [
+        "data.pt",
+        "actor/model_world_size_2_rank_0.pt",
+        "actor/optim_world_size_2_rank_0.pt",
+        "actor/optim_world_size_2_rank_1.pt",
+        "actor/model_world_size_2_rank_1.pt",
+        "actor/extra_state_world_size_2_rank_1.pt",
+        "actor/extra_state_world_size_2_rank_0.pt",
+        "critic/model_world_size_2_rank_0.pt",
+        "critic/optim_world_size_2_rank_0.pt",
+        "critic/optim_world_size_2_rank_1.pt",
+        "critic/model_world_size_2_rank_1.pt",
+        "critic/extra_state_world_size_2_rank_1.pt",
+        "critic/extra_state_world_size_2_rank_0.pt"
+      ]
+    }
+  },
+  "new_gad_checkpoint_restore_events": [],
+  "source_code_matches": {
+    "scripts/train/run_full_gad_optimized.sh": {
+      "server_sha256_lf": "3321ba32608ee2a7fbd86629db73b21fcee2d69360a929ea6b0a8e5d90d769b4",
+      "local_sha256_lf": "3321ba32608ee2a7fbd86629db73b21fcee2d69360a929ea6b0a8e5d90d769b4",
+      "matches": true
+    },
+    "verl/trainer/ppo/ray_trainer.py": {
+      "server_sha256_lf": "da112ce5df5c704ecc24912f7ad84c1c9cf89c39b34d43ec4eea4adcd74e21a3",
+      "local_sha256_lf": "da112ce5df5c704ecc24912f7ad84c1c9cf89c39b34d43ec4eea4adcd74e21a3",
+      "matches": true
+    },
+    "verl/workers/actor/dp_actor.py": {
+      "server_sha256_lf": "137599828555dbed98236f1a9c65efaa0907e3d25875604b62181d7332315eaf",
+      "local_sha256_lf": "137599828555dbed98236f1a9c65efaa0907e3d25875604b62181d7332315eaf",
+      "matches": true
+    },
+    "verl/workers/critic/dp_critic.py": {
+      "server_sha256_lf": "e36228ea46418ffcc38a4b37ff564386fde1a281176e8bd76bc9868113d36efa",
+      "local_sha256_lf": "e36228ea46418ffcc38a4b37ff564386fde1a281176e8bd76bc9868113d36efa",
+      "matches": true
+    },
+    "verl/trainer/ppo/core_algos.py": {
+      "server_sha256_lf": "69c2665e4cfef6143712790e8cf3b84784eaab623876f16d024fdd343a726c83",
+      "local_sha256_lf": "69c2665e4cfef6143712790e8cf3b84784eaab623876f16d024fdd343a726c83",
+      "matches": true
+    },
+    "verl/workers/fsdp_workers.py": {
+      "server_sha256_lf": "17561a9d71432b5d3ad4c1d1e50139b0f84f44724c20971f901de56addaad466",
+      "local_sha256_lf": "17561a9d71432b5d3ad4c1d1e50139b0f84f44724c20971f901de56addaad466",
+      "matches": true
+    },
+    "tools/merge_model2hf.py": {
+      "server_sha256_lf": "bd94f397040d1ca30038a2e5e3ac469708be0da39d8126bc9e189d158aad66a4",
+      "local_sha256_lf": "bd94f397040d1ca30038a2e5e3ac469708be0da39d8126bc9e189d158aad66a4",
+      "matches": true
+    }
+  },
+  "findings": {
+    "actual_new_gad_start": "resume_mode=auto but line365 explicitly says Training from scratch. First logged update is step1, final is1813. Therefore this GAD run did not restore a prior GAD checkpoint state; it initialized from the selected new experiment warmup1813 HF weights with fresh optimizer/scheduler/dataloader.",
+    "hyperparameters": "No difference in actor/critic LR, training batch, mini-batch, rollout n/temperature, total_epochs, loss mode, KL or entropy settings between the two actual GAD config maps.",
+    "resume_changes": "Only resume_mode disable->auto and ray_init.num_cpus null->8 are runtime/resume differences. Other eight GAD config differences are expected experiment/data/checkpoint/tokenizer path changes.",
+    "warmup": "Only train/validation file and experiment name/output directory differ. Both actual warmup configs have resume_mode=disable and ray_init.num_cpus=null.",
+    "tracker": "Both currently collected tracker values are1813; warmup .stage_completed is1813; both selected checkpoints have data.pt and model/optim/extra state shards for both roles/ranks.",
+    "merge_markers": "Warmup actor and critic HF .merge_completed markers exist. GAD markers are absent, which does not imply training failure; the training script only touches these markers while preparing warmup HF exports.",
+    "limits": "This report records the successful new GAD startup and current files. It does not prove why the earlier aborted attempt had no discoverable GAD checkpoint, nor physically hash model weights or teacher dataset contents. Source hashes describe collection-time server code and agree with current local code."
+  }
+}

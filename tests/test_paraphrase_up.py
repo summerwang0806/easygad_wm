@@ -4,6 +4,7 @@ from dataclasses import replace
 from contextlib import nullcontext, redirect_stderr
 import io
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -17,7 +18,7 @@ from baseline_acl.paraphrase_up import (
     run_paraphrasing, validate_output_paths, render_dipper_input, paraphrase_windows, validate_window_audit,
     preflight_source, asset_identity, dipper_weight_source,
     load_sentence_splitter, DipperGenerator, FORMAT_VERSION,
-    parse_visible_gpus, select_dtype, main,
+    parse_visible_gpus, select_up_gpus, gpu_inventory, select_dtype, main,
 )
 
 try:
@@ -34,6 +35,12 @@ class FakeTokenizer:
 
 def one_sentence(text):
     return [text]
+
+
+def fake_gpu_inventory():
+    return [{"gpu": i, "uuid": f"GPU-00000000-0000-0000-0000-{i:012d}", "name": "Mock A100",
+             "total_mib": 80_000, "free_mib": free}
+            for i, free in enumerate((9_000, 78_000, 61_000, 52_000))]
 
 
 class FakeGenerator:
@@ -99,6 +106,46 @@ class FakeStreamingGenerator:
 
 
 class PureUnitTests(unittest.TestCase):
+    def test_automatic_gpu_selection_uses_free_memory_and_exact_requested_count(self):
+        with patch("baseline_acl.paraphrase_up.gpu_inventory", return_value=fake_gpu_inventory()):
+            self.assertEqual(select_up_gpus(None, 3, "auto"), [row["uuid"] for row in fake_gpu_inventory()[1:]])
+            self.assertEqual(select_up_gpus(None, None, "auto"), [fake_gpu_inventory()[1]["uuid"]])
+            with self.assertRaisesRegex(RuntimeError, "only 3.*requested 4"):
+                select_up_gpus(None, 4, "auto")
+            for count in (0, -1):
+                with self.assertRaisesRegex(ValueError, "positive"):
+                    select_up_gpus(None, count, "auto")
+
+    def test_auto_selection_screens_memory_for_recorded_precision(self):
+        rows = fake_gpu_inventory()
+        rows[3]["free_mib"] = 32_000
+        with patch("baseline_acl.paraphrase_up.gpu_inventory", return_value=rows):
+            self.assertEqual(len(select_up_gpus(None, 3, "bfloat16")), 3)
+            with self.assertRaisesRegex(RuntimeError, "only 2.*50000MiB"):
+                select_up_gpus(None, 3, "float32")
+
+    def test_explicit_gpu_mask_never_auto_selects_additional_cards(self):
+        with patch("baseline_acl.paraphrase_up.gpu_inventory", side_effect=AssertionError("must not discover other GPUs")):
+            self.assertEqual(select_up_gpus("1,3,5", 3, "auto"), ["1", "3", "5"])
+            self.assertEqual(select_up_gpus("1,3", None, "auto"), ["1", "3"])
+            for visible, count in (("1,3", 3), ("", 3), ("-1", 3)):
+                with self.assertRaises(ValueError):
+                    select_up_gpus(visible, count, "auto")
+
+    def test_gpu_inventory_parses_uuid_and_reports_unavailable_driver(self):
+        row = fake_gpu_inventory()[1]
+        output = f"1, {row['uuid']}, Mock A100, 80000, 78000\n"
+        with patch("baseline_acl.paraphrase_up.subprocess.run", return_value=SimpleNamespace(stdout=output)) as run:
+            self.assertEqual(gpu_inventory(), [row])
+            self.assertIn("uuid", run.call_args.args[0][1])
+        for output in ("", "0, not-a-uuid, Broken, 100, 200\n"):
+            with patch("baseline_acl.paraphrase_up.subprocess.run", return_value=SimpleNamespace(stdout=output)):
+                with self.assertRaisesRegex(RuntimeError, "invalid GPU inventory"):
+                    gpu_inventory()
+        with patch("baseline_acl.paraphrase_up.subprocess.run", side_effect=FileNotFoundError("not installed")):
+            with self.assertRaisesRegex(RuntimeError, "could not read nvidia-smi"):
+                gpu_inventory()
+
     def test_visible_gpu_selection_is_explicit_and_matches_requested_count(self):
         self.assertEqual(parse_visible_gpus("1,3", 2), ["1", "3"])
         self.assertEqual(parse_visible_gpus(" 2 , 5 ", 2), ["2", "5"])
@@ -142,6 +189,7 @@ class PureUnitTests(unittest.TestCase):
     def test_cpu_entrypoints_do_not_validate_visible_gpus_or_probe_precision(self):
         forbidden = AssertionError("CPU modes must not inspect CUDA devices")
         with patch("baseline_acl.paraphrase_up.parse_visible_gpus", side_effect=forbidden), \
+             patch("baseline_acl.paraphrase_up.gpu_inventory", side_effect=forbidden), \
              patch("baseline_acl.paraphrase_up.select_dtype", side_effect=forbidden), \
              patch("baseline_acl.paraphrase_up.inspect_source", return_value={"rows": 3}), \
              patch("sys.stdout", new_callable=io.StringIO):
@@ -149,6 +197,7 @@ class PureUnitTests(unittest.TestCase):
         fake_transformers = SimpleNamespace(T5Tokenizer=SimpleNamespace(from_pretrained=lambda *args, **kwargs: FakeTokenizer()))
         with patch.dict(sys.modules, {"transformers": fake_transformers}), \
              patch("baseline_acl.paraphrase_up.parse_visible_gpus", side_effect=forbidden), \
+             patch("baseline_acl.paraphrase_up.gpu_inventory", side_effect=forbidden), \
              patch("baseline_acl.paraphrase_up.select_dtype", side_effect=forbidden), \
              patch("baseline_acl.paraphrase_up.asset_identity", return_value={}), \
              patch("baseline_acl.paraphrase_up.load_sentence_splitter", return_value=one_sentence), \
@@ -193,6 +242,44 @@ class PureUnitTests(unittest.TestCase):
         independent = prepare_response(FakeTokenizer(), " ".join(["word"] * 600),
                                        replace(GenerationConfig(), max_output_length=512), one_sentence)
         self.assertEqual(independent["issues"], [])
+
+    def test_up_truncation_preserves_short_inputs_exactly_and_handles_boundary(self):
+        tokenizer = FakeTokenizer()
+        text = "one two three"
+        config = replace(GenerationConfig(), max_input_tokens=12)
+        unchanged = prepare_response(tokenizer, text, config, one_sentence)
+        self.assertEqual(unchanged, prepare_response(tokenizer, text, config, one_sentence, truncate_overlong=True))
+        overlong = prepare_response(tokenizer, text + " four five six", config, one_sentence, truncate_overlong=True)
+        self.assertEqual(overlong["issues"], [])
+        self.assertLessEqual(overlong["prompt_tokens"], config.max_input_tokens)
+        self.assertEqual(overlong["source_tokens"], 6)
+        self.assertTrue((text + " four five six").startswith(overlong["windows"][0]["text"]))
+        self.assertEqual(overlong["input_truncation"]["original_input_tokens"], 15)
+
+    def test_truncation_preserves_unicode_and_control_template(self):
+        class CharacterTokenizer:
+            def encode(self, text, add_special_tokens=False):
+                return list(text) + (["EOS"] if add_special_tokens else [])
+        tokenizer = CharacterTokenizer()
+        empty_length = len(tokenizer.encode(render_dipper_input("", "", GenerationConfig()), add_special_tokens=True))
+        config = replace(GenerationConfig(), max_input_tokens=empty_length + 2)
+        prepared = prepare_response(tokenizer, "你好🤨abcdef", config, one_sentence, truncate_overlong=True)
+        self.assertEqual(prepared["windows"][0]["text"], "你好")
+        self.assertEqual(prepared["prompt_tokens"], config.max_input_tokens)
+        self.assertTrue(render_dipper_input(prepared["windows"][0]["text"], "", config).endswith(" </sent>"))
+        for limit in (empty_length - 1, empty_length):
+            with self.subTest(limit=limit), self.assertRaisesRegex(ValueError, "too small|no room"):
+                prepare_response(tokenizer, "你好", replace(config, max_input_tokens=limit), one_sentence, truncate_overlong=True)
+
+    def test_truncated_generation_requires_matching_audit(self):
+        tokenizer = FakeTokenizer()
+        config = replace(GenerationConfig(), max_input_tokens=12)
+        prepared = prepare_response(tokenizer, "one two three four five", config, one_sentence, truncate_overlong=True)
+        generated = paraphrase_windows(prepared, lambda prompt, seed: GeneratedResponse("Rewritten.", "stop", 1),
+                                       tokenizer, config, 7, 1)
+        self.assertEqual(validate_window_audit(generated, prepared, tokenizer, config, 7, 1), [])
+        generated.windows[0].pop("input_truncation")
+        self.assertIn("full_response_truncation_audit_mismatch", validate_window_audit(generated, prepared, tokenizer, config, 7, 1))
 
     def test_generation_failures_are_classified(self):
         config = GenerationConfig()
@@ -557,20 +644,55 @@ class ParquetTests(unittest.TestCase):
         return run_paraphrasing(self.source, self.output, config, self.tokenizer,
                                lambda: generator, self.identity, sentence_splitter=one_sentence, **kwargs)
 
-    def run_cli(self, generator, *, identity=None, options=(), bf16_supported=True):
+    def run_cli(self, generator, *, identity=None, options=(), bf16_supported=True, visible="1,2", num_gpus=2, free_gib=70):
         def make_generator(model, config, tokenizer_path, visible):
             generator.config = config
             return generator
-        fake_transformers = SimpleNamespace(T5Tokenizer=SimpleNamespace(from_pretrained=lambda *a, **k: self.tokenizer))
+        def load_tokenizer(*args, **kwargs):
+            self.assertEqual(len(parse_visible_gpus(os.environ.get("CUDA_VISIBLE_DEVICES"))), num_gpus)
+            return self.tokenizer
+        fake_transformers = SimpleNamespace(T5Tokenizer=SimpleNamespace(from_pretrained=load_tokenizer))
         with patch.dict(sys.modules, {"transformers": fake_transformers}), \
-             patch.dict("os.environ", {"CUDA_VISIBLE_DEVICES": "1,2"}), \
+             patch.dict("os.environ"), \
              patch("baseline_acl.paraphrase_up.asset_identity", return_value={}), \
              patch("baseline_acl.paraphrase_up.model_identity", return_value=self.identity if identity is None else identity), \
              patch("baseline_acl.paraphrase_up.load_sentence_splitter", return_value=one_sentence), \
-             patch("baseline_acl.paraphrase_up.probe_selected_gpus", return_value=[{"bf16_supported": bf16_supported}] * 2), \
+             patch("baseline_acl.paraphrase_up.probe_selected_gpus", return_value=[{"bf16_supported": bf16_supported, "free_gib": free_gib, "total_gib": 80}] * num_gpus), \
              patch("baseline_acl.dipper_parallel.ParallelDipperGenerator", side_effect=make_generator) as factory:
-            main(["--input", str(self.source), "--output", str(self.output), "--num-gpus", "2", *options])
+            if visible is None:
+                os.environ.pop("CUDA_VISIBLE_DEVICES", None)
+            else:
+                os.environ["CUDA_VISIBLE_DEVICES"] = visible
+            main(["--input", str(self.source), "--output", str(self.output), "--num-gpus", str(num_gpus), *options])
         return factory
+
+    def test_plain_cli_count_only_auto_selects_three_gpus_before_tokenizer_import(self):
+        generator = FakeStreamingGenerator()
+        with patch("baseline_acl.paraphrase_up.gpu_inventory", return_value=fake_gpu_inventory()):
+            factory = self.run_cli(generator, visible=None, num_gpus=3)
+        self.assertEqual(factory.call_args.args[3], [row["uuid"] for row in fake_gpu_inventory()[1:]])
+        self.assertEqual(pq.read_table(self.output).num_rows, 3)
+
+    def test_resume_can_increase_gpu_count_without_regenerating_successful_rows(self):
+        with self.assertRaisesRegex(RuntimeError, "simulated worker interruption"):
+            self.run_cli(FakeStreamingGenerator(order=[0, 1, 2], crash_after=1), num_gpus=1, visible="2")
+        before = self.checkpoint.read_bytes()
+        generator = FakeStreamingGenerator()
+        with patch("baseline_acl.paraphrase_up.gpu_inventory", return_value=fake_gpu_inventory()):
+            factory = self.run_cli(generator, visible=None, num_gpus=3)
+        self.assertEqual(len(factory.call_args.args[3]), 3)
+        self.assertEqual(set(generator.calls), {1, 2})
+        self.assertTrue(self.checkpoint.read_bytes().startswith(before))
+
+    def test_auto_selection_rechecks_free_memory_and_effective_precision_before_workers(self):
+        for bf16_supported, free_gib, expected in ((True, 1, "bfloat16"), (False, 40, "float32")):
+            with self.subTest(bf16_supported=bf16_supported), \
+                 patch("baseline_acl.paraphrase_up.gpu_inventory", return_value=fake_gpu_inventory()):
+                generator = FakeStreamingGenerator()
+                with self.assertRaisesRegex(RuntimeError, f"estimated free memory.*{expected}"):
+                    self.run_cli(generator, visible=None, num_gpus=3, bf16_supported=bf16_supported, free_gib=free_gib)
+                self.assertEqual(generator.calls, [])
+                self.assertFalse(self.checkpoint.exists())
 
     def test_plain_cli_retries_three_times_and_drops_without_recovery_flags(self):
         generator = FakeStreamingGenerator({1: GeneratedResponse("", "stop", 2)})
@@ -581,6 +703,73 @@ class ParquetTests(unittest.TestCase):
         self.assertEqual([attempt for row, attempt in generator.attempt_calls if row == 1], [1, 2, 3])
         self.assertEqual(pq.read_table(self.output)["id"].to_pylist(), ["source-0", "source-2"])
         self.assertEqual(json.loads(self.audit.read_text(encoding="utf-8"))["dropped_rows"], [1])
+
+    def write_one_overlong_response(self):
+        self.rows[1]["teacher_response"] = " ".join(["repeated"] * 40)
+        self.table = pa.Table.from_pylist(self.rows, schema=self.schema)
+        pq.write_table(self.table, self.source)
+
+    def test_plain_cli_truncates_overlong_input_and_records_original_length(self):
+        from baseline_acl.validate_up_data import validate_tables
+        self.write_one_overlong_response()
+        generator = FakeGenerator()
+        with patch.object(generator, "generate", wraps=generator.generate) as generate:
+            self.run_cli(generator, options=("--max-input-tokens", "16"))
+        prepared = [row for call in generate.call_args_list for row in call.args[0]]
+        self.assertTrue(all(row["prompt_tokens"] <= 16 for row in prepared))
+        self.assertEqual(sum("input_truncation" in row for row in prepared), 1)
+        audit = json.loads(self.audit.read_text(encoding="utf-8"))
+        self.assertEqual(audit["truncated_input_rows"], [1])
+        self.assertEqual(audit["truncated_input_ids"], ["source-1"])
+        record = audit["metadata"]["input_truncation"]["rows"][0]
+        self.assertEqual(record["original_input_tokens"], 49)
+        self.assertEqual(record["retained_input_tokens"], 16)
+        self.assertEqual(audit["dropped_count"], 0)
+        output = pq.read_table(self.output)
+        self.assertEqual(output.num_rows, 3)
+        self.assertEqual(output["content"], self.table["content"])
+        validation = self.table.slice(0, 1).set_column(0, self.schema.field("id"), pa.array(["held-out"]))
+        self.assertEqual(validate_tables(self.table, output, validation, drop_evidence=audit)["train_rows"], 3)
+
+    def test_truncated_input_resume_keeps_successes_and_rejects_policy_change(self):
+        self.write_one_overlong_response()
+        config = replace(self.config, max_input_tokens=16)
+        with self.assertRaisesRegex(RuntimeError, "simulated interruption"):
+            self.run_job(FakeGenerator(crash_on_attempts={(2, 1)}), config=config, truncate_overlong=True)
+        before = self.checkpoint.read_bytes()
+        with self.assertRaisesRegex(ValueError, "No source text is truncated"):
+            self.run_job(FakeGenerator(), config=config, resume=True)
+        self.assertEqual(self.checkpoint.read_bytes(), before)
+        resumed = FakeGenerator()
+        report = self.run_job(resumed, config=config, resume=True, truncate_overlong=True)
+        self.assertEqual(resumed.calls, [2])
+        self.assertTrue(self.checkpoint.read_bytes().startswith(before))
+        self.assertEqual(report["truncated_input_rows"], [1])
+
+    def test_truncated_input_still_retries_three_times_then_drops_empty_output(self):
+        from baseline_acl.validate_up_data import validate_tables
+        self.write_one_overlong_response()
+        generator = FakeStreamingGenerator({1: GeneratedResponse("", "stop", 2)})
+        self.run_cli(generator, options=("--max-input-tokens", "16"))
+        self.assertEqual([attempt for row, attempt in generator.attempt_calls if row == 1], [1, 2, 3])
+        audit = json.loads(self.audit.read_text(encoding="utf-8"))
+        self.assertEqual(audit["truncated_input_rows"], [1])
+        self.assertEqual(audit["dropped_rows"], [1])
+        self.assertNotIn("full_response_exceeds_encoder_budget", audit["dropped_records"][0]["issues"])
+        output = pq.read_table(self.output)
+        validation = self.table.slice(0, 1).set_column(0, self.schema.field("id"), pa.array(["held-out"]))
+        self.assertEqual(validate_tables(self.table, output, validation, drop_evidence=audit)["train_rows"], 2)
+
+    def test_cpu_preflight_reports_truncation_without_generation(self):
+        self.write_one_overlong_response()
+        report = preflight_source(self.source, self.tokenizer, replace(self.config, max_input_tokens=16),
+                                  one_sentence, truncate_overlong=True)
+        self.assertTrue(report["valid"])
+        self.assertFalse(report["model_weights_loaded"])
+        self.assertEqual(report["truncated_input_count"], 1)
+        self.assertEqual(report["max_original_full_response_input_tokens"], 49)
+        self.assertEqual(report["max_full_response_input_tokens"], 16)
+        self.assertFalse(self.checkpoint.exists())
 
     def test_plain_cli_auto_resumes_old_checkpoint_and_preserves_precision_and_successes(self):
         with self.assertRaisesRegex(RuntimeError, "exhausted 1 attempts"):

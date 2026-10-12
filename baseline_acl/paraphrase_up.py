@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 from contextlib import contextmanager
+import csv
 from dataclasses import asdict, dataclass, field, replace
 import hashlib
 from importlib import metadata
@@ -24,6 +25,7 @@ import os
 from pathlib import Path
 import re
 import sys
+import subprocess
 import tempfile
 import time
 from typing import Callable
@@ -110,6 +112,57 @@ def parse_visible_gpus(visible: str | None, requested_count: int | None = None) 
     if requested_count is not None and requested_count != len(values):
         raise ValueError(f"--num-gpus={requested_count} but CUDA_VISIBLE_DEVICES selects {len(values)} GPUs")
     return values
+
+
+def gpu_inventory() -> list[dict]:
+    """Read physical GPU availability without importing torch or starting CUDA."""
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=index,uuid,name,memory.total,memory.free", "--format=csv,noheader,nounits"],
+            check=True, capture_output=True, text=True, timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        raise RuntimeError("automatic GPU selection could not read nvidia-smi; check the NVIDIA driver or set CUDA_VISIBLE_DEVICES explicitly") from error
+    inventory = []
+    try:
+        for fields in csv.reader(result.stdout.splitlines(), skipinitialspace=True):
+            if not fields:
+                continue
+            index, uuid, name, total, free = [value.strip() for value in fields]
+            item = {"gpu": int(index), "uuid": uuid, "name": name, "total_mib": int(total), "free_mib": int(free)}
+            if item["gpu"] < 0 or not 0 <= item["free_mib"] <= item["total_mib"]:
+                raise ValueError("invalid GPU memory/index")
+            inventory.append(item)
+        parse_visible_gpus(",".join(item["uuid"] for item in inventory))
+    except (TypeError, ValueError) as error:
+        raise RuntimeError("nvidia-smi returned no GPUs or an invalid GPU inventory") from error
+    return inventory
+
+
+def automatic_gpu_minimum_mib(dtype: str) -> int:
+    # Screening estimates for a complete T5-XXL replica plus generation memory.
+    # Actual native BF16 support and free VRAM are checked after selection.
+    return 50_000 if dtype == "float32" else 30_000
+
+
+def select_up_gpus(visible: str | None, requested_count: int | None, dtype: str) -> list[str]:
+    """Honor an explicit GPU mask, otherwise select enough free GPUs by UUID."""
+    if visible is not None:
+        return parse_visible_gpus(visible, requested_count)
+    count = requested_count if requested_count is not None else 1
+    if type(count) is not int or count < 1:
+        raise ValueError("--num-gpus must be a positive integer")
+    minimum = automatic_gpu_minimum_mib(dtype)
+    inventory = sorted(gpu_inventory(), key=lambda item: (-item["free_mib"], item["gpu"]))
+    selected = [item for item in inventory if item["free_mib"] >= minimum][:count]
+    if len(selected) != count:
+        summary = ", ".join(f"GPU {item['gpu']} free={item['free_mib']}MiB" for item in inventory)
+        raise RuntimeError(f"automatic GPU selection found only {len(selected)} eligible GPU(s), requested {count}; "
+                           f"each Dipper replica needs estimated free memory >= {minimum}MiB. {summary}")
+    for item in selected:
+        print(f"[GPU select] GPU {item['gpu']} ({item['name']}): free={item['free_mib']}MiB, UUID={item['uuid']}", flush=True)
+    # UUIDs preserve physical device identity independently of CUDA device order.
+    return parse_visible_gpus(",".join(item["uuid"] for item in selected), count)
 
 
 def select_dtype(requested: str, devices: list[dict]) -> str:
@@ -308,8 +361,31 @@ def render_dipper_input(window: str, prefix: str, config: GenerationConfig) -> s
                                  prefix=f" {prefix}" if prefix else "", window=window)
 
 
-def prepare_response(tokenizer, response: str, config: GenerationConfig, sentence_splitter: Callable | None = None) -> dict:
-    """Join ALL sentences into one complete answer, never three-sentence chunks.
+def truncate_response_prefix(tokenizer, text: str, config: GenerationConfig) -> str:
+    """Keep a literal text prefix that fits with the complete template and EOS."""
+    def fits(prefix: str) -> bool:
+        return len(tokenizer.encode(render_dipper_input(prefix, "", config), add_special_tokens=True)) <= config.max_input_tokens
+
+    if not fits(""):
+        raise ValueError("--max-input-tokens is too small for the Dipper template and encoder EOS")
+    # Search text boundaries rather than decode token IDs: this preserves the
+    # source prefix exactly, including Unicode, and rechecks the actual prompt.
+    low, high = 0, len(text)
+    while low + 1 < high:
+        middle = (low + high) // 2
+        if fits(text[:middle]):
+            low = middle
+        else:
+            high = middle
+    prefix = text[:low]
+    if not prefix.strip() or not fits(prefix):
+        raise ValueError("--max-input-tokens leaves no room for nonempty response text")
+    return prefix
+
+
+def prepare_response(tokenizer, response: str, config: GenerationConfig, sentence_splitter: Callable | None = None,
+                     *, truncate_overlong: bool = False) -> dict:
+    """Join sentences into one input; ordinary UP may trim an overlong tail.
 
     The internal ``windows`` list is retained for durable audit records, but
     contains exactly one full-response item. No generated prefix is needed.
@@ -321,23 +397,36 @@ def prepare_response(tokenizer, response: str, config: GenerationConfig, sentenc
     source_tokens = len(tokenizer.encode(response, add_special_tokens=False))
     text = " ".join(sentences)
     input_tokens = len(tokenizer.encode(render_dipper_input(text, "", config), add_special_tokens=True))
+    truncation = None
+    if truncate_overlong and input_tokens > config.max_input_tokens:
+        original_text, original_input_tokens = text, input_tokens
+        text = truncate_response_prefix(tokenizer, text, config)
+        input_tokens = len(tokenizer.encode(render_dipper_input(text, "", config), add_special_tokens=True))
+        truncation = {"policy": "response_prefix_v1", "original_input_tokens": original_input_tokens,
+                      "retained_input_tokens": input_tokens, "original_characters": len(original_text),
+                      "retained_characters": len(text), "retained_text_sha256": text_sha256(text)}
     answer_tokens = len(tokenizer.encode(text, add_special_tokens=True))
     issues = ["full_response_exceeds_encoder_budget"] if input_tokens > config.max_input_tokens else []
-    # Source length does not constrain decoder output length. Ending naturally
-    # in EOS avoids hard truncation, but does not guarantee factual completeness.
-    return {"windows": [{"text": text, "source_tokens": answer_tokens, "minimum_input_tokens": input_tokens}],
-            "sentence_count": len(sentences), "prompt_tokens": input_tokens,
-            "source_tokens": source_tokens, "issues": issues}
+    # Source length does not constrain decoder output length. Natural decoder
+    # EOS does not guarantee factual completeness, especially after input trimming.
+    prepared = {"windows": [{"text": text, "source_tokens": answer_tokens, "minimum_input_tokens": input_tokens}],
+                "sentence_count": len(sentences), "prompt_tokens": input_tokens,
+                "source_tokens": source_tokens, "issues": issues}
+    if truncation is not None:
+        prepared["input_truncation"] = truncation
+    return prepared
 
 
-def preflight_source(path: Path, tokenizer, config: GenerationConfig, sentence_splitter: Callable) -> dict:
+def preflight_source(path: Path, tokenizer, config: GenerationConfig, sentence_splitter: Callable,
+                     *, truncate_overlong: bool = False) -> dict:
     config.validate()
     table = read_source(path)
-    prepared = [prepare_response(tokenizer, text, config, sentence_splitter) for text in table["teacher_response"].to_pylist()]
+    prepared = [prepare_response(tokenizer, text, config, sentence_splitter, truncate_overlong=truncate_overlong)
+                for text in table["teacher_response"].to_pylist()]
     windows = [window for row in prepared for window in row["windows"]]
     invalid = [{"row_index": index, "id": table["id"][index].as_py(), "issues": row["issues"]}
                for index, row in enumerate(prepared) if row["issues"]]
-    return {"input": str(path.resolve()), "input_sha256": file_sha256(path), "rows": table.num_rows,
+    report = {"input": str(path.resolve()), "input_sha256": file_sha256(path), "rows": table.num_rows,
             "config": asdict(config), "sentence_splitter_resources": getattr(sentence_splitter, "resource_identity", {}),
             "tokenizer_preflight": True, "model_weights_loaded": False,
             "paraphrase_mode": "whole_response", "generation_inputs": len(windows), "inputs_per_row": 1,
@@ -347,6 +436,14 @@ def preflight_source(path: Path, tokenizer, config: GenerationConfig, sentence_s
             "max_full_response_input_tokens": max(window["minimum_input_tokens"] for window in windows),
             "invalid_rows": invalid, "valid": not invalid,
             "note": "All sentences from each response are passed in one input, without chunks or rolling prefixes. Encoder and decoder budgets are independent; natural EOS does not guarantee semantic completeness."}
+    if truncate_overlong:
+        truncated = [{"row_index": i, "id": table["id"][i].as_py(), **row["input_truncation"]}
+                     for i, row in enumerate(prepared) if "input_truncation" in row]
+        report.update(input_overflow_policy="truncate_response_prefix", truncated_input_count=len(truncated),
+                      truncated_inputs=truncated,
+                      max_original_full_response_input_tokens=max(row.get("input_truncation", {}).get("original_input_tokens", row["prompt_tokens"]) for row in prepared),
+                      note="Each response uses one input. Overlong responses retain their beginning and lose the tail; the full Dipper template and encoder EOS fit within the budget. Encoder and decoder budgets are independent.")
+    return report
 
 
 def response_issues(generated: GeneratedResponse, source: str, config: GenerationConfig) -> list[str]:
@@ -367,7 +464,7 @@ def response_issues(generated: GeneratedResponse, source: str, config: Generatio
 
 def paraphrase_windows(prepared: dict, generate_window: Callable, tokenizer, config: GenerationConfig,
                        row_index: int, attempt: int) -> GeneratedResponse:
-    """One Dipper call for the complete response; name retained for audit users."""
+    """One Dipper call for the prepared response; name retained for audit users."""
     if len(prepared["windows"]) != 1:
         raise ValueError("whole-response mode requires exactly one complete response; chunked inputs are refused")
     window = prepared["windows"][0]
@@ -376,6 +473,8 @@ def paraphrase_windows(prepared: dict, generate_window: Callable, tokenizer, con
     seed = generation_seed(config.seed, row_index, attempt)
     record = {"window_index": 0, "source_sha256": text_sha256(window["text"]), "source_tokens": window["source_tokens"],
               "prefix_sha256": text_sha256(""), "input_tokens": input_tokens, "seed": seed}
+    if "input_truncation" in prepared:
+        record["input_truncation"] = prepared["input_truncation"]
     if input_tokens > config.max_input_tokens:
         issues = ["full_response_exceeds_encoder_budget"]
         record.update(output_text="", output_tokens=0, decoder_length=0, finish_reason="input_limit", issues=issues)
@@ -402,6 +501,8 @@ def validate_window_audit(generated: GeneratedResponse, prepared: dict, tokenize
             or record.get("seed") != generation_seed(config.seed, row_index, attempt)
             or record.get("input_tokens") != expected_input):
         issues.append("full_response_audit_mismatch")
+    if record.get("input_truncation") != prepared.get("input_truncation"):
+        issues.append("full_response_truncation_audit_mismatch")
     if expected_input > config.max_input_tokens:
         issues.append("full_response_input_limit")
     count = record.get("output_tokens")
@@ -677,6 +778,11 @@ def write_final_outputs(source, responses: list[str], records: dict[int, dict], 
             "paraphrase_mode": "whole_response",
             "model_card": DIPPER_MODEL_CARD,
         }
+        if "input_truncation" in meta:
+            truncated = meta["input_truncation"]["rows"]
+            report.update(input_overflow_policy="truncate_response_prefix", truncated_input_count=len(truncated),
+                          truncated_input_rows=[row["row_index"] for row in truncated],
+                          truncated_input_ids=[row["id"] for row in truncated])
         if meta["config"]["on_failure"] == "drop":
             report.update(source_rows=source.num_rows, dropped_count=len(dropped), dropped_rows=dropped,
                           dropped_ids=[records[i]["id"] for i in dropped],
@@ -730,7 +836,7 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                      sentence_splitter: Callable | None = None, prepare_fn: Callable | None = None,
                      candidate_issues_fn: Callable | None = None, validate_audit_fn: Callable | None = None,
                      metadata_builder: Callable | None = None, final_writer: Callable | None = None,
-                     checkpoint_loader: Callable | None = None) -> dict:
+                     checkpoint_loader: Callable | None = None, truncate_overlong: bool = False) -> dict:
     """Durable row orchestration with explicit model-specific contracts.
 
     The defaults retain the Dipper UP/backup TP behavior. A causal student TP
@@ -750,7 +856,7 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
     write_outputs = final_writer or write_final_outputs
     if prepare_fn is None:
         splitter = sentence_splitter or load_sentence_splitter()
-        prepared = [prepare_response(tokenizer, value, config, splitter) for value in values]
+        prepared = [prepare_response(tokenizer, value, config, splitter, truncate_overlong=truncate_overlong) for value in values]
     else:
         splitter = None
         prepared = [prepare_fn(tokenizer, value, config) for value in values]
@@ -770,6 +876,10 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
         }
     else:
         meta = metadata_builder(input_path, source, identity, config, prepared)
+    truncated = [{"row_index": i, "id": ids[i], "source_sha256": text_sha256(values[i]), **row["input_truncation"]}
+                 for i, row in enumerate(prepared) if "input_truncation" in row]
+    if truncated:
+        meta["input_truncation"] = {"policy": "response_prefix_v1", "rows": truncated}
     meta["fingerprint"] = text_sha256(canonical_json(meta))
     over_budget = [(index, info["issues"]) for index, info in enumerate(prepared) if info["issues"]]
     if over_budget and config.on_failure != "keep-original":
@@ -777,7 +887,10 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                          "Review --max-input-tokens; whole-response mode never falls back to chunks. No source text is truncated.")
     print(f"[preflight] rows={source.num_rows}, maximum source tokens={max(p['source_tokens'] for p in prepared)}, "
           f"maximum complete response input={max(p['prompt_tokens'] for p in prepared)}, "
-          "all sentences per row are passed in ONE input; no chunks or rolling prefixes", flush=True)
+          f"truncated_inputs={len(truncated)}; ONE input per row; no chunks or rolling prefixes", flush=True)
+    if truncated:
+        print(f"[truncate] retained response beginnings within {config.max_input_tokens} input tokens; "
+              f"rows={len(truncated)}, examples={[row['row_index'] for row in truncated[:10]]}; details saved in the audit", flush=True)
     with checkpoint_lock(checkpoint_path):
         # Recheck after obtaining the lock to avoid two writers racing at startup.
         validate_output_paths(input_path, output_path, checkpoint_path, audit_path, resume)
@@ -974,10 +1087,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--model", default=str(BASELINE_DIR / "models" / "dipper-paraphraser-xxl"), help="Local Dipper T5-XXL weights")
     parser.add_argument("--tokenizer", default=str(BASELINE_DIR / "models" / "t5-v1_1-xxl-tokenizer"), help="Local google/t5-v1_1-xxl tokenizer")
     parser.add_argument("--nltk-data", type=Path, default=DEFAULT_NLTK_DATA, help="Local authoritative NLTK directory; global resources are not searched")
-    parser.add_argument("--num-gpus", type=int, help="GPU count, not IDs; must match CUDA_VISIBLE_DEVICES, or inferred from it when omitted")
+    parser.add_argument("--num-gpus", type=int, help="Number of parallel Dipper workers; automatically select free GPUs if CUDA_VISIBLE_DEVICES is unset (default one), otherwise match the explicit mask")
     parser.add_argument("--dtype", choices=("auto", "float32", "bfloat16"), default="auto", help="Auto uses bf16 only when every selected GPU supports it, otherwise float32; author example uses float32")
     parser.add_argument("--batch-size", type=int, default=1, help="Legacy progress-group size, not GPU count or tensor batch size; parallel workers dynamically schedule individual answers")
-    parser.add_argument("--max-input-tokens", type=int, default=4096, help="Full-response encoder budget, including the input template and encoder EOS; never truncate or chunk")
+    parser.add_argument("--max-input-tokens", type=int, default=4096, help="Encoder budget including the complete template and EOS; overlong responses automatically lose their tail")
     parser.add_argument("--max-output-length", type=int, default=4096, help="Full-response decoder total max_length including start token; raised from author's 512-window example")
     parser.add_argument("--lex-diversity", type=int, choices=(0, 20, 40, 60, 80, 100), default=60)
     parser.add_argument("--order-diversity", type=int, choices=(0, 20, 40, 60, 80, 100), default=0)
@@ -1011,44 +1124,54 @@ def main(argv: list[str] | None = None) -> None:
     config_values["dtype"] = "float32" if args.dtype == "auto" else args.dtype
     config = GenerationConfig(**config_values)
     config.validate()
+    if not args.preflight:
+        checkpoint = args.checkpoint or args.output.with_suffix(args.output.suffix + ".progress.jsonl")
+        audit = args.audit or args.output.with_suffix(args.output.suffix + ".audit.json")
+        resume = args.resume or checkpoint.is_file()
+        validate_output_paths(args.input, args.output, checkpoint, audit, resume)
+        requested_dtype = args.dtype
+        if resume:
+            print(f"[resume] found checkpoint: {checkpoint}; reusing completed rows", flush=True)
+            if requested_dtype == "auto":
+                # Preserve recorded precision when resuming with a new GPU count.
+                with checkpoint.open("rb") as handle:
+                    header_line = handle.readline()
+                if not header_line.endswith(b"\n"):
+                    raise ValueError("checkpoint has no durable metadata header")
+                header = json.loads(header_line)
+                saved_config = header.get("config") if isinstance(header, dict) else None
+                if not isinstance(saved_config, dict) or saved_config.get("dtype") not in ("float32", "bfloat16"):
+                    raise ValueError("checkpoint has an invalid concrete dtype")
+                requested_dtype = saved_config["dtype"]
+        visible_mask = os.environ.get("CUDA_VISIBLE_DEVICES")
+        automatic_selection = visible_mask is None
+        visible = select_up_gpus(visible_mask, args.num_gpus, requested_dtype)
+        # Set visibility before importing Transformers/torch and probing CUDA.
+        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(visible)
     from transformers import T5Tokenizer
     asset_identity(args.tokenizer)
     tokenizer = T5Tokenizer.from_pretrained(args.tokenizer, local_files_only=True, legacy=True)
-    # This is an encoder budget, not decoder max_length. T5 uses relative
-    # positions; avoid the tokenizer's generic 512-token warning while keeping
-    # our explicit whole-response checks and truncation=False authoritative.
-    tokenizer.model_max_length = config.max_input_tokens
+    # Tokenize the original text to measure and trim it before any generation.
+    # Suppress generic overlength warnings here; preparation and workers enforce
+    # config.max_input_tokens on the actual prompt, with truncation=False.
+    tokenizer.model_max_length = sys.maxsize
     splitter = load_sentence_splitter(args.nltk_data)
     if args.preflight:
-        report = preflight_source(args.input, tokenizer, config, splitter)
+        report = preflight_source(args.input, tokenizer, config, splitter, truncate_overlong=True)
         report["tokenizer_identity"] = asset_identity(args.tokenizer)
         print(json.dumps(report, ensure_ascii=False, indent=2), flush=True)
         if not report["valid"]:
-            raise ValueError(f"Dipper CPU preflight found {len(report['invalid_rows'])} oversized full responses; no text was truncated or chunked")
+            raise ValueError(f"Dipper CPU preflight found {len(report['invalid_rows'])} inputs that still exceed the budget")
         return
-    checkpoint = args.checkpoint or args.output.with_suffix(args.output.suffix + ".progress.jsonl")
-    audit = args.audit or args.output.with_suffix(args.output.suffix + ".audit.json")
-    resume = args.resume or checkpoint.is_file()
-    validate_output_paths(args.input, args.output, checkpoint, audit, resume)
-    requested_dtype = args.dtype
-    if resume:
-        print(f"[resume] found checkpoint: {checkpoint}; reusing completed rows", flush=True)
-        if requested_dtype == "auto":
-            # Keep the original concrete precision even when the available GPU
-            # set changes; full checkpoint validation still happens below.
-            with checkpoint.open("rb") as handle:
-                header_line = handle.readline()
-            if not header_line.endswith(b"\n"):
-                raise ValueError("checkpoint has no durable metadata header")
-            header = json.loads(header_line)
-            saved_config = header.get("config") if isinstance(header, dict) else None
-            if not isinstance(saved_config, dict) or saved_config.get("dtype") not in ("float32", "bfloat16"):
-                raise ValueError("checkpoint has an invalid concrete dtype")
-            requested_dtype = saved_config["dtype"]
-    visible = parse_visible_gpus(os.environ.get("CUDA_VISIBLE_DEVICES"), args.num_gpus)
     identity = model_identity(args.model, args.tokenizer)
     devices = probe_selected_gpus(visible)
     config = replace(config, dtype=select_dtype(requested_dtype, devices))
+    if automatic_selection:
+        minimum = automatic_gpu_minimum_mib(config.dtype)
+        insufficient = [device for device in devices if device["free_gib"] * 1024 < minimum]
+        if insufficient:
+            raise RuntimeError(f"selected GPUs no longer have estimated free memory >= {minimum}MiB per Dipper replica "
+                               f"for {config.dtype}: {canonical_json(insufficient)}; choose GPUs/precision explicitly or retry when memory is available")
     print(f"[gpu-plan] count={len(visible)}, dtype={config.dtype}, selected={canonical_json(devices)}; "
           "one complete Dipper replica per GPU; VRAM is NOT pooled", flush=True)
     if __package__:
@@ -1057,7 +1180,8 @@ def main(argv: list[str] | None = None) -> None:
         from dipper_parallel import ParallelDipperGenerator
     factory = lambda: ParallelDipperGenerator(args.model, config, args.tokenizer, visible)
     run_paraphrasing(args.input, args.output, config, tokenizer, factory, identity,
-                     resume=resume, checkpoint_path=checkpoint, audit_path=audit, sentence_splitter=splitter)
+                     resume=resume, checkpoint_path=checkpoint, audit_path=audit, sentence_splitter=splitter,
+                     truncate_overlong=True)
 
 
 if __name__ == "__main__":

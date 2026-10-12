@@ -91,6 +91,19 @@ class DipperParallelTests(unittest.TestCase):
             self.assertEqual(pool.generate([], [], []), [])
         self.assert_stopped(pool)
 
+    def test_three_spawned_workers_receive_all_rows_once_with_stable_seeds(self):
+        with self.make_pool(["1", "2", "3"]) as pool:
+            indices = list(range(90, 108))
+            results = list(pool.iter_generate([{"delay": .08}] * len(indices), indices, [2] * len(indices)))
+            self.assertEqual(pool.worker_count, 3)
+            self.assertEqual(sorted(index for index, _, _ in results), indices)
+            payloads = [json.loads(candidate.text) for _, _, candidate in results]
+            self.assertEqual({payload["gpu"] for payload in payloads}, {"1", "2", "3"})
+            for payload in payloads:
+                self.assertEqual(payload["visible"], payload["gpu"])
+                self.assertEqual(payload["seed"], generation_seed(42, payload["index"], 2))
+        self.assert_stopped(pool)
+
     def test_core_resolution_prefers_only_the_actual_direct_entry_module(self):
         direct_main = ModuleType("__main__")
         direct_main.__file__ = str(Path(paraphrase_up.__file__).resolve())
