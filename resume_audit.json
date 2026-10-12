@@ -1,0 +1,1324 @@
+{
+  "checkpoint": "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3",
+  "checkpoint_metadata": {
+    "warmup": {
+      "tracker": "1813",
+      "stage_completed": "1813",
+      "checkpoint_directories": [
+        "global_step_500",
+        "global_step_1000",
+        "global_step_1500",
+        "global_step_1813"
+      ],
+      "selected_checkpoint": "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813",
+      "data_pt_exists": true,
+      "files": [
+        {
+          "path": "data.pt",
+          "bytes": 1492
+        },
+        {
+          "path": "actor/model_world_size_2_rank_0.pt",
+          "bytes": 1260496762
+        },
+        {
+          "path": "actor/added_tokens.json",
+          "bytes": 605
+        },
+        {
+          "path": "actor/optim_world_size_2_rank_0.pt",
+          "bytes": 1976153731
+        },
+        {
+          "path": "actor/optim_world_size_2_rank_1.pt",
+          "bytes": 1976153731
+        },
+        {
+          "path": "actor/tokenizer_config.json",
+          "bytes": 7259
+        },
+        {
+          "path": "actor/model_world_size_2_rank_1.pt",
+          "bytes": 1260496762
+        },
+        {
+          "path": "actor/tokenizer.json",
+          "bytes": 11421896
+        },
+        {
+          "path": "actor/config.json",
+          "bytes": 744
+        },
+        {
+          "path": "actor/merges.txt",
+          "bytes": 1671853
+        },
+        {
+          "path": "actor/vocab.json",
+          "bytes": 2776833
+        },
+        {
+          "path": "actor/extra_state_world_size_2_rank_1.pt",
+          "bytes": 14632
+        },
+        {
+          "path": "actor/extra_state_world_size_2_rank_0.pt",
+          "bytes": 14632
+        },
+        {
+          "path": "actor/special_tokens_map.json",
+          "bytes": 616
+        },
+        {
+          "path": "actor/generation_config.json",
+          "bytes": 117
+        },
+        {
+          "path": "critic/model_world_size_2_rank_0.pt",
+          "bytes": 988232090
+        },
+        {
+          "path": "critic/added_tokens.json",
+          "bytes": 605
+        },
+        {
+          "path": "critic/optim_world_size_2_rank_0.pt",
+          "bytes": 1976156611
+        },
+        {
+          "path": "critic/optim_world_size_2_rank_1.pt",
+          "bytes": 1976156611
+        },
+        {
+          "path": "critic/tokenizer_config.json",
+          "bytes": 7259
+        },
+        {
+          "path": "critic/model_world_size_2_rank_1.pt",
+          "bytes": 988228506
+        },
+        {
+          "path": "critic/tokenizer.json",
+          "bytes": 11421896
+        },
+        {
+          "path": "critic/config.json",
+          "bytes": 907
+        },
+        {
+          "path": "critic/merges.txt",
+          "bytes": 1671853
+        },
+        {
+          "path": "critic/vocab.json",
+          "bytes": 2776833
+        },
+        {
+          "path": "critic/extra_state_world_size_2_rank_1.pt",
+          "bytes": 14632
+        },
+        {
+          "path": "critic/extra_state_world_size_2_rank_0.pt",
+          "bytes": 14632
+        },
+        {
+          "path": "critic/special_tokens_map.json",
+          "bytes": 616
+        },
+        {
+          "path": "actor/huggingface/added_tokens.json",
+          "bytes": 605
+        },
+        {
+          "path": "actor/huggingface/tokenizer_config.json",
+          "bytes": 7259
+        },
+        {
+          "path": "actor/huggingface/tokenizer.json",
+          "bytes": 11421896
+        },
+        {
+          "path": "actor/huggingface/model.safetensors",
+          "bytes": 1260367448
+        },
+        {
+          "path": "actor/huggingface/config.json",
+          "bytes": 705
+        },
+        {
+          "path": "actor/huggingface/merges.txt",
+          "bytes": 1671853
+        },
+        {
+          "path": "actor/huggingface/vocab.json",
+          "bytes": 2776833
+        },
+        {
+          "path": "actor/huggingface/.merge_completed",
+          "bytes": 0
+        },
+        {
+          "path": "actor/huggingface/special_tokens_map.json",
+          "bytes": 616
+        },
+        {
+          "path": "actor/huggingface/generation_config.json",
+          "bytes": 121
+        },
+        {
+          "path": "critic/huggingface/added_tokens.json",
+          "bytes": 605
+        },
+        {
+          "path": "critic/huggingface/tokenizer_config.json",
+          "bytes": 7259
+        },
+        {
+          "path": "critic/huggingface/tokenizer.json",
+          "bytes": 11421896
+        },
+        {
+          "path": "critic/huggingface/model.safetensors",
+          "bytes": 988099786
+        },
+        {
+          "path": "critic/huggingface/config.json",
+          "bytes": 868
+        },
+        {
+          "path": "critic/huggingface/merges.txt",
+          "bytes": 1671853
+        },
+        {
+          "path": "critic/huggingface/vocab.json",
+          "bytes": 2776833
+        },
+        {
+          "path": "critic/huggingface/.merge_completed",
+          "bytes": 0
+        },
+        {
+          "path": "critic/huggingface/special_tokens_map.json",
+          "bytes": 616
+        },
+        {
+          "path": "critic/huggingface/generation_config.json",
+          "bytes": 121
+        }
+      ],
+      "model_configs": {
+        "actor/config.json": {
+          "architectures": [
+            "Qwen2ForCausalLM"
+          ],
+          "eos_token_id": 151643,
+          "hidden_size": 896,
+          "model_type": "qwen2",
+          "num_attention_heads": 14,
+          "num_hidden_layers": 24,
+          "pad_token_id": 151643,
+          "torch_dtype": "float32",
+          "vocab_size": 151936
+        },
+        "actor/huggingface/config.json": {
+          "architectures": [
+            "Qwen2ForCausalLM"
+          ],
+          "eos_token_id": 151643,
+          "hidden_size": 896,
+          "model_type": "qwen2",
+          "num_attention_heads": 14,
+          "num_hidden_layers": 24,
+          "pad_token_id": 151643,
+          "torch_dtype": "bfloat16",
+          "vocab_size": 151936
+        },
+        "critic/config.json": {
+          "architectures": [
+            "Qwen2ForCausalLM"
+          ],
+          "bos_token_id": 151643,
+          "eos_token_id": 151643,
+          "hidden_size": 896,
+          "model_type": "qwen2",
+          "num_attention_heads": 14,
+          "num_hidden_layers": 24,
+          "torch_dtype": "float32",
+          "vocab_size": 151936
+        },
+        "critic/huggingface/config.json": {
+          "architectures": [
+            "Qwen2ForCausalLM"
+          ],
+          "bos_token_id": 151643,
+          "eos_token_id": 151643,
+          "hidden_size": 896,
+          "model_type": "qwen2",
+          "num_attention_heads": 14,
+          "num_hidden_layers": 24,
+          "torch_dtype": "bfloat16",
+          "vocab_size": 151936
+        }
+      },
+      "merge_completed": {
+        "actor": true,
+        "critic": true
+      }
+    },
+    "gad": {
+      "tracker": "1813",
+      "stage_completed": null,
+      "checkpoint_directories": [
+        "global_step_500",
+        "global_step_1000",
+        "global_step_1500",
+        "global_step_1813"
+      ],
+      "selected_checkpoint": "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad/global_step_1813",
+      "data_pt_exists": true,
+      "files": [
+        {
+          "path": "data.pt",
+          "bytes": 1492
+        },
+        {
+          "path": "actor/model_world_size_2_rank_0.pt",
+          "bytes": 1260496762
+        },
+        {
+          "path": "actor/added_tokens.json",
+          "bytes": 605
+        },
+        {
+          "path": "actor/optim_world_size_2_rank_0.pt",
+          "bytes": 1976153731
+        },
+        {
+          "path": "actor/optim_world_size_2_rank_1.pt",
+          "bytes": 1976153731
+        },
+        {
+          "path": "actor/tokenizer_config.json",
+          "bytes": 7259
+        },
+        {
+          "path": "actor/model_world_size_2_rank_1.pt",
+          "bytes": 1260496762
+        },
+        {
+          "path": "actor/tokenizer.json",
+          "bytes": 11421896
+        },
+        {
+          "path": "actor/config.json",
+          "bytes": 744
+        },
+        {
+          "path": "actor/merges.txt",
+          "bytes": 1671853
+        },
+        {
+          "path": "actor/vocab.json",
+          "bytes": 2776833
+        },
+        {
+          "path": "actor/extra_state_world_size_2_rank_1.pt",
+          "bytes": 14632
+        },
+        {
+          "path": "actor/extra_state_world_size_2_rank_0.pt",
+          "bytes": 14632
+        },
+        {
+          "path": "actor/special_tokens_map.json",
+          "bytes": 616
+        },
+        {
+          "path": "actor/generation_config.json",
+          "bytes": 121
+        },
+        {
+          "path": "critic/model_world_size_2_rank_0.pt",
+          "bytes": 988232090
+        },
+        {
+          "path": "critic/added_tokens.json",
+          "bytes": 605
+        },
+        {
+          "path": "critic/optim_world_size_2_rank_0.pt",
+          "bytes": 1976156611
+        },
+        {
+          "path": "critic/optim_world_size_2_rank_1.pt",
+          "bytes": 1976156611
+        },
+        {
+          "path": "critic/tokenizer_config.json",
+          "bytes": 7259
+        },
+        {
+          "path": "critic/model_world_size_2_rank_1.pt",
+          "bytes": 988228506
+        },
+        {
+          "path": "critic/tokenizer.json",
+          "bytes": 11421896
+        },
+        {
+          "path": "critic/config.json",
+          "bytes": 907
+        },
+        {
+          "path": "critic/merges.txt",
+          "bytes": 1671853
+        },
+        {
+          "path": "critic/vocab.json",
+          "bytes": 2776833
+        },
+        {
+          "path": "critic/extra_state_world_size_2_rank_1.pt",
+          "bytes": 14632
+        },
+        {
+          "path": "critic/extra_state_world_size_2_rank_0.pt",
+          "bytes": 14632
+        },
+        {
+          "path": "critic/special_tokens_map.json",
+          "bytes": 616
+        },
+        {
+          "path": "actor/huggingface/added_tokens.json",
+          "bytes": 605
+        },
+        {
+          "path": "actor/huggingface/tokenizer_config.json",
+          "bytes": 7259
+        },
+        {
+          "path": "actor/huggingface/tokenizer.json",
+          "bytes": 11421896
+        },
+        {
+          "path": "actor/huggingface/model.safetensors",
+          "bytes": 1260367448
+        },
+        {
+          "path": "actor/huggingface/config.json",
+          "bytes": 705
+        },
+        {
+          "path": "actor/huggingface/merges.txt",
+          "bytes": 1671853
+        },
+        {
+          "path": "actor/huggingface/vocab.json",
+          "bytes": 2776833
+        },
+        {
+          "path": "actor/huggingface/special_tokens_map.json",
+          "bytes": 616
+        },
+        {
+          "path": "actor/huggingface/generation_config.json",
+          "bytes": 121
+        }
+      ],
+      "model_configs": {
+        "actor/config.json": {
+          "architectures": [
+            "Qwen2ForCausalLM"
+          ],
+          "eos_token_id": 151643,
+          "hidden_size": 896,
+          "model_type": "qwen2",
+          "num_attention_heads": 14,
+          "num_hidden_layers": 24,
+          "pad_token_id": 151643,
+          "torch_dtype": "float32",
+          "vocab_size": 151936
+        },
+        "actor/huggingface/config.json": {
+          "architectures": [
+            "Qwen2ForCausalLM"
+          ],
+          "eos_token_id": 151643,
+          "hidden_size": 896,
+          "model_type": "qwen2",
+          "num_attention_heads": 14,
+          "num_hidden_layers": 24,
+          "pad_token_id": 151643,
+          "torch_dtype": "bfloat16",
+          "vocab_size": 151936
+        },
+        "critic/config.json": {
+          "architectures": [
+            "Qwen2ForCausalLM"
+          ],
+          "bos_token_id": 151643,
+          "eos_token_id": 151643,
+          "hidden_size": 896,
+          "model_type": "qwen2",
+          "num_attention_heads": 14,
+          "num_hidden_layers": 24,
+          "torch_dtype": "float32",
+          "vocab_size": 151936
+        }
+      },
+      "merge_completed": {
+        "actor": false,
+        "critic": false
+      }
+    }
+  },
+  "searched_log_roots": [
+    "ray_tmp/ray",
+    "/tmp/easygad-wwx/ray"
+  ],
+  "ray_logs": [
+    {
+      "path": "/shared/wwx/EasyGAD/ray_tmp/ray/session_2026-10-09_12-44-12_841737_1331653/logs/worker-10cb3031ad710167130385c45e6439f2b12f1b900a86bd969a60f4a1-01000000-1350821.err",
+      "events": []
+    },
+    {
+      "path": "/shared/wwx/EasyGAD/ray_tmp/ray/session_2026-10-09_12-44-12_841737_1331653/logs/worker-10cb3031ad710167130385c45e6439f2b12f1b900a86bd969a60f4a1-01000000-1350821.out",
+      "events": []
+    },
+    {
+      "path": "/shared/wwx/EasyGAD/ray_tmp/ray/session_2026-10-09_12-44-12_841737_1331653/logs/worker-cb15e8bb0127dcac352ff73d5e2035427fc90c7a4105d245060fc964-01000000-1351264.err",
+      "events": []
+    },
+    {
+      "path": "/shared/wwx/EasyGAD/ray_tmp/ray/session_2026-10-09_12-44-12_841737_1331653/logs/worker-fdd9ddaefda427b1bc07cc77adeee2697fa43636ee1a42bacd1fa8a2-01000000-1342387.out",
+      "events": [
+        {
+          "line": 354,
+          "text": "Total training steps: 1813"
+        },
+        {
+          "line": 1433,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_500"
+        },
+        {
+          "line": 2314,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1000"
+        },
+        {
+          "line": 3197,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1500"
+        },
+        {
+          "line": 3889,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813"
+        }
+      ],
+      "actual_config_safe": {
+        "actor_rollout_ref.actor.checkpoint.load_contents": [
+          "model",
+          "optimizer",
+          "extra"
+        ],
+        "actor_rollout_ref.actor.checkpoint.save_contents": [
+          "model",
+          "optimizer",
+          "extra"
+        ],
+        "actor_rollout_ref.actor.clip_ratio": 0.2,
+        "actor_rollout_ref.actor.clip_ratio_c": 3.0,
+        "actor_rollout_ref.actor.clip_ratio_high": 0.2,
+        "actor_rollout_ref.actor.clip_ratio_low": 0.2,
+        "actor_rollout_ref.actor.entropy_checkpointing": false,
+        "actor_rollout_ref.actor.entropy_coeff": 0.0,
+        "actor_rollout_ref.actor.entropy_from_logits_with_chunking": false,
+        "actor_rollout_ref.actor.fsdp_config.forward_prefetch": false,
+        "actor_rollout_ref.actor.fsdp_config.fsdp_size": -1,
+        "actor_rollout_ref.actor.fsdp_config.offload_policy": false,
+        "actor_rollout_ref.actor.fsdp_config.optimizer_offload": false,
+        "actor_rollout_ref.actor.fsdp_config.param_offload": false,
+        "actor_rollout_ref.actor.fsdp_config.reshard_after_forward": true,
+        "actor_rollout_ref.actor.fsdp_config.wrap_policy.min_num_params": 0,
+        "actor_rollout_ref.actor.grad_clip": 0.2,
+        "actor_rollout_ref.actor.kl_loss_coef": 0.001,
+        "actor_rollout_ref.actor.kl_loss_type": "low_var_kl",
+        "actor_rollout_ref.actor.loss_agg_mode": "token-mean",
+        "actor_rollout_ref.actor.optim.lr": 1e-06,
+        "actor_rollout_ref.actor.optim.lr_warmup_steps": -1,
+        "actor_rollout_ref.actor.optim.lr_warmup_steps_ratio": 0.0,
+        "actor_rollout_ref.actor.optim.min_lr_ratio": 0.0,
+        "actor_rollout_ref.actor.optim.num_cycles": 0.5,
+        "actor_rollout_ref.actor.optim.total_training_steps": -1,
+        "actor_rollout_ref.actor.optim.warmup_style": "constant",
+        "actor_rollout_ref.actor.optim.weight_decay": 0.01,
+        "actor_rollout_ref.actor.policy_loss.clip_cov_lb": 1.0,
+        "actor_rollout_ref.actor.policy_loss.clip_cov_ratio": 0.0002,
+        "actor_rollout_ref.actor.policy_loss.clip_cov_ub": 5.0,
+        "actor_rollout_ref.actor.policy_loss.kl_cov_ratio": 0.0002,
+        "actor_rollout_ref.actor.policy_loss.loss_mode": "vanilla",
+        "actor_rollout_ref.actor.policy_loss.ppo_kl_coef": 0.1,
+        "actor_rollout_ref.actor.ppo_epochs": 1,
+        "actor_rollout_ref.actor.ppo_max_token_len_per_gpu": 8192,
+        "actor_rollout_ref.actor.ppo_micro_batch_size": null,
+        "actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu": null,
+        "actor_rollout_ref.actor.ppo_mini_batch_size": 8,
+        "actor_rollout_ref.actor.profiler.all_ranks": false,
+        "actor_rollout_ref.actor.profiler.discrete": false,
+        "actor_rollout_ref.actor.profiler.ranks": null,
+        "actor_rollout_ref.actor.shuffle": false,
+        "actor_rollout_ref.actor.strategy": "fsdp",
+        "actor_rollout_ref.actor.tlgad_ema_momentum": 0.99,
+        "actor_rollout_ref.actor.ulysses_sequence_parallel_size": 1,
+        "actor_rollout_ref.actor.use_dynamic_bsz": true,
+        "actor_rollout_ref.actor.use_ema_reference": false,
+        "actor_rollout_ref.actor.use_kl_loss": false,
+        "actor_rollout_ref.actor.use_torch_compile": true,
+        "actor_rollout_ref.hybrid_engine": true,
+        "actor_rollout_ref.model.custom_chat_template": null,
+        "actor_rollout_ref.model.enable_activation_offload": false,
+        "actor_rollout_ref.model.enable_gradient_checkpointing": true,
+        "actor_rollout_ref.model.external_lib": null,
+        "actor_rollout_ref.model.fused_kernel_options.impl_backend": "torch",
+        "actor_rollout_ref.model.lora_alpha": 16,
+        "actor_rollout_ref.model.lora_rank": 0,
+        "actor_rollout_ref.model.path": "/shared/public_models/Qwen2.5-0.5B",
+        "actor_rollout_ref.model.target_modules": "all-linear",
+        "actor_rollout_ref.model.trust_remote_code": false,
+        "actor_rollout_ref.model.use_fused_kernels": false,
+        "actor_rollout_ref.model.use_liger": false,
+        "actor_rollout_ref.model.use_remove_padding": true,
+        "actor_rollout_ref.model.use_shm": false,
+        "actor_rollout_ref.ref.entropy_checkpointing": false,
+        "actor_rollout_ref.ref.entropy_from_logits_with_chunking": false,
+        "actor_rollout_ref.ref.fsdp_config.forward_prefetch": false,
+        "actor_rollout_ref.ref.fsdp_config.param_offload": false,
+        "actor_rollout_ref.ref.fsdp_config.reshard_after_forward": true,
+        "actor_rollout_ref.ref.fsdp_config.wrap_policy.min_num_params": 0,
+        "actor_rollout_ref.ref.log_prob_max_token_len_per_gpu": 8192,
+        "actor_rollout_ref.ref.log_prob_micro_batch_size": null,
+        "actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu": null,
+        "actor_rollout_ref.ref.log_prob_use_dynamic_bsz": true,
+        "actor_rollout_ref.ref.profiler.all_ranks": false,
+        "actor_rollout_ref.ref.profiler.discrete": false,
+        "actor_rollout_ref.ref.profiler.ranks": null,
+        "actor_rollout_ref.ref.strategy": "fsdp",
+        "actor_rollout_ref.ref.ulysses_sequence_parallel_size": 1,
+        "actor_rollout_ref.ref.use_torch_compile": true,
+        "actor_rollout_ref.rollout.calculate_log_probs": false,
+        "actor_rollout_ref.rollout.disable_log_stats": true,
+        "actor_rollout_ref.rollout.do_sample": true,
+        "actor_rollout_ref.rollout.dtype": "bfloat16",
+        "actor_rollout_ref.rollout.enable_chunked_prefill": true,
+        "actor_rollout_ref.rollout.enable_sleep_hack": false,
+        "actor_rollout_ref.rollout.enforce_eager": false,
+        "actor_rollout_ref.rollout.engine_kwargs.sglang.attention_backend": null,
+        "actor_rollout_ref.rollout.engine_kwargs.vllm.disable_mm_preprocessor_cache": false,
+        "actor_rollout_ref.rollout.engine_kwargs.vllm.swap_space": null,
+        "actor_rollout_ref.rollout.free_cache_engine": false,
+        "actor_rollout_ref.rollout.gpu_memory_utilization": 0.45,
+        "actor_rollout_ref.rollout.ignore_eos": false,
+        "actor_rollout_ref.rollout.layered_summon": false,
+        "actor_rollout_ref.rollout.load_format": "dummy_dtensor",
+        "actor_rollout_ref.rollout.log_prob_max_token_len_per_gpu": 8192,
+        "actor_rollout_ref.rollout.log_prob_micro_batch_size": null,
+        "actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu": null,
+        "actor_rollout_ref.rollout.log_prob_use_dynamic_bsz": true,
+        "actor_rollout_ref.rollout.max_model_len": null,
+        "actor_rollout_ref.rollout.max_num_batched_tokens": 8192,
+        "actor_rollout_ref.rollout.max_num_seqs": 1024,
+        "actor_rollout_ref.rollout.mode": "sync",
+        "actor_rollout_ref.rollout.multi_stage_wake_up": false,
+        "actor_rollout_ref.rollout.multi_turn.completion_callback": null,
+        "actor_rollout_ref.rollout.multi_turn.enable": false,
+        "actor_rollout_ref.rollout.multi_turn.format": "hermes",
+        "actor_rollout_ref.rollout.multi_turn.interaction_config_path": null,
+        "actor_rollout_ref.rollout.multi_turn.max_assistant_turns": null,
+        "actor_rollout_ref.rollout.multi_turn.max_user_turns": null,
+        "actor_rollout_ref.rollout.multi_turn.tokenization_sanity_check_mode": "strict",
+        "actor_rollout_ref.rollout.multi_turn.tool_config_path": null,
+        "actor_rollout_ref.rollout.multi_turn.use_inference_chat_template": false,
+        "actor_rollout_ref.rollout.n": 1,
+        "actor_rollout_ref.rollout.name": "vllm",
+        "actor_rollout_ref.rollout.profiler.all_ranks": false,
+        "actor_rollout_ref.rollout.profiler.discrete": false,
+        "actor_rollout_ref.rollout.profiler.ranks": null,
+        "actor_rollout_ref.rollout.prompt_length": 2048,
+        "actor_rollout_ref.rollout.response_length": 1536,
+        "actor_rollout_ref.rollout.temperature": 0.8,
+        "actor_rollout_ref.rollout.tensor_model_parallel_size": 1,
+        "actor_rollout_ref.rollout.top_k": -1,
+        "actor_rollout_ref.rollout.top_p": 1,
+        "actor_rollout_ref.rollout.use_fire_sampling": false,
+        "actor_rollout_ref.rollout.val_kwargs.do_sample": false,
+        "actor_rollout_ref.rollout.val_kwargs.n": 1,
+        "actor_rollout_ref.rollout.val_kwargs.temperature": 0,
+        "actor_rollout_ref.rollout.val_kwargs.top_k": -1,
+        "actor_rollout_ref.rollout.val_kwargs.top_p": 1.0,
+        "algorithm.adv_estimator": "grpo",
+        "algorithm.gamma": 1.0,
+        "algorithm.kl_ctrl.horizon": 10000,
+        "algorithm.kl_ctrl.kl_coef": 0.001,
+        "algorithm.kl_ctrl.target_kl": 0.1,
+        "algorithm.kl_ctrl.type": "fixed",
+        "algorithm.kl_penalty": "kl",
+        "algorithm.lam": 1.0,
+        "algorithm.norm_adv_by_std_in_grpo": true,
+        "algorithm.pf_ppo.reweight_method": "pow",
+        "algorithm.pf_ppo.weight_pow": 2.0,
+        "algorithm.tlgad_lambda": 0.8,
+        "algorithm.tlgad_temperature": 1.0,
+        "algorithm.use_kl_in_reward": false,
+        "algorithm.use_pf_ppo": false,
+        "critic.checkpoint.load_contents": [
+          "model",
+          "optimizer",
+          "extra"
+        ],
+        "critic.checkpoint.save_contents": [
+          "model",
+          "optimizer",
+          "extra"
+        ],
+        "critic.cliprange_value": 0.5,
+        "critic.forward_max_token_len_per_gpu": 8192,
+        "critic.forward_micro_batch_size": null,
+        "critic.forward_micro_batch_size_per_gpu": null,
+        "critic.grad_clip": 0.2,
+        "critic.loss_agg_mode": "token-mean",
+        "critic.model.enable_activation_offload": false,
+        "critic.model.enable_gradient_checkpointing": true,
+        "critic.model.external_lib": null,
+        "critic.model.fsdp_config.forward_prefetch": false,
+        "critic.model.fsdp_config.fsdp_size": -1,
+        "critic.model.fsdp_config.offload_policy": false,
+        "critic.model.fsdp_config.optimizer_offload": true,
+        "critic.model.fsdp_config.param_offload": true,
+        "critic.model.fsdp_config.reshard_after_forward": true,
+        "critic.model.fsdp_config.wrap_policy.min_num_params": 0,
+        "critic.model.lora_alpha": 16,
+        "critic.model.lora_rank": 0,
+        "critic.model.path": "/shared/public_models/Qwen2.5-0.5B",
+        "critic.model.target_modules": "all-linear",
+        "critic.model.tokenizer_path": "/shared/public_models/Qwen2.5-0.5B",
+        "critic.model.trust_remote_code": false,
+        "critic.model.use_remove_padding": true,
+        "critic.model.use_shm": false,
+        "critic.optim.lr": 1e-05,
+        "critic.optim.lr_warmup_steps_ratio": 0.0,
+        "critic.optim.min_lr_ratio": null,
+        "critic.optim.total_training_steps": -1,
+        "critic.optim.warmup_style": "constant",
+        "critic.optim.weight_decay": 0.01,
+        "critic.ppo_epochs": 1,
+        "critic.ppo_max_token_len_per_gpu": 8192,
+        "critic.ppo_micro_batch_size": null,
+        "critic.ppo_micro_batch_size_per_gpu": null,
+        "critic.ppo_mini_batch_size": 8,
+        "critic.profiler.all_ranks": false,
+        "critic.profiler.discrete": false,
+        "critic.profiler.ranks": null,
+        "critic.rollout_n": 1,
+        "critic.shuffle": false,
+        "critic.strategy": "fsdp",
+        "critic.ulysses_sequence_parallel_size": 1,
+        "critic.use_dynamic_bsz": true,
+        "custom_reward_function.name": "compute_score",
+        "custom_reward_function.path": null,
+        "data.custom_cls.name": null,
+        "data.custom_cls.path": null,
+        "data.filter_overlong_prompts": false,
+        "data.filter_overlong_prompts_workers": 1,
+        "data.image_key": "images",
+        "data.max_prompt_length": 2048,
+        "data.max_response_length": 1536,
+        "data.prompt_key": "content",
+        "data.return_full_prompt": false,
+        "data.return_raw_chat": false,
+        "data.return_raw_input_ids": false,
+        "data.reward_fn_key": "data_source",
+        "data.shuffle": true,
+        "data.tokenizer": null,
+        "data.train_batch_size": 8,
+        "data.train_files": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet",
+        "data.truncation": "right",
+        "data.trust_remote_code": false,
+        "data.use_shm": false,
+        "data.val_batch_size": 8,
+        "data.val_files": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet",
+        "data.validation_shuffle": false,
+        "data.video_key": "videos",
+        "ray_init.num_cpus": null,
+        "ray_init.timeline_json_file": null,
+        "reward_model.arena.arena_group_size": 1,
+        "reward_model.arena.arena_impl": "fast",
+        "reward_model.arena.elo_match_multiplier": 4,
+        "reward_model.arena.max_length": null,
+        "reward_model.arena.n_arena_bsl": 4,
+        "reward_model.arena.remove_think": true,
+        "reward_model.arena.seed": 42,
+        "reward_model.arena.truncation": "right",
+        "reward_model.enable": false,
+        "reward_model.forward_max_token_len_per_gpu": 8192,
+        "reward_model.launch_reward_fn_async": false,
+        "reward_model.max_length": null,
+        "reward_model.micro_batch_size": null,
+        "reward_model.micro_batch_size_per_gpu": null,
+        "reward_model.model.external_lib": null,
+        "reward_model.model.fsdp_config.forward_prefetch": false,
+        "reward_model.model.fsdp_config.fsdp_size": -1,
+        "reward_model.model.fsdp_config.param_offload": false,
+        "reward_model.model.fsdp_config.reshard_after_forward": true,
+        "reward_model.model.fsdp_config.wrap_policy.min_num_params": 0,
+        "reward_model.model.input_tokenizer": "/shared/public_models/Qwen2.5-0.5B",
+        "reward_model.model.path": "~/models/FsfairX-LLaMA3-RM-v0.1",
+        "reward_model.model.trust_remote_code": false,
+        "reward_model.model.use_fused_kernels": false,
+        "reward_model.model.use_remove_padding": false,
+        "reward_model.model.use_shm": false,
+        "reward_model.online_transform_data_source": "_all",
+        "reward_model.online_transform_template_name": null,
+        "reward_model.profiler.all_ranks": false,
+        "reward_model.profiler.discrete": false,
+        "reward_model.profiler.ranks": null,
+        "reward_model.reward_manager": "naive",
+        "reward_model.rollout.calculate_log_probs": false,
+        "reward_model.rollout.disable_log_stats": true,
+        "reward_model.rollout.do_sample": true,
+        "reward_model.rollout.dtype": "bfloat16",
+        "reward_model.rollout.enable_chunked_prefill": true,
+        "reward_model.rollout.enable_sleep_hack": false,
+        "reward_model.rollout.enforce_eager": true,
+        "reward_model.rollout.engine_kwargs.sglang.attention_backend": null,
+        "reward_model.rollout.engine_kwargs.vllm.disable_mm_preprocessor_cache": false,
+        "reward_model.rollout.engine_kwargs.vllm.swap_space": null,
+        "reward_model.rollout.free_cache_engine": true,
+        "reward_model.rollout.gpu_memory_utilization": 0.5,
+        "reward_model.rollout.ignore_eos": false,
+        "reward_model.rollout.layered_summon": false,
+        "reward_model.rollout.load_format": "dummy_dtensor",
+        "reward_model.rollout.log_prob_max_token_len_per_gpu": 8192,
+        "reward_model.rollout.log_prob_micro_batch_size": null,
+        "reward_model.rollout.log_prob_micro_batch_size_per_gpu": null,
+        "reward_model.rollout.log_prob_use_dynamic_bsz": true,
+        "reward_model.rollout.max_model_len": null,
+        "reward_model.rollout.max_num_batched_tokens": 8192,
+        "reward_model.rollout.max_num_seqs": 1024,
+        "reward_model.rollout.mode": "sync",
+        "reward_model.rollout.multi_stage_wake_up": false,
+        "reward_model.rollout.multi_turn.completion_callback": null,
+        "reward_model.rollout.multi_turn.enable": false,
+        "reward_model.rollout.multi_turn.format": "hermes",
+        "reward_model.rollout.multi_turn.interaction_config_path": null,
+        "reward_model.rollout.multi_turn.max_assistant_turns": null,
+        "reward_model.rollout.multi_turn.max_user_turns": null,
+        "reward_model.rollout.multi_turn.tokenization_sanity_check_mode": "strict",
+        "reward_model.rollout.multi_turn.tool_config_path": null,
+        "reward_model.rollout.multi_turn.use_inference_chat_template": false,
+        "reward_model.rollout.n": 1,
+        "reward_model.rollout.name": "vllm",
+        "reward_model.rollout.profiler.all_ranks": false,
+        "reward_model.rollout.profiler.discrete": false,
+        "reward_model.rollout.profiler.ranks": null,
+        "reward_model.rollout.prompt_length": 2048,
+        "reward_model.rollout.response_length": 1536,
+        "reward_model.rollout.temperature": 0.6,
+        "reward_model.rollout.tensor_model_parallel_size": 2,
+        "reward_model.rollout.top_k": -1,
+        "reward_model.rollout.top_p": 1,
+        "reward_model.rollout.use_fire_sampling": false,
+        "reward_model.rollout.val_kwargs.do_sample": false,
+        "reward_model.rollout.val_kwargs.n": 1,
+        "reward_model.rollout.val_kwargs.temperature": 0,
+        "reward_model.rollout.val_kwargs.top_k": -1,
+        "reward_model.rollout.val_kwargs.top_p": 1.0,
+        "reward_model.sandbox_fusion.max_concurrent": 64,
+        "reward_model.sandbox_fusion.memory_limit_mb": 1024,
+        "reward_model.sandbox_fusion.url": null,
+        "reward_model.strategy": "vllm",
+        "reward_model.ulysses_sequence_parallel_size": 1,
+        "reward_model.use_dynamic_bsz": true,
+        "trainer.balance_batch": true,
+        "trainer.controller_nsight_options.cuda-graph-trace": "graph",
+        "trainer.controller_nsight_options.cuda-memory-usage": "true",
+        "trainer.controller_nsight_options.trace": "cuda,nvtx,cublas,ucx",
+        "trainer.critic_warmup": 10,
+        "trainer.default_hdfs_dir": null,
+        "trainer.default_local_dir": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup",
+        "trainer.del_local_ckpt_after_load": false,
+        "trainer.device": "cuda",
+        "trainer.experiment_name": "te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_warmup",
+        "trainer.log_val_generations": 0,
+        "trainer.logger": [
+          "console",
+          "swanlab"
+        ],
+        "trainer.max_actor_ckpt_to_keep": 2,
+        "trainer.max_critic_ckpt_to_keep": 2,
+        "trainer.n_gpus_per_node": 2,
+        "trainer.nnodes": 1,
+        "trainer.profile_steps": null,
+        "trainer.project_name": "easyGAD-wm",
+        "trainer.ray_wait_register_center_timeout": 300,
+        "trainer.resume_from_path": null,
+        "trainer.resume_mode": "disable",
+        "trainer.rollout_data_dir": null,
+        "trainer.save_freq": 500,
+        "trainer.test_freq": 250,
+        "trainer.total_epochs": 1,
+        "trainer.total_training_steps": null,
+        "trainer.training_stage": "warmup",
+        "trainer.val_before_train": true,
+        "trainer.val_only": false,
+        "trainer.validation_data_dir": null,
+        "trainer.worker_nsight_options.capture-range": "cudaProfilerApi",
+        "trainer.worker_nsight_options.capture-range-end": null,
+        "trainer.worker_nsight_options.cuda-graph-trace": "graph",
+        "trainer.worker_nsight_options.cuda-memory-usage": "true",
+        "trainer.worker_nsight_options.kill": "none",
+        "trainer.worker_nsight_options.trace": "cuda,nvtx,cublas,ucx"
+      },
+      "first_train_metric": {
+        "line": 555,
+        "text": "step:1 - actor/entropy:1.094 - critic/d_loss:0.762 - critic/d_acc:0.500 - critic/student_value_mean:6.531 - critic/teacher_value_mean:6.625 - critic/grad_norm:130.943 - perf/mfu/critic:0.002 - critic/lr:0.000 - training/global_step:1.000 - training/epoch:0.000 - critic/score/mean:6.562 - critic/score/max:7.938 - critic/score/min:5.594 - critic/rewards/mean:6.562 - critic/rewards/max:7.938 - critic/rewards/min:5.594 - critic/advantages/mean:6.781 - critic/advantages/max:7.938 - critic/advantages/min:5.594 - critic/returns/mean:6.781 - critic/returns/max:7.938 - critic/returns/min:5.594 - critic/values/mean:0.066 - critic/values/max:7.938 - critic/values/min:0.000 - critic/vf_explained_var:-0.500 - response_length/mean:99.125 - response_length/max:267.000 - response_length/min:12.000 - response_length/clip_ratio:0.000 - prompt_length/mean:52.750 - prompt_length/max:61.000 - prompt_length/min:47.000 - prompt_length/clip_ratio:0.000 - timing_s/generate_sequences:2.853 - timing_s/reshard:0.605 - timing_s/gen:6.609 - timing_s/old_log_prob:38.611 - timing_s/reward:0.454 - timing_s/adv:0.001 - timing_s/update_critic:4.343 - timing_s/step:50.021 - timing_per_token_ms/update_critic:3.574 - timing_per_token_ms/gen:8.334 - timing_per_token_ms/adv:0.001 - perf/total_num_tokens:1215.000 - perf/time_per_step:50.021 - perf/throughput:12.145"
+      },
+      "last_train_metrics": [
+        {
+          "line": 3699,
+          "text": "step:1812 - actor/entropy:0.207 - critic/d_loss:0.445 - critic/d_acc:1.000 - critic/student_value_mean:-2.531 - critic/teacher_value_mean:-1.609 - critic/grad_norm:7.452 - perf/mfu/critic:0.034 - critic/lr:0.000 - actor/pg_loss:0.053 - actor/teacher_pg_loss:0.053 - actor/grad_norm:10.319 - perf/mfu/actor:0.054 - perf/max_memory_allocated_gb:28.424 - perf/max_memory_reserved_gb:32.486 - perf/cpu_memory_used_gb:186.308 - actor/lr:0.000 - training/global_step:1812.000 - training/epoch:0.000 - critic/score/mean:-2.312 - critic/score/max:-1.102 - critic/score/min:-4.469 - critic/rewards/mean:-2.312 - critic/rewards/max:-1.102 - critic/rewards/min:-4.469 - critic/advantages/mean:-2.656 - critic/advantages/max:-1.102 - critic/advantages/min:-4.469 - critic/returns/mean:-2.656 - critic/returns/max:-1.102 - critic/returns/min:-4.469 - critic/values/mean:-0.005 - critic/values/max:-0.000 - critic/values/min:-4.469 - critic/vf_explained_var:-0.008 - response_length/mean:461.125 - response_length/max:1536.000 - response_length/min:22.000 - response_length/clip_ratio:0.250 - prompt_length/mean:103.375 - prompt_length/max:320.000 - prompt_length/min:52.000 - prompt_length/clip_ratio:0.000 - timing_s/generate_sequences:3.938 - timing_s/reshard:0.442 - timing_s/gen:8.459 - timing_s/old_log_prob:0.171 - timing_s/reward:0.271 - timing_s/adv:0.003 - timing_s/update_critic:1.159 - timing_s/update_actor:0.581 - timing_s/step:10.647 - timing_per_token_ms/update_critic:0.257 - timing_per_token_ms/update_actor:0.129 - timing_per_token_ms/gen:2.293 - timing_per_token_ms/adv:0.001 - perf/total_num_tokens:4516.000 - perf/time_per_step:10.647 - perf/throughput:212.077"
+        },
+        {
+          "line": 3890,
+          "text": "step:1813 - actor/entropy:1.165 - critic/d_loss:0.742 - critic/d_acc:0.250 - critic/student_value_mean:-1.219 - critic/teacher_value_mean:-1.289 - critic/grad_norm:5.526 - perf/mfu/critic:0.009 - critic/lr:0.000 - actor/pg_loss:0.056 - actor/teacher_pg_loss:0.056 - actor/grad_norm:13.224 - perf/mfu/actor:0.014 - perf/max_memory_allocated_gb:28.424 - perf/max_memory_reserved_gb:32.486 - perf/cpu_memory_used_gb:186.349 - actor/lr:0.000 - val-core/unknown/reward/mean@1:0.242 - val/rouge-L/mean:0.242 - training/global_step:1813.000 - training/epoch:0.000 - critic/score/mean:-1.828 - critic/score/max:-0.520 - critic/score/min:-3.953 - critic/rewards/mean:-1.828 - critic/rewards/max:-0.520 - critic/rewards/min:-3.953 - critic/advantages/mean:-1.508 - critic/advantages/max:-0.520 - critic/advantages/min:-3.953 - critic/returns/mean:-1.508 - critic/returns/max:-0.520 - critic/returns/min:-3.953 - critic/values/mean:-0.019 - critic/values/max:-0.000 - critic/values/min:-3.953 - critic/vf_explained_var:-0.008 - response_length/mean:94.500 - response_length/max:242.000 - response_length/min:9.000 - response_length/clip_ratio:0.000 - prompt_length/mean:70.250 - prompt_length/max:139.000 - prompt_length/min:48.000 - prompt_length/clip_ratio:0.000 - timing_s/generate_sequences:0.742 - timing_s/reshard:0.485 - timing_s/gen:2.333 - timing_s/old_log_prob:0.143 - timing_s/reward:0.244 - timing_s/adv:0.001 - timing_s/update_critic:1.056 - timing_s/update_actor:0.590 - timing_s/testing:434.620 - timing_s/save_checkpoint:9.903 - timing_s/step:448.892 - timing_per_token_ms/update_critic:0.801 - timing_per_token_ms/update_actor:0.448 - timing_per_token_ms/gen:3.086 - timing_per_token_ms/adv:0.001 - perf/total_num_tokens:1318.000 - perf/time_per_step:448.892 - perf/throughput:1.468"
+        }
+      ]
+    },
+    {
+      "path": "/tmp/easygad-wwx/ray/session_2026-10-10_10-37-55_080570_642631/logs/worker-671b2e0bee062041e19115cc64e47f16725b7e9ffc60180b368b5789-01000000-646936.err",
+      "events": []
+    },
+    {
+      "path": "/tmp/easygad-wwx/ray/session_2026-10-10_10-37-55_080570_642631/logs/worker-93c4d7559f549d5cc0856187052eecbce3ae705649fe53f2046fc669-01000000-646508.err",
+      "events": []
+    },
+    {
+      "path": "/tmp/easygad-wwx/ray/session_2026-10-10_10-37-55_080570_642631/logs/worker-93c4d7559f549d5cc0856187052eecbce3ae705649fe53f2046fc669-01000000-646508.out",
+      "events": []
+    },
+    {
+      "path": "/tmp/easygad-wwx/ray/session_2026-10-10_10-37-55_080570_642631/logs/worker-fa3e63716174a0aa78d8a9011ff47206dbaa52519d833b6b3cd61980-01000000-644781.out",
+      "events": [
+        {
+          "line": 354,
+          "text": "Total training steps: 1813"
+        },
+        {
+          "line": 365,
+          "text": "Training from scratch"
+        },
+        {
+          "line": 1443,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad/global_step_500"
+        },
+        {
+          "line": 2322,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad/global_step_1000"
+        },
+        {
+          "line": 3201,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad/global_step_1500"
+        },
+        {
+          "line": 3893,
+          "text": "local_global_step_folder: checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad/global_step_1813"
+        }
+      ],
+      "actual_config_safe": {
+        "actor_rollout_ref.actor.checkpoint.load_contents": [
+          "model",
+          "optimizer",
+          "extra"
+        ],
+        "actor_rollout_ref.actor.checkpoint.save_contents": [
+          "model",
+          "optimizer",
+          "extra"
+        ],
+        "actor_rollout_ref.actor.clip_ratio": 0.2,
+        "actor_rollout_ref.actor.clip_ratio_c": 3.0,
+        "actor_rollout_ref.actor.clip_ratio_high": 0.2,
+        "actor_rollout_ref.actor.clip_ratio_low": 0.2,
+        "actor_rollout_ref.actor.entropy_checkpointing": false,
+        "actor_rollout_ref.actor.entropy_coeff": 0.0,
+        "actor_rollout_ref.actor.entropy_from_logits_with_chunking": false,
+        "actor_rollout_ref.actor.fsdp_config.forward_prefetch": false,
+        "actor_rollout_ref.actor.fsdp_config.fsdp_size": -1,
+        "actor_rollout_ref.actor.fsdp_config.offload_policy": false,
+        "actor_rollout_ref.actor.fsdp_config.optimizer_offload": false,
+        "actor_rollout_ref.actor.fsdp_config.param_offload": false,
+        "actor_rollout_ref.actor.fsdp_config.reshard_after_forward": true,
+        "actor_rollout_ref.actor.fsdp_config.wrap_policy.min_num_params": 0,
+        "actor_rollout_ref.actor.grad_clip": 0.2,
+        "actor_rollout_ref.actor.kl_loss_coef": 0.001,
+        "actor_rollout_ref.actor.kl_loss_type": "low_var_kl",
+        "actor_rollout_ref.actor.loss_agg_mode": "token-mean",
+        "actor_rollout_ref.actor.optim.lr": 1e-06,
+        "actor_rollout_ref.actor.optim.lr_warmup_steps": -1,
+        "actor_rollout_ref.actor.optim.lr_warmup_steps_ratio": 0.0,
+        "actor_rollout_ref.actor.optim.min_lr_ratio": 0.0,
+        "actor_rollout_ref.actor.optim.num_cycles": 0.5,
+        "actor_rollout_ref.actor.optim.total_training_steps": -1,
+        "actor_rollout_ref.actor.optim.warmup_style": "constant",
+        "actor_rollout_ref.actor.optim.weight_decay": 0.01,
+        "actor_rollout_ref.actor.policy_loss.clip_cov_lb": 1.0,
+        "actor_rollout_ref.actor.policy_loss.clip_cov_ratio": 0.0002,
+        "actor_rollout_ref.actor.policy_loss.clip_cov_ub": 5.0,
+        "actor_rollout_ref.actor.policy_loss.kl_cov_ratio": 0.0002,
+        "actor_rollout_ref.actor.policy_loss.loss_mode": "clip_cov",
+        "actor_rollout_ref.actor.policy_loss.ppo_kl_coef": 0.1,
+        "actor_rollout_ref.actor.ppo_epochs": 1,
+        "actor_rollout_ref.actor.ppo_max_token_len_per_gpu": 8192,
+        "actor_rollout_ref.actor.ppo_micro_batch_size": null,
+        "actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu": null,
+        "actor_rollout_ref.actor.ppo_mini_batch_size": 8,
+        "actor_rollout_ref.actor.profiler.all_ranks": false,
+        "actor_rollout_ref.actor.profiler.discrete": false,
+        "actor_rollout_ref.actor.profiler.ranks": null,
+        "actor_rollout_ref.actor.shuffle": false,
+        "actor_rollout_ref.actor.strategy": "fsdp",
+        "actor_rollout_ref.actor.tlgad_ema_momentum": 0.99,
+        "actor_rollout_ref.actor.ulysses_sequence_parallel_size": 1,
+        "actor_rollout_ref.actor.use_dynamic_bsz": true,
+        "actor_rollout_ref.actor.use_ema_reference": false,
+        "actor_rollout_ref.actor.use_kl_loss": false,
+        "actor_rollout_ref.actor.use_torch_compile": true,
+        "actor_rollout_ref.hybrid_engine": true,
+        "actor_rollout_ref.model.custom_chat_template": null,
+        "actor_rollout_ref.model.enable_activation_offload": false,
+        "actor_rollout_ref.model.enable_gradient_checkpointing": true,
+        "actor_rollout_ref.model.external_lib": null,
+        "actor_rollout_ref.model.fused_kernel_options.impl_backend": "torch",
+        "actor_rollout_ref.model.lora_alpha": 16,
+        "actor_rollout_ref.model.lora_rank": 0,
+        "actor_rollout_ref.model.path": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813/actor/huggingface",
+        "actor_rollout_ref.model.target_modules": "all-linear",
+        "actor_rollout_ref.model.trust_remote_code": false,
+        "actor_rollout_ref.model.use_fused_kernels": false,
+        "actor_rollout_ref.model.use_liger": false,
+        "actor_rollout_ref.model.use_remove_padding": true,
+        "actor_rollout_ref.model.use_shm": false,
+        "actor_rollout_ref.ref.entropy_checkpointing": false,
+        "actor_rollout_ref.ref.entropy_from_logits_with_chunking": false,
+        "actor_rollout_ref.ref.fsdp_config.forward_prefetch": false,
+        "actor_rollout_ref.ref.fsdp_config.param_offload": false,
+        "actor_rollout_ref.ref.fsdp_config.reshard_after_forward": true,
+        "actor_rollout_ref.ref.fsdp_config.wrap_policy.min_num_params": 0,
+        "actor_rollout_ref.ref.log_prob_max_token_len_per_gpu": 8192,
+        "actor_rollout_ref.ref.log_prob_micro_batch_size": null,
+        "actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu": null,
+        "actor_rollout_ref.ref.log_prob_use_dynamic_bsz": true,
+        "actor_rollout_ref.ref.profiler.all_ranks": false,
+        "actor_rollout_ref.ref.profiler.discrete": false,
+        "actor_rollout_ref.ref.profiler.ranks": null,
+        "actor_rollout_ref.ref.strategy": "fsdp",
+        "actor_rollout_ref.ref.ulysses_sequence_parallel_size": 1,
+        "actor_rollout_ref.ref.use_torch_compile": true,
+        "actor_rollout_ref.rollout.calculate_log_probs": false,
+        "actor_rollout_ref.rollout.disable_log_stats": true,
+        "actor_rollout_ref.rollout.do_sample": true,
+        "actor_rollout_ref.rollout.dtype": "bfloat16",
+        "actor_rollout_ref.rollout.enable_chunked_prefill": true,
+        "actor_rollout_ref.rollout.enable_sleep_hack": false,
+        "actor_rollout_ref.rollout.enforce_eager": false,
+        "actor_rollout_ref.rollout.engine_kwargs.sglang.attention_backend": null,
+        "actor_rollout_ref.rollout.engine_kwargs.vllm.disable_mm_preprocessor_cache": false,
+        "actor_rollout_ref.rollout.engine_kwargs.vllm.swap_space": null,
+        "actor_rollout_ref.rollout.free_cache_engine": false,
+        "actor_rollout_ref.rollout.gpu_memory_utilization": 0.45,
+        "actor_rollout_ref.rollout.ignore_eos": false,
+        "actor_rollout_ref.rollout.layered_summon": false,
+        "actor_rollout_ref.rollout.load_format": "dummy_dtensor",
+        "actor_rollout_ref.rollout.log_prob_max_token_len_per_gpu": 8192,
+        "actor_rollout_ref.rollout.log_prob_micro_batch_size": null,
+        "actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu": null,
+        "actor_rollout_ref.rollout.log_prob_use_dynamic_bsz": true,
+        "actor_rollout_ref.rollout.max_model_len": null,
+        "actor_rollout_ref.rollout.max_num_batched_tokens": 8192,
+        "actor_rollout_ref.rollout.max_num_seqs": 1024,
+        "actor_rollout_ref.rollout.mode": "sync",
+        "actor_rollout_ref.rollout.multi_stage_wake_up": false,
+        "actor_rollout_ref.rollout.multi_turn.completion_callback": null,
+        "actor_rollout_ref.rollout.multi_turn.enable": false,
+        "actor_rollout_ref.rollout.multi_turn.format": "hermes",
+        "actor_rollout_ref.rollout.multi_turn.interaction_config_path": null,
+        "actor_rollout_ref.rollout.multi_turn.max_assistant_turns": null,
+        "actor_rollout_ref.rollout.multi_turn.max_user_turns": null,
+        "actor_rollout_ref.rollout.multi_turn.tokenization_sanity_check_mode": "strict",
+        "actor_rollout_ref.rollout.multi_turn.tool_config_path": null,
+        "actor_rollout_ref.rollout.multi_turn.use_inference_chat_template": false,
+        "actor_rollout_ref.rollout.n": 2,
+        "actor_rollout_ref.rollout.name": "vllm",
+        "actor_rollout_ref.rollout.profiler.all_ranks": false,
+        "actor_rollout_ref.rollout.profiler.discrete": false,
+        "actor_rollout_ref.rollout.profiler.ranks": null,
+        "actor_rollout_ref.rollout.prompt_length": 2048,
+        "actor_rollout_ref.rollout.response_length": 1536,
+        "actor_rollout_ref.rollout.temperature": 0.8,
+        "actor_rollout_ref.rollout.tensor_model_parallel_size": 1,
+        "actor_rollout_ref.rollout.top_k": -1,
+        "actor_rollout_ref.rollout.top_p": 1,
+        "actor_rollout_ref.rollout.use_fire_sampling": false,
+        "actor_rollout_ref.rollout.val_kwargs.do_sample": false,
+        "actor_rollout_ref.rollout.val_kwargs.n": 1,
+        "actor_rollout_ref.rollout.val_kwargs.temperature": 0,
+        "actor_rollout_ref.rollout.val_kwargs.top_k": -1,
+        "actor_rollout_ref.rollout.val_kwargs.top_p": 1.0,
+        "algorithm.adv_estimator": "grpo",
+        "algorithm.gamma": 1.0,
+        "algorithm.kl_ctrl.horizon": 10000,
+        "algorithm.kl_ctrl.kl_coef": 0.001,
+        "algorithm.kl_ctrl.target_kl": 0.1,
+        "algorithm.kl_ctrl.type": "fixed",
+        "algorithm.kl_penalty": "kl",
+        "algorithm.lam": 1.0,
+        "algorithm.norm_adv_by_std_in_grpo": true,
+        "algorithm.pf_ppo.reweight_method": "pow",
+        "algorithm.pf_ppo.weight_pow": 2.0,
+        "algorithm.tlgad_lambda": 0.8,
+        "algorithm.tlgad_temperature": 1.0,
+        "algorithm.use_kl_in_reward": false,
+        "algorithm.use_pf_ppo": false,
+        "critic.checkpoint.load_contents": [
+          "model",
+          "optimizer",
+          "extra"
+        ],
+        "critic.checkpoint.save_contents": [
+          "model",
+          "optimizer",
+          "extra"
+        ],
+        "critic.cliprange_value": 0.5,
+        "critic.forward_max_token_len_per_gpu": 8192,
+        "critic.forward_micro_batch_size": null,
+        "critic.forward_micro_batch_size_per_gpu": null,
+        "critic.grad_clip": 0.2,
+        "critic.loss_agg_mode": "token-mean",
+        "critic.model.enable_activation_offload": false,
+        "critic.model.enable_gradient_checkpointing": true,
+        "critic.model.external_lib": null,
+        "critic.model.fsdp_config.forward_prefetch": false,
+        "critic.model.fsdp_config.fsdp_size": -1,
+        "critic.model.fsdp_config.offload_policy": false,
+        "critic.model.fsdp_config.optimizer_offload": true,
+        "critic.model.fsdp_config.param_offload": true,
+        "critic.model.fsdp_config.reshard_after_forward": true,
+        "critic.model.fsdp_config.wrap_policy.min_num_params": 0,
+        "critic.model.lora_alpha": 16,
+        "critic.model.lora_rank": 0,
+        "critic.model.path": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813/critic/huggingface",
+        "critic.model.target_modules": "all-linear",
+        "critic.model.tokenizer_path": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813/actor/huggingface",
+        "critic.model.trust_remote_code": false,
+        "critic.model.use_remove_padding": true,
+        "critic.model.use_shm": false,
+        "critic.optim.lr": 1e-05,
+        "critic.optim.lr_warmup_steps_ratio": 0.0,
+        "critic.optim.min_lr_ratio": null,
+        "critic.optim.total_training_steps": -1,
+        "critic.optim.warmup_style": "constant",
+        "critic.optim.weight_decay": 0.01,
+        "critic.ppo_epochs": 1,
+        "critic.ppo_max_token_len_per_gpu": 8192,
+        "critic.ppo_micro_batch_size": null,
+        "critic.ppo_micro_batch_size_per_gpu": null,
+        "critic.ppo_mini_batch_size": 8,
+        "critic.profiler.all_ranks": false,
+        "critic.profiler.discrete": false,
+        "critic.profiler.ranks": null,
+        "critic.rollout_n": 2,
+        "critic.shuffle": false,
+        "critic.strategy": "fsdp",
+        "critic.ulysses_sequence_parallel_size": 1,
+        "critic.use_dynamic_bsz": true,
+        "custom_reward_function.name": "compute_score",
+        "custom_reward_function.path": null,
+        "data.custom_cls.name": null,
+        "data.custom_cls.path": null,
+        "data.filter_overlong_prompts": false,
+        "data.filter_overlong_prompts_workers": 1,
+        "data.image_key": "images",
+        "data.max_prompt_length": 2048,
+        "data.max_response_length": 1536,
+        "data.prompt_key": "content",
+        "data.return_full_prompt": false,
+        "data.return_raw_chat": false,
+        "data.return_raw_input_ids": false,
+        "data.reward_fn_key": "data_source",
+        "data.shuffle": true,
+        "data.tokenizer": null,
+        "data.train_batch_size": 8,
+        "data.train_files": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet",
+        "data.truncation": "right",
+        "data.trust_remote_code": false,
+        "data.use_shm": false,
+        "data.val_batch_size": 8,
+        "data.val_files": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet",
+        "data.validation_shuffle": false,
+        "data.video_key": "videos",
+        "ray_init.num_cpus": 8,
+        "ray_init.timeline_json_file": null,
+        "reward_model.arena.arena_group_size": 2,
+        "reward_model.arena.arena_impl": "fast",
+        "reward_model.arena.elo_match_multiplier": 4,
+        "reward_model.arena.max_length": null,
+        "reward_model.arena.n_arena_bsl": 4,
+        "reward_model.arena.remove_think": true,
+        "reward_model.arena.seed": 42,
+        "reward_model.arena.truncation": "right",
+        "reward_model.enable": false,
+        "reward_model.forward_max_token_len_per_gpu": 8192,
+        "reward_model.launch_reward_fn_async": false,
+        "reward_model.max_length": null,
+        "reward_model.micro_batch_size": null,
+        "reward_model.micro_batch_size_per_gpu": null,
+        "reward_model.model.external_lib": null,
+        "reward_model.model.fsdp_config.forward_prefetch": false,
+        "reward_model.model.fsdp_config.fsdp_size": -1,
+        "reward_model.model.fsdp_config.param_offload": false,
+        "reward_model.model.fsdp_config.reshard_after_forward": true,
+        "reward_model.model.fsdp_config.wrap_policy.min_num_params": 0,
+        "reward_model.model.input_tokenizer": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/warmup/global_step_1813/actor/huggingface",
+        "reward_model.model.path": "~/models/FsfairX-LLaMA3-RM-v0.1",
+        "reward_model.model.trust_remote_code": false,
+        "reward_model.model.use_fused_kernels": false,
+        "reward_model.model.use_remove_padding": false,
+        "reward_model.model.use_shm": false,
+        "reward_model.online_transform_data_source": "_all",
+        "reward_model.online_transform_template_name": null,
+        "reward_model.profiler.all_ranks": false,
+        "reward_model.profiler.discrete": false,
+        "reward_model.profiler.ranks": null,
+        "reward_model.reward_manager": "naive",
+        "reward_model.rollout.calculate_log_probs": false,
+        "reward_model.rollout.disable_log_stats": true,
+        "reward_model.rollout.do_sample": true,
+        "reward_model.rollout.dtype": "bfloat16",
+        "reward_model.rollout.enable_chunked_prefill": true,
+        "reward_model.rollout.enable_sleep_hack": false,
+        "reward_model.rollout.enforce_eager": true,
+        "reward_model.rollout.engine_kwargs.sglang.attention_backend": null,
+        "reward_model.rollout.engine_kwargs.vllm.disable_mm_preprocessor_cache": false,
+        "reward_model.rollout.engine_kwargs.vllm.swap_space": null,
+        "reward_model.rollout.free_cache_engine": true,
+        "reward_model.rollout.gpu_memory_utilization": 0.5,
+        "reward_model.rollout.ignore_eos": false,
+        "reward_model.rollout.layered_summon": false,
+        "reward_model.rollout.load_format": "dummy_dtensor",
+        "reward_model.rollout.log_prob_max_token_len_per_gpu": 8192,
+        "reward_model.rollout.log_prob_micro_batch_size": null,
+        "reward_model.rollout.log_prob_micro_batch_size_per_gpu": null,
+        "reward_model.rollout.log_prob_use_dynamic_bsz": true,
+        "reward_model.rollout.max_model_len": null,
+        "reward_model.rollout.max_num_batched_tokens": 8192,
+        "reward_model.rollout.max_num_seqs": 1024,
+        "reward_model.rollout.mode": "sync",
+        "reward_model.rollout.multi_stage_wake_up": false,
+        "reward_model.rollout.multi_turn.completion_callback": null,
+        "reward_model.rollout.multi_turn.enable": false,
+        "reward_model.rollout.multi_turn.format": "hermes",
+        "reward_model.rollout.multi_turn.interaction_config_path": null,
+        "reward_model.rollout.multi_turn.max_assistant_turns": null,
+        "reward_model.rollout.multi_turn.max_user_turns": null,
+        "reward_model.rollout.multi_turn.tokenization_sanity_check_mode": "strict",
+        "reward_model.rollout.multi_turn.tool_config_path": null,
+        "reward_model.rollout.multi_turn.use_inference_chat_template": false,
+        "reward_model.rollout.n": 1,
+        "reward_model.rollout.name": "vllm",
+        "reward_model.rollout.profiler.all_ranks": false,
+        "reward_model.rollout.profiler.discrete": false,
+        "reward_model.rollout.profiler.ranks": null,
+        "reward_model.rollout.prompt_length": 2048,
+        "reward_model.rollout.response_length": 1536,
+        "reward_model.rollout.temperature": 0.6,
+        "reward_model.rollout.tensor_model_parallel_size": 2,
+        "reward_model.rollout.top_k": -1,
+        "reward_model.rollout.top_p": 1,
+        "reward_model.rollout.use_fire_sampling": false,
+        "reward_model.rollout.val_kwargs.do_sample": false,
+        "reward_model.rollout.val_kwargs.n": 1,
+        "reward_model.rollout.val_kwargs.temperature": 0,
+        "reward_model.rollout.val_kwargs.top_k": -1,
+        "reward_model.rollout.val_kwargs.top_p": 1.0,
+        "reward_model.sandbox_fusion.max_concurrent": 64,
+        "reward_model.sandbox_fusion.memory_limit_mb": 1024,
+        "reward_model.sandbox_fusion.url": null,
+        "reward_model.strategy": "vllm",
+        "reward_model.ulysses_sequence_parallel_size": 1,
+        "reward_model.use_dynamic_bsz": true,
+        "trainer.balance_batch": true,
+        "trainer.controller_nsight_options.cuda-graph-trace": "graph",
+        "trainer.controller_nsight_options.cuda-memory-usage": "true",
+        "trainer.controller_nsight_options.trace": "cuda,nvtx,cublas,ucx",
+        "trainer.critic_warmup": 0,
+        "trainer.default_hdfs_dir": null,
+        "trainer.default_local_dir": "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad",
+        "trainer.del_local_ckpt_after_load": false,
+        "trainer.device": "cuda",
+        "trainer.experiment_name": "te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_gad",
+        "trainer.log_val_generations": 0,
+        "trainer.logger": [
+          "console",
+          "swanlab"
+        ],
+        "trainer.max_actor_ckpt_to_keep": 2,
+        "trainer.max_critic_ckpt_to_keep": 2,
+        "trainer.n_gpus_per_node": 2,
+        "trainer.nnodes": 1,
+        "trainer.profile_steps": null,
+        "trainer.project_name": "easyGAD-wm",
+        "trainer.ray_wait_register_center_timeout": 300,
+        "trainer.resume_from_path": null,
+        "trainer.resume_mode": "auto",
+        "trainer.rollout_data_dir": null,
+        "trainer.save_freq": 500,
+        "trainer.test_freq": 250,
+        "trainer.total_epochs": 1,
+        "trainer.total_training_steps": null,
+        "trainer.training_stage": "gad",
+        "trainer.val_before_train": true,
+        "trainer.val_only": false,
+        "trainer.validation_data_dir": null,
+        "trainer.worker_nsight_options.capture-range": "cudaProfilerApi",
+        "trainer.worker_nsight_options.capture-range-end": null,
+        "trainer.worker_nsight_options.cuda-graph-trace": "graph",
+        "trainer.worker_nsight_options.cuda-memory-usage": "true",
+        "trainer.worker_nsight_options.kill": "none",
+        "trainer.worker_nsight_options.trace": "cuda,nvtx,cublas,ucx"
+      },
+      "first_train_metric": {
+        "line": 559,
+        "text": "step:1 - actor/entropy:0.304 - critic/d_loss:0.504 - critic/d_acc:0.625 - critic/student_value_mean:-2.000 - critic/teacher_value_mean:-1.172 - critic/grad_norm:14.322 - perf/mfu/critic:0.058 - critic/lr:0.000 - actor/pg_loss:0.691 - actor/pg_clipfrac:0.000 - actor/ppo_kl:-0.000 - actor/grad_norm:0.877 - perf/mfu/actor:0.018 - perf/max_memory_allocated_gb:21.909 - perf/max_memory_reserved_gb:25.932 - perf/cpu_memory_used_gb:175.296 - actor/lr:0.000 - training/global_step:1.000 - training/epoch:0.000 - critic/score/mean:-1.836 - critic/score/max:-0.285 - critic/score/min:-4.438 - critic/rewards/mean:-1.836 - critic/rewards/max:-0.285 - critic/rewards/min:-4.438 - critic/advantages/mean:-0.224 - critic/advantages/max:0.809 - critic/advantages/min:-0.746 - critic/returns/mean:-0.224 - critic/returns/max:0.809 - critic/returns/min:-0.746 - critic/values/mean:-0.004 - critic/values/max:-0.000 - critic/values/min:-4.438 - critic/vf_explained_var:-0.023 - response_length/mean:470.125 - response_length/max:1536.000 - response_length/min:2.000 - response_length/clip_ratio:0.250 - prompt_length/mean:52.750 - prompt_length/max:61.000 - prompt_length/min:47.000 - prompt_length/clip_ratio:0.000 - timing_s/generate_sequences:6.182 - timing_s/reshard:0.381 - timing_s/gen:8.684 - timing_s/old_log_prob:62.314 - timing_s/reward:0.312 - timing_s/adv:0.008 - timing_s/update_critic:4.105 - timing_s/update_actor:3.128 - timing_s/step:78.556 - timing_per_token_ms/update_actor:0.374 - timing_per_token_ms/gen:1.155 - timing_per_token_ms/update_critic:0.491 - timing_per_token_ms/adv:0.001 - perf/total_num_tokens:8366.000 - perf/time_per_step:78.556 - perf/throughput:53.248"
+      },
+      "last_train_metrics": [
+        {
+          "line": 3703,
+          "text": "step:1812 - actor/entropy:0.765 - critic/d_loss:0.000 - critic/d_acc:1.000 - critic/student_value_mean:-37.375 - critic/teacher_value_mean:9.312 - critic/grad_norm:0.000 - perf/mfu/critic:0.099 - critic/lr:0.000 - actor/pg_loss:0.292 - actor/pg_clipfrac:0.000 - actor/ppo_kl:0.000 - actor/grad_norm:1.027 - perf/mfu/actor:0.262 - perf/max_memory_allocated_gb:27.905 - perf/max_memory_reserved_gb:32.043 - perf/cpu_memory_used_gb:174.861 - actor/lr:0.000 - training/global_step:1812.000 - training/epoch:0.000 - critic/score/mean:-40.000 - critic/score/max:-26.250 - critic/score/min:-54.750 - critic/rewards/mean:-40.000 - critic/rewards/max:-26.250 - critic/rewards/min:-54.750 - critic/advantages/mean:0.032 - critic/advantages/max:0.941 - critic/advantages/min:-0.707 - critic/returns/mean:0.032 - critic/returns/max:0.941 - critic/returns/min:-0.707 - critic/values/mean:-0.026 - critic/values/max:-0.000 - critic/values/min:-54.750 - critic/vf_explained_var:-2.156 - response_length/mean:1536.000 - response_length/max:1536.000 - response_length/min:1536.000 - response_length/clip_ratio:1.000 - prompt_length/mean:103.375 - prompt_length/max:320.000 - prompt_length/min:52.000 - prompt_length/clip_ratio:0.000 - timing_s/generate_sequences:7.882 - timing_s/reshard:0.570 - timing_s/gen:11.053 - timing_s/old_log_prob:0.392 - timing_s/reward:0.381 - timing_s/adv:0.002 - timing_s/update_critic:2.014 - timing_s/update_actor:0.700 - timing_s/step:14.544 - timing_per_token_ms/update_actor:0.027 - timing_per_token_ms/gen:0.450 - timing_per_token_ms/update_critic:0.077 - timing_per_token_ms/adv:0.000 - perf/total_num_tokens:26230.000 - perf/time_per_step:14.544 - perf/throughput:901.729"
+        },
+        {
+          "line": 3894,
+          "text": "step:1813 - actor/entropy:0.757 - critic/d_loss:0.000 - critic/d_acc:1.000 - critic/student_value_mean:-45.500 - critic/teacher_value_mean:16.094 - critic/grad_norm:0.000 - perf/mfu/critic:0.091 - critic/lr:0.000 - actor/pg_loss:-0.154 - actor/pg_clipfrac:0.000 - actor/ppo_kl:0.000 - actor/grad_norm:1.224 - perf/mfu/actor:0.235 - perf/max_memory_allocated_gb:27.905 - perf/max_memory_reserved_gb:32.043 - perf/cpu_memory_used_gb:174.706 - actor/lr:0.000 - val-core/unknown/reward/mean@1:0.035 - val/rouge-L/mean:0.035 - training/global_step:1813.000 - training/epoch:0.000 - critic/score/mean:-42.500 - critic/score/max:-16.875 - critic/score/min:-59.500 - critic/rewards/mean:-42.500 - critic/rewards/max:-16.875 - critic/rewards/min:-59.500 - critic/advantages/mean:0.085 - critic/advantages/max:1.414 - critic/advantages/min:-0.730 - critic/returns/mean:0.085 - critic/returns/max:1.414 - critic/returns/min:-0.730 - critic/values/mean:-0.031 - critic/values/max:-0.000 - critic/values/min:-59.500 - critic/vf_explained_var:-2.484 - response_length/mean:1374.438 - response_length/max:1536.000 - response_length/min:120.000 - response_length/clip_ratio:0.875 - prompt_length/mean:70.250 - prompt_length/max:139.000 - prompt_length/min:48.000 - prompt_length/clip_ratio:0.000 - timing_s/generate_sequences:7.606 - timing_s/reshard:0.797 - timing_s/gen:10.864 - timing_s/old_log_prob:0.355 - timing_s/reward:0.486 - timing_s/adv:0.002 - timing_s/update_critic:1.914 - timing_s/update_actor:0.683 - timing_s/testing:654.811 - timing_s/save_checkpoint:10.533 - timing_s/step:679.649 - timing_per_token_ms/update_actor:0.030 - timing_per_token_ms/gen:0.494 - timing_per_token_ms/update_critic:0.083 - timing_per_token_ms/adv:0.000 - perf/total_num_tokens:23115.000 - perf/time_per_step:679.649 - perf/throughput:17.005"
+        }
+      ]
+    }
+  ],
+  "source_sha256_lf": {
+    "scripts/train/run_full_gad_optimized.sh": "3321ba32608ee2a7fbd86629db73b21fcee2d69360a929ea6b0a8e5d90d769b4",
+    "verl/trainer/ppo/ray_trainer.py": "da112ce5df5c704ecc24912f7ad84c1c9cf89c39b34d43ec4eea4adcd74e21a3",
+    "verl/workers/actor/dp_actor.py": "137599828555dbed98236f1a9c65efaa0907e3d25875604b62181d7332315eaf",
+    "verl/workers/critic/dp_critic.py": "e36228ea46418ffcc38a4b37ff564386fde1a281176e8bd76bc9868113d36efa",
+    "verl/trainer/ppo/core_algos.py": "69c2665e4cfef6143712790e8cf3b84784eaab623876f16d024fdd343a726c83",
+    "verl/workers/fsdp_workers.py": "17561a9d71432b5d3ad4c1d1e50139b0f84f44724c20971f901de56addaad466",
+    "tools/merge_model2hf.py": "bd94f397040d1ca30038a2e5e3ac469708be0da39d8126bc9e189d158aad66a4"
+  },
+  "errors": []
+}
