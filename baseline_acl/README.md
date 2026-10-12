@@ -33,10 +33,10 @@ python baseline_acl/paraphrase_up.py \
   --num-gpus 3
 
 # 这个是0.5/3的kgw参数配置
-python baseline_acl/paraphrase_up.py \
-  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet \
-  --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_train.parquet \
-  --num-gpus 3
+CUDA_VISIBLE_DEVICES=0,1 python baseline_acl/paraphrase_up.py \
+  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet \
+  --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_test.parquet \
+  --num-gpus 2
 ```
 
 `--num-gpus 3` 自动按空闲显存选择 3 张卡，每卡一个完整 Dipper，动态领取回答；快卡会领取更多样本，最终按原始顺序输出。可改为其他卡数，省略默认自动选 1 张卡。`--batch-size` 默认 1 即可。

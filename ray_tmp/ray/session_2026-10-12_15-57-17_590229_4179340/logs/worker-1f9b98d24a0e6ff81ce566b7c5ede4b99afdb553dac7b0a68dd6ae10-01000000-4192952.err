@@ -1,0 +1,11 @@
+:job_id:01000000
+:actor_name:WorkerGroupRegisterCenter
+*** SIGSEGV received at time=1791791899 on cpu 123 ***
+PC: @     0x77971831d7be  (unknown)  ray::gcs::TaskInfoAccessor::AsyncAddTaskEventData()
+    @     0x77971a042520       3696  (unknown)
+    @     0x7797181fe975       1392  ray::core::worker::TaskEventBufferImpl::FlushEvents()
+    @     0x7797181876ec       1488  ray::core::CoreWorker::Disconnect()
+    @     0x779718187a9d       1152  ray::core::CoreWorker::ForceExit()
+    @     0x779718188307         64  std::_Function_handler<>::_M_invoke()
+    @     0x77971850cbc8       1168  EventTracker::RecordExecution()
+    @     0x7797184f0ffe         48  std::_Function_handler<>::_M_invoke()

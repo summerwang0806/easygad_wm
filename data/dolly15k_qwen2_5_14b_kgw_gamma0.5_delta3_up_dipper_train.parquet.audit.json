@@ -1,0 +1,575 @@
+{
+  "format_version": 3,
+  "complete": true,
+  "method": "ordinary_untargeted_dipper_paraphrasing",
+  "metadata": {
+    "kind": "meta",
+    "format_version": 3,
+    "input": {
+      "path": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet",
+      "sha256": "ff5e5b827bd9d5bd20eeeaf2f4dfc2cc5fbed68204e23836e5507b3e8fac7cb6",
+      "rows": 14511,
+      "schema_sha256": "da196221caed012e3c6be1029799c45344eb77467d870144116fc8591ab2dee1"
+    },
+    "model": {
+      "model": {
+        "path": "/shared/wwx/EasyGAD/baseline_acl/models/dipper-paraphraser-xxl",
+        "files": [
+          {
+            "name": "config.json",
+            "size": 764,
+            "mtime_ns": 1791516526321416837,
+            "sha256": "4ca8b00925507693063c5fbdb85b8681159ec6e850ee97c6cf6527dbaa661196"
+          },
+          {
+            "name": "model-00001-of-00005.safetensors",
+            "size": 9452262328,
+            "mtime_ns": 1791636913805171536
+          },
+          {
+            "name": "model-00002-of-00005.safetensors",
+            "size": 9597007440,
+            "mtime_ns": 1791623911158093228
+          },
+          {
+            "name": "model-00003-of-00005.safetensors",
+            "size": 9955647024,
+            "mtime_ns": 1791638258617859111
+          },
+          {
+            "name": "model-00004-of-00005.safetensors",
+            "size": 9999712776,
+            "mtime_ns": 1791557669480423076
+          },
+          {
+            "name": "model-00005-of-00005.safetensors",
+            "size": 6063154240,
+            "mtime_ns": 1791558937398860341
+          },
+          {
+            "name": "model.safetensors.index.json",
+            "size": 53032,
+            "mtime_ns": 1791600175809267375,
+            "sha256": "bab7fd6107b34412f8575908370f29f44f433617a93d557e57b299d6ee688efe"
+          },
+          {
+            "name": "pytorch_model.bin.index.json",
+            "size": 50781,
+            "mtime_ns": 1791600179490225240,
+            "sha256": "d032ba92f923c9c8de32641e2edda138bbf2cfd01d014fd9a0397370afdbda47"
+          }
+        ]
+      },
+      "tokenizer": {
+        "path": "/shared/wwx/EasyGAD/baseline_acl/models/t5-v1_1-xxl-tokenizer",
+        "files": [
+          {
+            "name": "config.json",
+            "size": 593,
+            "mtime_ns": 1791516520327491355,
+            "sha256": "a58c2192a7166501ad2382c3d7ca3d694a1259b71a23a1925887e5afe7adcbd8"
+          },
+          {
+            "name": "special_tokens_map.json",
+            "size": 1786,
+            "mtime_ns": 1791516520214492760,
+            "sha256": "4720c0fddbe4c5991334f85ad7073d9bd0a294a8ba4641a2f8dab614ca825949"
+          },
+          {
+            "name": "spiece.model",
+            "size": 791656,
+            "mtime_ns": 1791516522975458434,
+            "sha256": "d60acb128cf7b7f2536e8f38a5b18a05535c9e14c7a355904270e15b0945ea86"
+          },
+          {
+            "name": "tokenizer_config.json",
+            "size": 1857,
+            "mtime_ns": 1791516522010470431,
+            "sha256": "b971dce1d2805c2a66da8657156e7114a30501c6ba602fc947c8bf607a3ead2d"
+          }
+        ],
+        "provenance": {
+          "repo_id": "google/t5-v1_1-xxl",
+          "revision": "3db67ab1af984cf10548a73467f0e5bca2aaaeb2"
+        }
+      },
+      "versions": {
+        "torch": "2.6.0",
+        "transformers": "4.51.3",
+        "nltk": "3.10.3",
+        "sentencepiece": "0.2.2",
+        "pyarrow": "19.0.1"
+      }
+    },
+    "config": {
+      "batch_size": 1,
+      "max_input_tokens": 4096,
+      "max_output_length": 4096,
+      "lex_diversity": 60,
+      "order_diversity": 0,
+      "top_p": 0.75,
+      "top_k": 0,
+      "temperature": 1.0,
+      "dtype": "bfloat16",
+      "seed": 42,
+      "on_failure": "drop",
+      "max_attempts": 3
+    },
+    "input_template_sha256": "50e5fc937b202c4a1122585e3747ed3f1b6cf0bda2916a9b33b9c2b157fbbe4c",
+    "segmentation_sha256": "67aed9e6902c118490ee5264af20636bef2856cdb9b0e873228797f3eea43492",
+    "sentence_splitter_resources": {
+      "directory": "/shared/wwx/EasyGAD/baseline_acl/nltk_data",
+      "nltk_version": "3.10.3",
+      "english_punkt_tab": [
+        {
+          "name": "abbrev_types.txt",
+          "sha256": "92a3e070f43d9b4c5534758ca40ad7343b04e7e29bfe0c2eb658a39445a4f779"
+        },
+        {
+          "name": "collocations.tab",
+          "sha256": "8e2da1225e4dd2cc9dba261ee231ccb134859e21b46006e7f472c5ee269af0cf"
+        },
+        {
+          "name": "ortho_context.tab",
+          "sha256": "4bbcca25ed3d3f06c02402abf8419b9f033b8adc06e7b482eca4e45f81a5dc4c"
+        },
+        {
+          "name": "sent_starters.txt",
+          "sha256": "f3f8535483e1dba487241b764945168123bca3209a9645e59acd1225dc76edac"
+        }
+      ]
+    },
+    "generation_contract": {
+      "architecture": "T5_encoder_decoder",
+      "paraphrase_mode": "whole_response",
+      "inputs_per_response": 1,
+      "initial_prefix": "",
+      "rolling_prefix": false,
+      "sentence_splitter": "nltk.sent_tokenize",
+      "language": "english",
+      "do_sample": true,
+      "top_k_zero_equivalent_to_author_example_none": true,
+      "decoder_max_length_includes_start_token": true
+    },
+    "input_truncation": {
+      "policy": "response_prefix_v1",
+      "rows": [
+        {
+          "row_index": 1898,
+          "id": "dolly-11948",
+          "source_sha256": "938376b990ed6c3b326fc9384bab1c03e6911690d34dea678f37d075b8f95d3d",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 6114,
+          "retained_input_tokens": 4096,
+          "original_characters": 17539,
+          "retained_characters": 11731,
+          "retained_text_sha256": "871509ecc564908bdd8bf910839cc4bedd60c98b758e2499bbbeaff2e142f156"
+        },
+        {
+          "row_index": 2687,
+          "id": "dolly-14470",
+          "source_sha256": "4a08448b5bb64977dbd9d0a0917ecaae15d945f89dadd067bc7b3c760dd86b77",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 5125,
+          "retained_input_tokens": 4096,
+          "original_characters": 11204,
+          "retained_characters": 8997,
+          "retained_text_sha256": "7dd82e6d8066618d7d9838d32c43c873cf0911b0206e4b6a7daada07a27b741e"
+        },
+        {
+          "row_index": 2834,
+          "id": "dolly-11930",
+          "source_sha256": "415f83f7fd57c23b3977bb66c55226e24da1d5ccb4ce91efa4ed513c5d01255a",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 4367,
+          "retained_input_tokens": 4096,
+          "original_characters": 6698,
+          "retained_characters": 6305,
+          "retained_text_sha256": "a5c4dbd4b4918438e4748df4df3f1b5c9d383a920ccd28d40f9e55f6f9e29f6a"
+        },
+        {
+          "row_index": 2980,
+          "id": "dolly-11388",
+          "source_sha256": "399239eaf6bddd53df77f4356bbb170e06e75b195a4edee831a3f2ae81841553",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 4698,
+          "retained_input_tokens": 4096,
+          "original_characters": 10620,
+          "retained_characters": 9331,
+          "retained_text_sha256": "72ede4d9a5c31baf1bc6e92dccef0c5ae1699e67e7398cc50fd040b433cc14e6"
+        },
+        {
+          "row_index": 3533,
+          "id": "dolly-00438",
+          "source_sha256": "983dfae6c2ff3e69d5fb084be17c4496f20040f11b4c8485db80b16b80b5ad44",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 4134,
+          "retained_input_tokens": 4095,
+          "original_characters": 5494,
+          "retained_characters": 5445,
+          "retained_text_sha256": "d9f19fff132de5c934f52ba4cb2e55a7f097e6bf5ed6822693a24e83e00830a0"
+        },
+        {
+          "row_index": 3695,
+          "id": "dolly-05686",
+          "source_sha256": "66e1222f5dfc97b9422dd1749a4651b176edf28667ae8d9a26b2d2a51321fa3c",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 4817,
+          "retained_input_tokens": 4096,
+          "original_characters": 8149,
+          "retained_characters": 7017,
+          "retained_text_sha256": "442b7c08a1c6994463b0461ad2d9e0339b526ac80eca8f1596c5d27baba9252b"
+        },
+        {
+          "row_index": 4573,
+          "id": "dolly-10687",
+          "source_sha256": "3db9e4e3ead8c9b5832630fb5f933df069fc8bde2ee5d9fe19f7fc0bf518a1c2",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 5206,
+          "retained_input_tokens": 4096,
+          "original_characters": 11348,
+          "retained_characters": 8969,
+          "retained_text_sha256": "7eccee57cc5e8c6d39b9d093afb0b8e2b1c5e99081a1adc3654ef829cf83be3e"
+        },
+        {
+          "row_index": 4778,
+          "id": "dolly-01934",
+          "source_sha256": "332ee2956131f2577b5603452832c53a987800f596ce73e502eebbfaaa7725ce",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 4564,
+          "retained_input_tokens": 4096,
+          "original_characters": 6689,
+          "retained_characters": 6014,
+          "retained_text_sha256": "2ea00af8b0ec8309c09ee04209f0ec11b43c96bcab22ad9398b0c4eae2f34999"
+        },
+        {
+          "row_index": 4851,
+          "id": "dolly-03168",
+          "source_sha256": "7cb7039bef6a9c492ecc6e7cfa8675f250e23f7a88ddfffa0f970754474b2539",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 5323,
+          "retained_input_tokens": 4096,
+          "original_characters": 11449,
+          "retained_characters": 8820,
+          "retained_text_sha256": "58752a98a5588c434143d35e4e57607eb0fe6f46afbb1f128b1a7fdd0f0aef7a"
+        },
+        {
+          "row_index": 6648,
+          "id": "dolly-07196",
+          "source_sha256": "1937b860c23e837363274e5aa42c8f955a133bb577c23e28ac44fa1e860027a4",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 4492,
+          "retained_input_tokens": 4096,
+          "original_characters": 6154,
+          "retained_characters": 5626,
+          "retained_text_sha256": "061749fcf16a572ab6100bc0d0a7d1eafc1c2408a3fb981eafd954c1cd7d5dcd"
+        },
+        {
+          "row_index": 8007,
+          "id": "dolly-11146",
+          "source_sha256": "605e845adfc870408c2bba6674df4544a9977923de3147a238cde0b35cc24b56",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 4558,
+          "retained_input_tokens": 4096,
+          "original_characters": 6672,
+          "retained_characters": 6070,
+          "retained_text_sha256": "2fb33c9a9187b29bbd02ecf4893005abfd2534b0f9c1877d0f5a80707ed99906"
+        },
+        {
+          "row_index": 8012,
+          "id": "dolly-03400",
+          "source_sha256": "429ac4b4e067b631ab229f198aa6d43bd643a0916b735e4084002181d0e8a64f",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 5354,
+          "retained_input_tokens": 4096,
+          "original_characters": 11453,
+          "retained_characters": 8755,
+          "retained_text_sha256": "7d3561e640e2912e9e87669e01ab9954e8c9080500913d3502580ce0b752e7dd"
+        },
+        {
+          "row_index": 8499,
+          "id": "dolly-07884",
+          "source_sha256": "688577a4ca0a5b4018e324b7bed3491077cc990f55584549bdaf38265ff6842d",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 4550,
+          "retained_input_tokens": 4095,
+          "original_characters": 10782,
+          "retained_characters": 9808,
+          "retained_text_sha256": "3d1b8c4dc91971338edf1acc17446fd0e0e69e58eac0202634f6d726056871cc"
+        },
+        {
+          "row_index": 10429,
+          "id": "dolly-11154",
+          "source_sha256": "3e68694b2fc20b9e07f54371f92fe6ffe56b48371132e07f1a4abf80444b9905",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 4758,
+          "retained_input_tokens": 4096,
+          "original_characters": 8971,
+          "retained_characters": 7834,
+          "retained_text_sha256": "c33e2644e7c14f49f473a97d26aac4179aef3ccd01b47f90f8f82be1f0098fd1"
+        },
+        {
+          "row_index": 10872,
+          "id": "dolly-11489",
+          "source_sha256": "ab8fd4148216c976f9a5fd31e51dec8c1cfb56c658241f8284a3587d8c0e823f",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 4922,
+          "retained_input_tokens": 4096,
+          "original_characters": 10662,
+          "retained_characters": 8893,
+          "retained_text_sha256": "afa53add4546157596890e484c71f9a28012b5e7be23a60a064e303fa01b120c"
+        },
+        {
+          "row_index": 11224,
+          "id": "dolly-00103",
+          "source_sha256": "3715240683c58ed55a3320d7273de5d40f3358a3eee8d6dfda0f78edc6961b5c",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 4778,
+          "retained_input_tokens": 4096,
+          "original_characters": 10592,
+          "retained_characters": 9129,
+          "retained_text_sha256": "819cef7599ccb42ed205cd4e5845ceff286c9fcee900b3c6abcac179f16c36ea"
+        },
+        {
+          "row_index": 11441,
+          "id": "dolly-10781",
+          "source_sha256": "7e9144c5d7899e7870f8eb149f2d5cc208c621e0f45f279cffd0913fd1f19ff2",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 4200,
+          "retained_input_tokens": 4096,
+          "original_characters": 12330,
+          "retained_characters": 12033,
+          "retained_text_sha256": "6833fee218d804eb962949b3f0e0b06bb47391e2587788a8e1da0fb0148edcaf"
+        },
+        {
+          "row_index": 11812,
+          "id": "dolly-07324",
+          "source_sha256": "e1ee059afc0e5d9b5d01afb0bc8f5f6d8bebd7d33163b92c4732f8846640c353",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 5283,
+          "retained_input_tokens": 4096,
+          "original_characters": 11390,
+          "retained_characters": 8844,
+          "retained_text_sha256": "cb53cb854949338a39ae154e49b9bf178dcbd4cc50650ee0f0ceacc07ddd02d5"
+        },
+        {
+          "row_index": 14039,
+          "id": "dolly-06107",
+          "source_sha256": "9412b47d632c04545ac7e31695e0e978b9492ed970f4fdd9492672b904a95c51",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 4135,
+          "retained_input_tokens": 4096,
+          "original_characters": 4944,
+          "retained_characters": 4906,
+          "retained_text_sha256": "ac627011a4847eff2880e37b335fecd748780a5d980d06cd608aa1d297ab8b8d"
+        },
+        {
+          "row_index": 14176,
+          "id": "dolly-08686",
+          "source_sha256": "8a0c785af65c003848c057012133069146084937bcd469362c41b32ca409e803",
+          "policy": "response_prefix_v1",
+          "original_input_tokens": 5295,
+          "retained_input_tokens": 4096,
+          "original_characters": 11432,
+          "retained_characters": 8863,
+          "retained_text_sha256": "028b110c20aa0bb05460024360dd4e6844ae2ac8b5718fa5e5cedddac24d19ac"
+        }
+      ]
+    },
+    "fingerprint": "4f7734e6905d3869c7da5d75693a25789ff3c40a0aa81313cf8bc0c00c81013c"
+  },
+  "output": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_train.parquet",
+  "output_sha256": "0d5ceb85d51c4b2b6e693116fd4c9c603d3871402dc3f19d8bd57d810dcb8fab",
+  "rows": 14504,
+  "processed_rows": 14511,
+  "status_counts": {
+    "ok": 14504,
+    "dropped": 7
+  },
+  "fallback_rows": [],
+  "fallback_reasons": {},
+  "finish_reasons": {
+    "stop": 14504,
+    "length": 7
+  },
+  "accepted_attempts": {
+    "1": 14425,
+    "2": 68,
+    "3": 18
+  },
+  "rejected_generation_attempts": 111,
+  "rejected_attempt_reasons": {
+    "length_limit": 86,
+    "full_response_generation_failure": 111,
+    "empty_output": 38,
+    "full_response_empty_output": 38,
+    "refusal": 2
+  },
+  "changed_teacher_responses": 14451,
+  "identical_accepted_responses": 53,
+  "schema_and_metadata_equal": true,
+  "row_order_and_ids_equal": false,
+  "protected_columns_equal": {
+    "id": true,
+    "content": true,
+    "category": true,
+    "grounded": true,
+    "flaw": true,
+    "agreement": true
+  },
+  "output_tokens": {
+    "min": 2,
+    "max": 3912,
+    "mean": 91.0984555984556
+  },
+  "duration_seconds": 21864.558,
+  "semantic_preservation": "Dipper paraphrasing; not an automatic factual equivalence guarantee",
+  "parameter_provenance": "Dipper author template/sampling with user-requested whole-response mode and enlarged decoder limit; full ACL paraphrasing hyperparameters were not disclosed",
+  "paraphrase_mode": "whole_response",
+  "model_card": "https://huggingface.co/kalpeshk2011/dipper-paraphraser-xxl",
+  "input_overflow_policy": "truncate_response_prefix",
+  "truncated_input_count": 20,
+  "truncated_input_rows": [
+    1898,
+    2687,
+    2834,
+    2980,
+    3533,
+    3695,
+    4573,
+    4778,
+    4851,
+    6648,
+    8007,
+    8012,
+    8499,
+    10429,
+    10872,
+    11224,
+    11441,
+    11812,
+    14039,
+    14176
+  ],
+  "truncated_input_ids": [
+    "dolly-11948",
+    "dolly-14470",
+    "dolly-11930",
+    "dolly-11388",
+    "dolly-00438",
+    "dolly-05686",
+    "dolly-10687",
+    "dolly-01934",
+    "dolly-03168",
+    "dolly-07196",
+    "dolly-11146",
+    "dolly-03400",
+    "dolly-07884",
+    "dolly-11154",
+    "dolly-11489",
+    "dolly-00103",
+    "dolly-10781",
+    "dolly-07324",
+    "dolly-06107",
+    "dolly-08686"
+  ],
+  "source_rows": 14511,
+  "dropped_count": 7,
+  "dropped_rows": [
+    1989,
+    2721,
+    2906,
+    3887,
+    4047,
+    9957,
+    12820
+  ],
+  "dropped_ids": [
+    "dolly-02394",
+    "dolly-02540",
+    "dolly-07361",
+    "dolly-06924",
+    "dolly-13729",
+    "dolly-05581",
+    "dolly-15000"
+  ],
+  "dropped_records": [
+    {
+      "row_index": 1989,
+      "id": "dolly-02394",
+      "attempt": 3,
+      "issues": [
+        "length_limit",
+        "full_response_generation_failure"
+      ],
+      "source_sha256": "f712d280f29adc53375cf93eca4ff8a1f98dc2b15078c4dee6fd68d78bc8a120"
+    },
+    {
+      "row_index": 2721,
+      "id": "dolly-02540",
+      "attempt": 3,
+      "issues": [
+        "length_limit",
+        "full_response_generation_failure"
+      ],
+      "source_sha256": "11927c1cb9d8b48f7fb0a892db3517d569c33d0e814fd9cec0fb1f274d13d270"
+    },
+    {
+      "row_index": 2906,
+      "id": "dolly-07361",
+      "attempt": 3,
+      "issues": [
+        "length_limit",
+        "full_response_generation_failure"
+      ],
+      "source_sha256": "df7489a161b8b03ea4bdf2d058d5f62505da7807c099d340b7214f05c90dcd53"
+    },
+    {
+      "row_index": 3887,
+      "id": "dolly-06924",
+      "attempt": 3,
+      "issues": [
+        "length_limit",
+        "full_response_generation_failure"
+      ],
+      "source_sha256": "d6f960190ebdb2ce7e0206dde5c3c3e43fa25e99cc0d643e87dfe5885856b922"
+    },
+    {
+      "row_index": 4047,
+      "id": "dolly-13729",
+      "attempt": 3,
+      "issues": [
+        "length_limit",
+        "full_response_generation_failure"
+      ],
+      "source_sha256": "54a05d15d2f16b31f41bd89c8a5641ba2dabe947e7905b9d4b3ddfe37e7a5b3b"
+    },
+    {
+      "row_index": 9957,
+      "id": "dolly-05581",
+      "attempt": 3,
+      "issues": [
+        "length_limit",
+        "full_response_generation_failure"
+      ],
+      "source_sha256": "7b10d900bd19e0a1a08bd85b7cd9a7aa720a86ce888c5f782b3bc65204add116"
+    },
+    {
+      "row_index": 12820,
+      "id": "dolly-15000",
+      "attempt": 3,
+      "issues": [
+        "empty_output",
+        "length_limit",
+        "full_response_generation_failure",
+        "full_response_empty_output"
+      ],
+      "source_sha256": "2f0ccc0c043c6cc96ef642c4c21669bd51d8d0de3f21103482da56fdff6ffa1d"
+    }
+  ],
+  "retained_row_order_and_ids_equal": true,
+  "response_input_checks": 14615,
+  "generated_response_attempts": 14615,
+  "max_encoder_input_tokens": 4096,
+  "max_decoder_sequence_length": 4096
+}
