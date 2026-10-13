@@ -54,7 +54,8 @@ require_value() {
 }
 
 BRANCH=""
-UP_TRAIN_FILE="data/dolly15k_qwen2_5_14b_kgw_up_dipper_train.parquet"
+# UP_TRAIN_FILE="data/dolly15k_qwen2_5_14b_kgw_up_dipper_train.parquet"
+UP_TRAIN_FILE="data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_train.parquet"
 KGW_TRAIN_FILE="data/dolly15k_qwen2_5_14b_kgw_train.parquet"
 VAL_FILE="data/dolly15k_qwen2_5_14b_kgw_test.parquet"
 EXP_NAME=""

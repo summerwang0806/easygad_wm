@@ -12,7 +12,13 @@
 cd /shared/wwx/EasyGAD
 conda activate wm
 VLLM_USE_V1=0 CUDA_VISIBLE_DEVICES=3 python wm_test/generate_compare_score.py \
-  --gamma 0.5 --delta 3
+  --gamma 0.5 --delta 2
+
+
+VLLM_USE_V1=0 CUDA_VISIBLE_DEVICES=0 python wm_test/generate_compare_score.py \
+  --gamma 0.25 --delta 2
+
+
 ```
 
 脚本默认处理测试集全部 500 条数据。可通过 `CUDA_VISIBLE_DEVICES` 指定一张空闲 GPU。

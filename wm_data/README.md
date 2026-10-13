@@ -99,12 +99,32 @@ CUDA_VISIBLE_DEVICES=0,1,2 python wm_data/generate_kgw.py \
 
 
 CUDA_VISIBLE_DEVICES=0,1 python wm_data/generate_kgw.py \
-  --input data/dolly15k_test.parquet \
-  --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta2_test.parquet \
+  --input data/dolly15k_train.parquet \
+  --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta2_train.parquet \
   --num-gpus 2 \
   --gamma 0.5 \
   --delta 2.0 \
   --hash-key 15485863
+
+CUDA_VISIBLE_DEVICES=0 python wm_data/generate_kgw.py \
+  --input data/dolly15k_train.parquet \
+  --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta2_train.parquet \
+  --gamma 0.5 \
+  --delta 2.0 \
+  --hash-key 15485863
+
+
+# 我找到错误在哪里了，之前gamma0.5, delta=3 的gad训练，这个模型调用的时候调用的是0.5b学生生成train数据，难怪值掉那么低
+CUDA_VISIBLE_DEVICES=0,3 python wm_data/generate_kgw.py \
+  --model /shared/public_models/Qwen2.5-14B-Instruct \
+  --input data/dolly15k_test.parquet \
+  --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta2_test.parquet \
+  --num-gpus 2 \
+  --gpu-memory-utilization 0.85 \
+  --gamma 0.5 \
+  --delta 2.0 \
+  --hash-key 15485863
+
 
 
 ```

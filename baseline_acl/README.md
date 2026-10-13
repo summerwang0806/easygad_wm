@@ -28,8 +28,8 @@ unset CUDA_VISIBLE_DEVICES
 
 # 这个是0.25/2的kgw参数配置
 python baseline_acl/paraphrase_up.py \
-  --input data/dolly15k_qwen2_5_14b_kgw_train.parquet \
-  --output data/dolly15k_qwen2_5_14b_kgw_up_dipper_train.parquet \
+  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta2_train.parquet \
+  --output data/dolly15k_qwen2_5_14b_kgw_up_dipper_gamma0.5_delta2_train.parquet \
   --num-gpus 3
 
 # 这个是0.5/3的kgw参数配置

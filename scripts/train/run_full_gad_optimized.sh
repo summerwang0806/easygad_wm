@@ -55,8 +55,8 @@ RESUME_MODE=disable
 RAY_NUM_CPUS=${RAY_NUM_CPUS:-8}
 # TRAIN_FILE=data/dolly15k_qwen2_5_14b_kgw_train.parquet
 # VAL_FILE=data/dolly15k_qwen2_5_14b_kgw_test.parquet
-TRAIN_FILE=data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_train.parquet
-VAL_FILE=data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_test.parquet
+TRAIN_FILE=data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta2_train.parquet
+VAL_FILE=data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta2_test.parquet
 
 while [[ $# -gt 0 ]]; do
     case $1 in
