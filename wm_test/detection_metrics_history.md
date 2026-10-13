@@ -4308,3 +4308,248 @@ KGW 的小 p 占比是该理论阈值下的检出率，clean 的小 p 占比是�
   "history_document": "/shared/wwx/EasyGAD/wm_test/detection_metrics_history.md"
 }
 ```
+
+## 评估记录：2026-10-13T10:56:12+08:00
+
+- 样本数：KGW 500，clean 500
+- AUROC：0.547194
+- 实际检测配置：`{"gamma": 0.25, "hash_key": 15485863, "seeding": "simple_1 (hash_key * previous_token_id)", "delta_by_label": {"kgw": 2.0, "clean": 2.0}}`
+- ROUGE-L（同批 500 条原始 Dolly 回答作参考）：0.191711（KGW 文件中的采样回答，逐条 F1 平均，use_stemmer=True）
+- 原始 Dolly 参考文件：`/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl`
+- ROUGE-L（同批 500 条 14B clean 教师回答作参考）：0.244020（KGW 文件中的采样回答，逐条 F1 平均，use_stemmer=True）
+- 14B clean 教师参考文件：`/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet`
+- Best F1：0.666667（z 阈值 -22.332789172475128，TPR 1.000000，FPR 1.000000）
+- TPR@FPR 及该工作点的 F1：
+
+  | 目标 FPR | 实际 FPR | TPR | F1 | z 阈值 |
+  |---:|---:|---:|---:|---:|
+  | 1% | 0.008000 | 0.010000 | 0.019646 | 21.27212900069531 |
+  | 5% | 0.050000 | 0.038000 | 0.069853 | 3.476608340833859 |
+  | 10% | 0.096000 | 0.108000 | 0.179402 | 2.1783245945486835 |
+
+两种逐条文本 p-value 统计（单侧正态近似；不是 AUROC 的显著性检验）：
+
+去重规则：相同的 `(previous_token_id, token_id)` 只计一次；不修改回答文本。
+
+| 数据 | 检测方式 | 有效样本 | p 均值 | p 中位数 | p≤0.01 | p≤0.05 | p≤0.10 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| kgw | 原始 | 499/500 | 0.431213 | 0.392747 | 46 (9.22%) | 84 (16.83%) | 122 (24.45%) |
+| kgw | token 对去重 | 499/500 | 0.459589 | 0.431583 | 12 (2.40%) | 33 (6.61%) | 57 (11.42%) |
+| clean | 原始 | 500/500 | 0.489848 | 0.473107 | 42 (8.40%) | 71 (14.20%) | 102 (20.40%) |
+| clean | token 对去重 | 500/500 | 0.493376 | 0.5 | 7 (1.40%) | 29 (5.80%) | 61 (12.20%) |
+
+KGW 的小 p 占比是该理论阈值下的检出率，clean 的小 p 占比是实测误报率。p≤0.05 不保证实际 FPR=5%；去重可改善重复带来的失真，但不保证完全校准。空回答不做显著性检验，p=null，并排除在有效样本统计之外。
+
+逐条 p-value：`/shared/wwx/EasyGAD/wm_test/dipper_upkgwwarmup_upkgwgad_warmup_gamma0.25_delta2_qwen2_5_0_5b_dolly15k_test.p_values.jsonl`；`/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test.p_values.jsonl`
+
+完整指标（JSON）：
+
+```json
+{
+  "positive_class": "kgw",
+  "score": "z_score (higher means more likely watermarked)",
+  "num_kgw": 500,
+  "num_clean": 500,
+  "auroc": 0.5471940000000001,
+  "best_f1": {
+    "threshold": -22.332789172475128,
+    "fpr": 1.0,
+    "tpr": 1.0,
+    "precision": 0.5,
+    "f1": 0.6666666666666666,
+    "tp": 500,
+    "fp": 500,
+    "tn": 0,
+    "fn": 0
+  },
+  "tpr_at_fpr": {
+    "1%": {
+      "threshold": 21.27212900069531,
+      "fpr": 0.008,
+      "tpr": 0.01,
+      "precision": 0.5555555555555556,
+      "f1": 0.019646365422396856,
+      "tp": 5,
+      "fp": 4,
+      "tn": 496,
+      "fn": 495,
+      "target_fpr": 0.01
+    },
+    "5%": {
+      "threshold": 3.476608340833859,
+      "fpr": 0.05,
+      "tpr": 0.038,
+      "precision": 0.4318181818181818,
+      "f1": 0.06985294117647059,
+      "tp": 19,
+      "fp": 25,
+      "tn": 475,
+      "fn": 481,
+      "target_fpr": 0.05
+    },
+    "10%": {
+      "threshold": 2.1783245945486835,
+      "fpr": 0.096,
+      "tpr": 0.108,
+      "precision": 0.5294117647058824,
+      "f1": 0.17940199335548174,
+      "tp": 54,
+      "fp": 48,
+      "tn": 452,
+      "fn": 446,
+      "target_fpr": 0.1
+    }
+  },
+  "note": "For each target FPR, select the empirical ROC point with the highest TPR whose FPR does not exceed the target; tied scores are kept together.",
+  "detector_config": {
+    "gamma": 0.25,
+    "hash_key": 15485863,
+    "seeding": "simple_1 (hash_key * previous_token_id)",
+    "delta_by_label": {
+      "kgw": 2.0,
+      "clean": 2.0
+    }
+  },
+  "rouge_l_dolly": {
+    "mean": 0.19171139917277105,
+    "num_samples": 500,
+    "evaluated_file": "/shared/wwx/EasyGAD/wm_test/dipper_upkgwwarmup_upkgwgad_warmup_gamma0.25_delta2_qwen2_5_0_5b_dolly15k_test.jsonl",
+    "reference_file": "/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl",
+    "reference_source": "databricks/databricks-dolly-15k:response",
+    "metric": "rougeL",
+    "measure": "fmeasure",
+    "use_stemmer": true,
+    "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+  },
+  "rouge_l_teacher_clean": {
+    "mean": 0.2440201727234147,
+    "num_samples": 500,
+    "evaluated_file": "/shared/wwx/EasyGAD/wm_test/dipper_upkgwwarmup_upkgwgad_warmup_gamma0.25_delta2_qwen2_5_0_5b_dolly15k_test.jsonl",
+    "reference_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet",
+    "reference_source": "Qwen2.5-14B clean teacher responses",
+    "metric": "rougeL",
+    "measure": "fmeasure",
+    "use_stemmer": true,
+    "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+  },
+  "p_values": {
+    "kgw": {
+      "raw": {
+        "n_total": 500,
+        "n_valid": 499,
+        "n_invalid": 1,
+        "mean": 0.4312126091624406,
+        "median": 0.3927473735591771,
+        "min": 0.0,
+        "max": 1.0,
+        "at_alpha": {
+          "1%": {
+            "alpha": 0.01,
+            "count": 46,
+            "fraction": 0.09218436873747494
+          },
+          "5%": {
+            "alpha": 0.05,
+            "count": 84,
+            "fraction": 0.1683366733466934
+          },
+          "10%": {
+            "alpha": 0.1,
+            "count": 122,
+            "fraction": 0.24448897795591182
+          }
+        }
+      },
+      "deduplicated": {
+        "n_total": 500,
+        "n_valid": 499,
+        "n_invalid": 1,
+        "mean": 0.45958885818907325,
+        "median": 0.4315829590466157,
+        "min": 6.746866635113954e-06,
+        "max": 0.9998450020239172,
+        "at_alpha": {
+          "1%": {
+            "alpha": 0.01,
+            "count": 12,
+            "fraction": 0.02404809619238477
+          },
+          "5%": {
+            "alpha": 0.05,
+            "count": 33,
+            "fraction": 0.06613226452905811
+          },
+          "10%": {
+            "alpha": 0.1,
+            "count": 57,
+            "fraction": 0.11422845691382766
+          }
+        }
+      }
+    },
+    "clean": {
+      "raw": {
+        "n_total": 500,
+        "n_valid": 500,
+        "n_invalid": 0,
+        "mean": 0.4898484984234752,
+        "median": 0.47310655220988485,
+        "min": 1.6726509285640453e-112,
+        "max": 1.0,
+        "at_alpha": {
+          "1%": {
+            "alpha": 0.01,
+            "count": 42,
+            "fraction": 0.084
+          },
+          "5%": {
+            "alpha": 0.05,
+            "count": 71,
+            "fraction": 0.142
+          },
+          "10%": {
+            "alpha": 0.1,
+            "count": 102,
+            "fraction": 0.204
+          }
+        }
+      },
+      "deduplicated": {
+        "n_total": 500,
+        "n_valid": 500,
+        "n_invalid": 0,
+        "mean": 0.49337648065434225,
+        "median": 0.5,
+        "min": 0.0011733627719406451,
+        "max": 0.9992323580322656,
+        "at_alpha": {
+          "1%": {
+            "alpha": 0.01,
+            "count": 7,
+            "fraction": 0.014
+          },
+          "5%": {
+            "alpha": 0.05,
+            "count": 29,
+            "fraction": 0.058
+          },
+          "10%": {
+            "alpha": 0.1,
+            "count": 61,
+            "fraction": 0.122
+          }
+        }
+      }
+    }
+  },
+  "p_value_method": "one-sided normal survival probability; unique context-token pairs for dedup",
+  "per_sample_p_value_files": {
+    "kgw": "/shared/wwx/EasyGAD/wm_test/dipper_upkgwwarmup_upkgwgad_warmup_gamma0.25_delta2_qwen2_5_0_5b_dolly15k_test.p_values.jsonl",
+    "clean": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test.p_values.jsonl"
+  },
+  "evaluated_at": "2026-10-13T10:56:12+08:00",
+  "kgw_file": "/shared/wwx/EasyGAD/wm_test/dipper_upkgwwarmup_upkgwgad_warmup_gamma0.25_delta2_qwen2_5_0_5b_dolly15k_test.jsonl",
+  "clean_file": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test.jsonl",
+  "history_document": "/shared/wwx/EasyGAD/wm_test/detection_metrics_history.md"
+}
+```
