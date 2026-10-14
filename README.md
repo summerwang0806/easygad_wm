@@ -145,7 +145,7 @@ bash scripts/train/run_full_seqkd_optimized.sh \
 CUDA_VISIBLE_DEVICES=0,3 \
 bash scripts/train/run_full_gad_optimized.sh \
   --model /shared/public_models/Qwen2.5-0.5B \
-  --exp_name te_old_st_Qwen2.5-0.5B_gamma0.5_delta2 \
+  --exp_name te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new \
   --nnodes 1
 
 
