@@ -63,12 +63,13 @@ class WNTests(unittest.TestCase):
                                        "dedup_num_tokens": 1, "dedup_green_tokens": 0,
                                        "dedup_green_fraction": 0.0, "p_value": 0.5, "dedup_p_value": 0.5})
 
-    def run_fake(self, engine_factory=FakeEngine):
+    def run_fake(self, engine_factory=FakeEngine, detector_tokenizer=None):
         with redirect_stdout(io.StringIO()):
             run_model(args=self.args, prepared=self.prepared, tokenizer=self.tokenizer,
                       rules=self.rules, rules_sha256="rule-hash", input_sha256="input-hash",
                       engine_factory=engine_factory, sampling_factory=SimpleNamespace,
-                      score_function=self.score, score_config_factory=SimpleNamespace)
+                      score_function=self.score, score_config_factory=SimpleNamespace,
+                      detector_tokenizer=self.tokenizer if detector_tokenizer is None else detector_tokenizer)
 
     def test_sampling_hook_biases_student_and_emits_evaluator_compatible_records(self):
         engines = []
@@ -100,6 +101,20 @@ class WNTests(unittest.TestCase):
         from wm_test.evaluate_compare_metrics import load_scores
 
         self.assertEqual(load_scores(self.output, "kgw", True), {"one": 0.0, "two": 0.0})
+
+    def test_detection_uses_teacher_while_generation_and_rules_use_student(self):
+        teacher = FakeTokenizer("teacher")
+        teacher.vocab = {"<eos>": 0, "a": 4, "b": 3, "c": 1, "d": 2}
+        teacher.apply_chat_template = Mock(side_effect=AssertionError("use actual rendered prompt"))
+        engine = FakeEngine()
+        self.run_fake(lambda **kwargs: engine, detector_tokenizer=teacher)
+        self.assertEqual(engine.calls[0][0], [{"prompt_token_ids": [1, 2]}, {"prompt_token_ids": [1, 2]}])
+        self.assertAlmostEqual(engine.biased_logits[0][3], 10 - 2.5 * 2.4)
+        for call in self.score.call_args_list:
+            self.assertEqual(call.kwargs["prompt_token_ids"], [4, 3])
+            self.assertEqual(call.kwargs["generated_token_ids"], [4])
+            self.assertEqual(call.kwargs["vocab_size"], 5)
+        teacher.apply_chat_template.assert_not_called()
 
     def test_strength_zero_preserves_logits_and_records_control(self):
         self.args.strength = 0

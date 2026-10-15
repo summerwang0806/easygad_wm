@@ -27,8 +27,9 @@ CUDA_VISIBLE_DEVICES=3 python wm_test/evaluate_compare_metrics.py \
 ```
 
 GPU 3 只是示例，运行前按当前资源情况选择。后续相同文件直接使用缓存，无需 GPU。
-若旧 checkpoint tokenizer 已移除，可加 `--tokenizer /shared/public_models/Qwen2.5-0.5B`，
-必须与采样时使用的 tokenizer 相同。重算原始 z 分数与保存值不一致时会停止，避免生成错误的去重结果。
+检测默认使用教师 `/shared/public_models/Qwen2.5-14B-Instruct` 的 tokenizer，原命令、输出字段和旧结果读取流程保持不变。
+原 `--tokenizer` 参数仍可指定检测 tokenizer，必须与教师加水印时的 token 编码一致；旧对话 prompt 的模板和截断仍由记录中 `model_path` 的生成 tokenizer 还原。
+重算原始 z 分数与保存值不一致时会停止，避免生成错误的去重结果。
 缓存按源文件 SHA256 和检测版本核对，采样文件变化后自动重算。
 
 这里是每条回答的单侧正态近似 p-value：`0.5 * erfc(z / sqrt(2))`，不是 AUROC 的检验 p 值，

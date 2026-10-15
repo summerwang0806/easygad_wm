@@ -4,6 +4,8 @@
 
 推理时不会额外施加 KGW 水印。脚本检测的是学生模型是否从 KGW 训练数据中学到了水印信号。两个模型使用相同的 prompt、采样参数和逐条随机种子。
 
+水印检测默认使用教师 `/shared/public_models/Qwen2.5-14B-Instruct` 的 tokenizer 编码实际 prompt 和回答；生成时的学生 tokenizer、聊天模板和截断方式保持原样。原运行命令、输出字段和已有 JSONL 的评估流程不变。
+
 ## 运行方法
 
 在 EasyGAD 根目录激活 `wm` 环境后运行：
@@ -101,7 +103,7 @@ BASE_FILE=wm_test/base_qwen2_5_0_5b_dolly15k_test.jsonl
 CUDA_VISIBLE_DEVICES=1 python wm_test/rescore_compare_scores.py \
   --inputs "$GAD_FILE" "$WARMUP_FILE" "$BASE_FILE" \
   --gamma 0.5 --delta 3 --hash-key 15485863 \
-  --tokenizer /shared/public_models/Qwen2.5-0.5B
+  --tokenizer /shared/public_models/Qwen2.5-14B-Instruct
 ```
 
 选择当前可用 GPU；示例只使用一张卡。脚本只加载本地 tokenizer，使用原 CUDA 随机数算法重新打分，不加载模型权重。CPU 与 CUDA 的随机数实现不同，不能用 CPU 结果替代本实验的 CUDA 绿名单。输出在原文件旁另存为 `*.rescored_gamma0.5_delta3_key15485863.jsonl`，保留回答、原配置和来源 SHA256；原文件不改。已有重评分输出默认拒绝覆盖，确认要替换时加 `--overwrite`。

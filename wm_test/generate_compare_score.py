@@ -64,6 +64,7 @@ DEFAULT_STUDENT = ROOT / (
 
 
 DEFAULT_BASE = Path("/shared/public_models/Qwen2.5-0.5B")
+DEFAULT_DETECTOR_TOKENIZER = Path("/shared/public_models/Qwen2.5-14B-Instruct")
 DEFAULT_STUDENT_OUTPUT = ROOT / "wm_test/dipper_upkgwwarmup_upkgwgad_warmup_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl"
 DEFAULT_BASE_OUTPUT = ROOT / "wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl"
 
@@ -109,11 +110,18 @@ def render_prompt(tokenizer: Any, messages: list[dict[str, str]], max_tokens: in
 def run_model(
     *, model_path: Path, label: str, output_path: Path, rows: list[dict[str, Any]],
     tokenizer: Any, args: argparse.Namespace,
+    detector_tokenizer: Any = None,
 ) -> None:
     import torch
 
     from vllm import LLM, SamplingParams
     from wm_data.kgw import KGWConfig, kgw_score
+
+    if detector_tokenizer is None:
+        from transformers import AutoTokenizer
+        detector_tokenizer = AutoTokenizer.from_pretrained(
+            str(DEFAULT_DETECTOR_TOKENIZER), trust_remote_code=True
+        )
 
     greenlist_cache = OrderedDict()
 
@@ -159,14 +167,14 @@ def run_model(
                     zip(batch, prompts, generations, strict=True)
                 ):
                     answer = result.outputs[0].text
-                    prompt_ids = tokenizer.encode(prompt, add_special_tokens=False)
+                    prompt_ids = detector_tokenizer.encode(prompt, add_special_tokens=False)
                     # Match wm_data's existing scorer by scoring the visible,
                     # re-tokenized answer and excluding the prompt itself.
-                    answer_ids = tokenizer.encode(answer, add_special_tokens=False)
+                    answer_ids = detector_tokenizer.encode(answer, add_special_tokens=False)
                     score = kgw_score(
                         prompt_token_ids=prompt_ids,
                         generated_token_ids=answer_ids,
-                        vocab_size=len(tokenizer),
+                        vocab_size=len(detector_tokenizer),
                         config=KGWConfig(
                             gamma=args.gamma, delta=args.delta, hash_key=args.hash_key
                         ),
@@ -244,15 +252,16 @@ def main() -> None:
             raise ValueError("input rows must contain a nonempty id and message-list content")
     print(f"Loaded {len(rows)} prompts from {args.input}", flush=True)
 
-    # Qwen2.5 base and fine-tuned models share the same tokenizer, also used
-    # by wm_data when it generated and scored the teacher data.
+    # Keep generation formatting unchanged; detect in the watermark teacher's token space.
     tokenizer = AutoTokenizer.from_pretrained(str(args.student_model), trust_remote_code=True)
+    detector_tokenizer = AutoTokenizer.from_pretrained(str(DEFAULT_DETECTOR_TOKENIZER), trust_remote_code=True)
     run_model(
         model_path=args.student_model,
         label="kgw_trained_student",
         output_path=args.student_output,
         rows=rows,
         tokenizer=tokenizer,
+        detector_tokenizer=detector_tokenizer,
         args=args,
     )
     run_model(
@@ -261,6 +270,7 @@ def main() -> None:
         output_path=args.base_output,
         rows=rows,
         tokenizer=tokenizer,
+        detector_tokenizer=detector_tokenizer,
         args=args,
     )
     print("Done. Both files contain the same prompt IDs, answers, and KGW z-scores.", flush=True)

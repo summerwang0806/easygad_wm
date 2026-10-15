@@ -179,7 +179,8 @@ def sampling_parameters(factory: Callable, args: argparse.Namespace, rules: Rule
 def run_model(*, args: argparse.Namespace, prepared: list[dict[str, Any]], tokenizer: Any,
               rules: RuleTable, rules_sha256: str, input_sha256: str,
               engine_factory: Callable | None = None, sampling_factory: Callable | None = None,
-              score_function: Callable | None = None, score_config_factory: Callable | None = None) -> None:
+              score_function: Callable | None = None, score_config_factory: Callable | None = None,
+              detector_tokenizer: Any = None) -> None:
     """Generate all rows into a temporary file; publish only after complete success.
 
 Optional factories enable CPU integration tests of the actual sampling hook and
@@ -189,6 +190,13 @@ output writer. Production dependencies are imported only at execution time.
         raise ValueError("no prompts to generate")
     if args.output.exists() and not args.overwrite:
         raise FileExistsError(f"{args.output} already exists")
+    if detector_tokenizer is None:
+        from transformers import AutoTokenizer
+
+        detector_tokenizer = AutoTokenizer.from_pretrained(
+            "/shared/public_models/Qwen2.5-14B-Instruct", local_files_only=True,
+            trust_remote_code=False,
+        )
     if engine_factory is None or sampling_factory is None:
         from vllm import LLM, SamplingParams
 
@@ -232,9 +240,9 @@ output writer. Production dependencies are imported only at execution time.
                         raise ValueError("vLLM result prompt IDs differ from validated input")
                     # Match wm_test's visible-answer retokenization and deduped
                     # KGW detection; this is independent of estimated rules.
-                    score = score_function(prompt_token_ids=item["prompt_ids"],
-                                           generated_token_ids=tokenizer.encode(answer, add_special_tokens=False),
-                                           vocab_size=len(tokenizer), config=detector_config, device="cuda",
+                    score = score_function(prompt_token_ids=detector_tokenizer.encode(item["prompt"], add_special_tokens=False),
+                                           generated_token_ids=detector_tokenizer.encode(answer, add_special_tokens=False),
+                                           vocab_size=len(detector_tokenizer), config=detector_config, device="cuda",
                                            include_deduplicated=True, greenlist_cache=cache)
                     record = {
                         "id": item["row"]["id"], "model_label": "kgw_trained_student_wn",
@@ -322,8 +330,13 @@ def main(argv: list[str] | None = None) -> None:
         raise RuntimeError("CUDA is required for WN generation and the original KGW detector RNG")
     if torch.cuda.device_count() != args.tensor_parallel_size:
         raise RuntimeError("CUDA device count differs from explicitly selected tensor-parallel devices")
+    detector_tokenizer = AutoTokenizer.from_pretrained(
+        "/shared/public_models/Qwen2.5-14B-Instruct", local_files_only=True,
+        trust_remote_code=False,
+    )
     run_model(args=args, prepared=prepared, tokenizer=tokenizer, rules=rules,
-              rules_sha256=rules_hash, input_sha256=input_hash)
+              rules_sha256=rules_hash, input_sha256=input_hash,
+              detector_tokenizer=detector_tokenizer)
 
 
 if __name__ == "__main__":

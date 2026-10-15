@@ -1,0 +1,1272 @@
+{
+  "p_value_aggregation": "arithmetic mean of 500 per-answer one-sided normal-approximation p-values",
+  "deduplication": "unique (previous_token_id, token_id) pairs; answers unchanged",
+  "repetition_method": "1 - unique answer-internal adjacent token pairs / all answer-internal adjacent token pairs > 0.5; prompt boundary excluded",
+  "repetition_verification": {
+    "tokenizer_file": "C:/Users/wenxin/Desktop/distall-watermark/model/Qwen2.5-1.5B-Instruct/tokenizer.json",
+    "tokenizer_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+    "implementation": "wm_test/audit_quality/local_bpe_quality_audit.py",
+    "answer_token_length_checks_passed": 4000,
+    "delta3_new_boundary_cases": [
+      {
+        "id": "dolly-02678",
+        "answer_tokens": 102,
+        "unique_answer_pairs": 50,
+        "severe": true
+      },
+      {
+        "id": "dolly-07027",
+        "answer_tokens": 94,
+        "unique_answer_pairs": 46,
+        "severe": true
+      },
+      {
+        "id": "dolly-09935",
+        "answer_tokens": 146,
+        "unique_answer_pairs": 72,
+        "severe": true
+      }
+    ],
+    "delta3_new_gad": {
+      "answer_token_length_checks_passed": 500,
+      "severe_count": 11,
+      "source_sha256": "c3a2d49b19f3cd3260df2189913eb69b4cf161442b09b083ba28f09fae2fa562",
+      "dedup_detection_pairs_minus_unique_answer_pairs_counts": {
+        "0": 6,
+        "1": 494
+      },
+      "over_saved_max_tokens": 0,
+      "mean_repeated_fraction": 0.1740483808861919,
+      "median_repeated_fraction": 0.15455609963806682
+    },
+    "delta3_new_teacher_para_warmup": {
+      "answer_token_length_checks_passed": 500,
+      "severe_count": 29,
+      "source_sha256": "3403bc41568577bfb5854d80ed9a8b6af9fd7f7d2f7ab0fad4891e2f1472a292",
+      "dedup_detection_pairs_minus_unique_answer_pairs_counts": {
+        "0": 3,
+        "1": 497
+      },
+      "over_saved_max_tokens": 0
+    },
+    "delta3_new_teacher_para_gad": {
+      "answer_token_length_checks_passed": 500,
+      "severe_count": 7,
+      "source_sha256": "4cae8667166defb3e5cff9569e2fe6ca46a1d9e9212b0f37cc7a3b1ae5ea21c9",
+      "dedup_detection_pairs_minus_unique_answer_pairs_counts": {
+        "0": 3,
+        "1": 497
+      },
+      "over_saved_max_tokens": 0
+    },
+    "delta2_teacher_para_warmup": {
+      "answer_token_length_checks_passed": 500,
+      "severe_count": 52,
+      "source_sha256": "65fb9633020ea8053d317e2fc49f74953afa2ea00bc1e159622ffc176167d03f",
+      "dedup_detection_pairs_minus_unique_answer_pairs_counts": {
+        "0": 1,
+        "1": 499
+      },
+      "over_saved_max_tokens": 0
+    },
+    "delta2_teacher_para_gad": {
+      "answer_token_length_checks_passed": 500,
+      "severe_count": 28,
+      "source_sha256": "29c1bc7c23bb9845dba8a1345b8a993a0b3660d923fa529ef1996c90e34a4ec0",
+      "dedup_detection_pairs_minus_unique_answer_pairs_counts": {
+        "0": 1,
+        "1": 499
+      },
+      "over_saved_max_tokens": 0
+    }
+  },
+  "validation_scope": "Source/cache hashes, sample IDs/prompts, metadata, saved z-score and p-value formulas, AUROC/TPR and p-value summary recomputation; no new generation or CUDA green-token reclassification. ROUGE-L read from matching attachment/local history, not independently recomputed.",
+  "models": [
+    {
+      "label": "warmup（δ=2，教师未para）",
+      "evaluated_at": "2026-10-15T11:14:06+08:00",
+      "source_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\kgwwarmup_kgwgad_warmup_gamma0.5_delta2_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": "ed960362f4f9594a241270a36142a29f577faa4c77ddd1bd5572afb3ebd68c8c",
+      "source_lf_sha256": "2975acd5c274c985b3e5c412b7d14b39707a2674bf3153ac8df659c4e39ea413",
+      "clean_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
+      "n_kgw": 500,
+      "n_clean": 500,
+      "detector_config": {
+        "gamma": 0.5,
+        "hash_key": 15485863,
+        "seeding": "simple_1 (hash_key * previous_token_id)",
+        "delta_by_label": {
+          "kgw": 2.0,
+          "clean": 2.0
+        }
+      },
+      "auroc": 0.6357940000000003,
+      "tpr_at_fpr": {
+        "5%": {
+          "threshold": 2.2460579065115365,
+          "fpr": 0.048,
+          "tpr": 0.128,
+          "precision": 0.7272727272727273,
+          "f1": 0.217687074829932,
+          "tp": 64,
+          "fp": 24,
+          "tn": 476,
+          "fn": 436,
+          "target_fpr": 0.05
+        },
+        "10%": {
+          "threshold": 1.6895637160701555,
+          "fpr": 0.1,
+          "tpr": 0.216,
+          "precision": 0.6835443037974683,
+          "f1": 0.3282674772036474,
+          "tp": 108,
+          "fp": 50,
+          "tn": 450,
+          "fn": 392,
+          "target_fpr": 0.1
+        }
+      },
+      "rouge_l_teacher_clean": {
+        "mean": 0.3032032044407931,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/kgwwarmup_kgwgad_warmup_gamma0.5_delta2_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet",
+        "reference_source": "Qwen2.5-14B clean teacher responses",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "severe_repetition_count": 26,
+      "severe_repetition_fraction": 0.052,
+      "p_values": {
+        "raw": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.3799718602947059,
+          "median": 0.2797888182915552,
+          "min": 9.691561294488009e-15,
+          "max": 1.0,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 60,
+              "fraction": 0.12
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 114,
+              "fraction": 0.228
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 164,
+              "fraction": 0.328
+            }
+          }
+        },
+        "deduplicated": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.3805934043195033,
+          "median": 0.32215994192734054,
+          "min": 0.0004793542787484259,
+          "max": 0.9973271615636728,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 22,
+              "fraction": 0.044
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 63,
+              "fraction": 0.126
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 108,
+              "fraction": 0.216
+            }
+          }
+        }
+      },
+      "source_attachment_file": "C:\\Users\\wenxin\\.codex\\attachments\\b79a23bd-3625-4ec2-af44-a514690ea1fc\\已粘贴的文本.txt",
+      "model_paths": [
+        "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta2/warmup/global_step_1813/actor/huggingface"
+      ],
+      "teacher_training_text_paraphrased": false,
+      "experiment_variant": "gamma0.5_delta2",
+      "teacher_training_text_note": "No dipper source prefix; saved checkpoint is gamma0.5_delta2 without dipper2stage. These are the original delta2 table rows.",
+      "rouge_l_dolly": {
+        "mean": 0.2060959350581176,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/kgwwarmup_kgwgad_warmup_gamma0.5_delta2_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl",
+        "reference_source": "databricks/databricks-dolly-15k:response",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "rouge_l_dolly_provenance": {
+        "history_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\detection_metrics_history.md",
+        "matched_evaluated_at": "2026-10-15T11:14:06+08:00",
+        "source_hash_checked": true,
+        "independently_recomputed": false
+      }
+    },
+    {
+      "label": "gad（δ=2，教师未para）",
+      "evaluated_at": "2026-10-15T11:21:37+08:00",
+      "source_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\kgwwarmup_kgwgad_gad_gamma0.5_delta2_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": "f782a0427ab6f0f854590918fbf7c84c4d60bac568aa0d4c2cf8e17836d1e8cc",
+      "source_lf_sha256": "4369d3850ddf2c0ef86cc04cbdfed4af4f9ec9264be57984cc60684410d03217",
+      "clean_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
+      "n_kgw": 500,
+      "n_clean": 500,
+      "detector_config": {
+        "gamma": 0.5,
+        "hash_key": 15485863,
+        "seeding": "simple_1 (hash_key * previous_token_id)",
+        "delta_by_label": {
+          "kgw": 2.0,
+          "clean": 2.0
+        }
+      },
+      "auroc": 0.5751699999999997,
+      "tpr_at_fpr": {
+        "5%": {
+          "threshold": 2.2294816068526147,
+          "fpr": 0.05,
+          "tpr": 0.048,
+          "precision": 0.4897959183673469,
+          "f1": 0.08743169398907102,
+          "tp": 24,
+          "fp": 25,
+          "tn": 475,
+          "fn": 476,
+          "target_fpr": 0.05
+        },
+        "10%": {
+          "threshold": 1.6909936308157578,
+          "fpr": 0.1,
+          "tpr": 0.122,
+          "precision": 0.5495495495495496,
+          "f1": 0.19967266775777415,
+          "tp": 61,
+          "fp": 50,
+          "tn": 450,
+          "fn": 439,
+          "target_fpr": 0.1
+        }
+      },
+      "rouge_l_teacher_clean": {
+        "mean": 0.32087517853541186,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta2_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet",
+        "reference_source": "Qwen2.5-14B clean teacher responses",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "severe_repetition_count": 12,
+      "severe_repetition_fraction": 0.024,
+      "p_values": {
+        "raw": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.452519525086268,
+          "median": 0.43115843880879967,
+          "min": 4.73666139662072e-06,
+          "max": 1.0,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 20,
+              "fraction": 0.04
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 64,
+              "fraction": 0.128
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 100,
+              "fraction": 0.2
+            }
+          }
+        },
+        "deduplicated": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.43462442290871683,
+          "median": 0.3979178688051665,
+          "min": 2.8904972787142577e-05,
+          "max": 0.9984630130390078,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 9,
+              "fraction": 0.018
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 51,
+              "fraction": 0.102
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 76,
+              "fraction": 0.152
+            }
+          }
+        }
+      },
+      "source_attachment_file": "C:\\Users\\wenxin\\.codex\\attachments\\b79a23bd-3625-4ec2-af44-a514690ea1fc\\已粘贴的文本.txt",
+      "model_paths": [
+        "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta2/gad/global_step_1813/actor/huggingface"
+      ],
+      "teacher_training_text_paraphrased": false,
+      "experiment_variant": "gamma0.5_delta2",
+      "teacher_training_text_note": "No dipper source prefix; saved checkpoint is gamma0.5_delta2 without dipper2stage. These are the original delta2 table rows.",
+      "rouge_l_dolly": {
+        "mean": 0.21449190214028263,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta2_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl",
+        "reference_source": "databricks/databricks-dolly-15k:response",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "rouge_l_dolly_provenance": {
+        "history_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\detection_metrics_history.md",
+        "matched_evaluated_at": "2026-10-15T11:21:37+08:00",
+        "source_hash_checked": true,
+        "independently_recomputed": false
+      }
+    },
+    {
+      "label": "warmup（δ=2，教师para）",
+      "evaluated_at": "2026-10-15T16:05:11+08:00",
+      "source_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\dipper_upkgwwarmup_upkgwgad_warmup_gamma0.5_delta2_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": "65fb9633020ea8053d317e2fc49f74953afa2ea00bc1e159622ffc176167d03f",
+      "source_lf_sha256": "844efa93dee8f1b7e63f6bb99133e64427cafd03e40047a139c746eed97a2a24",
+      "source_attachment_file": null,
+      "source_history_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\detection_metrics_history.md",
+      "clean_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
+      "model_paths": [
+        "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta2_dipper2stage/warmup/global_step_1813/actor/huggingface"
+      ],
+      "teacher_training_text_paraphrased": true,
+      "teacher_training_text_note": "DIPPER-prefixed source and gamma0.5_delta2_dipper2stage checkpoint; teacher-text paraphrasing before student training.",
+      "experiment_variant": "gamma0.5_delta2_dipper2stage",
+      "n_kgw": 500,
+      "n_clean": 500,
+      "detector_config": {
+        "gamma": 0.5,
+        "hash_key": 15485863,
+        "seeding": "simple_1 (hash_key * previous_token_id)",
+        "delta_by_label": {
+          "kgw": 2.0,
+          "clean": 2.0
+        }
+      },
+      "auroc": 0.5461980000000002,
+      "tpr_at_fpr": {
+        "5%": {
+          "threshold": 2.271099895830676,
+          "fpr": 0.046,
+          "tpr": 0.076,
+          "precision": 0.6229508196721312,
+          "f1": 0.13547237076648844,
+          "tp": 38,
+          "fp": 23,
+          "tn": 477,
+          "fn": 462,
+          "target_fpr": 0.05
+        },
+        "10%": {
+          "threshold": 1.6924558427507104,
+          "fpr": 0.1,
+          "tpr": 0.118,
+          "precision": 0.5412844036697247,
+          "f1": 0.19376026272577995,
+          "tp": 59,
+          "fp": 50,
+          "tn": 450,
+          "fn": 441,
+          "target_fpr": 0.1
+        }
+      },
+      "rouge_l_teacher_clean": {
+        "mean": 0.2551511891699088,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/dipper_upkgwwarmup_upkgwgad_warmup_gamma0.5_delta2_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet",
+        "reference_source": "Qwen2.5-14B clean teacher responses",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "severe_repetition_count": 52,
+      "severe_repetition_fraction": 0.104,
+      "p_values": {
+        "raw": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.4860921504689607,
+          "median": 0.5,
+          "min": 0.0,
+          "max": 1.0,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 36,
+              "fraction": 0.072
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 62,
+              "fraction": 0.124
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 88,
+              "fraction": 0.176
+            }
+          }
+        },
+        "deduplicated": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.5162260304469206,
+          "median": 0.5,
+          "min": 0.0038164408938961528,
+          "max": 0.9990129301439148,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 3,
+              "fraction": 0.006
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 20,
+              "fraction": 0.04
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 42,
+              "fraction": 0.084
+            }
+          }
+        }
+      },
+      "rouge_l_dolly": {
+        "mean": 0.20300235975931522,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/dipper_upkgwwarmup_upkgwgad_warmup_gamma0.5_delta2_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl",
+        "reference_source": "databricks/databricks-dolly-15k:response",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "rouge_l_dolly_provenance": {
+        "history_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\detection_metrics_history.md",
+        "matched_evaluated_at": "2026-10-15T16:05:11+08:00",
+        "source_hash_checked": true,
+        "independently_recomputed": false
+      }
+    },
+    {
+      "label": "gad（δ=2，教师para）",
+      "evaluated_at": "2026-10-15T16:12:14+08:00",
+      "source_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\dipper_upkgwwarmup_upkgwgad_gad_gamma0.5_delta2_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": "29c1bc7c23bb9845dba8a1345b8a993a0b3660d923fa529ef1996c90e34a4ec0",
+      "source_lf_sha256": "e9bcfed78baabd8c95528b318d71d50fe05a20ce23254e05b3bf5e570f27e4a0",
+      "source_attachment_file": null,
+      "source_history_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\detection_metrics_history.md",
+      "clean_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
+      "model_paths": [
+        "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta2_dipper2stage/gad/global_step_1813/actor/huggingface"
+      ],
+      "teacher_training_text_paraphrased": true,
+      "teacher_training_text_note": "DIPPER-prefixed source and gamma0.5_delta2_dipper2stage checkpoint; teacher-text paraphrasing before student training.",
+      "experiment_variant": "gamma0.5_delta2_dipper2stage",
+      "n_kgw": 500,
+      "n_clean": 500,
+      "detector_config": {
+        "gamma": 0.5,
+        "hash_key": 15485863,
+        "seeding": "simple_1 (hash_key * previous_token_id)",
+        "delta_by_label": {
+          "kgw": 2.0,
+          "clean": 2.0
+        }
+      },
+      "auroc": 0.5552279999999995,
+      "tpr_at_fpr": {
+        "5%": {
+          "threshold": 2.2517050070105746,
+          "fpr": 0.046,
+          "tpr": 0.052,
+          "precision": 0.5306122448979592,
+          "f1": 0.09471766848816028,
+          "tp": 26,
+          "fp": 23,
+          "tn": 477,
+          "fn": 474,
+          "target_fpr": 0.05
+        },
+        "10%": {
+          "threshold": 1.6867605906952476,
+          "fpr": 0.1,
+          "tpr": 0.114,
+          "precision": 0.5327102803738317,
+          "f1": 0.18780889621087316,
+          "tp": 57,
+          "fp": 50,
+          "tn": 450,
+          "fn": 443,
+          "target_fpr": 0.1
+        }
+      },
+      "rouge_l_teacher_clean": {
+        "mean": 0.2661856003624705,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/dipper_upkgwwarmup_upkgwgad_gad_gamma0.5_delta2_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet",
+        "reference_source": "Qwen2.5-14B clean teacher responses",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "severe_repetition_count": 28,
+      "severe_repetition_fraction": 0.056,
+      "p_values": {
+        "raw": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.4747191572248848,
+          "median": 0.45709878118725006,
+          "min": 0.0,
+          "max": 1.0,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 21,
+              "fraction": 0.042
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 59,
+              "fraction": 0.118
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 101,
+              "fraction": 0.202
+            }
+          }
+        },
+        "deduplicated": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.4941416552299487,
+          "median": 0.4706080915381696,
+          "min": 0.0008081111075299945,
+          "max": 0.9982156857815333,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 5,
+              "fraction": 0.01
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 31,
+              "fraction": 0.062
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 62,
+              "fraction": 0.124
+            }
+          }
+        }
+      },
+      "rouge_l_dolly": {
+        "mean": 0.19268209024137792,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/dipper_upkgwwarmup_upkgwgad_gad_gamma0.5_delta2_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl",
+        "reference_source": "databricks/databricks-dolly-15k:response",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "rouge_l_dolly_provenance": {
+        "history_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\detection_metrics_history.md",
+        "matched_evaluated_at": "2026-10-15T16:12:14+08:00",
+        "source_hash_checked": true,
+        "independently_recomputed": false
+      }
+    },
+    {
+      "label": "warmup（δ=3，教师未para）",
+      "evaluated_at": "2026-10-15T11:38:32+08:00",
+      "source_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\kgwwarmup_kgwgad_warmup_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": "43137533eed0685fff39dfdfd97867974934116797ee9b4f94ed4f32427c72cc",
+      "source_lf_sha256": "eccdb602ca9bcbdc0a01cca653bf5f8242fccddecda2225359a0b98e74ff535c",
+      "clean_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
+      "n_kgw": 500,
+      "n_clean": 500,
+      "detector_config": {
+        "gamma": 0.5,
+        "hash_key": 15485863,
+        "seeding": "simple_1 (hash_key * previous_token_id)",
+        "delta_by_label": {
+          "kgw": 3.0,
+          "clean": 2.0
+        }
+      },
+      "auroc": 0.6795839999999989,
+      "tpr_at_fpr": {
+        "5%": {
+          "threshold": 2.2460579065115365,
+          "fpr": 0.048,
+          "tpr": 0.19,
+          "precision": 0.7983193277310925,
+          "f1": 0.30694668820678517,
+          "tp": 95,
+          "fp": 24,
+          "tn": 476,
+          "fn": 405,
+          "target_fpr": 0.05
+        },
+        "10%": {
+          "threshold": 1.7038855027411943,
+          "fpr": 0.1,
+          "tpr": 0.3,
+          "precision": 0.75,
+          "f1": 0.4285714285714285,
+          "tp": 150,
+          "fp": 50,
+          "tn": 450,
+          "fn": 350,
+          "target_fpr": 0.1
+        }
+      },
+      "rouge_l_teacher_clean": {
+        "mean": 0.300919843309813,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/kgwwarmup_kgwgad_warmup_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet",
+        "reference_source": "Qwen2.5-14B clean teacher responses",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "severe_repetition_count": 28,
+      "severe_repetition_fraction": 0.056,
+      "p_values": {
+        "raw": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.3296664932281066,
+          "median": 0.21915062085091014,
+          "min": 5.357780917290389e-13,
+          "max": 1.0,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 92,
+              "fraction": 0.184
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 153,
+              "fraction": 0.306
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 188,
+              "fraction": 0.376
+            }
+          }
+        },
+        "deduplicated": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.3385771887153556,
+          "median": 0.29479844477264167,
+          "min": 1.3561332466625727e-05,
+          "max": 0.9831684817377956,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 37,
+              "fraction": 0.074
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 97,
+              "fraction": 0.194
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 142,
+              "fraction": 0.284
+            }
+          }
+        }
+      },
+      "source_attachment_file": "C:\\Users\\wenxin\\.codex\\attachments\\b79a23bd-3625-4ec2-af44-a514690ea1fc\\已粘贴的文本.txt",
+      "model_paths": [
+        "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/warmup/global_step_1813/actor/huggingface"
+      ],
+      "teacher_training_text_paraphrased": false,
+      "teacher_training_text_note": "User identifies previous delta3_new setting as teacher text without paraphrasing; unprefixed source and checkpoint lack dipper2stage.",
+      "experiment_variant": "gamma0.5_delta3_new",
+      "historical_training_input_independently_verified": false,
+      "teacher_training_text_status_basis": "experimental description and source/checkpoint naming; dataset paraphrasing lineage verified; actual training input awaits runtime config",
+      "rouge_l_dolly": {
+        "mean": 0.20416985319974867,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/kgwwarmup_kgwgad_warmup_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl",
+        "reference_source": "databricks/databricks-dolly-15k:response",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "rouge_l_dolly_provenance": {
+        "history_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\detection_metrics_history.md",
+        "matched_evaluated_at": "2026-10-15T11:38:32+08:00",
+        "source_hash_checked": true,
+        "independently_recomputed": false
+      }
+    },
+    {
+      "label": "gad（δ=3，教师未para）",
+      "evaluated_at": "2026-10-15T12:01:50+08:00",
+      "source_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": "c3a2d49b19f3cd3260df2189913eb69b4cf161442b09b083ba28f09fae2fa562",
+      "source_lf_sha256": "618df1162dbd1bbf770b90baabfd23226ef52fd3028f5fdb6490919cca78b92e",
+      "source_attachment_file": "C:\\Users\\wenxin\\.codex\\attachments\\0b638105-3617-49ab-b7f5-68ad8c9df0ee\\已粘贴的文本.txt",
+      "clean_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
+      "n_kgw": 500,
+      "n_clean": 500,
+      "detector_config": {
+        "gamma": 0.5,
+        "hash_key": 15485863,
+        "seeding": "simple_1 (hash_key * previous_token_id)",
+        "delta_by_label": {
+          "kgw": 3.0,
+          "clean": 2.0
+        }
+      },
+      "auroc": 0.6476880000000005,
+      "tpr_at_fpr": {
+        "5%": {
+          "threshold": 2.225394561056747,
+          "fpr": 0.05,
+          "tpr": 0.114,
+          "precision": 0.6951219512195121,
+          "f1": 0.19587628865979384,
+          "tp": 57,
+          "fp": 25,
+          "tn": 475,
+          "fn": 443,
+          "target_fpr": 0.05
+        },
+        "10%": {
+          "threshold": 1.6859773678906163,
+          "fpr": 0.1,
+          "tpr": 0.228,
+          "precision": 0.6951219512195121,
+          "f1": 0.34337349397590367,
+          "tp": 114,
+          "fp": 50,
+          "tn": 450,
+          "fn": 386,
+          "target_fpr": 0.1
+        }
+      },
+      "rouge_l_teacher_clean": {
+        "mean": 0.3091744425525882,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet",
+        "reference_source": "Qwen2.5-14B clean teacher responses",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "severe_repetition_count": 11,
+      "severe_repetition_fraction": 0.022,
+      "p_values": {
+        "raw": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.36577704616420137,
+          "median": 0.2383728596628124,
+          "min": 6.834897526731109e-14,
+          "max": 0.9999999683624243,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 53,
+              "fraction": 0.106
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 119,
+              "fraction": 0.238
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 156,
+              "fraction": 0.312
+            }
+          }
+        },
+        "deduplicated": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.3474721954408633,
+          "median": 0.2705911687912894,
+          "min": 9.802720950622567e-05,
+          "max": 0.9947064313329715,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 19,
+              "fraction": 0.038
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 80,
+              "fraction": 0.16
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 140,
+              "fraction": 0.28
+            }
+          }
+        }
+      },
+      "model_paths": [
+        "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_step_1813/actor/huggingface"
+      ],
+      "teacher_training_text_paraphrased": false,
+      "teacher_training_text_note": "User identifies previous delta3_new setting as teacher text without paraphrasing; unprefixed source and checkpoint lack dipper2stage.",
+      "experiment_variant": "gamma0.5_delta3_new",
+      "historical_training_input_independently_verified": false,
+      "teacher_training_text_status_basis": "experimental description and source/checkpoint naming; dataset paraphrasing lineage verified; actual training input awaits runtime config",
+      "rouge_l_dolly": {
+        "mean": 0.19849387557587408,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl",
+        "reference_source": "databricks/databricks-dolly-15k:response",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "rouge_l_dolly_provenance": {
+        "history_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\detection_metrics_history.md",
+        "matched_evaluated_at": "2026-10-15T12:01:50+08:00",
+        "source_hash_checked": true,
+        "independently_recomputed": false
+      }
+    },
+    {
+      "label": "warmup（δ=3，DIPPER未生效，待重跑）",
+      "evaluated_at": "2026-10-15T20:08:49+08:00",
+      "source_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\dipper_upkgwwarmup_upkgwgad_warmup_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": "3403bc41568577bfb5854d80ed9a8b6af9fd7f7d2f7ab0fad4891e2f1472a292",
+      "source_lf_sha256": "9befc0f7fca9248b9f17374e145b1e9da82b5351d3a9376da45538832e52da10",
+      "source_attachment_file": "C:\\Users\\wenxin\\.codex\\attachments\\a7fa6efd-a243-43ff-a363-4de3c67eeccf\\已粘贴的文本.txt",
+      "clean_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
+      "model_paths": [
+        "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new_dipper2stage/warmup/global_step_1813/actor/huggingface"
+      ],
+      "teacher_training_text_paraphrased": false,
+      "teacher_training_text_note": "User identifies teacher text paraphrasing; source prefix dipper_upkgwwarmup_upkgwgad and checkpoint suffix dipper2stage.",
+      "experiment_variant": "gamma0.5_delta3_new_dipper2stage",
+      "n_kgw": 500,
+      "n_clean": 500,
+      "detector_config": {
+        "gamma": 0.5,
+        "hash_key": 15485863,
+        "seeding": "simple_1 (hash_key * previous_token_id)",
+        "delta_by_label": {
+          "kgw": 3.0,
+          "clean": 2.0
+        }
+      },
+      "auroc": 0.6800119999999998,
+      "tpr_at_fpr": {
+        "5%": {
+          "threshold": 2.223781796726481,
+          "fpr": 0.05,
+          "tpr": 0.218,
+          "precision": 0.8134328358208955,
+          "f1": 0.3438485804416404,
+          "tp": 109,
+          "fp": 25,
+          "tn": 475,
+          "fn": 391,
+          "target_fpr": 0.05
+        },
+        "10%": {
+          "threshold": 1.6818826599284376,
+          "fpr": 0.1,
+          "tpr": 0.31,
+          "precision": 0.7560975609756098,
+          "f1": 0.43971631205673756,
+          "tp": 155,
+          "fp": 50,
+          "tn": 450,
+          "fn": 345,
+          "target_fpr": 0.1
+        }
+      },
+      "rouge_l_teacher_clean": {
+        "mean": 0.2981779421838879,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/dipper_upkgwwarmup_upkgwgad_warmup_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet",
+        "reference_source": "Qwen2.5-14B clean teacher responses",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "severe_repetition_count": 29,
+      "severe_repetition_fraction": 0.058,
+      "p_values": {
+        "raw": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.32985368204963733,
+          "median": 0.237215515326687,
+          "min": 1.9456879130293956e-98,
+          "max": 1.0,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 99,
+              "fraction": 0.198
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 157,
+              "fraction": 0.314
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 183,
+              "fraction": 0.366
+            }
+          }
+        },
+        "deduplicated": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.3264851781114101,
+          "median": 0.24083499339513048,
+          "min": 1.3561332466625727e-05,
+          "max": 0.9911469670963167,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 40,
+              "fraction": 0.08
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 98,
+              "fraction": 0.196
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 148,
+              "fraction": 0.296
+            }
+          }
+        }
+      },
+      "historical_training_input_independently_verified": false,
+      "teacher_training_text_status_basis": "User confirms server shell edits were not saved before launch; unchanged disk TRAIN_FILE points to delta3_newtrain (non-paraphrased). Historical runtime config not independently available.",
+      "teacher_training_text_paraphrased_intended": true,
+      "intended_dipper_treatment_effective": false,
+      "eligible_for_dipper_before_after_comparison": false,
+      "run_status": "dipper_setting_not_applied_pending_rerun",
+      "inferred_train_file": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet",
+      "rouge_l_dolly": {
+        "mean": 0.19969676240172327,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/dipper_upkgwwarmup_upkgwgad_warmup_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl",
+        "reference_source": "databricks/databricks-dolly-15k:response",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "rouge_l_dolly_provenance": {
+        "history_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\detection_metrics_history.md",
+        "matched_evaluated_at": "2026-10-15T20:08:49+08:00",
+        "source_hash_checked": true,
+        "independently_recomputed": false
+      }
+    },
+    {
+      "label": "gad（δ=3，DIPPER未生效，待重跑）",
+      "evaluated_at": "2026-10-15T19:57:15+08:00",
+      "source_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\dipper_upkgwwarmup_upkgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": "4cae8667166defb3e5cff9569e2fe6ca46a1d9e9212b0f37cc7a3b1ae5ea21c9",
+      "source_lf_sha256": "74b0fac7d97adb6a3b515a94188def461f5daf273f16faee269f20607e1528c3",
+      "source_attachment_file": "C:\\Users\\wenxin\\.codex\\attachments\\a7fa6efd-a243-43ff-a363-4de3c67eeccf\\已粘贴的文本.txt",
+      "clean_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
+      "model_paths": [
+        "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new_dipper2stage/gad/global_step_1813/actor/huggingface"
+      ],
+      "teacher_training_text_paraphrased": false,
+      "teacher_training_text_note": "User identifies teacher text paraphrasing; source prefix dipper_upkgwwarmup_upkgwgad and checkpoint suffix dipper2stage.",
+      "experiment_variant": "gamma0.5_delta3_new_dipper2stage",
+      "n_kgw": 500,
+      "n_clean": 500,
+      "detector_config": {
+        "gamma": 0.5,
+        "hash_key": 15485863,
+        "seeding": "simple_1 (hash_key * previous_token_id)",
+        "delta_by_label": {
+          "kgw": 3.0,
+          "clean": 2.0
+        }
+      },
+      "auroc": 0.6410340000000009,
+      "tpr_at_fpr": {
+        "5%": {
+          "threshold": 2.225995548013356,
+          "fpr": 0.05,
+          "tpr": 0.11,
+          "precision": 0.6875,
+          "f1": 0.1896551724137931,
+          "tp": 55,
+          "fp": 25,
+          "tn": 475,
+          "fn": 445,
+          "target_fpr": 0.05
+        },
+        "10%": {
+          "threshold": 1.6867605906952476,
+          "fpr": 0.1,
+          "tpr": 0.196,
+          "precision": 0.6621621621621622,
+          "f1": 0.30246913580246915,
+          "tp": 98,
+          "fp": 50,
+          "tn": 450,
+          "fn": 402,
+          "target_fpr": 0.1
+        }
+      },
+      "rouge_l_teacher_clean": {
+        "mean": 0.3044319488556256,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/dipper_upkgwwarmup_upkgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet",
+        "reference_source": "Qwen2.5-14B clean teacher responses",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "severe_repetition_count": 7,
+      "severe_repetition_fraction": 0.014,
+      "p_values": {
+        "raw": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.37301834928378047,
+          "median": 0.28690262573002534,
+          "min": 6.869952468447251e-09,
+          "max": 0.9999780531408222,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 45,
+              "fraction": 0.09
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 102,
+              "fraction": 0.204
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 143,
+              "fraction": 0.286
+            }
+          }
+        },
+        "deduplicated": {
+          "n_total": 500,
+          "n_valid": 500,
+          "n_invalid": 0,
+          "mean": 0.3702501637134407,
+          "median": 0.2926804848339488,
+          "min": 7.852614211537582e-05,
+          "max": 0.9989889754015482,
+          "at_alpha": {
+            "1%": {
+              "alpha": 0.01,
+              "count": 28,
+              "fraction": 0.056
+            },
+            "5%": {
+              "alpha": 0.05,
+              "count": 72,
+              "fraction": 0.144
+            },
+            "10%": {
+              "alpha": 0.1,
+              "count": 117,
+              "fraction": 0.234
+            }
+          }
+        }
+      },
+      "historical_training_input_independently_verified": false,
+      "teacher_training_text_status_basis": "User confirms server shell edits were not saved before launch; unchanged disk TRAIN_FILE points to delta3_newtrain (non-paraphrased). Historical runtime config not independently available.",
+      "teacher_training_text_paraphrased_intended": true,
+      "intended_dipper_treatment_effective": false,
+      "eligible_for_dipper_before_after_comparison": false,
+      "run_status": "dipper_setting_not_applied_pending_rerun",
+      "inferred_train_file": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet",
+      "rouge_l_dolly": {
+        "mean": 0.21269025925218651,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/dipper_upkgwwarmup_upkgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl",
+        "reference_source": "databricks/databricks-dolly-15k:response",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "rouge_l_dolly_provenance": {
+        "history_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\detection_metrics_history.md",
+        "matched_evaluated_at": "2026-10-15T19:57:15+08:00",
+        "source_hash_checked": true,
+        "independently_recomputed": false
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "file": "C:\\Users\\wenxin\\.codex\\attachments\\b79a23bd-3625-4ec2-af44-a514690ea1fc\\已粘贴的文本.txt",
+      "sha256": "6be1133dd6f6a328634914b544fe22c57eec3c8d6a39c7e20d317f123325c9f3"
+    },
+    {
+      "file": "C:\\Users\\wenxin\\.codex\\attachments\\0b638105-3617-49ab-b7f5-68ad8c9df0ee\\已粘贴的文本.txt",
+      "sha256": "4bd39c502e17ad96a91ffd8624113d98beff20e0a5d0274060b69f6f52ba0d66"
+    },
+    {
+      "file": "C:\\Users\\wenxin\\.codex\\attachments\\a7fa6efd-a243-43ff-a363-4de3c67eeccf\\已粘贴的文本.txt",
+      "sha256": "0e47f59ea69a3b6a27eaa8447867ac3b5ed2b318c9ddba5fec58b09d6ca95f22"
+    }
+  ],
+  "delta2_original_rows_provenance": "The original delta2 table rows use kgwwarmup_kgwgad_* files (no dipper prefix), not dipper_upkgwwarmup_upkgwgad_* files. DIPPER rows were added in this update.",
+  "delta3_new_provenance_check": {
+    "verification_date": "2026-10-15",
+    "report_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\attachment_table_20261015\\delta3_new_verification.md",
+    "evaluation_pair_confirmed": "gamma0.5_delta3_new versus gamma0.5_delta3_new_dipper2stage; no old delta3 checkpoints mixed",
+    "new_dipper_dataset_lineage_verified": true,
+    "input_sha256": "d65baf10e6b4def5f0d6f92b13935cabcb6704368df917d15d5dbcb71e67fdf5",
+    "output_sha256": "9fa345968e54535ca20ccc5e12ba762603e9944f4eacbb22cefa539531e9dd22",
+    "historical_training_input_independently_verified": false,
+    "current_local_script_train_file": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_newtrain.parquet",
+    "expected_dipper_train_file": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_newtrain.parquet",
+    "user_statement": "User confirms server sh edits were not saved and asks whether run used old non-DIPPER input.",
+    "limitation": "No historical runtime Hydra config recovered; dataset-use conclusion is based on user-confirmed unsaved shell edits and disk TRAIN_FILE. Result/checkpoint names alone do not establish treatment.",
+    "paired_bootstrap": {
+      "replicates": 10000,
+      "seed": 20261015,
+      "method": "paired positive ID resampling plus independently resampled shared clean; percentile interval for after-minus-before AUROC",
+      "scope": "fixed models and saved generations; test-sample uncertainty only, not training-run uncertainty",
+      "warmup": {
+        "difference": 0.000428,
+        "ci95": [
+          -0.0180224,
+          0.0192702
+        ]
+      },
+      "gad": {
+        "difference": -0.006654,
+        "ci95": [
+          -0.0303404,
+          0.01685445
+        ]
+      },
+      "interpretation": "Describes differences between two saved runs only; cannot be interpreted as a DIPPER treatment effect."
+    },
+    "conclusion": "Treat both delta3_new_dipper2stage runs as DIPPER setting not applied and exclude from valid DIPPER before/after comparison; based on user confirmation plus unchanged disk script, not recovered runtime logs.",
+    "dipper_before_after_comparison_valid": false,
+    "rerun_required_stages": [
+      "warmup",
+      "gad"
+    ],
+    "previous_local_script_train_file": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet",
+    "corrected_launch_review": {
+      "commit": "0b29ec5",
+      "date": "2026-10-15",
+      "exp_name": "te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new1_dipper2stage",
+      "cuda_visible_devices": "0,3",
+      "nnodes": 1,
+      "gpus_per_node": 2,
+      "fresh_warmup_then_gad": true,
+      "both_stages_train_file": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_newtrain.parquet",
+      "both_stages_val_file": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtest.parquet",
+      "train_parquet_hash_matches_dipper_audit": true,
+      "status": "static_configuration_correct; no training launched by assistant",
+      "history_note": "Corrected script does not validate or replace the previous two treatment-not-applied runs."
+    }
+  }
+}

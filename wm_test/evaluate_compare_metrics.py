@@ -18,6 +18,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parent
+DEFAULT_DETECTOR_TOKENIZER = Path("/shared/public_models/Qwen2.5-14B-Instruct")
 
 # DEFAULT_KGW = "data/dolly15k_qwen2_5_0.5b_kgw_test_kgw_scores.jsonl"
 # DEFAULT_CLEAN = "data/dolly15k_qwen2_5_0.5b_clean_test_kgw_scores.jsonl"
@@ -49,7 +50,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
              "or JSONL with id, answer and prompt); matched by ID",
     )
     parser.add_argument("--tokenizer", type=Path, default=None,
-                        help="Tokenizer override for old JSONL files missing deduplicated scores")
+                        help="Teacher tokenizer override for legacy rescoring; defaults to Qwen2.5-14B-Instruct")
     parser.add_argument("--score-device", default="cuda",
                         help="CUDA device for one-time rescoring of old JSONL; no model is loaded")
     parser.add_argument(
@@ -303,9 +304,7 @@ class LegacyRescorer:
                 "because CPU/CUDA KGW random generators differ. Use an available GPU "
                 "with CUDA_VISIBLE_DEVICES; later evaluations use the saved scores or p-value cache."
             )
-        model_path = str(self.args.tokenizer or row.get("model_path", ""))
-        if not model_path:
-            raise ValueError("Cannot rescore old JSONL without model_path; supply --tokenizer")
+        model_path = str(self.args.tokenizer or DEFAULT_DETECTOR_TOKENIZER)
         if model_path not in self.tokenizers:
             self.tokenizers[model_path] = AutoTokenizer.from_pretrained(
                 model_path, trust_remote_code=True, local_files_only=True
@@ -313,14 +312,24 @@ class LegacyRescorer:
         tokenizer = self.tokenizers[model_path]
         prompt = row.get("prompt")
         if isinstance(prompt, list):
-            prompt = tokenizer.apply_chat_template(prompt, add_generation_prompt=True, tokenize=False)
+            # Preserve the original generation template and truncation, then
+            # encode that same prompt text with the teacher detector tokenizer.
+            generation_path = str(row.get("model_path", ""))
+            if not generation_path:
+                raise ValueError("Legacy message prompts require the generating model_path")
+            if generation_path not in self.tokenizers:
+                self.tokenizers[generation_path] = AutoTokenizer.from_pretrained(
+                    generation_path, trust_remote_code=True, local_files_only=True
+                )
+            generation_tokenizer = self.tokenizers[generation_path]
+            prompt = generation_tokenizer.apply_chat_template(prompt, add_generation_prompt=True, tokenize=False)
+            generation_ids = generation_tokenizer.encode(prompt, add_special_tokens=False)
+            limit = int(row.get("generation", {}).get("max_prompt_tokens", 2048))
+            if len(generation_ids) > limit:
+                prompt = generation_tokenizer.decode(generation_ids[:limit], skip_special_tokens=False)
         if not isinstance(prompt, str) or not isinstance(row.get("answer"), str):
             raise ValueError("Legacy rescoring requires prompt and answer text in each JSONL row")
         prompt_ids = tokenizer.encode(prompt, add_special_tokens=False)
-        limit = int(row.get("generation", {}).get("max_prompt_tokens", 2048))
-        if len(prompt_ids) > limit:
-            prompt = tokenizer.decode(prompt_ids[:limit], skip_special_tokens=False)
-            prompt_ids = tokenizer.encode(prompt, add_special_tokens=False)
         metadata = config_override if config_override is not None else row.get("kgw", {})
         if not all(key in metadata for key in ("gamma", "delta", "hash_key")):
             raise ValueError("Legacy rescoring requires the original kgw gamma/delta/hash_key metadata")

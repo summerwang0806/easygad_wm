@@ -36,7 +36,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="Original generation bias; stored as metadata")
     parser.add_argument("--hash-key", type=int, default=15_485_863)
     parser.add_argument("--tokenizer", type=Path, default=None,
-                        help="Local tokenizer directory; defaults to each row's model_path")
+                        help="Teacher tokenizer directory; defaults to /shared/public_models/Qwen2.5-14B-Instruct")
     parser.add_argument("--score-device", default="cuda",
                         help="CUDA device reproducing the original green-list RNG")
     parser.add_argument("--output-dir", type=Path, default=None,

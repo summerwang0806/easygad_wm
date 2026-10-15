@@ -350,13 +350,38 @@ class DetectorBackendAndCliTests(FileTestCase):
         self.assertEqual(seen[-1]["config"].hash_key, KEY)
         self.assertTrue(seen[-1]["include_deduplicated"])
         self.assertEqual(seen[-1]["device"], "cuda")
-        modules["transformers"].AutoTokenizer.from_pretrained.assert_called_once_with("/offline/model", trust_remote_code=True, local_files_only=True)
+        self.assertEqual([call.args[0] for call in modules["transformers"].AutoTokenizer.from_pretrained.call_args_list],
+                         [str(evaluator.DEFAULT_DETECTOR_TOKENIZER), "/offline/model"])
 
     def test_legacy_without_override_still_rejects_nonreproduced_old_scores(self):
         modules, _ = self.fake_backend(lambda **kwargs: scores(0.5))
         rescorer = evaluator.LegacyRescorer(argparse.Namespace(tokenizer=None, score_device="cuda"))
         with patch.dict("sys.modules", modules), self.assertRaises(ValueError):
             rescorer.score(answer_row())
+
+    def test_legacy_uses_native_prompt_format_and_teacher_token_ids(self):
+        calls = []
+        modules, teacher = self.fake_backend(lambda **kwargs: calls.append(kwargs) or scores(0.5))
+        native = type(teacher)()
+        native.apply_chat_template = MagicMock(return_value="native student prompt")
+        native.encode = MagicMock(return_value=[4, 5, 6])
+        native.decode = MagicMock(return_value="truncated native student prompt")
+        teacher.encode = MagicMock(side_effect=lambda text, **kwargs:
+                                   [71, 72, 73] if text == "truncated native student prompt" else [81, 82])
+        teacher.apply_chat_template = MagicMock(side_effect=AssertionError("teacher must not render the student prompt"))
+        loader = modules["transformers"].AutoTokenizer.from_pretrained
+        loader.side_effect = lambda path, **kwargs: teacher if path == str(evaluator.DEFAULT_DETECTOR_TOKENIZER) else native
+        row = answer_row()
+        row["generation"]["max_prompt_tokens"] = 2
+        rescorer = evaluator.LegacyRescorer(argparse.Namespace(tokenizer=None, score_device="cuda"))
+        with patch.dict("sys.modules", modules):
+            result = rescorer.score(row, config_override=TARGET)
+        native.apply_chat_template.assert_called_once_with(row["prompt"], add_generation_prompt=True, tokenize=False)
+        native.decode.assert_called_once_with([4, 5], skip_special_tokens=False)
+        self.assertEqual(calls[0]["prompt_token_ids"], [71, 72, 73])
+        self.assertEqual(calls[0]["generated_token_ids"], [81, 82])
+        self.assertEqual(calls[0]["vocab_size"], len(teacher))
+        self.assertEqual(set(result), set(scores(0.5)))
 
     def test_generation_and_rescore_cli_require_explicit_gamma_and_delta(self):
         for parser, prefix in ((generator.parse_args, []), (rescoring.parse_args, ["--inputs", "saved.jsonl"])):
@@ -371,10 +396,19 @@ class DetectorBackendAndCliTests(FileTestCase):
         sampling_calls, detector_calls = [], []
 
         def score_function(**kwargs):
-            detector_calls.append(kwargs["config"])
+            detector_calls.append(kwargs)
             return scores(kwargs["config"].gamma)
 
         modules, tokenizer = self.fake_backend(score_function)
+        class TeacherTokenizer(type(tokenizer)):
+            def __len__(self):
+                return 200
+
+        teacher = TeacherTokenizer()
+        teacher.encode = MagicMock(side_effect=lambda text, **kwargs:
+                                   [71, 72] if text == "rendered question" else [81, 82, 83])
+        teacher.apply_chat_template = MagicMock(side_effect=AssertionError("teacher must not render the student prompt"))
+        modules["transformers"].AutoTokenizer.from_pretrained.return_value = teacher
         vllm = types.ModuleType("vllm")
 
         class Engine:
@@ -399,10 +433,18 @@ class DetectorBackendAndCliTests(FileTestCase):
                 args = generator.parse_args(["--gamma", str(gamma), "--delta", str(delta)])
                 generator.run_model(model_path=model, label="kgw_trained_student", output_path=self.root / f"generated-{index}.jsonl", rows=rows, tokenizer=tokenizer, args=args)
         self.assertEqual(sampling_calls[0], sampling_calls[1])
-        self.assertEqual([(config.gamma, config.delta) for config in detector_calls], [(0.25, 2.0), (0.5, 3.0)])
+        self.assertEqual([(call["config"].gamma, call["config"].delta) for call in detector_calls], [(0.25, 2.0), (0.5, 3.0)])
+        for call in detector_calls:
+            self.assertEqual(call["prompt_token_ids"], [71, 72])
+            self.assertEqual(call["generated_token_ids"], [81, 82, 83])
+            self.assertEqual(call["vocab_size"], len(teacher))
+        for call in modules["transformers"].AutoTokenizer.from_pretrained.call_args_list:
+            self.assertEqual(call.args[0], str(generator.DEFAULT_DETECTOR_TOKENIZER))
         for index in (0, 1):
             row = self.read_rows(self.root / f"generated-{index}.jsonl")[0]
             self.assertFalse(row["generation"]["kgw_enabled_during_generation"])
+            self.assertNotIn("detector_tokenizer", row)
+            self.assertNotIn("rendered_prompt", row)
 
 
 if __name__ == "__main__":
