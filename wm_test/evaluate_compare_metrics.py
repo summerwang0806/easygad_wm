@@ -22,9 +22,10 @@ ROOT = Path(__file__).resolve().parent
 # DEFAULT_KGW = "data/dolly15k_qwen2_5_0.5b_kgw_test_kgw_scores.jsonl"
 # DEFAULT_CLEAN = "data/dolly15k_qwen2_5_0.5b_clean_test_kgw_scores.jsonl"
 
-DEFAULT_KGW = ROOT / "kgwwarmup_kgwgad_gad_gamma0.5_delta2_qwen2_5_0_5b_dolly15k_test.jsonl"
+DEFAULT_KGW = ROOT / "kgwwarmup_kgwgad_warmup_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl"
 # DEFAULT_CLEAN = ROOT / "base_qwen2_5_0_5b_dolly15k_test.jsonl"
 DEFAULT_CLEAN = ROOT / "base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl"
+# 下面是gamma=0.5，上面是gamma=0.25,需要和待测试文本相对应
 
 DEFAULT_DOLLY_REFERENCE = ROOT.parent / "text_quality/references/dolly_human_500.jsonl"
 DEFAULT_TEACHER_CLEAN_REFERENCE = ROOT.parent / "data/dolly15k_qwen2_5_14b_clean_test.parquet"

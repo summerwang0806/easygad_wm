@@ -53,12 +53,13 @@ DEFAULT_STUDENT = ROOT / (
     # "checkpoints/kgw_up_dipper_up_1ep_0.25-2/gad/global_step_1813/actor/huggingface"
     # "checkpoints/kgw_up_dipper_up_1ep_0.25-2/warmup/global_step_1813/actor/huggingface"
     # "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta2/warmup/global_step_1813/actor/huggingface"
-    "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta2/gad/global_step_1813/actor/huggingface"
+    # "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta2/gad/global_step_1813/actor/huggingface"
+    "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/warmup/global_step_1813/actor/huggingface"
 )
 
 
 DEFAULT_BASE = Path("/shared/public_models/Qwen2.5-0.5B")
-DEFAULT_STUDENT_OUTPUT = ROOT / "wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta2_qwen2_5_0_5b_dolly15k_test.jsonl"
+DEFAULT_STUDENT_OUTPUT = ROOT / "wm_test/kgwwarmup_kgwgad_warmup_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl"
 DEFAULT_BASE_OUTPUT = ROOT / "wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl"
 
 
