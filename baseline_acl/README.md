@@ -42,6 +42,11 @@ CUDA_VISIBLE_DEVICES=2,3 python baseline_acl/paraphrase_up.py \
   --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet \
   --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_newtrain.parquet \
   --num-gpus 2
+
+CUDA_VISIBLE_DEVICES=3 python baseline_acl/paraphrase_up.py \
+  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet \
+  --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_newtrain.parquet \
+  --num-gpus 1
 ```
 
 `--num-gpus 3` 自动按空闲显存选择 3 张卡，每卡一个完整 Dipper，动态领取回答；快卡会领取更多样本，最终按原始顺序输出。可改为其他卡数，省略默认自动选 1 张卡。`--batch-size` 默认 1 即可。

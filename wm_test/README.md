@@ -15,7 +15,7 @@ VLLM_USE_V1=0 CUDA_VISIBLE_DEVICES=3 python wm_test/generate_compare_score.py \
   --gamma 0.5 --delta 2
 
 
-VLLM_USE_V1=0 CUDA_VISIBLE_DEVICES=0 python wm_test/generate_compare_score.py \
+VLLM_USE_V1=0 CUDA_VISIBLE_DEVICES=2 python wm_test/generate_compare_score.py \
   --gamma 0.25 --delta 2
 
 
