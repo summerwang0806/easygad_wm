@@ -1,6 +1,6 @@
 """CPU integration tests for WN sampling, local preflight and atomic output."""
 
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 import io
 import json
 import os
@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from wm_test.generate_wn_score import (
-    main, parse_args, prepare_rows, read_rows, run_model, selected_gpus,
+    WNProgress, main, parse_args, prepare_rows, read_rows, run_model, selected_gpus,
     validate_args, validate_model_assets,
 )
 from baseline_acl.inverse_watermark import RuleTable
@@ -23,9 +23,11 @@ class FakeEngine:
         self.kwargs = kwargs
         self.calls = []
         self.biased_logits = []
+        self.progress_flags = []
 
     def generate(self, prompts, parameters, use_tqdm):
         self.calls.append((prompts, parameters))
+        self.progress_flags.append(use_tqdm)
         answers = []
         for prompt, params in zip(prompts, parameters, strict=True):
             logits = [10.0] * 4
@@ -63,8 +65,10 @@ class WNTests(unittest.TestCase):
                                        "dedup_num_tokens": 1, "dedup_green_tokens": 0,
                                        "dedup_green_fraction": 0.0, "p_value": 0.5, "dedup_p_value": 0.5})
 
-    def run_fake(self, engine_factory=FakeEngine, detector_tokenizer=None):
-        with redirect_stdout(io.StringIO()):
+    def run_fake(self, engine_factory=FakeEngine, detector_tokenizer=None, progress_stream=None):
+        self.stdout = io.StringIO()
+        self.stderr = io.StringIO() if progress_stream is None else progress_stream
+        with redirect_stdout(self.stdout), redirect_stderr(self.stderr):
             run_model(args=self.args, prepared=self.prepared, tokenizer=self.tokenizer,
                       rules=self.rules, rules_sha256="rule-hash", input_sha256="input-hash",
                       engine_factory=engine_factory, sampling_factory=SimpleNamespace,
@@ -133,6 +137,71 @@ class WNTests(unittest.TestCase):
         self.assertEqual(self.output.read_text(encoding="utf-8"), "previous-output")
         self.assertEqual(list(self.directory.glob("output.jsonl.*.tmp")), [])
 
+    def test_progress_counts_final_partial_batch_and_keeps_logs_readable(self):
+        self.args.batch_size = 2
+        self.prepared.append({**self.prepared[0], "row": {**self.rows[0], "id": "three"}})
+        engine = FakeEngine()
+        self.run_fake(lambda **kwargs: engine)
+        log = self.stderr.getvalue()
+        self.assertIn("[WN generate 1/2]", log)
+        self.assertIn("[WN score 2/2]", log)
+        self.assertIn("1/3", log)
+        self.assertIn("3/3", log)
+        self.assertIn("[WN saving]", log)
+        self.assertIn("[WN done]", log)
+        self.assertNotIn("\r", log)
+        self.assertEqual(engine.progress_flags, [False, False])
+        self.assertEqual([[param.seed for param in call[1]] for call in engine.calls], [[42, 43], [44]])
+        self.assertEqual(len(self.output.read_text(encoding="utf-8").splitlines()), 3)
+
+    def test_scoring_failure_keeps_actual_count_and_never_reports_done(self):
+        self.score.side_effect = [self.score.return_value, RuntimeError("scoring stopped")]
+        with self.assertRaisesRegex(RuntimeError, "scoring stopped"):
+            self.run_fake()
+        log = self.stderr.getvalue()
+        self.assertIn("[WN failed]", log)
+        self.assertIn("1/2", log.splitlines()[-1])
+        self.assertNotIn("[WN done]", log)
+        self.assertNotIn("Saved", self.stdout.getvalue())
+        self.assertFalse(self.output.exists())
+
+    def test_publication_failure_is_not_reported_as_success(self):
+        self.output.write_text("previous-output", encoding="utf-8")
+        self.args.overwrite = True
+        with patch("wm_test.generate_wn_score.os.replace", side_effect=OSError("publish failed")), \
+                self.assertRaisesRegex(OSError, "publish failed"):
+            self.run_fake()
+        log = self.stderr.getvalue()
+        self.assertIn("[WN failed]", log)
+        self.assertIn("2/2", log.splitlines()[-1])
+        self.assertNotIn("[WN done]", log)
+        self.assertNotIn("Saved", self.stdout.getvalue())
+        self.assertEqual(self.output.read_text(encoding="utf-8"), "previous-output")
+        self.assertEqual(list(self.directory.glob("output.jsonl.*.tmp")), [])
+
+    def test_terminal_enables_live_vllm_batch_progress_and_finishes_line(self):
+        class Terminal(io.StringIO):
+            def isatty(self):
+                return True
+
+        engine = FakeEngine()
+        self.run_fake(lambda **kwargs: engine, progress_stream=Terminal())
+        log = self.stderr.getvalue()
+        self.assertEqual(engine.progress_flags, [True])
+        self.assertIn("\r[WN", log)
+        self.assertIn("[WN done]", log)
+        self.assertTrue(log.endswith("\n"))
+
+    def test_keyboard_interrupt_ends_progress_without_publishing(self):
+        self.score.side_effect = KeyboardInterrupt
+        with self.assertRaises(KeyboardInterrupt):
+            self.run_fake()
+        self.assertIn("[WN failed]", self.stderr.getvalue())
+        self.assertTrue(self.stderr.getvalue().endswith("\n"))
+        self.assertNotIn("[WN done]", self.stderr.getvalue())
+        self.assertFalse(self.output.exists())
+        self.assertEqual(list(self.directory.glob("output.jsonl.*.tmp")), [])
+
     def test_default_refuses_existing_output(self):
         self.output.write_text("previous-output", encoding="utf-8")
         with self.assertRaises(FileExistsError):
@@ -166,18 +235,36 @@ class WNTests(unittest.TestCase):
         fake_transformers = SimpleNamespace(AutoTokenizer=SimpleNamespace(from_pretrained=loader))
         with patch.dict("sys.modules", {"transformers": fake_transformers}), \
                 patch("wm_test.generate_wn_score.run_model") as runner, \
-                patch.dict(os.environ, {"CUDA_VISIBLE_DEVICES": ""}), redirect_stdout(io.StringIO()) as output:
+                patch.dict(os.environ, {"CUDA_VISIBLE_DEVICES": ""}), \
+                redirect_stdout(io.StringIO()) as output, redirect_stderr(io.StringIO()) as progress:
             main(self.argv + ["--preflight", "--limit", "1"])
         self.assertFalse(self.output.exists())
         runner.assert_not_called()
         self.assertTrue(loader.call_args.kwargs["local_files_only"])
         self.assertFalse(loader.call_args.kwargs["trust_remote_code"])
         self.assertEqual(json.loads(output.getvalue())["rows"], 1)
+        self.assertEqual(progress.getvalue(), "")
 
     def test_full_prompt_budget_failure_occurs_before_engine_load(self):
         with self.assertRaisesRegex(ValueError, "full prompt has 2 tokens"):
             prepare_rows(self.rows, self.tokenizer, 1)
         self.assertEqual(self.rows[0]["content"][0]["content"], "a b")
+
+    def test_prompt_budget_failure_reports_maximum_over_all_rows(self):
+        rows = [
+            {"id": "first-long", "content": [{"role": "user", "content": "a b c"}]},
+            {"id": "longest", "content": [{"role": "user", "content": "a b c a b"}]},
+            {"id": "short", "content": [{"role": "user", "content": "a"}]},
+        ]
+        with self.assertRaises(ValueError) as failure:
+            prepare_rows(rows, self.tokenizer, 2)
+        message = str(failure.exception)
+        self.assertIn("id 'longest': full prompt has 5 tokens", message)
+        self.assertIn("scanned all 3 prompts, 2 exceed budget", message)
+        self.assertIn("set --max-prompt-tokens to at least 5", message)
+        prepared = prepare_rows(rows, self.tokenizer, 5)
+        self.assertEqual([len(row["prompt_ids"]) for row in prepared], [3, 5, 1])
+        self.assertEqual(prepared[1]["prompt"], "a b c a b")
 
     def test_input_schema_and_unique_ids_checked_before_limit(self):
         duplicate = [self.rows[0], self.rows[0]]
@@ -204,6 +291,23 @@ class WNTests(unittest.TestCase):
         for value, count in ((None, 1), ("", 1), ("2,2", 2), ("2", 2), ("-1", 1), ("1，2", 2)):
             with self.subTest(value=value, count=count), self.assertRaises(ValueError):
                 selected_gpus(value, count)
+
+
+class WNProgressTests(unittest.TestCase):
+    def test_bar_reports_elapsed_speed_and_estimated_remaining_time(self):
+        stream = io.StringIO()
+        with patch("wm_test.generate_wn_score.time.monotonic", return_value=100) as clock:
+            progress = WNProgress(4, stream=stream)
+            self.assertIn("--:--:--", stream.getvalue())
+            clock.return_value = 102
+            progress.advance()
+            line = stream.getvalue().splitlines()[-1]
+            self.assertIn("25.0% 1/4", line)
+            self.assertIn("00:00:02<~00:00:06, 0.50/s", line)
+            with self.assertRaisesRegex(ValueError, "before all answers"):
+                progress.finish(success=True)
+            progress.finish(success=False)
+        self.assertNotIn("[WN done]", stream.getvalue())
 
 
 if __name__ == "__main__":

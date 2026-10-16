@@ -132,6 +132,12 @@ python wm_test/evaluate_compare_metrics.py \
 
 WN 的检测设置也必须匹配模型训练水印。对新的 gamma=0.5、delta=3 模型，给 `generate_wn_score.py` 显式加 `--gamma 0.5 --kgw-delta 3`；其原有默认值仍用于旧 gamma=0.25、delta=2 实验。
 
+正式运行自动显示 WN 总进度条：已生成并完成 KGW 评分的回答数、百分比、耗时、平均速度和预计剩余时间，并标明 `generate`（生成）、`score`（评分）、`saving`（保存）阶段。在交互终端中，每批生成还显示 vLLM 自带进度条，可查看当前批次的生成进展。模型加载先显示提示，加载完成后才开始统计生成进度；最终文件成功保存后显示 `[WN done]` 和 `Saved ...`。重定向到日志时改用逐行进度记录；`--preflight` 仅执行检查，不显示生成进度。无需添加参数或安装新依赖。
+
+完整 prompt 默认预算为 2048 token。长度校验现在先扫描所有选中的样本，再一次报告超限数量、`maximum_prompt_tokens` 和最长的五条样本，避免逐条增加预算后反复失败。根据报告显式设置 `--max-prompt-tokens`，先预检再正式生成；检查整个测试集时不要加 `--limit`。prompt 保留完整文本，输出上限仍由 `--max-new-tokens` 控制，vLLM 的上下文窗口按两项预算之和配置。WN 开关对照应使用相同的 prompt 预算和采样参数。
+
+2026-10-16 全量核对本地 `data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtest.parquet`：500 条样本的最大完整 prompt 为 5148 token（`dolly-13445`），3 条超过 2048，1 条超过 4096。使用与窃取规则匹配的 Qwen 分词后端和 chat template，`--max-prompt-tokens 6144` 可通过这份数据的全部长度检查；WN 开关对照均应使用该预算。
+
 ```bash
 W=checkpoints/kgw_reference/gad/global_step_NNN/actor/huggingface
 RULES=data/acl_estimated_rules.json

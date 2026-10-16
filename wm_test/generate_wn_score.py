@@ -15,8 +15,10 @@ import json
 import math
 import os
 import re
+import shutil
 import sys
 import tempfile
+import time
 from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Callable
@@ -25,6 +27,82 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from baseline_acl.inverse_watermark import RuleTable, VLLMInverseWatermarkProcessor
+
+
+class WNProgress:
+    """Overall generated-and-scored progress; plain newline records in log files."""
+
+    def __init__(self, total: int, stream=None):
+        self.total = total
+        self.done = 0
+        self.stream = sys.stderr if stream is None else stream
+        self.terminal = self.stream.isatty()
+        self.started = self.last_report = time.monotonic()
+        self.phase = "starting"
+        self.line_width = 0
+        self.line_open = False
+        self.closed = False
+        self._render()
+
+    @staticmethod
+    def _duration(seconds: float) -> str:
+        hours, rest = divmod(int(max(seconds, 0)), 3600)
+        minutes, seconds = divmod(rest, 60)
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+    def _render(self, final: bool = False) -> None:
+        now = time.monotonic()
+        elapsed = max(now - self.started, 0)
+        fraction = self.done / self.total
+        rate = self.done / elapsed if elapsed > 0 else 0
+        eta = self._duration((self.total - self.done) / rate) if rate else "--:--:--"
+        head = f"[WN {self.phase}] "
+        tail = (f" {100 * fraction:5.1f}% {self.done}/{self.total} "
+                f"[{self._duration(elapsed)}<~{eta}, {rate:.2f}/s]")
+        columns = shutil.get_terminal_size(fallback=(100, 24)).columns if self.terminal else None
+        width = max(5, min(20, columns - len(head) - len(tail) - 3)) if columns else 20
+        filled = int(width * fraction)
+        line = head + "|" + "#" * filled + "-" * (width - filled) + "|" + tail
+        if columns:
+            line = line[:max(columns - 1, 1)]
+            self.line_width = min(self.line_width, max(columns - 1, 1))
+        if self.terminal:
+            self.stream.write("\r" + line.ljust(self.line_width) + ("\n" if final else ""))
+        else:
+            self.stream.write(line + "\n")
+        self.stream.flush()
+        self.line_width = len(line)
+        self.line_open = self.terminal and not final
+        self.last_report = now
+
+    def set_phase(self, phase: str) -> None:
+        self.phase = phase
+        self._render()
+
+    def pause(self) -> None:
+        """Leave a clean line for vLLM's own per-batch generation progress."""
+        if self.line_open:
+            self.stream.write("\n")
+            self.stream.flush()
+        self.line_open = False
+        self.line_width = 0
+
+    def advance(self) -> None:
+        if self.closed or self.done >= self.total:
+            raise ValueError("WN progress exceeds its total or is already closed")
+        self.done += 1
+        interval = 0.5 if self.terminal else 5.0
+        if self.done in (1, self.total) or time.monotonic() - self.last_report >= interval:
+            self._render()
+
+    def finish(self, success: bool) -> None:
+        if self.closed:
+            return
+        if success and self.done != self.total:
+            raise ValueError("cannot finish WN progress before all answers are scored")
+        self.phase = "done" if success else "failed"
+        self._render(final=True)
+        self.closed = True
 
 
 def file_sha256(path: Path) -> str:
@@ -144,6 +222,7 @@ def read_rows(path: Path, limit: int | None = None) -> list[dict[str, Any]]:
 
 def prepare_rows(rows: list[dict[str, Any]], tokenizer: Any, max_prompt_tokens: int) -> list[dict[str, Any]]:
     prepared = []
+    oversized = []
     for row in rows:
         prompt = tokenizer.apply_chat_template(row["content"], add_generation_prompt=True, tokenize=False)
         if not isinstance(prompt, str):
@@ -152,8 +231,18 @@ def prepare_rows(rows: list[dict[str, Any]], tokenizer: Any, max_prompt_tokens: 
         if not ids:
             raise ValueError(f"empty tokenized prompt for id {row['id']!r}")
         if len(ids) > max_prompt_tokens:
-            raise ValueError(f"id {row['id']!r}: full prompt has {len(ids)} tokens, exceeds --max-prompt-tokens={max_prompt_tokens}; increase budget explicitly")
+            oversized.append((row["id"], len(ids)))
         prepared.append({"row": row, "prompt": prompt, "prompt_ids": ids})
+    if oversized:
+        longest = sorted(oversized, key=lambda item: item[1], reverse=True)
+        longest_id, maximum = longest[0]
+        examples = ", ".join(f"{row_id}={length}" for row_id, length in longest[:5])
+        raise ValueError(
+            f"id {longest_id!r}: full prompt has {maximum} tokens, exceeds --max-prompt-tokens={max_prompt_tokens}; "
+            f"scanned all {len(rows)} prompts, {len(oversized)} exceed budget; "
+            f"maximum_prompt_tokens={maximum}; longest prompts: {examples}; "
+            f"set --max-prompt-tokens to at least {maximum}. No prompts were truncated and no model was loaded."
+        )
     return prepared
 
 
@@ -211,14 +300,18 @@ output writer. Production dependencies are imported only at execution time.
     args.output.parent.mkdir(parents=True, exist_ok=True)
     temporary: Path | None = None
     engine = None
+    progress: WNProgress | None = None
     cache: OrderedDict = OrderedDict()
     try:
+        print("[WN] Loading vLLM model (generation progress starts after loading)...", file=sys.stderr, flush=True)
         engine = engine_factory(model=str(args.student_model.resolve()),
                                 tokenizer=str((args.tokenizer or args.student_model).resolve()),
                                 trust_remote_code=False, tensor_parallel_size=args.tensor_parallel_size,
                                 dtype="auto", gpu_memory_utilization=args.gpu_memory_utilization,
                                 max_model_len=args.max_prompt_tokens + args.max_new_tokens,
                                 seed=args.seed)
+        progress = WNProgress(len(prepared))
+        batch_count = (len(prepared) + args.batch_size - 1) // args.batch_size
         with tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="\n", dir=args.output.parent,
                                          prefix=args.output.name + ".", suffix=".tmp", delete=False) as handle:
             temporary = Path(handle.name)
@@ -229,7 +322,12 @@ output writer. Production dependencies are imported only at execution time.
                 # Passing IDs explicitly prevents vLLM from adding BOS or
                 # retokenizing a prompt differently from length checks/scoring.
                 prompts = [{"prompt_token_ids": item["prompt_ids"]} for item in batch]
-                generations = engine.generate(prompts, sampling, use_tqdm=False)
+                batch_number = start // args.batch_size + 1
+                progress.set_phase(f"generate {batch_number}/{batch_count}")
+                if progress.terminal:
+                    progress.pause()
+                generations = engine.generate(prompts, sampling, use_tqdm=progress.terminal)
+                progress.set_phase(f"score {batch_number}/{batch_count}")
                 for offset, (item, result) in enumerate(zip(batch, generations, strict=True)):
                     if len(result.outputs) != 1:
                         raise ValueError("WN expects exactly one answer per prompt")
@@ -270,8 +368,9 @@ output writer. Production dependencies are imported only at execution time.
                                    "seed": args.seed + start + offset},
                     }
                     handle.write(json.dumps(record, ensure_ascii=False, allow_nan=False) + "\n")
+                    progress.advance()
                 handle.flush()
-                print(f"WN: {start + len(batch)}/{len(prepared)} answers generated and scored", flush=True)
+            progress.set_phase("saving")
             os.fsync(handle.fileno())
         if args.overwrite:
             os.replace(temporary, args.output)
@@ -284,6 +383,11 @@ output writer. Production dependencies are imported only at execution time.
             os.link(temporary, args.output)
             temporary.unlink()
         temporary = None
+        progress.finish(success=True)
+    except BaseException:
+        if progress is not None:
+            progress.finish(success=False)
+        raise
     finally:
         if temporary is not None:
             temporary.unlink(missing_ok=True)
