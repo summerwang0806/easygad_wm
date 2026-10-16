@@ -79,7 +79,7 @@ CUDA_VISIBLE_DEVICES=3 python baseline_acl/steal_watermark.py \
   --output wn/acl_rules_gad_Qwen2.5-0.5B_gamma0.5_delta3_fp32.json \
   --device cuda \
   --dtype float32 \
-  --batch-size 16  
+  --batch-size 16
 ```
 
 `--device cpu` 也可执行实际估计，但仍需要 PyTorch 和模型权重；它与 `--preflight` 不同。
@@ -178,16 +178,24 @@ WN 在 vLLM V0 的三参数 `logits_processors` 接口中，以 prompt 和已生
 W=checkpoints/kgw_reference/gad/global_step_NNN/actor/huggingface
 
 python wm_test/generate_wn_score.py \
-  --student-model "$W" \
-  --rules data/acl_estimated_rules.json \
-  --input data/dolly15k_qwen2_5_14b_kgw_test.parquet \
-  --output wm_test/student_wn.jsonl --preflight
+  --student-model checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_step_1813/actor/huggingface \
+  --rules wn/acl_rules_gad_Qwen2.5-0.5B_gamma0.5_delta3_fp32.json \
+  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtest.parquet \
+  --output wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new.jsonl --preflight
 
 CUDA_VISIBLE_DEVICES=1 VLLM_USE_V1=0 python wm_test/generate_wn_score.py \
   --student-model "$W" \
   --rules data/acl_estimated_rules.json \
   --input data/dolly15k_qwen2_5_14b_kgw_test.parquet \
   --output wm_test/student_wn.jsonl --strength 2.5
+
+
+python wm_test/generate_wn_score.py \
+  --student-model "$W" \
+  --rules data/acl_estimated_rules.json \
+  --input data/dolly15k_qwen2_5_14b_kgw_test.parquet \
+  --output wm_test/student_wn.jsonl --preflight
+
 ```
 
 将 `NNN` 换成已保存完整、合并后的参考学生 W checkpoint 步数；完整前序流程见 [TP_WN_BASELINE.md](TP_WN_BASELINE.md)。
