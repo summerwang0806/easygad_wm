@@ -100,8 +100,9 @@ def prefix_key(prefix: Sequence[int]) -> str:
 def validate_training_path(path: Path) -> None:
     """Require an explicitly named training parquet and reject test/dev names."""
     words = re.split(r"[^a-z0-9]+", path.stem.lower())
-    if path.suffix.lower() != ".parquet" or "train" not in words:
-        raise ValueError("--input must be an explicitly named *_train.parquet training dataset")
+    # Both names are used by the project's original watermarked training sets.
+    if path.suffix.lower() != ".parquet" or not {"train", "newtrain"}.intersection(words):
+        raise ValueError("--input must be an explicitly named *_train.parquet or *_newtrain.parquet training dataset")
     if any(word in {"test", "validation", "valid", "val", "dev", "eval"} for word in words):
         raise ValueError("rule extraction cannot use a test/validation/evaluation dataset")
 
@@ -577,9 +578,9 @@ def publish_rules(path: Path, document: dict) -> None:
 
 def parse_args(argv: Sequence[str] | None = None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", type=Path, required=True, help="ORIGINAL watermarked *_train.parquet")
-    parser.add_argument("--model-before", type=Path, required=True, help="local original student base O")
-    parser.add_argument("--model-after", type=Path, required=True, help="local student W trained without UP/TP")
+    parser.add_argument("--input", type=Path, required=True, help="ORIGINAL watermarked *_train.parquet or *_newtrain.parquet used to train W")
+    parser.add_argument("--model-before", type=Path, required=True, help="local original student base O, before Warmup/GAD")
+    parser.add_argument("--model-after", type=Path, required=True, help="local student W trained without UP/TP; for GAD use the merged HF actor")
     parser.add_argument("--tokenizer-before", type=Path, help="local O tokenizer (defaults to model-before)")
     parser.add_argument("--tokenizer-after", type=Path, help="local W tokenizer (defaults to model-after)")
     parser.add_argument("--output", type=Path, help="new JSON rule file; existing outputs are never overwritten")

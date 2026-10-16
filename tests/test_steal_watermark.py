@@ -349,8 +349,11 @@ class GlobalPositionTests(unittest.TestCase):
 
 class InputAndDeviceTests(unittest.TestCase):
     def test_input_must_be_training_parquet(self):
-        validate_training_path(Path("original_kgw_train.parquet"))
-        for name in ("kgw_test.parquet", "kgw_train_test.parquet", "train_val.parquet", "train.json", "kgw.parquet"):
+        for name in ("original_kgw_train.parquet", "dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet"):
+            with self.subTest(name=name):
+                validate_training_path(Path(name))
+        for name in ("kgw_test.parquet", "kgw_train_test.parquet", "train_val.parquet", "train.json", "kgw.parquet",
+                     "kgw_newtrain_test.parquet", "newtrain_val.parquet", "newtrain.json", "kgw_pretrain.parquet"):
             with self.subTest(name=name), self.assertRaises(ValueError):
                 validate_training_path(Path(name))
         for values in ([], [None], [42], [" "], ["ok", ""]):

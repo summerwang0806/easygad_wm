@@ -32,6 +32,8 @@ W="$W_CKPT/huggingface"
 
 已有水印 GAD 模型可跳过本步，直接将 `W` 设置为合并后的模型目录。
 
+这里的 `MODEL` 始终指 Warmup 之前的原始学生 O；`W` 指完整 GAD 训练后的 actor，且训练中未使用 UP/TP 改写数据。`TRAIN` 需对应这个 W 的原始水印训练集，也支持 `*_newtrain.parquet` 文件名。
+
 ## 2. 窃取规则，TP / WN 共用
 
 ```bash

@@ -25,3 +25,15 @@ DIPPER 数据本身的 new 谱系已核实：[数据审计](C:/Users/wenxin/Desk
 之前表格中的“教师 para”依据实验说明及文件/checkpoint 命名，未独立核实当次训练输入。最新结论是这两份结果不能作为有效 DIPPER 前后对照；本记录保留全部数值，标明“DIPPER 设置未生效／待重跑”，不删除现有结果，不将数值变化归因于 DIPPER。有效重跑应在启动前保存 `TRAIN_FILE=data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_newtrain.parquet`，并以两阶段运行时记录的 `data.train_files` 核实。
 
 后续修正（2026-10-15，git pull 后 commit `0b29ec5`）：当前本地 `run_full_gad_optimized.sh:58` 已保存为 `delta3_up_dipper_newtrain.parquet`，第59行验证集仍为 `delta3_newtest.parquet`，两阶段均使用这一训练/验证路径。先前关于“当前脚本仍指向未para”的描述记录的是修正前版本。已核对新命令使用 GPU 0,3、默认双卡单节点、新实验名 `te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new1_dipper2stage`，默认不续训，从原始 Qwen2.5-0.5B 进行 warmup，再用本次 warmup checkpoint 进入 GAD。DIPPER parquet 哈希仍与审计匹配。新命令的静态配置正确；旧两份 DIPPER 未生效结果的历史标记保留，新结果尚待实际训练与评估。
+
+
+2026-10-16：new1 补跑结果
+
+本次拉取的 warmup/gad 输出均指向 te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new1_dipper2stage，对应已修正 TRAIN_FILE 后提交的新实验。按已保存脚本、用户提交命令及结果路径归类为教师 DIPPER para；未独立取得服务器当次运行配置。
+
+| 模型/方式 | AUROC | TPR@FPR≤5% | TPR@FPR≤10% | ROUGE-L（原始Dolly，500条） | ROUGE-L（clean教师，500条） | 严重重复输出¹ | p-value（均值） | p-value去重后（均值） |
+| :---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| warmup（δ=3，教师para，new1） | 0.546344 | 5.20% | 11.00% | 0.195773 | 0.251185 | 42/500（8.40%） | 0.484232 | 0.503516 |
+| gad（δ=3，教师para，new1） | 0.531456 | 3.80% | 8.40% | 0.211098 | 0.262207 | 15/500（3.00%） | 0.505501 | 0.516716 |
+
+已复核样本、源文件哈希、AUROC/TPR、原始与去重 p-value；ROUGE-L 取匹配历史记录。new1 逐条分词复核 1000/1000 通过，严重重复 warmup 42/500、gad 15/500。旧 delta3_new_dipper2stage 两份保留为历史误跑，主表对应位置由 new1 填入。

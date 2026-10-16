@@ -29,6 +29,8 @@
 
 输入是同一学生的原始基座 **O**、使用原始带水印数据且未经 UP/TP 攻击训练的 **W**，以及该原始训练集 **C**。TP 同样需要这个 W 作为规则提取的参考；最终 TP 学生再从 O 开始训练。
 
+用于本项目 GAD 实验时，`--model-before` 传入 **Warmup 之前的原始学生模型**，`--model-after` 传入完整 Warmup → GAD 后已合并的 **actor Hugging Face 模型目录**（如 `gad/global_step_NNN/actor/huggingface`）。不要把 critic、原始 FSDP 分片目录或仅完成 Warmup 的模型作为最终 GAD W。`--input` 应与该 W 使用的原始水印训练集对应，支持项目中的 `*_train.parquet` 和 `*_newtrain.parquet` 命名。若 W 使用过 UP/TP 数据，应标明为组合攻击实验，不能当作标准无攻击参考 W。
+
 程序只读取 `teacher_response`，不使用真实 KGW 密钥或检测器。O/W 的 tokenizer 必须在词表、token IDs、特殊 token 和分词配置上匹配，路径名称不参与身份判断。
 
 前缀频率统计对每条回答先完成 tokenizer 编码，再去掉最后一个 token（`answer_ids[:-1]`）。分别统计长度为 1、2 的前缀，每种长度使用各自的有效前缀总数作为分母，保留相对频率严格大于 `5e-5` 的前缀。这一统计边界与官方 `analyze_prefix_frequency.py` 一致。
@@ -40,6 +42,8 @@
 模型仍顺序加载：先加载 W，平均概率；条件前缀项此时才选 W 平均概率 top-50，全局项保留整个规则词表。卸载 W 后加载 O，使用相同上下文计算对应平均概率。每个候选计算 `d = min(2, mean_PW / mean_PO) / 2`，只有 `mean_PW > mean_PO` 时得分非零，其余为 0。全局项与各前缀项按论文频率权重组合，合成 D 不额外截到 1。
 
 默认 `n'=3`、`alpha=0.3`。窃取入口不提供 `--seed`，也不设置固定抽样 seed；TP/WN 自身的生成 seed 与此独立，仍保留。模型顺序加载避免同时占用两份模型显存。规则 JSON 保存训练数据 SHA-256、checkpoint manifest、tokenizer fingerprint、精度、抽样参数和来源；不覆盖旧规则文件。
+
+核心统计定义与官方 `analyze_prefix_frequency.py`、`calculate_d_n.py`、`calculate_d_0.py` 和 `calculate_w.py` 对齐。工程适配包括：默认 CUDA 精度按硬件选择 BF16/FP32、FP32 softmax 与 FP64 累加、显式 padding/position IDs，以及只为真实 tokenizer token ID 保存规则（模型额外的词表填充槽仍参与 softmax 分母）。因此不保证与官方多 GPU 程序逐位一致；需要控制精度时可显式加 `--dtype float32`。论文中的 W 通过 SFT 得到，本项目以 GAD 训练 W 后应用相同窃取算法，属于训练协议适配。
 
 以上三处已按官方实现调整；现有 Qwen 模型、项目训练协议和同模型 TP 转述仍是项目适配，不能据此宣称原论文全部实验设置已复现。窃取程序和 WN 不因此次 TP 模型切换而改变；已使用当前窃取协议产生的匹配规则可同时给 TP/WN 使用。若规则是在上述三处修正以前产生的，需要使用更新后的窃取程序重新估计并写入新的文件；已有 TP 数据或生成结果也不会被自动更新。
 
