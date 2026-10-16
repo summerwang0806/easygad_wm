@@ -31,6 +31,7 @@ import os
 from pathlib import Path
 import random
 import re
+import shutil
 import sys
 import tempfile
 import time
@@ -79,6 +80,84 @@ class ContextPlan:
     prefix_metadata: dict[Prefix, dict]
     contexts: dict[Prefix, list[ContextRef]]
     statistics: dict
+
+
+class EstimationProgress:
+    """Terminal progress bar, or newline records when piped to a log file."""
+
+    def __init__(self, label: str, total: int, unit: str, synchronize: Callable | None = None, stream=None):
+        self.label, self.total, self.unit = label, total, unit
+        self.done = 0
+        self.started = self.last_report = time.monotonic()
+        self.first_report = True
+        self.synchronize = synchronize
+        self.stream = sys.stderr if stream is None else stream
+        self.terminal = self.stream.isatty()
+        self.line_width = 0
+        self.detail = ""
+        self.closed = False
+        self._render(0)
+
+    @staticmethod
+    def _duration(seconds: float) -> str:
+        hours, rest = divmod(int(max(seconds, 0)), 3600)
+        minutes, seconds = divmod(rest, 60)
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+    def _render(self, elapsed: float) -> None:
+        fraction = min(self.done / self.total, 1) if self.total else 1
+        rate = self.done / elapsed if elapsed > 0 else 0
+        eta = self._duration(max(self.total - self.done, 0) / rate) if rate else "--:--:--"
+        head = f"[{self.label}] "
+        tail = f" {100 * fraction:5.1f}% {self.done}/{self.total} [{self._duration(elapsed)} < ~{eta}]"
+        columns = shutil.get_terminal_size(fallback=(80, 24)).columns if self.terminal else None
+        bar_width = max(5, min(20, columns - len(head) - len(tail) - 3)) if columns else 20
+        filled = int(bar_width * fraction)
+        bar = "#" * filled + "-" * (bar_width - filled)
+        line = head + "|" + bar + "|" + tail
+        extras = f" {self.unit}, {rate:.1f}/s" + (f"; {self.detail}" if self.detail else "")
+        if columns is None or len(line + extras) < columns:
+            line += extras
+        if columns:
+            line = line[:max(columns - 1, 1)]
+            self.line_width = min(self.line_width, max(columns - 1, 1))
+        finished = self.done == self.total
+        if self.terminal:
+            self.stream.write("\r" + line.ljust(self.line_width) + ("\n" if finished else ""))
+        else:
+            self.stream.write(line + "\n")
+        self.stream.flush()
+        self.line_width = len(line)
+        self.closed = finished
+
+    def advance(self, count: int, detail: str = "") -> None:
+        self.update_to(self.done + count, detail)
+
+    def update_to(self, completed: int, detail: str = "") -> None:
+        if completed == self.done:
+            return
+        if not self.done <= completed <= self.total:
+            raise ValueError("progress count must be monotonic and within the stage total")
+        self.done = completed
+        if detail:
+            self.detail = detail
+        now = time.monotonic()
+        if not (self.first_report or self.done == self.total or now - self.last_report >= 5):
+            return
+        # Synchronize only at render points so a queued CUDA batch is not
+        # reported as completed; do not synchronize on every inference batch.
+        if self.synchronize is not None:
+            self.synchronize()
+        now = time.monotonic()
+        self._render(max(now - self.started, 1e-9))
+        self.first_report = False
+        self.last_report = now
+
+    def close(self) -> None:
+        if self.terminal and not self.closed:
+            self.stream.write("\n")
+            self.stream.flush()
+        self.closed = True
 
 
 def file_sha256(path: Path) -> str:
@@ -413,6 +492,8 @@ class HFProbabilityEstimator:
         ids_tensor = (None if candidate_ids is None else
                       torch.tensor(list(candidate_ids), dtype=torch.long, device=self.device))
         total = None
+        progress = getattr(self, "context_progress", None)
+        completed_before = progress.done if progress is not None else 0
         with torch.inference_mode():
             for start in range(0, len(contexts), batch_size):
                 batch = contexts[start:start + batch_size]
@@ -436,6 +517,8 @@ class HFProbabilityEstimator:
                 batch_sum = probabilities.double().sum(dim=0)
                 total = batch_sum if total is None else total + batch_sum
                 del outputs, probabilities, batch_sum
+                if progress is not None:
+                    progress.update_to(completed_before + start + len(batch))
             average = total / len(contexts)
             if not bool(torch.isfinite(average).all().item()):
                 raise ValueError("model produced non-finite averaged probabilities")
@@ -461,6 +544,11 @@ class HFProbabilityEstimator:
         torch = self.torch
         total = None
         position_count = 0
+        progress = None
+        if hasattr(self, "progress_label"):
+            synchronize = (lambda: torch.cuda.synchronize(self.device)) if self.device.startswith("cuda") else None
+            progress = EstimationProgress(f"{self.progress_label} global d0", len(token_rows), "answers", synchronize)
+            self.global_progress = progress
         # Conditional estimation may request only the last logit. Explicitly
         # request all logits for architectures exposing that optimization.
         all_logits_kwargs = {name: 0 for name in self.logits_kwargs}
@@ -492,6 +580,8 @@ class HFProbabilityEstimator:
                     position_count += len(row)
                     del row_logits, probabilities, row_sum
                 del outputs
+                if progress is not None:
+                    progress.advance(len(batch), f"positions={position_count}")
             average = total / position_count
             if not bool(torch.isfinite(average).all().item()):
                 raise ValueError("model produced non-finite global averaged probabilities")
@@ -499,6 +589,10 @@ class HFProbabilityEstimator:
             return {token_id: float(value) for token_id, value in enumerate(values)}
 
     def close(self) -> None:
+        for name in ("global_progress", "context_progress"):
+            progress = getattr(self, name, None)
+            if progress is not None:
+                progress.close()
         self.model = None
         gc.collect()
         if self.device.startswith("cuda"):
@@ -510,28 +604,46 @@ def estimate_rule_document(plan: ContextPlan, config: EstimationConfig, tokenize
                            provenance: dict, estimator_factory: Callable = HFProbabilityEstimator) -> dict:
     config.validate()
     after_means = {}
+    print(f"[load W] start: pid={os.getpid()}, device={device}, dtype={dtype}, model={after_model}", flush=True)
+    load_started = time.monotonic()
     estimator = estimator_factory(after_model, tokenizer, device, dtype)
     actual_dtype = getattr(estimator, "dtype_name", dtype)
+    estimator.progress_label = "1/4 W"
+    print(f"[load W] ready: dtype={actual_dtype}, elapsed={time.monotonic() - load_started:.1f}s", flush=True)
     try:
         after_global = estimator.mean_global(plan.token_rows, config.batch_size, config.max_context_tokens)
+        synchronize = (lambda: estimator.torch.cuda.synchronize(device)) if device.startswith("cuda") else None
+        progress = EstimationProgress("2/4 W conditional", sum(map(len, plan.contexts.values())), "contexts", synchronize)
+        estimator.context_progress = progress
+        completed_contexts = 0
         for index, (prefix, refs) in enumerate(plan.contexts.items()):
+            progress.detail = f"current_prefix={index + 1}/{len(plan.contexts)}"
             contexts = [plan.token_rows[ref.row_index][:ref.end] for ref in refs]
             after_means[prefix] = estimator.mean(contexts, config.batch_size, top_k=config.top_k)
-            if (index + 1) % 100 == 0:
-                print(f"[estimate W] {index + 1}/{len(plan.contexts)} prefixes", flush=True)
+            completed_contexts += len(refs)
+            progress.update_to(completed_contexts)
     finally:
         estimator.close()
     scores = {}
+    print(f"[load O] start: pid={os.getpid()}, device={device}, dtype={actual_dtype}, model={before_model}", flush=True)
+    load_started = time.monotonic()
     estimator = estimator_factory(before_model, tokenizer, device, actual_dtype)
+    estimator.progress_label = "3/4 O"
+    print(f"[load O] ready: elapsed={time.monotonic() - load_started:.1f}s", flush=True)
     try:
         before_global = estimator.mean_global(plan.token_rows, config.batch_size, config.max_context_tokens)
         global_scores = score_probability_change(before_global, after_global, include_zero=True)
+        synchronize = (lambda: estimator.torch.cuda.synchronize(device)) if device.startswith("cuda") else None
+        progress = EstimationProgress("4/4 O conditional", sum(map(len, plan.contexts.values())), "contexts", synchronize)
+        estimator.context_progress = progress
+        completed_contexts = 0
         for index, (prefix, refs) in enumerate(plan.contexts.items()):
+            progress.detail = f"current_prefix={index + 1}/{len(plan.contexts)}"
             contexts = [plan.token_rows[ref.row_index][:ref.end] for ref in refs]
             before_mean = estimator.mean(contexts, config.batch_size, candidate_ids=list(after_means[prefix]))
             scores[prefix] = score_probability_change(before_mean, after_means[prefix])
-            if (index + 1) % 100 == 0:
-                print(f"[estimate O] {index + 1}/{len(plan.contexts)} prefixes", flush=True)
+            completed_contexts += len(refs)
+            progress.update_to(completed_contexts)
     finally:
         estimator.close()
     prefix_scores = {}
@@ -644,7 +756,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             versions[package] = "unavailable"
     report = {"preflight": args.preflight, "input": data_info, "tokenizer_O": before_identity,
               "tokenizer_W": after_identity, "parameters": asdict(config), "context_statistics": plan.statistics,
-              "model_weights_loaded": False, "device_probed": False}
+              "report_stage": "before_model_loading", "model_weights_loaded": False, "device_probed": False}
     print(canonical_json(report), flush=True)
     if args.preflight:
         return 0

@@ -1,6 +1,6 @@
 """CPU-only rule extraction tests; no real model weights, torch, CUDA or SSH."""
 
-from contextlib import nullcontext, redirect_stdout
+from contextlib import nullcontext, redirect_stderr, redirect_stdout
 from dataclasses import replace
 import io
 import json
@@ -14,7 +14,7 @@ import unittest
 from unittest.mock import patch
 
 from baseline_acl.steal_watermark import (
-    ContextRef, EstimationConfig, HFProbabilityEstimator, build_context_plan, canonical_json,
+    ContextRef, EstimationConfig, EstimationProgress, HFProbabilityEstimator, build_context_plan, canonical_json,
     count_prefixes, estimate_rule_document, file_sha256, frequency_weight,
     load_local_tokenizers, main, mean_probabilities, model_asset_identity,
     parse_args, publish_rules, read_training_responses,
@@ -58,6 +58,47 @@ class FakeTokenizer:
         if add_special_tokens:
             raise AssertionError("rules must be estimated from answer tokens without prompts/special tokens")
         return [int(word) for word in text.split()]
+
+
+class ProgressTests(unittest.TestCase):
+    def test_logged_progress_throttles_rendering_and_counts_each_batch_once(self):
+        stream = io.StringIO()
+        clock = [0.0]
+        sync_calls = []
+        with patch("baseline_acl.steal_watermark.time.monotonic", side_effect=lambda: clock[0]):
+            progress = EstimationProgress("2/4 W conditional", 10, "contexts", lambda: sync_calls.append(True), stream)
+            clock[0] = 1
+            progress.update_to(2)
+            clock[0] = 2
+            progress.update_to(4)
+            clock[0] = 7
+            progress.update_to(6)
+            clock[0] = 8
+            progress.update_to(10)
+            progress.update_to(10)  # Outer prefix completion cannot double-count.
+            progress.close()
+        self.assertEqual(progress.done, 10)
+        self.assertEqual(len(sync_calls), 3)  # First, periodic, final; not every batch.
+        self.assertEqual(len(stream.getvalue().splitlines()), 4)
+        self.assertNotIn("\r", stream.getvalue())
+        self.assertIn("100.0% 10/10", stream.getvalue())
+        self.assertIn("contexts", stream.getvalue())
+
+    def test_terminal_bar_fits_screen_and_closes_on_interruption(self):
+        class Terminal(io.StringIO):
+            def isatty(self):
+                return True
+        stream = Terminal()
+        with patch("baseline_acl.steal_watermark.shutil.get_terminal_size", return_value=os.terminal_size((80, 24))):
+            progress = EstimationProgress("2/4 W conditional", 1002845, "contexts", stream=stream)
+            progress.update_to(1000)
+            progress.close()
+        self.assertIn("\r", stream.getvalue())
+        self.assertTrue(stream.getvalue().endswith("\n"))
+        self.assertTrue(all(len(line.rstrip("\n")) <= 79 for line in stream.getvalue().split("\r")))
+        empty = io.StringIO()
+        EstimationProgress("empty", 0, "contexts", stream=empty).close()
+        self.assertIn("100.0% 0/0", empty.getvalue())
 
 
 class MathAndContextTests(unittest.TestCase):
@@ -215,6 +256,12 @@ class ArrayTensor:
     def float(self):
         return ArrayTensor(self.values.astype(np.float32))
 
+    def double(self):
+        return ArrayTensor(self.values.astype(np.float64))
+
+    def index_select(self, dim, indices):
+        return ArrayTensor(np.take(self.values, indices.values, axis=dim))
+
     def sum(self, dim=None, dtype=None):
         return ArrayTensor(self.values.sum(axis=dim, dtype=dtype))
 
@@ -291,6 +338,28 @@ class GlobalPositionTests(unittest.TestCase):
         estimator.logits_kwargs = {logit_parameter: 1}
         estimator.model = Model()
         return estimator, calls
+
+    def test_conditional_bar_updates_each_batch_without_changing_probabilities(self):
+        estimator, _ = self.make_estimator()
+        stream = io.StringIO()
+        progress = EstimationProgress("2/4 W conditional", 3, "contexts", stream=stream)
+        estimator.context_progress = progress
+        actual = estimator.mean([[1], [2, 2], [3]], batch_size=2, candidate_ids=[0, 2])
+        progress.update_to(3)  # Same absolute update made by the outer prefix loop.
+        self.assertEqual(progress.done, 3)
+        self.assertAlmostEqual(actual[0], (0.80 + 0.10 + 0.05) / 3, places=6)
+        self.assertAlmostEqual(actual[2], (0.05 + 0.30 + 0.05) / 3, places=6)
+        self.assertIn("2/3", stream.getvalue())
+        self.assertIn("100.0% 3/3", stream.getvalue())
+
+    def test_global_bar_counts_answers_and_valid_positions(self):
+        estimator, _ = self.make_estimator()
+        estimator.progress_label = "1/4 W"
+        with redirect_stderr(io.StringIO()) as output:
+            estimator.mean_global([[1], [2, 2, 2]], batch_size=1, max_context_tokens=3)
+        self.assertEqual(estimator.global_progress.done, 2)
+        self.assertIn("positions=4", output.getvalue())
+        self.assertIn("100.0% 2/2", output.getvalue())
 
     def test_global_uses_every_valid_position_with_token_weighting_and_full_softmax(self):
         # One short answer contributes one position, the longer contributes

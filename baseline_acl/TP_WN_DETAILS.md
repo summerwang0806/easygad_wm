@@ -84,6 +84,10 @@ CUDA_VISIBLE_DEVICES=3 python baseline_acl/steal_watermark.py \
 
 `--device cpu` 也可执行实际估计，但仍需要 PyTorch 和模型权重；它与 `--preflight` 不同。
 
+正式运行会先打印 W/O 模型加载的开始、完成、PID 和精度，再显示四个阶段的进度条：`1/4 W global d0`、`2/4 W conditional`、`3/4 O global d0`、`4/4 O conditional`。全局阶段按回答计数，附有效位置数；条件阶段按抽样上下文计数，每一批都更新内部计数，不必等待整个前缀算完。进度条在第一批完成后、随后约每 5 秒以及最后一批完成后刷新，显示比例、数量、耗时及当前阶段的预计剩余时间；宽屏/日志同时显示速度和当前前缀。终端中原位更新，重定向或 `tee` 时逐行保存。剩余时间只针对当前阶段，首批速度受加载和预热影响，不代表整次任务的耗时。初始化 JSON 的 `report_stage=before_model_loading` 表明其中 `model_weights_loaded=false` 是加载前的快照。
+
+计算量取决于有效预测位置及抽样上下文总数，不能只按模型参数量判断耗时。规则仅在全部估计完成后发布，没有生成中途的部分 JSON 或恢复断点。运行中可在另一终端用 `ps -ef | grep '[s]teal_watermark.py'` 核对进程；整卡 GPU 利用率不能区分同卡上的多个任务。需要定位退出原因时，使用 `set -o pipefail`，将命令的 `2>&1` 通过 `tee -a` 保存，再立即查看 `$?`。更新代码只对下一次启动生效，不会为已运行的进程补日志。
+
 ## 2. TP 数据预处理
 
 正式入口的 `--model` 必须使用窃取时 `--model-before` 指定的原始学生 **O**，例如 `models/Qwen2.5-0.5B`。`--tokenizer` 可选，默认同一模型目录。程序验证模型来源和规则 tokenizer 的词表、ID、特殊 token、分词配置；不以目录名相同代替校验，也不接受任意词表相似的转述模型。
