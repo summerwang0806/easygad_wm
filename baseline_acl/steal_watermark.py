@@ -140,8 +140,13 @@ def read_training_responses(path: Path) -> tuple[list[str], dict]:
 
 
 def require_same_tokenizers(before: Mapping, after: Mapping) -> None:
-    if before.get("vocab_size") != after.get("vocab_size") or before.get("fingerprint") != after.get("fingerprint"):
-        raise ValueError("O and W must have identical tokenizer behavior, vocabulary IDs and special tokens")
+    try:
+        from baseline_acl.inverse_watermark import tokenizer_identities_match, tokenizer_mismatch_details
+    except ModuleNotFoundError:  # direct `python baseline_acl/steal_watermark.py`
+        from inverse_watermark import tokenizer_identities_match, tokenizer_mismatch_details
+    if not tokenizer_identities_match(before, after):
+        raise ValueError("O and W must have identical tokenizer behavior, vocabulary IDs and special tokens; "
+                         + tokenizer_mismatch_details(before, after))
 
 
 def load_local_tokenizers(before_path: Path, after_path: Path):

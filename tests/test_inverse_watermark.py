@@ -5,10 +5,12 @@ import inspect
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 
 from baseline_acl.inverse_watermark import (
     RuleTable, VLLMInverseWatermarkProcessor, TransformersInverseWatermarkProcessor, tokenizer_identity,
+    tokenizer_identities_match,
 )
 
 
@@ -50,6 +52,61 @@ def rules_document(tokenizer=None):
 
 
 class IdentityTests(unittest.TestCase):
+    def test_save_reload_metadata_matches_effective_identity_and_rule_consumers(self):
+        original = FakeTokenizer("original/student")
+        original.clean_up_tokenization_spaces = False
+        saved = copy.deepcopy(original)
+        saved.name_or_path = "gad/actor/huggingface"
+        saved.init_kwargs.update({
+            "extra_special_tokens": {}, "added_tokens_decoder": {},
+            "chat_template": saved.chat_template, "tokenizer_class": "FakeTokenizer",
+            "clean_up_tokenization_spaces": False,
+            "eos_token": SimpleNamespace(content="<eos>", single_word=False, lstrip=False,
+                                         rstrip=False, normalized=False, special=True),
+        })
+        before, after = tokenizer_identity(original), tokenizer_identity(saved)
+        self.assertNotEqual(before["fingerprint"], after["fingerprint"])
+        self.assertEqual(before["compatibility"], after["compatibility"])
+        self.assertTrue(tokenizer_identities_match(before, after))
+        from baseline_acl.steal_watermark import require_same_tokenizers
+        require_same_tokenizers(before, after)
+        RuleTable(rules_document(original)).validate_tokenizer(saved)
+        RuleTable(rules_document(saved)).validate_tokenizer(original)
+
+    def test_unknown_kwargs_and_nonempty_extra_special_tokens_remain_checked(self):
+        original = FakeTokenizer()
+        for changes in ({"unknown_encoding_option": True},
+                        {"extra_special_tokens": {"image_token": "a"}}):
+            changed = copy.deepcopy(original)
+            changed.init_kwargs.update(changes)
+            with self.subTest(changes=changes):
+                self.assertFalse(tokenizer_identities_match(tokenizer_identity(original), tokenizer_identity(changed)))
+                with self.assertRaisesRegex(ValueError, "differing init_kwargs"):
+                    RuleTable(rules_document(original)).validate_tokenizer(changed)
+
+    def test_legacy_rules_use_legacy_hash_without_guessing_a_new_identity(self):
+        original = FakeTokenizer()
+        document = rules_document(original)
+        for field in ("compatibility", "component_fingerprints", "init_kwargs_fingerprints"):
+            document["tokenizer"].pop(field)
+        table = RuleTable(document)
+        table.validate_tokenizer(original)
+        saved = copy.deepcopy(original)
+        saved.init_kwargs["extra_special_tokens"] = {}
+        self.assertTrue(tokenizer_identities_match(tokenizer_identity(original), tokenizer_identity(saved)))
+        with self.assertRaisesRegex(ValueError, "tokenizer mismatch"):
+            table.validate_tokenizer(saved)
+
+    def test_mismatch_reports_components_but_not_the_full_vocabulary_or_template(self):
+        from baseline_acl.steal_watermark import require_same_tokenizers
+        original = FakeTokenizer()
+        changed = copy.deepcopy(original)
+        changed.vocab["a"], changed.vocab["b"] = changed.vocab["b"], changed.vocab["a"]
+        with self.assertRaisesRegex(ValueError, "differing components: vocab") as context:
+            require_same_tokenizers(tokenizer_identity(original), tokenizer_identity(changed))
+        self.assertNotIn("test-template", str(context.exception))
+        self.assertLess(len(str(context.exception)), 1000)
+
     def test_path_independent_but_vocab_and_configuration_sensitive(self):
         original = FakeTokenizer("old/path")
         moved = FakeTokenizer("new/path")
@@ -71,6 +128,7 @@ class IdentityTests(unittest.TestCase):
         for variant in variants:
             with self.subTest(variant=variant.__dict__):
                 self.assertNotEqual(tokenizer_identity(original)["fingerprint"], tokenizer_identity(variant)["fingerprint"])
+                self.assertFalse(tokenizer_identities_match(tokenizer_identity(original), tokenizer_identity(variant)))
                 with self.assertRaisesRegex(ValueError, "tokenizer mismatch"):
                     RuleTable(rules_document(original)).validate_tokenizer(variant)
 
@@ -89,8 +147,35 @@ class IdentityTests(unittest.TestCase):
         original = tokenizer_identity(tokenizer)["fingerprint"]
         tokenizer.backend_tokenizer.padding = {"length": 100}
         self.assertEqual(original, tokenizer_identity(tokenizer)["fingerprint"])
+        unmodified = copy.deepcopy(tokenizer)
         tokenizer.backend_tokenizer.lower = True
         self.assertNotEqual(original, tokenizer_identity(tokenizer)["fingerprint"])
+        self.assertFalse(tokenizer_identities_match(tokenizer_identity(unmodified), tokenizer_identity(tokenizer)))
+
+    def test_compatibility_retains_actual_special_token_roles_and_added_token_flags(self):
+        original = FakeTokenizer()
+        original.padding_side = "right"
+        variants = []
+        special = copy.deepcopy(original)
+        special.special_tokens_map["eos_token"] = "a"
+        variants.append(special)
+        added = copy.deepcopy(original)
+        added.added_tokens_decoder[1] = SimpleNamespace(content="a", single_word=True)
+        variants.append(added)
+        padding = copy.deepcopy(original)
+        padding.padding_side = "left"
+        variants.append(padding)
+        for changed in variants:
+            with self.subTest(changed=changed.__dict__):
+                self.assertFalse(tokenizer_identities_match(tokenizer_identity(original), tokenizer_identity(changed)))
+
+    def test_unknown_compatibility_versions_cannot_enable_fallback(self):
+        original = tokenizer_identity(FakeTokenizer())
+        changed = copy.deepcopy(original)
+        changed["fingerprint"] = "0" * 64
+        for version in (True, 2, "1"):
+            changed["compatibility"]["version"] = version
+            self.assertFalse(tokenizer_identities_match(original, changed))
 
 
 class RuleTests(unittest.TestCase):
@@ -130,6 +215,9 @@ class RuleTests(unittest.TestCase):
             lambda doc: doc.update(format="kgw-secret-key-rules"),
             lambda doc: doc.update(version=True),
             lambda doc: doc["tokenizer"].update(fingerprint="unknown"),
+            lambda doc: doc["tokenizer"].update(compatibility={"version": True, "fingerprint": "0" * 64}),
+            lambda doc: doc["tokenizer"].update(compatibility={"version": 2, "fingerprint": "0" * 64}),
+            lambda doc: doc["tokenizer"].update(compatibility={"version": 1, "fingerprint": "unknown"}),
             lambda doc: doc["global_scores"].update({"4": 0.1}),
             lambda doc: doc["global_scores"].update({"01": 0.1}),
             lambda doc: doc["global_scores"].update({"2": 1.01}),

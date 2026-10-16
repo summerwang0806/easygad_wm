@@ -16,6 +16,7 @@ from typing import Any
 
 RULE_FORMAT = "acl-watermark-rules"
 RULE_VERSION = 1
+TOKENIZER_COMPATIBILITY_VERSION = 1
 
 
 def _stable_value(value: Any) -> Any:
@@ -33,12 +34,20 @@ def _stable_value(value: Any) -> Any:
     raise TypeError(f"unsupported tokenizer configuration value: {type(value).__name__}")
 
 
+def _value_fingerprint(value: Any) -> str:
+    payload = json.dumps(_stable_value(value), sort_keys=True, ensure_ascii=False,
+                         separators=(",", ":"), allow_nan=False).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def tokenizer_identity(tokenizer: Any) -> dict[str, Any]:
     """Fingerprint token IDs and tokenization behavior, independently of paths.
 
 The fast tokenizer's backend covers normalizer, pre-tokenizer, model, decoder,
 and post-processor. Slow SentencePiece tokenizers contribute their serialized
-model. Runtime padding/truncation state and model/cache paths are excluded.
+model. Backend padding/truncation state and model/cache paths are excluded.
+The original fingerprint is retained for existing rule files; a versioned
+compatibility fingerprint normalizes redundant save_pretrained metadata.
     """
     vocab = tokenizer.get_vocab()
     vocab_size = len(tokenizer)
@@ -79,10 +88,62 @@ model. Runtime padding/truncation state and model/cache paths are excluded.
     sp_model = getattr(tokenizer, "sp_model", None)
     if sp_model is not None and hasattr(sp_model, "serialized_model_proto"):
         behavior["sentencepiece_sha256"] = hashlib.sha256(sp_model.serialized_model_proto()).hexdigest()
-    payload = json.dumps(_stable_value(behavior), sort_keys=True, ensure_ascii=False,
-                         separators=(",", ":"), allow_nan=False).encode("utf-8")
-    return {"vocab_size": vocab_size, "fingerprint": hashlib.sha256(payload).hexdigest(),
-            "name_or_path": str(getattr(tokenizer, "name_or_path", ""))}
+    # Keep the old hash unchanged so already published rules remain readable.
+    fingerprint = _value_fingerprint(behavior)
+    effective = dict(behavior)
+    effective_kwargs = dict(stable_kwargs)
+    # HF saves effective settings back into init_kwargs, sometimes changing
+    # strings to AddedToken objects or introducing previously absent defaults.
+    # These values are checked above through their actual runtime properties.
+    redundant_keys = set(behavior["attributes"]) | set(behavior["special_tokens_map"])
+    redundant_keys.update({"chat_template", "added_tokens_decoder", "tokenizer_class"})
+    for key in redundant_keys:
+        effective_kwargs.pop(key, None)
+    # Missing and empty extra_special_tokens both mean no extra named roles.
+    # Retain nonempty mappings and every unknown kwarg rather than ignoring
+    # arbitrary settings that might change tokenization.
+    if effective_kwargs.get("extra_special_tokens") == {}:
+        effective_kwargs.pop("extra_special_tokens")
+    effective["init_kwargs"] = effective_kwargs
+    effective["tokenizer_class"] = f"{type(tokenizer).__module__}.{type(tokenizer).__qualname__}"
+    return {"vocab_size": vocab_size, "fingerprint": fingerprint,
+            "name_or_path": str(getattr(tokenizer, "name_or_path", "")),
+            "compatibility": {"version": TOKENIZER_COMPATIBILITY_VERSION,
+                              "fingerprint": _value_fingerprint(effective)},
+            "component_fingerprints": {key: _value_fingerprint(value) for key, value in effective.items()},
+            "init_kwargs_fingerprints": {key: _value_fingerprint(value) for key, value in effective_kwargs.items()}}
+
+
+def _is_fingerprint(value: Any) -> bool:
+    return isinstance(value, str) and len(value) == 64 and all(char in "0123456789abcdef" for char in value)
+
+
+def tokenizer_identities_match(expected: Mapping, actual: Mapping) -> bool:
+    """Accept an exact legacy identity or equal versioned effective behavior."""
+    if expected.get("vocab_size") != actual.get("vocab_size"):
+        return False
+    if expected.get("fingerprint") is not None and expected.get("fingerprint") == actual.get("fingerprint"):
+        return True
+    left, right = expected.get("compatibility"), actual.get("compatibility")
+    return (isinstance(left, Mapping) and isinstance(right, Mapping)
+            and type(left.get("version")) is int and type(right.get("version")) is int
+            and left["version"] == right["version"] == TOKENIZER_COMPATIBILITY_VERSION
+            and _is_fingerprint(left.get("fingerprint"))
+            and left["fingerprint"] == right.get("fingerprint"))
+
+
+def tokenizer_mismatch_details(expected: Mapping, actual: Mapping) -> str:
+    """Bounded diagnostics without printing the vocabulary or chat template."""
+    details = [f"vocab_size: {expected.get('vocab_size')} vs {actual.get('vocab_size')}"]
+    for field, label in (("component_fingerprints", "differing components"),
+                         ("init_kwargs_fingerprints", "differing init_kwargs")):
+        left, right = expected.get(field), actual.get(field)
+        if isinstance(left, Mapping) and isinstance(right, Mapping):
+            changed = sorted(key for key in left.keys() | right.keys() if left.get(key) != right.get(key))
+            if changed:
+                details.append(f"{label}: {', '.join(changed[:20])}" + (" ..." if len(changed) > 20 else ""))
+    details.append(f"paths: {expected.get('name_or_path', '?')} vs {actual.get('name_or_path', '?')}")
+    return "; ".join(details)
 
 
 def _number(value: Any, label: str, *, minimum: float = 0, maximum: float | None = None) -> float:
@@ -119,8 +180,14 @@ score and every matching suffix's weighted score; D is intentionally not capped.
         if not isinstance(identity, dict) or type(identity.get("vocab_size")) is not int or identity["vocab_size"] <= 1:
             raise ValueError("rules tokenizer.vocab_size must be an integer > 1")
         fingerprint = identity.get("fingerprint")
-        if not isinstance(fingerprint, str) or len(fingerprint) != 64 or any(char not in "0123456789abcdef" for char in fingerprint):
+        if not _is_fingerprint(fingerprint):
             raise ValueError("rules tokenizer.fingerprint must be a SHA256 hex digest")
+        compatibility = identity.get("compatibility")
+        if compatibility is not None and (not isinstance(compatibility, dict)
+                or type(compatibility.get("version")) is not int
+                or compatibility["version"] != TOKENIZER_COMPATIBILITY_VERSION
+                or not _is_fingerprint(compatibility.get("fingerprint"))):
+            raise ValueError("rules tokenizer.compatibility must contain a supported version and SHA256 fingerprint")
         if not isinstance(identity.get("name_or_path"), str):
             raise ValueError("rules tokenizer.name_or_path must be a string")
         parameters = document.get("parameters")
@@ -182,8 +249,9 @@ score and every matching suffix's weighted score; D is intentionally not capped.
 
     def validate_tokenizer(self, tokenizer: Any) -> None:
         actual = tokenizer_identity(tokenizer)
-        if actual["vocab_size"] != self.vocab_size or actual["fingerprint"] != self.tokenizer["fingerprint"]:
-            raise ValueError("tokenizer mismatch: rules require the same vocabulary, token IDs, and tokenization configuration")
+        if not tokenizer_identities_match(self.tokenizer, actual):
+            raise ValueError("tokenizer mismatch: rules require the same vocabulary, token IDs, and tokenization configuration; "
+                             + tokenizer_mismatch_details(self.tokenizer, actual))
 
     def penalties(self, prefix_ids: Sequence[int]) -> dict[int, float]:
         context = tuple(prefix_ids[-self.max_prefix:]) if self.max_prefix else ()

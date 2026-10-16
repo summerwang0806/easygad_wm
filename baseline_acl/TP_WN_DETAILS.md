@@ -33,6 +33,10 @@
 
 程序只读取 `teacher_response`，不使用真实 KGW 密钥或检测器。O/W 的 tokenizer 必须在词表、token IDs、特殊 token 和分词配置上匹配，路径名称不参与身份判断。
 
+Hugging Face 的 `save_pretrained()` 可能在无损保存 tokenizer 时补入 `extra_special_tokens: {}`，或将已经生效的特殊 token 配置重新序列化。仅哈希原始 `init_kwargs` 会把这种情况误判为不一致。当前保留原严格指纹供旧规则验证，同时为新规则记录带版本的兼容指纹：规范化空的额外特殊 token 映射及已通过实际属性校验的重复配置。词表、token ID、特殊 token、AddedToken 标志、完整分词后端、chat template 和未知配置仍需匹配；不直接跳过检查。窃取、TP 和 WN 使用同一校验逻辑。若仍有真实差异，错误会列出 `differing components` 或 `differing init_kwargs`，而不打印完整词表或模板。同步到服务器时需一起更新 `inverse_watermark.py` 和 `steal_watermark.py`；无须重新训练 GAD 模型。
+
+已用官方 Qwen2.5-0.5B 的真实 tokenizer（151665 个 token，Transformers 4.51.3 / tokenizers 0.21.4）复现：保存后仅新增空的 `extra_special_tokens`，分词后端和测试文本编码保持一致，但旧指纹改变。新版窃取及规则消费校验均通过，实际更改 EOS 仍被拒绝。此验证未加载模型权重；服务器 checkpoint 若存在其它差异，需以新版错误中的差异项为准。
+
 前缀频率统计对每条回答先完成 tokenizer 编码，再去掉最后一个 token（`answer_ids[:-1]`）。分别统计长度为 1、2 的前缀，每种长度使用各自的有效前缀总数作为分母，保留相对频率严格大于 `5e-5` 的前缀。这一统计边界与官方 `analyze_prefix_frequency.py` 一致。
 
 条件前缀规则只收集回答前 200 token 范围内以该前缀结尾的非空上下文；送入模型的上下文保留此前的完整回答，不裁成尾部窗口。先收集每个前缀的全部有效上下文，超过 1000 个时才调用 `random.shuffle()` 打乱并截取前 1000 个，否则全部保留；不显式设置抽样 seed。这与官方 `calculate_d_n.py` 的选择方式一致；重复运行可能选到不同的上下文，但同一次窃取中 O/W 始终使用同一批样本。此处的随机抽样与生成水印时的 seed 无关。
