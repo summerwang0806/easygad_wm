@@ -1,6 +1,7 @@
 """Fixed-token evaluation checks; no CUDA, models or network required."""
 
 import contextlib
+from decimal import Decimal, localcontext
 import io
 import json
 import math
@@ -29,13 +30,42 @@ class FixedTokenGroupsTests(unittest.TestCase):
         expected = 0.5 * math.erfc(1.0)
         self.assertAlmostEqual(result["groups"][1]["p_value"], expected)
 
-    def test_upper_median_not_average_and_not_mean_of_answer_p(self):
+    def test_even_median_averages_the_two_middle_p_values(self):
         # Four blocks with 0, 1, 2 and 3 green scored tokens, respectively.
         flags = [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1]
         result = grouped.group_token_flags(flags, 0.5, (4,))["4"]
-        expected = 0.5 * math.erfc(((1 - 1.5) / math.sqrt(0.75)) / math.sqrt(2))
-        self.assertAlmostEqual(result["median_p_value"], expected)
-        self.assertGreater(result["median_p_value"], 0.5)
+        self.assertAlmostEqual(result["median_p_value"], 0.5)
+        self.assertAlmostEqual(result["median_log10_p_value"], math.log10(0.5))
+
+    def test_odd_and_single_group_medians_select_the_middle_p(self):
+        flags = [0, 0, 0, 0] * 2 + [0, 1, 1, 1]
+        result = grouped.group_token_flags(flags, 0.5, (4,))["4"]
+        expected = grouped.tail_probability(-math.sqrt(3))
+        self.assertEqual(result["median_p_value"], expected[0])
+        self.assertEqual(result["median_log10_p_value"], expected[1])
+        single = grouped.group_token_flags(flags[:4], 0.5, (4,))["4"]
+        self.assertEqual(single["median_p_value"], expected[0])
+
+    def test_two_group_median_averages_p_not_z_or_log(self):
+        groups = [{"z_score": z, "p_value": p, "log10_p_value": log_p}
+                  for z in (3.2, -10.0)
+                  for p, log_p in (grouped.tail_probability(z),)]
+        median_p, median_log_p = grouped.ordinary_median_pvalues(groups)
+        expected = (groups[0]["p_value"] + groups[1]["p_value"]) / 2
+        self.assertEqual(median_p, expected)
+        self.assertAlmostEqual(median_log_p, math.log10(expected))
+
+    def test_even_median_preserves_extreme_scientific_values(self):
+        flags = [0] + [1] * 4999 + [0, 0] + [1] * 4998
+        result = grouped.group_token_flags(flags, 0.5, (5000,))["5000"]
+        self.assertIsInstance(result["median_p_value"], str)
+        with localcontext() as context:
+            context.prec = 50
+            expected = sum(Decimal(str(g["p_value"])) for g in result["groups"]) / 2
+            actual = Decimal(result["median_p_value"])
+            self.assertGreater(actual, 0)
+            self.assertLess(abs(actual / expected - 1), Decimal("1e-10"))
+            self.assertAlmostEqual(result["median_log10_p_value"], float(expected.log10()), places=9)
 
     def test_all_six_budgets_and_insufficient_groups(self):
         result = grouped.group_token_flags([0, 1] * 3100, 0.5)
@@ -45,6 +75,7 @@ class FixedTokenGroupsTests(unittest.TestCase):
         for budget in (10000, 20000, 30000):
             self.assertEqual(result[str(budget)]["status"], "insufficient_tokens")
             self.assertIsNone(result[str(budget)]["median_p_value"])
+            self.assertIsNone(result[str(budget)]["median_log10_p_value"])
 
     def test_extreme_tail_preserves_nonzero_scientific_value(self):
         p, log_p = grouped.tail_probability(40.0)
@@ -68,7 +99,9 @@ class FixedTokenGroupsTests(unittest.TestCase):
             self.assertIn(f"| {budget} | {budget - 1} |", text)
         self.assertIn("N/A", text)
         self.assertIn("clean median p", text)
-        self.assertIn("上中位数", text)
+        self.assertIn("普通中位数", text)
+        self.assertNotIn("上中位数", text)
+        self.assertEqual(summary["aggregation"], "ordinary_median")
         self.assertNotIn("groups", summary["budgets"]["1000"])
 
 
@@ -162,6 +195,38 @@ class GroupedCacheTests(unittest.TestCase):
         with patch.object(grouped, "ExactKGWScorer", side_effect=AssertionError("No CUDA")):
             payload, _ = grouped.load_grouped_pvalues(self.source, self.tokenizer, "cpu", CONFIG)
         self.assertEqual(payload["budgets"]["1000"]["num_groups"], 1)
+
+    def test_legacy_upper_median_cache_migrates_without_cuda(self):
+        source_before = self.source.read_bytes()
+        with patch.object(grouped, "ExactKGWScorer") as scorer:
+            scorer.return_value.score.return_value = [0] * 1000 + [1] * 1000
+            payload, cache = self.run_scoring()
+        # Reconstruct a genuine v1 cache with its original upper-median result.
+        payload["signature"]["schema"] = grouped.LEGACY_SCHEMA
+        payload.pop("aggregation")
+        payload["method"] = "upper median of block p-values"
+        for summary in payload["budgets"].values():
+            ordered = sorted(summary["groups"], key=lambda group: -group["z_score"])
+            upper = ordered[len(ordered) // 2] if ordered else None
+            summary["median_p_value"] = upper["p_value"] if upper else None
+            summary["median_log10_p_value"] = upper["log10_p_value"] if upper else None
+        self.assertEqual(payload["budgets"]["1000"]["median_p_value"], 1.0)
+        old_groups = payload["budgets"]["1000"]["groups"]
+        cache.write_text(json.dumps(payload), encoding="utf-8")
+        with patch.object(grouped, "ExactKGWScorer", side_effect=AssertionError("No CUDA")):
+            migrated, _ = grouped.load_grouped_pvalues(self.source, self.tokenizer, "cpu", CONFIG)
+            persisted = json.loads(cache.read_text(encoding="utf-8"))
+            self.assertEqual(persisted, migrated)
+            self.assertEqual(migrated["signature"]["schema"], grouped.SCHEMA)
+            self.assertEqual(migrated["aggregation"], "ordinary_median")
+            self.assertNotIn("upper median", migrated["method"])
+            self.assertEqual(migrated["budgets"]["1000"]["median_p_value"], 0.5)
+            self.assertEqual(migrated["budgets"]["1000"]["groups"], old_groups)
+            self.assertIsNone(migrated["budgets"]["3000"]["median_p_value"])
+            self.assertEqual(grouped.load_grouped_pvalues(
+                self.source, self.tokenizer, "cpu", CONFIG,
+            )[0], migrated)
+        self.assertEqual(self.source.read_bytes(), source_before)
 
 
 if __name__ == "__main__":

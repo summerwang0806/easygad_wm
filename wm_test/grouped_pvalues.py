@@ -1,8 +1,10 @@
-"""Exact fixed-token KGW evaluation using Pan's grouping/reporting protocol.
+"""Exact fixed-token KGW evaluation with ordinary-median aggregation.
 
 The green lists remain this project's CUDA simple_1 lists. Answer token IDs are
 concatenated without separators, including cross-answer contexts. Each block
 skips its first context token, counts repetitions, and discards the short tail.
+Grouping follows Pan's protocol; the median averages the two middle p-values
+for an even number of groups.
 """
 
 from __future__ import annotations
@@ -18,11 +20,14 @@ from typing import Any
 
 
 TOKEN_BUDGETS = (1000, 2000, 3000, 10000, 20000, 30000)
-SCHEMA = "kgw-pan-exact-blocks-simple1-cuda-v1"
+LEGACY_SCHEMA = "kgw-pan-exact-blocks-simple1-cuda-v1"
+SCHEMA = "kgw-pan-exact-blocks-simple1-cuda-v2"
+AGGREGATION = "ordinary_median"
 METHOD = (
     "teacher-tokenizer answer IDs concatenated without separators; exact disjoint "
     "blocks; first token of each block is context only; no repetition deduplication; "
-    "incomplete tail discarded; upper median of block p-values"
+    "incomplete tail discarded; ordinary median of block p-values "
+    "(arithmetic mean of the two middle p-values for even group counts)"
 )
 
 
@@ -44,6 +49,30 @@ def tail_probability(z: float) -> tuple[float | str, float]:
     log_p = (-0.5 * z * z - math.log(z) - 0.5 * math.log(2 * math.pi)
              + math.log(total)) / math.log(10)
     if log_p >= -300:
+        return p, log_p
+    exponent = math.floor(log_p)
+    mantissa = 10 ** (log_p - exponent)
+    return f"{mantissa:.12g}e{exponent:+d}", log_p
+
+
+def ordinary_median_pvalues(groups: list[dict[str, Any]]) -> tuple[float | str | None, float | None]:
+    """Median on the p scale, using log space only to prevent underflow."""
+    if not groups:
+        return None, None
+    # Sorting z descending sorts right-tail p ascending, including tiny p-values
+    # represented as scientific-notation strings.
+    ordered = sorted(groups, key=lambda group: -group["z_score"])
+    middle = len(ordered) // 2
+    upper = ordered[middle]
+    if len(ordered) % 2:
+        return upper["p_value"], upper["log10_p_value"]
+    lower = ordered[middle - 1]
+    high_log = upper["log10_p_value"]
+    low_log = lower["log10_p_value"]
+    # log10((p_lower + p_upper) / 2), not the average of their logarithms.
+    log_p = high_log + math.log10((1.0 + 10 ** (low_log - high_log)) / 2.0)
+    if log_p >= -300:
+        p = (float(lower["p_value"]) + float(upper["p_value"])) / 2.0
         return p, log_p
     exponent = math.floor(log_p)
     mantissa = 10 ** (log_p - exponent)
@@ -80,16 +109,13 @@ def group_token_flags(
                 "green_fraction": green / n, "z_score": z,
                 "p_value": p, "log10_p_value": log_p,
             })
-        # Sorting z descending is exactly sorting right-tail p ascending, even
-        # when the latter is too small for a float. Pan uses the upper median.
-        ordered = sorted(groups, key=lambda group: -group["z_score"])
-        median = ordered[count // 2] if count else None
+        median_p, median_log_p = ordinary_median_pvalues(groups)
         result[str(budget)] = {
             "group_token_count": budget, "scored_tokens_per_group": budget - 1,
             "num_groups": count, "total_answer_tokens": len(flags),
             "discarded_tail_tokens": len(flags) % budget,
-            "median_p_value": median["p_value"] if median else None,
-            "median_log10_p_value": median["log10_p_value"] if median else None,
+            "median_p_value": median_p,
+            "median_log10_p_value": median_log_p,
             "status": "ok" if count else "insufficient_tokens", "groups": groups,
         }
     return result
@@ -186,6 +212,17 @@ class ExactKGWScorer:
         return flags
 
 
+def _write_cache(cache_path: Path, payload: dict[str, Any]) -> None:
+    temporary = cache_path.with_name(cache_path.name + f".{os.getpid()}.tmp")
+    try:
+        with temporary.open("w", encoding="utf-8", newline="\n") as handle:
+            json.dump(payload, handle, ensure_ascii=False, indent=2, allow_nan=False)
+            handle.write("\n")
+        os.replace(temporary, cache_path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def load_grouped_pvalues(
     source_path: Path, tokenizer_path: Path, device: str, config: dict[str, Any],
     greenlist_cache: OrderedDict | None = None,
@@ -202,34 +239,46 @@ def load_grouped_pvalues(
     }
     cache_path = source_path.with_suffix(".grouped_p_values.json")
     if cache_path.exists():
+        migrated = None
         try:
             cached = json.loads(cache_path.read_text(encoding="utf-8"))
-            if (cached.get("signature") == signature
-                    and set(cached.get("budgets", {})) == {str(n) for n in TOKEN_BUDGETS}):
-                return cached, cache_path
-        except (ValueError, OSError):
+            if set(cached.get("budgets", {})) == {str(n) for n in TOKEN_BUDGETS}:
+                if cached.get("signature") == signature:
+                    return cached, cache_path
+                legacy_signature = {**signature, "schema": LEGACY_SCHEMA}
+                if cached.get("signature") == legacy_signature:
+                    # All token scoring inputs still match. Only aggregation
+                    # changed, so reuse the saved per-group evidence without CUDA.
+                    for summary in cached["budgets"].values():
+                        groups = summary["groups"]
+                        if len(groups) != summary["num_groups"]:
+                            raise ValueError("Incomplete legacy grouped cache")
+                        median_p, median_log_p = ordinary_median_pvalues(groups)
+                        summary["median_p_value"] = median_p
+                        summary["median_log10_p_value"] = median_log_p
+                    cached.update(signature=signature, method=METHOD, aggregation=AGGREGATION)
+                    migrated = cached
+        except (KeyError, TypeError, ValueError, OSError):
             pass
+        if migrated is not None:
+            _write_cache(cache_path, migrated)
+            return migrated, cache_path
     rows = [json.loads(line) for line in source.decode("utf-8").splitlines() if line.strip()]
     scorer = ExactKGWScorer(tokenizer_path, device, config, greenlist_cache)
     flags = scorer.score(rows)
     payload = {
         "signature": signature, "source_file": str(source_path), "method": METHOD,
+        "aggregation": AGGREGATION,
         "num_answers": len(rows), "total_answer_tokens": len(flags),
         "budgets": group_token_flags(flags, config["gamma"]),
     }
-    temporary = cache_path.with_name(cache_path.name + f".{os.getpid()}.tmp")
-    try:
-        with temporary.open("w", encoding="utf-8", newline="\n") as handle:
-            json.dump(payload, handle, ensure_ascii=False, indent=2, allow_nan=False)
-            handle.write("\n")
-        os.replace(temporary, cache_path)
-    finally:
-        temporary.unlink(missing_ok=True)
+    _write_cache(cache_path, payload)
     return payload, cache_path
 
 
 def summarize_grouped(payload: dict[str, Any]) -> dict[str, Any]:
-    return {"num_answers": payload["num_answers"],
+    return {"aggregation": AGGREGATION,
+            "num_answers": payload["num_answers"],
             "total_answer_tokens": payload["total_answer_tokens"],
             "budgets": {budget: {key: value for key, value in summary.items() if key != "groups"}
                         for budget, summary in payload["budgets"].items()}}
@@ -240,10 +289,10 @@ def format_p(value: float | str | None) -> str:
 
 
 def write_grouped_summary(handle: Any, summaries: dict[str, Any]) -> None:
-    handle.write("\nPan 口径固定 token 分组 p-value（新增；p 越大表示原单侧检验证据越弱）：\n\n")
+    handle.write("\n固定 token 分组 p-value（普通中位数；p 越大表示原单侧检验证据越弱）：\n\n")
     handle.write("按教师 tokenizer 编码回答并无分隔拼接，精确分组；每组首 token 仅作上下文，"
                  "其余 token 用本项目原 KGW 绿表评分；不去重，尾部不足一组丢弃；"
-                 "各组 p 排序后取上中位数（偶数组不平均）。\n\n")
+                 "各组 p 排序后取普通中位数（偶数组取中间两个 p 的算术平均）。\n\n")
     handle.write("| 每组 token 数 | 计分 token 数 | KGW 组数 | KGW median p ↑ | "
                  "clean 组数 | clean median p | KGW/clean 丢弃尾部 tokens |\n")
     handle.write("|---:|---:|---:|---:|---:|---:|---:|\n")

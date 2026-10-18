@@ -567,7 +567,7 @@ def main() -> None:
     }
     result["p_value_method"] = "one-sided normal survival probability; unique context-token pairs for dedup"
     result["per_sample_p_value_files"] = {"kgw": str(kgw_cache), "clean": str(clean_cache)}
-    # Additional Pan-style fixed-token statistics; existing per-answer metrics
+    # Additional fixed-token statistics with ordinary-median aggregation; existing per-answer metrics
     # and their caches are left unchanged.
     grouped_summaries = {}
     grouped_caches = {}
