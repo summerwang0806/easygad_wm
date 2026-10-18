@@ -1,0 +1,1340 @@
+{
+  "date": "2026-10-18",
+  "scope": "Read-only arithmetic audit of saved counts; no text generation and no CUDA green-list rescoring.",
+  "important_limits": [
+    "Whole-answer grouping reaches or exceeds the target, not exact fixed-token blocks.",
+    "Original prompt boundaries are preserved through saved counts. Pan concatenates answer token IDs and recomputes boundary membership.",
+    "Within-answer deduplication is not global deduplication. Aggregated nominal p-values are diagnostics, not calibrated attribution guarantees.",
+    "Current script defaults do not establish historical runtime configuration."
+  ],
+  "models": [
+    {
+      "label": "No Attack warmup: gamma=.5 delta=3 new, teacher text not paraphrased",
+      "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\kgwwarmup_kgwgad_warmup_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": "43137533eed0685fff39dfdfd97867974934116797ee9b4f94ed4f32427c72cc",
+      "answers": 500,
+      "model_path": "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/warmup/global_step_1813/actor/huggingface",
+      "detector": {
+        "gamma": 0.5,
+        "delta": 3.0,
+        "hash_key": 15485863,
+        "seeding": "simple_1 (hash_key * previous_token_id)",
+        "detection_threshold_z": 4.0,
+        "deduplication": "unique (previous_token_id, token_id) pairs"
+      },
+      "statistics": {
+        "raw": {
+          "per_answer_p_mean": 0.3296664932281066,
+          "per_answer_p_median": 0.21915062085091014,
+          "pooled_N": 113530,
+          "pooled_G": 59653,
+          "pooled_green_fraction": 0.5254382101647141,
+          "pooled_z": 17.142409510415334,
+          "pooled_nominal_p": 3.5810130375102883e-66,
+          "max_saved_z_formula_error": 0.0,
+          "groups": {
+            "10000": {
+              "count": 11,
+              "N_range": [
+                10001,
+                10579
+              ],
+              "median_standard": 5.719833471019724e-12,
+              "median_upper": 5.719833471019724e-12,
+              "groups_with_p_le_05": 10,
+              "all_groups": [
+                {
+                  "N": 10137,
+                  "G": 5499,
+                  "z": 8.551620667466992,
+                  "p": 6.068604874006487e-18,
+                  "answer_count": 47,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-06748"
+                },
+                {
+                  "N": 10009,
+                  "G": 5223,
+                  "z": 4.368034826392743,
+                  "p": 6.268475269713753e-06,
+                  "answer_count": 53,
+                  "first_id": "dolly-11405",
+                  "last_id": "dolly-14385"
+                },
+                {
+                  "N": 10371,
+                  "G": 5629,
+                  "z": 8.709902685022765,
+                  "p": 1.5206789314096264e-18,
+                  "answer_count": 47,
+                  "first_id": "dolly-02004",
+                  "last_id": "dolly-02223"
+                },
+                {
+                  "N": 10038,
+                  "G": 5359,
+                  "z": 6.787116705783384,
+                  "p": 5.719833471019724e-12,
+                  "answer_count": 48,
+                  "first_id": "dolly-04949",
+                  "last_id": "dolly-00370"
+                },
+                {
+                  "N": 10134,
+                  "G": 5338,
+                  "z": 5.38404692757542,
+                  "p": 3.641475132331973e-08,
+                  "answer_count": 35,
+                  "first_id": "dolly-01888",
+                  "last_id": "dolly-10067"
+                },
+                {
+                  "N": 10030,
+                  "G": 5451,
+                  "z": 8.706949356617613,
+                  "p": 1.5608124261153002e-18,
+                  "answer_count": 50,
+                  "first_id": "dolly-09344",
+                  "last_id": "dolly-03696"
+                },
+                {
+                  "N": 10579,
+                  "G": 5720,
+                  "z": 8.371067481049517,
+                  "p": 2.85492991151055e-17,
+                  "answer_count": 49,
+                  "first_id": "dolly-07132",
+                  "last_id": "dolly-00170"
+                },
+                {
+                  "N": 10103,
+                  "G": 5204,
+                  "z": 3.0344128082324464,
+                  "p": 0.001205022042452004,
+                  "answer_count": 40,
+                  "first_id": "dolly-09108",
+                  "last_id": "dolly-00803"
+                },
+                {
+                  "N": 10129,
+                  "G": 5177,
+                  "z": 2.2356264158885533,
+                  "p": 0.012688126375223723,
+                  "answer_count": 41,
+                  "first_id": "dolly-01653",
+                  "last_id": "dolly-00852"
+                },
+                {
+                  "N": 10490,
+                  "G": 4844,
+                  "z": -7.830448258161017,
+                  "p": 0.9999999999999976,
+                  "answer_count": 36,
+                  "first_id": "dolly-05067",
+                  "last_id": "dolly-06631"
+                },
+                {
+                  "N": 10001,
+                  "G": 5400,
+                  "z": 7.989600529960003,
+                  "p": 6.768834754281669e-16,
+                  "answer_count": 48,
+                  "first_id": "dolly-10153",
+                  "last_id": "dolly-12236"
+                }
+              ],
+              "unused_tail_N": 1509
+            },
+            "20000": {
+              "count": 5,
+              "N_range": [
+                20021,
+                20429
+              ],
+              "median_standard": 1.693236955178972e-20,
+              "median_upper": 1.693236955178972e-20,
+              "groups_with_p_le_05": 4,
+              "all_groups": [
+                {
+                  "N": 20064,
+                  "G": 10684,
+                  "z": 9.205954664015952,
+                  "p": 1.693236955178972e-20,
+                  "answer_count": 99,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-08789"
+                },
+                {
+                  "N": 20021,
+                  "G": 10786,
+                  "z": 10.961472912759579,
+                  "p": 2.9269384809041164e-28,
+                  "answer_count": 93,
+                  "first_id": "dolly-14385",
+                  "last_id": "dolly-14483"
+                },
+                {
+                  "N": 20098,
+                  "G": 10735,
+                  "z": 9.677823345306296,
+                  "p": 1.8730315800556682e-22,
+                  "answer_count": 87,
+                  "first_id": "dolly-13126",
+                  "last_id": "dolly-01239"
+                },
+                {
+                  "N": 20101,
+                  "G": 10614,
+                  "z": 7.949047355689352,
+                  "p": 9.397560088836636e-16,
+                  "answer_count": 84,
+                  "first_id": "dolly-03696",
+                  "last_id": "dolly-13544"
+                },
+                {
+                  "N": 20429,
+                  "G": 9915,
+                  "z": -4.190861111214804,
+                  "p": 0.9999861051129575,
+                  "answer_count": 79,
+                  "first_id": "dolly-06238",
+                  "last_id": "dolly-14069"
+                }
+              ],
+              "unused_tail_N": 12817
+            },
+            "30000": {
+              "count": 3,
+              "N_range": [
+                30044,
+                30488
+              ],
+              "median_standard": 5.792812498397394e-34,
+              "median_upper": 5.792812498397394e-34,
+              "groups_with_p_le_05": 3,
+              "all_groups": [
+                {
+                  "N": 30139,
+                  "G": 16135,
+                  "z": 12.274930178196175,
+                  "p": 6.17491503290193e-35,
+                  "answer_count": 146,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-01092"
+                },
+                {
+                  "N": 30044,
+                  "G": 16070,
+                  "z": 12.092397133445667,
+                  "p": 5.792812498397394e-34,
+                  "answer_count": 133,
+                  "first_id": "dolly-02223",
+                  "last_id": "dolly-01239"
+                },
+                {
+                  "N": 30488,
+                  "G": 15991,
+                  "z": 8.556302487289797,
+                  "p": 5.827262490122415e-18,
+                  "answer_count": 127,
+                  "first_id": "dolly-03696",
+                  "last_id": "dolly-03319"
+                }
+              ],
+              "unused_tail_N": 22859
+            }
+          }
+        },
+        "dedup_": {
+          "per_answer_p_mean": 0.3385771887153556,
+          "per_answer_p_median": 0.2947984447726417,
+          "pooled_N": 78442,
+          "pooled_G": 41465,
+          "pooled_green_fraction": 0.528607123734734,
+          "pooled_z": 16.02427978546842,
+          "pooled_nominal_p": 4.324356167150115e-58,
+          "max_saved_z_formula_error": 0.0,
+          "groups": {
+            "10000": {
+              "count": 7,
+              "N_range": [
+                10013,
+                10461
+              ],
+              "median_standard": 1.6916463723400825e-08,
+              "median_upper": 1.6916463723400825e-08,
+              "groups_with_p_le_05": 7,
+              "all_groups": [
+                {
+                  "N": 10122,
+                  "G": 5311,
+                  "z": 4.969776267696395,
+                  "p": 3.3515100689716653e-07,
+                  "answer_count": 69,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-13565"
+                },
+                {
+                  "N": 10035,
+                  "G": 5294,
+                  "z": 5.52034782957034,
+                  "p": 1.6916463723400825e-08,
+                  "answer_count": 68,
+                  "first_id": "dolly-13004",
+                  "last_id": "dolly-07983"
+                },
+                {
+                  "N": 10013,
+                  "G": 5332,
+                  "z": 6.505772621248056,
+                  "p": 3.864753336530931e-11,
+                  "answer_count": 61,
+                  "first_id": "dolly-09930",
+                  "last_id": "dolly-09465"
+                },
+                {
+                  "N": 10045,
+                  "G": 5382,
+                  "z": 7.173876895118953,
+                  "p": 3.645158570912603e-13,
+                  "answer_count": 60,
+                  "first_id": "dolly-13779",
+                  "last_id": "dolly-04333"
+                },
+                {
+                  "N": 10461,
+                  "G": 5583,
+                  "z": 6.8929085390225575,
+                  "p": 2.733151127310486e-12,
+                  "answer_count": 71,
+                  "first_id": "dolly-06945",
+                  "last_id": "dolly-00170"
+                },
+                {
+                  "N": 10137,
+                  "G": 5287,
+                  "z": 4.340369607065128,
+                  "p": 7.112162788045403e-06,
+                  "answer_count": 62,
+                  "first_id": "dolly-09108",
+                  "last_id": "dolly-02069"
+                },
+                {
+                  "N": 10138,
+                  "G": 5285,
+                  "z": 4.290497007218221,
+                  "p": 8.9136844306842e-06,
+                  "answer_count": 64,
+                  "first_id": "dolly-09439",
+                  "last_id": "dolly-12273"
+                }
+              ],
+              "unused_tail_N": 7491
+            },
+            "20000": {
+              "count": 3,
+              "N_range": [
+                20058,
+                20157
+              ],
+              "median_standard": 5.2910722446077e-16,
+              "median_upper": 5.2910722446077e-16,
+              "groups_with_p_le_05": 3,
+              "all_groups": [
+                {
+                  "N": 20157,
+                  "G": 10605,
+                  "z": 7.416780449557613,
+                  "p": 6.000081200952871e-14,
+                  "answer_count": 137,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-07983"
+                },
+                {
+                  "N": 20058,
+                  "G": 10714,
+                  "z": 9.673346703922206,
+                  "p": 1.9568297473886507e-22,
+                  "answer_count": 121,
+                  "first_id": "dolly-09930",
+                  "last_id": "dolly-04333"
+                },
+                {
+                  "N": 20064,
+                  "G": 10600,
+                  "z": 8.019911425093651,
+                  "p": 5.2910722446077e-16,
+                  "answer_count": 130,
+                  "first_id": "dolly-06945",
+                  "last_id": "dolly-07633"
+                }
+              ],
+              "unused_tail_N": 18163
+            },
+            "30000": {
+              "count": 2,
+              "N_range": [
+                30109,
+                30170
+              ],
+              "median_standard": 2.542129337059175e-23,
+              "median_upper": 5.083694527221468e-23,
+              "groups_with_p_le_05": 2,
+              "all_groups": [
+                {
+                  "N": 30170,
+                  "G": 15937,
+                  "z": 9.810292025831078,
+                  "p": 5.083694527221468e-23,
+                  "answer_count": 198,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-09465"
+                },
+                {
+                  "N": 30109,
+                  "G": 15982,
+                  "z": 10.69044412870995,
+                  "p": 5.641468968817259e-27,
+                  "answer_count": 190,
+                  "first_id": "dolly-13779",
+                  "last_id": "dolly-07633"
+                }
+              ],
+              "unused_tail_N": 18163
+            }
+          }
+        }
+      }
+    },
+    {
+      "label": "GAD: gamma=.5 delta=3 new, teacher text not paraphrased",
+      "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": "c3a2d49b19f3cd3260df2189913eb69b4cf161442b09b083ba28f09fae2fa562",
+      "answers": 500,
+      "model_path": "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_step_1813/actor/huggingface",
+      "detector": {
+        "gamma": 0.5,
+        "delta": 3.0,
+        "hash_key": 15485863,
+        "seeding": "simple_1 (hash_key * previous_token_id)",
+        "detection_threshold_z": 4.0,
+        "deduplication": "unique (previous_token_id, token_id) pairs"
+      },
+      "statistics": {
+        "raw": {
+          "per_answer_p_mean": 0.36577704616420137,
+          "per_answer_p_median": 0.2383728596628124,
+          "pooled_N": 124556,
+          "pooled_G": 64883,
+          "pooled_green_fraction": 0.5209142875493754,
+          "pooled_z": 14.762346570396302,
+          "pooled_nominal_p": 1.2810446706970135e-49,
+          "max_saved_z_formula_error": 0.0,
+          "groups": {
+            "10000": {
+              "count": 12,
+              "N_range": [
+                10003,
+                10517
+              ],
+              "median_standard": 0.00011605206019056494,
+              "median_upper": 0.00022357344254447375,
+              "groups_with_p_le_05": 11,
+              "all_groups": [
+                {
+                  "N": 10252,
+                  "G": 5540,
+                  "z": 8.177603284218051,
+                  "p": 1.4477260897630943e-16,
+                  "answer_count": 38,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-05608"
+                },
+                {
+                  "N": 10517,
+                  "G": 5479,
+                  "z": 4.300239583269642,
+                  "p": 8.530677836656128e-06,
+                  "answer_count": 48,
+                  "first_id": "dolly-00304",
+                  "last_id": "dolly-00303"
+                },
+                {
+                  "N": 10290,
+                  "G": 5461,
+                  "z": 6.2303061929195405,
+                  "p": 2.3276220430250777e-10,
+                  "answer_count": 42,
+                  "first_id": "dolly-01059",
+                  "last_id": "dolly-09058"
+                },
+                {
+                  "N": 10003,
+                  "G": 5174,
+                  "z": 3.4494826164083983,
+                  "p": 0.00028083094621807376,
+                  "answer_count": 44,
+                  "first_id": "dolly-01461",
+                  "last_id": "dolly-06227"
+                },
+                {
+                  "N": 10180,
+                  "G": 5210,
+                  "z": 2.3786872937925856,
+                  "p": 0.008687203999877378,
+                  "answer_count": 37,
+                  "first_id": "dolly-03157",
+                  "last_id": "dolly-05752"
+                },
+                {
+                  "N": 10391,
+                  "G": 5344,
+                  "z": 2.9135855657267853,
+                  "p": 0.001786519513395049,
+                  "answer_count": 40,
+                  "first_id": "dolly-05555",
+                  "last_id": "dolly-12536"
+                },
+                {
+                  "N": 10011,
+                  "G": 5237,
+                  "z": 4.627455598938561,
+                  "p": 1.8509278135615895e-06,
+                  "answer_count": 42,
+                  "first_id": "dolly-04589",
+                  "last_id": "dolly-03726"
+                },
+                {
+                  "N": 10290,
+                  "G": 5224,
+                  "z": 1.5575765482298851,
+                  "p": 0.05966683078473374,
+                  "answer_count": 37,
+                  "first_id": "dolly-05761",
+                  "last_id": "dolly-07936"
+                },
+                {
+                  "N": 10096,
+                  "G": 5326,
+                  "z": 5.533502629173329,
+                  "p": 1.5694913785806313e-08,
+                  "answer_count": 38,
+                  "first_id": "dolly-00170",
+                  "last_id": "dolly-06824"
+                },
+                {
+                  "N": 10111,
+                  "G": 5232,
+                  "z": 3.5105701050775817,
+                  "p": 0.00022357344254447375,
+                  "answer_count": 42,
+                  "first_id": "dolly-14842",
+                  "last_id": "dolly-12885"
+                },
+                {
+                  "N": 10122,
+                  "G": 5207,
+                  "z": 2.9023493403346947,
+                  "p": 0.0018518763195610568,
+                  "answer_count": 38,
+                  "first_id": "dolly-03709",
+                  "last_id": "dolly-06631"
+                },
+                {
+                  "N": 10405,
+                  "G": 5471,
+                  "z": 5.2644528870438085,
+                  "p": 7.030372495908313e-08,
+                  "answer_count": 44,
+                  "first_id": "dolly-10153",
+                  "last_id": "dolly-01356"
+                }
+              ],
+              "unused_tail_N": 1888
+            },
+            "20000": {
+              "count": 6,
+              "N_range": [
+                20048,
+                20540
+              ],
+              "median_standard": 6.061668853958766e-09,
+              "median_upper": 1.2063858984558369e-08,
+              "groups_with_p_le_05": 6,
+              "all_groups": [
+                {
+                  "N": 20105,
+                  "G": 10645,
+                  "z": 8.35730614662112,
+                  "p": 3.2083312665302355e-17,
+                  "answer_count": 84,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-12659"
+                },
+                {
+                  "N": 20080,
+                  "G": 10541,
+                  "z": 7.0710818976439,
+                  "p": 7.686518590141771e-13,
+                  "answer_count": 84,
+                  "first_id": "dolly-08283",
+                  "last_id": "dolly-08212"
+                },
+                {
+                  "N": 20540,
+                  "G": 10535,
+                  "z": 3.6980744482935597,
+                  "p": 0.00010862058998675787,
+                  "answer_count": 76,
+                  "first_id": "dolly-03209",
+                  "last_id": "dolly-09918"
+                },
+                {
+                  "N": 20484,
+                  "G": 10563,
+                  "z": 4.485673347208408,
+                  "p": 3.6342012308809603e-06,
+                  "answer_count": 82,
+                  "first_id": "dolly-08340",
+                  "last_id": "dolly-13445"
+                },
+                {
+                  "N": 20404,
+                  "G": 10662,
+                  "z": 6.440656980519728,
+                  "p": 5.947872335916326e-11,
+                  "answer_count": 79,
+                  "first_id": "dolly-12418",
+                  "last_id": "dolly-01723"
+                },
+                {
+                  "N": 20048,
+                  "G": 10419,
+                  "z": 5.579452241076619,
+                  "p": 1.2063858984558369e-08,
+                  "answer_count": 81,
+                  "first_id": "dolly-03319",
+                  "last_id": "dolly-02991"
+                }
+              ],
+              "unused_tail_N": 2895
+            },
+            "30000": {
+              "count": 4,
+              "N_range": [
+                30080,
+                30508
+              ],
+              "median_standard": 4.249523464221131e-11,
+              "median_upper": 8.374474276129893e-11,
+              "groups_with_p_le_05": 4,
+              "all_groups": [
+                {
+                  "N": 30508,
+                  "G": 16187,
+                  "z": 10.683283923743025,
+                  "p": 6.0941139222716876e-27,
+                  "answer_count": 127,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-01431"
+                },
+                {
+                  "N": 30217,
+                  "G": 15534,
+                  "z": 4.895577023047355,
+                  "p": 4.900884532460669e-07,
+                  "answer_count": 117,
+                  "first_id": "dolly-09058",
+                  "last_id": "dolly-09918"
+                },
+                {
+                  "N": 30293,
+                  "G": 15756,
+                  "z": 7.003781087833429,
+                  "p": 1.245726523123686e-12,
+                  "answer_count": 119,
+                  "first_id": "dolly-08340",
+                  "last_id": "dolly-13544"
+                },
+                {
+                  "N": 30080,
+                  "G": 15594,
+                  "z": 6.388528615600029,
+                  "p": 8.374474276129893e-11,
+                  "answer_count": 121,
+                  "first_id": "dolly-06238",
+                  "last_id": "dolly-00182"
+                }
+              ],
+              "unused_tail_N": 3458
+            }
+          }
+        },
+        "dedup_": {
+          "per_answer_p_mean": 0.3474721954408633,
+          "per_answer_p_median": 0.2705911687912894,
+          "pooled_N": 94612,
+          "pooled_G": 49540,
+          "pooled_green_fraction": 0.5236122267788441,
+          "pooled_z": 14.525799754084149,
+          "pooled_nominal_p": 4.158297943638149e-48,
+          "max_saved_z_formula_error": 0.0,
+          "groups": {
+            "10000": {
+              "count": 9,
+              "N_range": [
+                10035,
+                10249
+              ],
+              "median_standard": 1.3680695909509509e-06,
+              "median_upper": 1.3680695909509509e-06,
+              "groups_with_p_le_05": 9,
+              "all_groups": [
+                {
+                  "N": 10142,
+                  "G": 5292,
+                  "z": 4.388948311903349,
+                  "p": 5.695006702940246e-06,
+                  "answer_count": 54,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-06540"
+                },
+                {
+                  "N": 10189,
+                  "G": 5398,
+                  "z": 6.013439001192407,
+                  "p": 9.081414703970194e-10,
+                  "answer_count": 60,
+                  "first_id": "dolly-07953",
+                  "last_id": "dolly-14060"
+                },
+                {
+                  "N": 10142,
+                  "G": 5259,
+                  "z": 3.7335849893114466,
+                  "p": 9.438672668846555e-05,
+                  "answer_count": 53,
+                  "first_id": "dolly-01174",
+                  "last_id": "dolly-07314"
+                },
+                {
+                  "N": 10111,
+                  "G": 5233,
+                  "z": 3.5304600206870864,
+                  "p": 0.00020741885211281307,
+                  "answer_count": 51,
+                  "first_id": "dolly-08212",
+                  "last_id": "dolly-06507"
+                },
+                {
+                  "N": 10056,
+                  "G": 5320,
+                  "z": 5.823716359463371,
+                  "p": 2.877661100625961e-09,
+                  "answer_count": 50,
+                  "first_id": "dolly-14464",
+                  "last_id": "dolly-04686"
+                },
+                {
+                  "N": 10035,
+                  "G": 5212,
+                  "z": 3.8832103177266943,
+                  "p": 5.1543164011446904e-05,
+                  "answer_count": 53,
+                  "first_id": "dolly-04273",
+                  "last_id": "dolly-12579"
+                },
+                {
+                  "N": 10044,
+                  "G": 5257,
+                  "z": 4.689693997365789,
+                  "p": 1.3680695909509509e-06,
+                  "answer_count": 50,
+                  "first_id": "dolly-01118",
+                  "last_id": "dolly-05312"
+                },
+                {
+                  "N": 10249,
+                  "G": 5384,
+                  "z": 5.126566689134953,
+                  "p": 1.4753678342331505e-07,
+                  "answer_count": 52,
+                  "first_id": "dolly-10992",
+                  "last_id": "dolly-12124"
+                },
+                {
+                  "N": 10098,
+                  "G": 5324,
+                  "z": 5.473246478576544,
+                  "p": 2.2093242771749445e-08,
+                  "answer_count": 54,
+                  "first_id": "dolly-02816",
+                  "last_id": "dolly-00571"
+                }
+              ],
+              "unused_tail_N": 3546
+            },
+            "20000": {
+              "count": 4,
+              "N_range": [
+                20023,
+                20331
+              ],
+              "median_standard": 3.3763844301857374e-12,
+              "median_upper": 5.034025930662332e-12,
+              "groups_with_p_le_05": 4,
+              "all_groups": [
+                {
+                  "N": 20331,
+                  "G": 10690,
+                  "z": 7.3569214316621725,
+                  "p": 9.410002136904023e-14,
+                  "answer_count": 114,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-14060"
+                },
+                {
+                  "N": 20053,
+                  "G": 10392,
+                  "z": 5.162115293085516,
+                  "p": 1.220874093042057e-07,
+                  "answer_count": 103,
+                  "first_id": "dolly-01174",
+                  "last_id": "dolly-06438"
+                },
+                {
+                  "N": 20037,
+                  "G": 10511,
+                  "z": 6.958568093412988,
+                  "p": 1.7187429297091433e-12,
+                  "answer_count": 103,
+                  "first_id": "dolly-06507",
+                  "last_id": "dolly-05324"
+                },
+                {
+                  "N": 20023,
+                  "G": 10493,
+                  "z": 6.805526249625045,
+                  "p": 5.034025930662332e-12,
+                  "answer_count": 101,
+                  "first_id": "dolly-12579",
+                  "last_id": "dolly-13936"
+                }
+              ],
+              "unused_tail_N": 14168
+            },
+            "30000": {
+              "count": 3,
+              "N_range": [
+                30032,
+                30132
+              ],
+              "median_standard": 7.087947913722819e-17,
+              "median_upper": 7.087947913722819e-17,
+              "groups_with_p_le_05": 3,
+              "all_groups": [
+                {
+                  "N": 30032,
+                  "G": 15732,
+                  "z": 8.263249962740053,
+                  "p": 7.087947913722819e-17,
+                  "answer_count": 165,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-02127"
+                },
+                {
+                  "N": 30132,
+                  "G": 15731,
+                  "z": 7.661920855508142,
+                  "p": 9.158625696091041e-15,
+                  "answer_count": 154,
+                  "first_id": "dolly-02320",
+                  "last_id": "dolly-07605"
+                },
+                {
+                  "N": 30048,
+                  "G": 15769,
+                  "z": 8.595645243139103,
+                  "p": 4.1399112627725965e-18,
+                  "answer_count": 154,
+                  "first_id": "dolly-05324",
+                  "last_id": "dolly-14900"
+                }
+              ],
+              "unused_tail_N": 4400
+            }
+          }
+        }
+      }
+    },
+    {
+      "label": "Original base negative reference",
+      "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
+      "source_sha256": "ac257f61da6ea85afaa9c200985cd818e5fe3a677d78e0ae77a15c1d1c47fcea",
+      "answers": 500,
+      "model_path": "/shared/public_models/Qwen2.5-0.5B",
+      "detector": {
+        "gamma": 0.5,
+        "delta": 2.0,
+        "hash_key": 15485863,
+        "seeding": "simple_1 (hash_key * previous_token_id)",
+        "detection_threshold_z": 4.0,
+        "deduplication": "unique (previous_token_id, token_id) pairs"
+      },
+      "statistics": {
+        "raw": {
+          "per_answer_p_mean": 0.5381206505070838,
+          "per_answer_p_median": 0.5715704145196637,
+          "pooled_N": 159765,
+          "pooled_G": 73639,
+          "pooled_green_fraction": 0.4609207273182487,
+          "pooled_z": -31.240450636219343,
+          "pooled_nominal_p": 1.0,
+          "max_saved_z_formula_error": 0.0,
+          "groups": {
+            "10000": {
+              "count": 15,
+              "N_range": [
+                10001,
+                11307
+              ],
+              "median_standard": 1.0,
+              "median_upper": 1.0,
+              "groups_with_p_le_05": 2,
+              "all_groups": [
+                {
+                  "N": 10005,
+                  "G": 4089,
+                  "z": -18.26543421209914,
+                  "p": 1.0,
+                  "answer_count": 48,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-11405"
+                },
+                {
+                  "N": 10029,
+                  "G": 4634,
+                  "z": -7.598989442184202,
+                  "p": 0.9999999999999851,
+                  "answer_count": 30,
+                  "first_id": "dolly-07788",
+                  "last_id": "dolly-01089"
+                },
+                {
+                  "N": 10061,
+                  "G": 4734,
+                  "z": -5.911995827346159,
+                  "p": 0.9999999983100645,
+                  "answer_count": 26,
+                  "first_id": "dolly-01947",
+                  "last_id": "dolly-05297"
+                },
+                {
+                  "N": 10025,
+                  "G": 3615,
+                  "z": -27.91512787163576,
+                  "p": 1.0,
+                  "answer_count": 34,
+                  "first_id": "dolly-00275",
+                  "last_id": "dolly-09930"
+                },
+                {
+                  "N": 10246,
+                  "G": 4430,
+                  "z": -13.692604197918914,
+                  "p": 1.0,
+                  "answer_count": 26,
+                  "first_id": "dolly-05394",
+                  "last_id": "dolly-04141"
+                },
+                {
+                  "N": 10567,
+                  "G": 5022,
+                  "z": -5.087750845756528,
+                  "p": 0.9999998188325203,
+                  "answer_count": 35,
+                  "first_id": "dolly-02127",
+                  "last_id": "dolly-13779"
+                },
+                {
+                  "N": 10315,
+                  "G": 4163,
+                  "z": -19.583944377041707,
+                  "p": 1.0,
+                  "answer_count": 34,
+                  "first_id": "dolly-09935",
+                  "last_id": "dolly-05605"
+                },
+                {
+                  "N": 10796,
+                  "G": 4812,
+                  "z": -11.279664278334607,
+                  "p": 1.0,
+                  "answer_count": 47,
+                  "first_id": "dolly-14358",
+                  "last_id": "dolly-03696"
+                },
+                {
+                  "N": 10220,
+                  "G": 4437,
+                  "z": -13.314339047288259,
+                  "p": 1.0,
+                  "answer_count": 34,
+                  "first_id": "dolly-07132",
+                  "last_id": "dolly-01054"
+                },
+                {
+                  "N": 10877,
+                  "G": 4931,
+                  "z": -9.73221014541963,
+                  "p": 1.0,
+                  "answer_count": 30,
+                  "first_id": "dolly-02628",
+                  "last_id": "dolly-13610"
+                },
+                {
+                  "N": 11307,
+                  "G": 6618,
+                  "z": 18.14088756204805,
+                  "p": 7.57818167407505e-74,
+                  "answer_count": 28,
+                  "first_id": "dolly-11445",
+                  "last_id": "dolly-10992"
+                },
+                {
+                  "N": 10317,
+                  "G": 4664,
+                  "z": -9.736874588986732,
+                  "p": 1.0,
+                  "answer_count": 22,
+                  "first_id": "dolly-05352",
+                  "last_id": "dolly-00148"
+                },
+                {
+                  "N": 11007,
+                  "G": 5893,
+                  "z": 7.425111410512733,
+                  "p": 5.634251220915824e-14,
+                  "answer_count": 34,
+                  "first_id": "dolly-08451",
+                  "last_id": "dolly-10389"
+                },
+                {
+                  "N": 10001,
+                  "G": 4687,
+                  "z": -6.269686523510541,
+                  "p": 0.9999999998191121,
+                  "answer_count": 31,
+                  "first_id": "dolly-03119",
+                  "last_id": "dolly-10476"
+                },
+                {
+                  "N": 10041,
+                  "G": 4976,
+                  "z": -0.8881810912373617,
+                  "p": 0.8127783258542424,
+                  "answer_count": 22,
+                  "first_id": "dolly-05864",
+                  "last_id": "dolly-02500"
+                }
+              ],
+              "unused_tail_N": 3951
+            },
+            "20000": {
+              "count": 7,
+              "N_range": [
+                20034,
+                21415
+              ],
+              "median_standard": 1.0,
+              "median_upper": 1.0,
+              "groups_with_p_le_05": 1,
+              "all_groups": [
+                {
+                  "N": 20034,
+                  "G": 8723,
+                  "z": -18.284388366623027,
+                  "p": 1.0,
+                  "answer_count": 78,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-01089"
+                },
+                {
+                  "N": 20086,
+                  "G": 8349,
+                  "z": -23.90543619175505,
+                  "p": 1.0,
+                  "answer_count": 60,
+                  "first_id": "dolly-01947",
+                  "last_id": "dolly-09930"
+                },
+                {
+                  "N": 20813,
+                  "G": 9452,
+                  "z": -13.232398953662909,
+                  "p": 1.0,
+                  "answer_count": 61,
+                  "first_id": "dolly-05394",
+                  "last_id": "dolly-13779"
+                },
+                {
+                  "N": 21111,
+                  "G": 8975,
+                  "z": -21.755551294471477,
+                  "p": 1.0,
+                  "answer_count": 81,
+                  "first_id": "dolly-09935",
+                  "last_id": "dolly-03696"
+                },
+                {
+                  "N": 21097,
+                  "G": 9368,
+                  "z": -16.254949913533192,
+                  "p": 1.0,
+                  "answer_count": 64,
+                  "first_id": "dolly-07132",
+                  "last_id": "dolly-13610"
+                },
+                {
+                  "N": 20834,
+                  "G": 10957,
+                  "z": 7.4823397722189195,
+                  "p": 3.650544223255998e-14,
+                  "answer_count": 48,
+                  "first_id": "dolly-11445",
+                  "last_id": "dolly-09439"
+                },
+                {
+                  "N": 21415,
+                  "G": 10722,
+                  "z": 0.19817047873267954,
+                  "p": 0.4214558419904881,
+                  "answer_count": 62,
+                  "first_id": "dolly-12065",
+                  "last_id": "dolly-11182"
+                }
+              ],
+              "unused_tail_N": 14375
+            },
+            "30000": {
+              "count": 5,
+              "N_range": [
+                30007,
+                30926
+              ],
+              "median_standard": 1.0,
+              "median_upper": 1.0,
+              "groups_with_p_le_05": 0,
+              "all_groups": [
+                {
+                  "N": 30007,
+                  "G": 13419,
+                  "z": -18.29409584392441,
+                  "p": 1.0,
+                  "answer_count": 103,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-02186"
+                },
+                {
+                  "N": 30926,
+                  "G": 13105,
+                  "z": -26.81710674168071,
+                  "p": 1.0,
+                  "answer_count": 96,
+                  "first_id": "dolly-05297",
+                  "last_id": "dolly-13779"
+                },
+                {
+                  "N": 30889,
+                  "G": 13184,
+                  "z": -25.723649456187495,
+                  "p": 1.0,
+                  "answer_count": 112,
+                  "first_id": "dolly-09935",
+                  "last_id": "dolly-08911"
+                },
+                {
+                  "N": 30617,
+                  "G": 15335,
+                  "z": 0.302896707460056,
+                  "p": 0.3809842903146635,
+                  "answer_count": 80,
+                  "first_id": "dolly-13555",
+                  "last_id": "dolly-02069"
+                },
+                {
+                  "N": 30155,
+                  "G": 15091,
+                  "z": 0.1554834246495089,
+                  "p": 0.43822011012107437,
+                  "answer_count": 86,
+                  "first_id": "dolly-09439",
+                  "last_id": "dolly-00571"
+                }
+              ],
+              "unused_tail_N": 7171
+            }
+          }
+        },
+        "dedup_": {
+          "per_answer_p_mean": 0.5374177558749705,
+          "per_answer_p_median": 0.5551540845432315,
+          "pooled_N": 51786,
+          "pooled_G": 25409,
+          "pooled_green_fraction": 0.4906538446684432,
+          "pooled_z": -4.253722689820523,
+          "pooled_nominal_p": 0.9999894877176112,
+          "max_saved_z_formula_error": 0.0,
+          "groups": {
+            "10000": {
+              "count": 5,
+              "N_range": [
+                10001,
+                10189
+              ],
+              "median_standard": 0.9785289023619981,
+              "median_upper": 0.9785289023619981,
+              "groups_with_p_le_05": 0,
+              "all_groups": [
+                {
+                  "N": 10189,
+                  "G": 5010,
+                  "z": -1.674252374302334,
+                  "p": 0.9529594949150796,
+                  "answer_count": 98,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-08008"
+                },
+                {
+                  "N": 10001,
+                  "G": 4892,
+                  "z": -2.1698915081368217,
+                  "p": 0.984992467103006,
+                  "answer_count": 95,
+                  "first_id": "dolly-08789",
+                  "last_id": "dolly-13126"
+                },
+                {
+                  "N": 10082,
+                  "G": 4899,
+                  "z": -2.8284271247461903,
+                  "p": 0.9976611325094764,
+                  "answer_count": 113,
+                  "first_id": "dolly-04856",
+                  "last_id": "dolly-07266"
+                },
+                {
+                  "N": 10156,
+                  "G": 4976,
+                  "z": -2.024271782763451,
+                  "p": 0.9785289023619981,
+                  "answer_count": 92,
+                  "first_id": "dolly-10408",
+                  "last_id": "dolly-08211"
+                },
+                {
+                  "N": 10146,
+                  "G": 5039,
+                  "z": -0.6750897028100296,
+                  "p": 0.7501906123046285,
+                  "answer_count": 89,
+                  "first_id": "dolly-01260",
+                  "last_id": "dolly-06562"
+                }
+              ],
+              "unused_tail_N": 1212
+            },
+            "20000": {
+              "count": 2,
+              "N_range": [
+                20080,
+                20348
+              ],
+              "median_standard": 0.9977267813615884,
+              "median_upper": 0.9997835676190763,
+              "groups_with_p_le_05": 0,
+              "all_groups": [
+                {
+                  "N": 20080,
+                  "G": 9854,
+                  "z": -2.6251920817600105,
+                  "p": 0.9956699951041006,
+                  "answer_count": 191,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-04687"
+                },
+                {
+                  "N": 20348,
+                  "G": 9923,
+                  "z": -3.5191911163821383,
+                  "p": 0.9997835676190763,
+                  "answer_count": 207,
+                  "first_id": "dolly-14483",
+                  "last_id": "dolly-08211"
+                }
+              ],
+              "unused_tail_N": 11358
+            },
+            "30000": {
+              "count": 1,
+              "N_range": [
+                30272,
+                30272
+              ],
+              "median_standard": 0.9999411406875155,
+              "median_upper": 0.9999411406875155,
+              "groups_with_p_le_05": 0,
+              "all_groups": [
+                {
+                  "N": 30272,
+                  "G": 14801,
+                  "z": -3.8508291026755113,
+                  "p": 0.9999411406875155,
+                  "answer_count": 306,
+                  "first_id": "dolly-13384",
+                  "last_id": "dolly-07266"
+                }
+              ],
+              "unused_tail_N": 21514
+            }
+          }
+        }
+      }
+    }
+  ],
+  "pan_reference": {
+    "teacher": "GLM-4-9b-chat",
+    "students": [
+      "Llama-7b",
+      "Llama-3.2-1b"
+    ],
+    "training_qa": 200000,
+    "epochs": 3,
+    "learning_rate": 1e-05,
+    "eval": "C4; exact fixed-token groups; median p",
+    "kgw_n2_no_attack_llama7b": {
+      "10000": 4.12e-28,
+      "20000": 4.12e-53,
+      "30000": 8.26e-79
+    },
+    "source": "https://aclanthology.org/2025.acl-long.648.pdf"
+  },
+  "teacher_saved_score_summaries": [
+    {
+      "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain_kgw_scores.jsonl",
+      "answers": 14511,
+      "scored_N": 3143602,
+      "G": 2174421,
+      "weighted_green_fraction": 0.691697295013809,
+      "median_z": 4.447495899966607
+    },
+    {
+      "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\data\\dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtest_kgw_scores.jsonl",
+      "answers": 500,
+      "scored_N": 118863,
+      "G": 82494,
+      "weighted_green_fraction": 0.694025895358522,
+      "median_z": 4.969270281326402
+    }
+  ]
+}

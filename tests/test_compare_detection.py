@@ -178,6 +178,7 @@ class DetectorMetadataTests(FileTestCase):
         positive = self.write_rows("student.jsonl", [answer_row(label="kgw", gamma=0.5, delta=3.0)])
         negative = self.write_rows("clean.jsonl", [answer_row(label="clean", gamma=0.5, delta=3.0)])
         report = self.root / "report.md"
+        report.write_text("Existing history must remain intact.\n", encoding="utf-8")
         args = argparse.Namespace(
             kgw_file=positive, clean_file=negative, output=report,
             dolly_reference_file=self.root / "dolly.jsonl",
@@ -185,13 +186,27 @@ class DetectorMetadataTests(FileTestCase):
             tokenizer=None, score_device="cuda",
         )
         rouge = {"mean": 0.7, "num_samples": 1, "reference_file": "offline-reference"}
-        with patch.object(evaluator, "parse_args", return_value=args), patch.object(evaluator, "evaluate_dolly_rouge", return_value=rouge), patch.object(evaluator, "evaluate_teacher_clean_rouge", return_value=rouge), contextlib.redirect_stdout(io.StringIO()) as stdout:
+        from wm_test.grouped_pvalues import group_token_flags
+        grouped_payload = {"num_answers": 1, "total_answer_tokens": 100,
+                           "budgets": group_token_flags([0, 1] * 50, 0.5)}
+        with patch.object(evaluator, "parse_args", return_value=args), patch.object(evaluator, "evaluate_dolly_rouge", return_value=rouge), patch.object(evaluator, "evaluate_teacher_clean_rouge", return_value=rouge), patch.object(evaluator, "load_grouped_pvalues", return_value=(grouped_payload, self.root / "grouped.json")), contextlib.redirect_stdout(io.StringIO()) as stdout:
+            evaluator.main()
             evaluator.main()
         text = report.read_text(encoding="utf-8")
+        self.assertTrue(text.startswith("Existing history must remain intact.\n"))
+        self.assertEqual(text.count("## 评估记录"), 2)
+        self.assertEqual(text.count("Pan 口径固定 token 分组"), 2)
+        self.assertEqual(text.count('"auroc": 0.5'), 2)
+        self.assertEqual(text.count("两种逐条文本 p-value"), 2)
         self.assertIn('"detector_config"', text)
         self.assertIn('"gamma": 0.5', text)
         self.assertIn('"delta_by_label"', text)
         self.assertIn("Detector config:", stdout.getvalue())
+        self.assertIn("Pan 口径固定 token 分组", text)
+        self.assertIn('"grouped_p_values"', text)
+        for budget in (1000, 2000, 3000, 10000, 20000, 30000):
+            self.assertIn(f"| {budget} | {budget - 1} |", text)
+        self.assertIn("N/A", text)
 
 
 class SavedAnswerRescoringTests(FileTestCase):

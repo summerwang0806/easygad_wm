@@ -16,6 +16,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+if __package__:
+    from .grouped_pvalues import METHOD as GROUPED_P_VALUE_METHOD, load_grouped_pvalues, summarize_grouped, write_grouped_summary
+else:
+    from grouped_pvalues import METHOD as GROUPED_P_VALUE_METHOD, load_grouped_pvalues, summarize_grouped, write_grouped_summary
+
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_DETECTOR_TOKENIZER = Path("/shared/public_models/Qwen2.5-14B-Instruct")
@@ -557,6 +562,20 @@ def main() -> None:
     }
     result["p_value_method"] = "one-sided normal survival probability; unique context-token pairs for dedup"
     result["per_sample_p_value_files"] = {"kgw": str(kgw_cache), "clean": str(clean_cache)}
+    # Additional Pan-style fixed-token statistics; existing per-answer metrics
+    # and their caches are left unchanged.
+    grouped_summaries = {}
+    grouped_caches = {}
+    for label, path in (("kgw", args.kgw_file), ("clean", args.clean_file)):
+        payload, cache = load_grouped_pvalues(
+            path.resolve(), Path(args.tokenizer or DEFAULT_DETECTOR_TOKENIZER),
+            args.score_device, detector, rescorer.greenlist_cache,
+        )
+        grouped_summaries[label] = summarize_grouped(payload)
+        grouped_caches[label] = str(cache)
+    result["grouped_p_values"] = grouped_summaries
+    result["grouped_p_value_method"] = GROUPED_P_VALUE_METHOD
+    result["per_group_p_value_files"] = grouped_caches
     timestamp = datetime.now().astimezone().isoformat(timespec="seconds")
     result["evaluated_at"] = timestamp
     result["kgw_file"] = str(args.kgw_file.resolve())
@@ -596,6 +615,8 @@ def main() -> None:
             )
         write_pvalue_summary(handle, result["p_values"])
         handle.write(f"\n逐条 p-value：`{kgw_cache}`；`{clean_cache}`\n")
+        write_grouped_summary(handle, grouped_summaries)
+        handle.write(f"\n逐组 p-value 缓存：`{grouped_caches['kgw']}`；`{grouped_caches['clean']}`\n")
         handle.write("\n完整指标（JSON）：\n\n```json\n")
         json.dump(result, handle, ensure_ascii=False, indent=2, allow_nan=False)
         handle.write("\n```\n")
@@ -628,6 +649,8 @@ def main() -> None:
         for method, summary in methods.items():
             print(f"p-values {label}/{method}: {json.dumps(summary, ensure_ascii=False)}")
     print(f"Per-sample p-values: {kgw_cache} | {clean_cache}")
+    write_grouped_summary(sys.stdout, grouped_summaries)
+    print(f"Per-group p-values: {grouped_caches['kgw']} | {grouped_caches['clean']}")
 
 
 if __name__ == "__main__":
