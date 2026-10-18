@@ -183,6 +183,19 @@ python wm_test/generate_wn_score.py \
   --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtest.parquet \
   --output wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new.jsonl --preflight
 
+# 正式运行指令
+CUDA_VISIBLE_DEVICES=3 VLLM_USE_V1=0 python wm_test/generate_wn_score.py \
+  --student-model checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_step_1813/actor/huggingface \
+  --rules wn/acl_rules_gad_Qwen2.5-0.5B_gamma0.5_delta3_fp32.json \
+  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtest.parquet \
+  --output wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new_strength3.jsonl \
+  --strength 3 \
+  --gamma 0.5 \
+  --kgw-delta 3 \
+  --max-prompt-tokens 6144
+
+
+
 CUDA_VISIBLE_DEVICES=1 VLLM_USE_V1=0 python wm_test/generate_wn_score.py \
   --student-model "$W" \
   --rules data/acl_estimated_rules.json \

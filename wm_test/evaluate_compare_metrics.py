@@ -27,8 +27,9 @@ DEFAULT_DETECTOR_TOKENIZER = Path("/shared/public_models/Qwen2.5-14B-Instruct")
 
 # DEFAULT_KGW = "data/dolly15k_qwen2_5_0.5b_kgw_test_kgw_scores.jsonl"
 # DEFAULT_CLEAN = "data/dolly15k_qwen2_5_0.5b_clean_test_kgw_scores.jsonl"
-
-DEFAULT_KGW = ROOT / "dipper_upkgwwarmup_upkgwgad_gad_gamma0.5_delta3_new1_qwen2_5_0_5b_dolly15k_test.jsonl"
+DEFAULT_KGW = "wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new_strength3.jsonl"
+# DEFAULT_KGW = "wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new.jsonl"
+# DEFAULT_KGW = ROOT / "dipper_upkgwwarmup_upkgwgad_gad_gamma0.5_delta3_new1_qwen2_5_0_5b_dolly15k_test.jsonl"
 # DEFAULT_CLEAN = ROOT / "base_qwen2_5_0_5b_dolly15k_test.jsonl"
 DEFAULT_CLEAN = ROOT / "base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl"
 # 下面是gamma=0.5，上面是gamma=0.25,需要和待测试文本相对应
