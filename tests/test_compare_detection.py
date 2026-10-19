@@ -189,13 +189,29 @@ class DetectorMetadataTests(FileTestCase):
         from wm_test.grouped_pvalues import group_token_flags
         grouped_payload = {"num_answers": 1, "total_answer_tokens": 100,
                            "budgets": group_token_flags([0, 1] * 50, 0.5)}
-        with patch.object(evaluator, "parse_args", return_value=args), patch.object(evaluator, "evaluate_dolly_rouge", return_value=rouge), patch.object(evaluator, "evaluate_teacher_clean_rouge", return_value=rouge), patch.object(evaluator, "load_grouped_pvalues", return_value=(grouped_payload, self.root / "grouped.json")), contextlib.redirect_stdout(io.StringIO()) as stdout:
+        filtered_payload = {
+            **grouped_payload,
+            "filtering": {
+                "num_answers_before": 1, "num_answers_removed": 0,
+                "num_answers_retained": 1, "fraction_answers_removed": 0.0,
+                "total_answer_tokens_before": 100, "total_answer_tokens_removed": 0,
+                "total_answer_tokens_retained": 100, "removed_answer_ids": [],
+                "per_answer": [],
+            },
+        }
+        source_before = (positive.read_bytes(), negative.read_bytes())
+        with patch.object(evaluator, "parse_args", return_value=args), patch.object(evaluator, "evaluate_dolly_rouge", return_value=rouge), patch.object(evaluator, "evaluate_teacher_clean_rouge", return_value=rouge), patch.object(evaluator, "load_grouped_pvalues", return_value=(grouped_payload, self.root / "grouped.json")), patch.object(evaluator, "load_nonrepetitive_grouped_pvalues", return_value=(filtered_payload, self.root / "filtered.json")) as filtered_loader, contextlib.redirect_stdout(io.StringIO()) as stdout:
             evaluator.main()
             evaluator.main()
+        self.assertEqual((positive.read_bytes(), negative.read_bytes()), source_before)
+        self.assertEqual(filtered_loader.call_count, 4)
+        self.assertEqual([call.args[0] for call in filtered_loader.call_args_list],
+                         [positive, negative, positive, negative])
         text = report.read_text(encoding="utf-8")
         self.assertTrue(text.startswith("Existing history must remain intact.\n"))
         self.assertEqual(text.count("## 评估记录"), 2)
-        self.assertEqual(text.count("固定 token 分组 p-value（普通中位数"), 2)
+        self.assertEqual(text.count("固定 token 分组 p-value（普通中位数"), 4)
+        self.assertEqual(text.count("剔除严重重复回答后的固定 token 分组 p-value（普通中位数"), 2)
         self.assertEqual(text.count('"auroc": 0.5'), 2)
         self.assertEqual(text.count("两种逐条文本 p-value"), 2)
         self.assertIn('"detector_config"', text)
@@ -206,6 +222,10 @@ class DetectorMetadataTests(FileTestCase):
         self.assertNotIn("上中位数", text)
         self.assertIn('"aggregation": "ordinary_median"', text)
         self.assertIn('"grouped_p_values"', text)
+        self.assertIn('"grouped_p_values_without_severe_repetition"', text)
+        self.assertIn('"num_answers_removed": 0', text)
+        self.assertIn('"removed_answer_ids": []', text)
+        self.assertIn("剔除严重重复回答后的固定 token 分组 p-value", stdout.getvalue())
         for budget in (1000, 2000, 3000, 10000, 20000, 30000):
             self.assertIn(f"| {budget} | {budget - 1} |", text)
         self.assertIn("N/A", text)

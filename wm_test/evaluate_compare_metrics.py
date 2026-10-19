@@ -18,8 +18,18 @@ from typing import Any
 
 if __package__:
     from .grouped_pvalues import METHOD as GROUPED_P_VALUE_METHOD, load_grouped_pvalues, summarize_grouped, write_grouped_summary
+    from .nonrepetitive_grouped_pvalues import (
+        METHOD as NONREPETITIVE_GROUPED_P_VALUE_METHOD,
+        load_nonrepetitive_grouped_pvalues, summarize_nonrepetitive_grouped,
+        write_nonrepetitive_grouped_summary,
+    )
 else:
     from grouped_pvalues import METHOD as GROUPED_P_VALUE_METHOD, load_grouped_pvalues, summarize_grouped, write_grouped_summary
+    from nonrepetitive_grouped_pvalues import (
+        METHOD as NONREPETITIVE_GROUPED_P_VALUE_METHOD,
+        load_nonrepetitive_grouped_pvalues, summarize_nonrepetitive_grouped,
+        write_nonrepetitive_grouped_summary,
+    )
 
 
 ROOT = Path(__file__).resolve().parent
@@ -581,6 +591,18 @@ def main() -> None:
     result["grouped_p_values"] = grouped_summaries
     result["grouped_p_value_method"] = GROUPED_P_VALUE_METHOD
     result["per_group_p_value_files"] = grouped_caches
+    nonrepetitive_summaries = {}
+    nonrepetitive_caches = {}
+    for label, path in (("kgw", args.kgw_file), ("clean", args.clean_file)):
+        payload, cache = load_nonrepetitive_grouped_pvalues(
+            path.resolve(), Path(args.tokenizer or DEFAULT_DETECTOR_TOKENIZER),
+            args.score_device, detector, rescorer.greenlist_cache,
+        )
+        nonrepetitive_summaries[label] = summarize_nonrepetitive_grouped(payload)
+        nonrepetitive_caches[label] = str(cache)
+    result["grouped_p_values_without_severe_repetition"] = nonrepetitive_summaries
+    result["grouped_p_value_without_severe_repetition_method"] = NONREPETITIVE_GROUPED_P_VALUE_METHOD
+    result["per_group_p_value_without_severe_repetition_files"] = nonrepetitive_caches
     timestamp = datetime.now().astimezone().isoformat(timespec="seconds")
     result["evaluated_at"] = timestamp
     result["kgw_file"] = str(args.kgw_file.resolve())
@@ -622,6 +644,11 @@ def main() -> None:
         handle.write(f"\n逐条 p-value：`{kgw_cache}`；`{clean_cache}`\n")
         write_grouped_summary(handle, grouped_summaries)
         handle.write(f"\n逐组 p-value 缓存：`{grouped_caches['kgw']}`；`{grouped_caches['clean']}`\n")
+        write_nonrepetitive_grouped_summary(handle, nonrepetitive_summaries)
+        handle.write(
+            f"\n剔除严重重复回答后的逐组 p-value 缓存：`{nonrepetitive_caches['kgw']}`；"
+            f"`{nonrepetitive_caches['clean']}`\n"
+        )
         handle.write("\n完整指标（JSON）：\n\n```json\n")
         json.dump(result, handle, ensure_ascii=False, indent=2, allow_nan=False)
         handle.write("\n```\n")
@@ -656,6 +683,11 @@ def main() -> None:
     print(f"Per-sample p-values: {kgw_cache} | {clean_cache}")
     write_grouped_summary(sys.stdout, grouped_summaries)
     print(f"Per-group p-values: {grouped_caches['kgw']} | {grouped_caches['clean']}")
+    write_nonrepetitive_grouped_summary(sys.stdout, nonrepetitive_summaries)
+    print(
+        f"Per-group p-values without severe repetition: "
+        f"{nonrepetitive_caches['kgw']} | {nonrepetitive_caches['clean']}"
+    )
 
 
 if __name__ == "__main__":

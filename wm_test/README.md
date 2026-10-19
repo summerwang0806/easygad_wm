@@ -155,3 +155,38 @@ VLLM_USE_V1=0 CUDA_VISIBLE_DEVICES=1 python wm_test/generate_wn_score.py \
 ```
 
 小规模试跑加 `--limit 8`；无偏置对照改为 `--strength 0 --output wm_test/student_wn_off.jsonl`。结果评估用下文的 `python wm_test/evaluate_compare_metrics.py`，设置 `--kgw-file wm_test/student_wn.jsonl` 和对应基座结果的 `--clean-file`。
+
+## 2026-10-19：剔除严重重复回答后的固定 token 分组 p-value
+
+`evaluate_compare_metrics.py` 现在默认追加一套质量筛选后的分组结果，无需新增参数。原有 AUROC、TPR、逐回答 p-value（含 token 对去重版本）和未筛选的分组 p-value 均保留。这套新结果是质量筛选补充指标，不是 Pan 原论文的去重协议，也不是对每个分组的 token 对去重。
+
+筛选和统计顺序如下：
+
+1. 用教师 tokenizer 单独编码每条回答，不含 prompt；计算回答内部相邻 token 对重复率 `1 - 不同 token 对数量 / 全部 token 对数量`。重复率严格大于 50% 时，剔除整条回答；恰好 50% 保留。少于两个 token 的回答重复率记为 0。
+2. KGW 和 clean 各自独立按相同标准筛选，保留剩余回答的原始顺序，将各回答 token ID 无分隔拼接。
+3. 分别切成不重叠的 1K、2K、3K、10K、20K、30K 原始 token 块；每块首 token 只提供上下文，其余 token 计分，最后不足一块的尾部丢弃。保留块内重复 token 对的正常计数。
+4. 每个预算报告各块 p-value 的普通中位数；偶数组取中间两个 p-value 的算术平均。完整块不足一组时报告 `N/A`。
+
+终端和追加的 `wm_test/detection_metrics_history.md`（含该次记录内的 JSON）会同时记录各组 p-value 中位数、有效分组数、尾部丢弃 token 数，以及 KGW/clean 各自的原始回答数、剔除数、保留数和移除 token 数。比较方法时应同时报告剔除比例，不能只比较筛选后的 p-value；原有文本质量指标仍使用完整测试集。
+
+新缓存独立保存为输入文件旁的 `*.nonrepetitive_grouped_p_values.json`，不覆盖原始 JSONL、逐回答缓存或 `*.grouped_p_values.json`。缓存包含筛选统计及逐回答筛选明细；源文件、检测配置或教师 tokenizer 等不匹配时会重算。首次精确评分需要 CUDA 和教师 tokenizer，不加载模型权重，也不重新生成回答；全部所需缓存有效后可直接复用，无需 CUDA。
+
+服务器同步以下三个文件后，在项目根目录激活原评估环境并运行：
+
+```text
+wm_test/evaluate_compare_metrics.py
+wm_test/grouped_pvalues.py
+wm_test/nonrepetitive_grouped_pvalues.py
+```
+
+```bash
+conda activate wm
+
+CUDA_VISIBLE_DEVICES=1 python wm_test/evaluate_compare_metrics.py \
+  --kgw-file wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new.jsonl
+
+CUDA_VISIBLE_DEVICES=1 python wm_test/evaluate_compare_metrics.py \
+  --kgw-file wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new_strength3.jsonl
+```
+
+两条命令分别对应 WN strength=2.5 和 3，继续使用既有的默认 clean 文件 `wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl`、Dolly 参考和 clean 教师参考；需要更换时仍用原有 `--clean-file`、`--dolly-reference-file`、`--teacher-clean-reference-file` 参数。选择当前空闲的 GPU；教师 tokenizer 路径不同则显式传 `--tokenizer`。
