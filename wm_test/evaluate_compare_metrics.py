@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluate KGW detection and ROUGE-L against Dolly and 14B clean teacher answers."""
+"""Evaluate KGW detection, reference ROUGE-L and optional saved-answer PPL."""
 
 from __future__ import annotations
 
@@ -23,6 +23,7 @@ if __package__:
         load_nonrepetitive_grouped_pvalues, summarize_nonrepetitive_grouped,
         write_nonrepetitive_grouped_summary,
     )
+    from .ppl_scoring import PPLConfig, evaluate_ppl_files, write_ppl_summary
 else:
     from grouped_pvalues import METHOD as GROUPED_P_VALUE_METHOD, load_grouped_pvalues, summarize_grouped, write_grouped_summary
     from nonrepetitive_grouped_pvalues import (
@@ -30,6 +31,7 @@ else:
         load_nonrepetitive_grouped_pvalues, summarize_nonrepetitive_grouped,
         write_nonrepetitive_grouped_summary,
     )
+    from ppl_scoring import PPLConfig, evaluate_ppl_files, write_ppl_summary
 
 
 ROOT = Path(__file__).resolve().parent
@@ -67,6 +69,15 @@ DEFAULT_DOLLY_REFERENCE = ROOT.parent / "text_quality/references/dolly_human_500
 DEFAULT_TEACHER_CLEAN_REFERENCE = ROOT.parent / "data/dolly15k_qwen2_5_14b_clean_test.parquet"
 
 DEFAULT_REPORT = ROOT / "detection_metrics_history.md"
+
+# 固定 PPL 配置：直接运行 evaluate 即使用这些设置，可在这里统一修改。
+DEFAULT_PPL_ENABLED = True
+DEFAULT_PPL_MODEL = Path("/shared/public_models/Llama-3-8B")
+DEFAULT_PPL_GENERATION_TOKENIZER = Path("/shared/public_models/Qwen2.5-0.5B")
+DEFAULT_PPL_DEVICE = "cuda"
+DEFAULT_PPL_DTYPE = "bfloat16"
+DEFAULT_PPL_MAX_LENGTH = None  # 使用评分模型配置的上下文窗口。
+DEFAULT_PPL_OVERFLOW = "error"  # 超长时报错，不静默截断回答。
 TARGET_FPRS = (0.01, 0.05, 0.10)
 P_VALUE_SCHEMA = "kgw-single-sided-unique-bigram-v1"
 
@@ -88,6 +99,23 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="Teacher tokenizer override for legacy rescoring; defaults to Qwen2.5-14B-Instruct")
     parser.add_argument("--score-device", default="cuda",
                         help="CUDA device for one-time rescoring of old JSONL; no model is loaded")
+    parser.add_argument("--ppl", action=argparse.BooleanOptionalAction, default=DEFAULT_PPL_ENABLED,
+                        help="Score saved answers with the fixed reference LM (enabled by default); "
+                             "use --no-ppl to disable temporarily")
+    parser.add_argument("--ppl-model", type=Path, default=DEFAULT_PPL_MODEL,
+                        help="Local reference causal LM and tokenizer for PPL (default: Llama-3-8B Base)")
+    parser.add_argument("--ppl-device", default=DEFAULT_PPL_DEVICE,
+                        help="Device for the PPL reference model, e.g. cuda, cuda:0 or cpu")
+    parser.add_argument("--ppl-dtype", choices=("bfloat16", "float16", "float32"), default=DEFAULT_PPL_DTYPE,
+                        help="Reference model precision; use float32 for CPU scoring")
+    parser.add_argument("--ppl-generation-tokenizer", type=Path, default=DEFAULT_PPL_GENERATION_TOKENIZER,
+                        help="Original generation tokenizer for reconstructing prompts "
+                             "(default: Qwen2.5-0.5B; tokenizer only, no student weights)")
+    parser.add_argument("--ppl-max-length", type=int, default=DEFAULT_PPL_MAX_LENGTH,
+                        help="Optional reference context limit, no larger than the reference model's configured limit")
+    parser.add_argument("--ppl-overflow", choices=("error", "truncate_prompt"), default=DEFAULT_PPL_OVERFLOW,
+                        help="Reference-context overflow: fail by default, or explicitly left-truncate only the prompt; "
+                             "the full saved answer is always retained")
     parser.add_argument(
         "--output",
         type=Path,
@@ -618,6 +646,23 @@ def main() -> None:
     result["grouped_p_values_without_severe_repetition"] = nonrepetitive_summaries
     result["grouped_p_value_without_severe_repetition_method"] = NONREPETITIVE_GROUPED_P_VALUE_METHOD
     result["per_group_p_value_without_severe_repetition_files"] = nonrepetitive_caches
+    result["ppl"] = {"enabled": False}
+    if getattr(args, "ppl", False):
+        # All watermark scoring is finished. Release cached CUDA green lists
+        # before loading the reference language model.
+        rescorer.greenlist_cache.clear()
+        print("PPL: evaluating saved answers only (no student generation)", flush=True)
+        result["ppl"] = evaluate_ppl_files(
+            {"kgw": args.kgw_file.resolve(), "clean": args.clean_file.resolve()},
+            PPLConfig(
+                model_path=args.ppl_model,
+                device=args.ppl_device,
+                dtype=args.ppl_dtype,
+                generation_tokenizer=args.ppl_generation_tokenizer,
+                max_length=args.ppl_max_length,
+                overflow=args.ppl_overflow,
+            ),
+        )
     timestamp = datetime.now().astimezone().isoformat(timespec="seconds")
     result["evaluated_at"] = timestamp
     result["kgw_file"] = str(args.kgw_file.resolve())
@@ -664,6 +709,8 @@ def main() -> None:
             f"\n剔除严重重复回答后的逐组 p-value 缓存：`{nonrepetitive_caches['kgw']}`；"
             f"`{nonrepetitive_caches['clean']}`\n"
         )
+        if result["ppl"]["enabled"]:
+            write_ppl_summary(handle, result["ppl"])
         handle.write("\n完整指标（JSON）：\n\n```json\n")
         json.dump(result, handle, ensure_ascii=False, indent=2, allow_nan=False)
         handle.write("\n```\n")
@@ -703,6 +750,8 @@ def main() -> None:
         f"Per-group p-values without severe repetition: "
         f"{nonrepetitive_caches['kgw']} | {nonrepetitive_caches['clean']}"
     )
+    if result["ppl"]["enabled"]:
+        write_ppl_summary(sys.stdout, result["ppl"])
 
 
 if __name__ == "__main__":

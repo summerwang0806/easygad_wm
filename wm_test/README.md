@@ -74,6 +74,82 @@ python wm_test/evaluate_compare_metrics.py
 
 这里的 best F1 和目标 FPR 工作点是在这 500 对测试样本上直接选择阈值的描述性结果；若要报告泛化性能，应另留校准集选阈值，再在独立测试集上评估。脚本也可用 `--kgw-file`、`--clean-file` 和 `--output` 指定自定义文件。
 
+## 默认同时评测已保存回答的 PPL
+
+`evaluate_compare_metrics.py` 默认在同一次评估中，给当前 `DEFAULT_KGW` 和
+`DEFAULT_CLEAN` 指定的完整回答分别计算参考模型 PPL。无需每次添加 PPL 参数，
+在项目根目录直接运行：
+
+```bash
+python wm_test/evaluate_compare_metrics.py
+```
+
+PPL 固定配置集中在 `evaluate_compare_metrics.py` 顶部，按需要编辑即可；更换待测文本
+仍然修改原有的 `DEFAULT_KGW`、`DEFAULT_CLEAN`，PPL 与水印检测使用同一批 JSONL。
+
+| 顶部配置 | 默认值 | 用途 |
+|---|---|---|
+| `DEFAULT_PPL_ENABLED` | `True` | 默认启用 PPL |
+| `DEFAULT_PPL_MODEL` | `/shared/public_models/Llama-3-8B` | 固定 Base 评分模型及其 tokenizer |
+| `DEFAULT_PPL_GENERATION_TOKENIZER` | `/shared/public_models/Qwen2.5-0.5B` | 恢复原生成时的消息模板与截断 |
+| `DEFAULT_PPL_DEVICE` | `cuda` | 评分设备 |
+| `DEFAULT_PPL_DTYPE` | `bfloat16` | 评分精度 |
+| `DEFAULT_PPL_MAX_LENGTH` | `None` | 使用参考模型配置的上下文窗口 |
+| `DEFAULT_PPL_OVERFLOW` | `error` | 超出参考上下文窗口时报错 |
+
+仍可用 CLI 参数临时覆盖顶部配置。只想运行原有水印和 ROUGE 评估时：
+
+```bash
+python wm_test/evaluate_compare_metrics.py --no-ppl
+```
+
+若顶部关闭了 PPL，可用 `--ppl` 临时打开。评分不加载学生权重、不重新生成回答，
+不向评分概率施加 KGW 或 WN 偏置。使用服务器现有的 `torch` 和 `transformers` 环境，
+所有模型及 tokenizer 都只从本地目录读取。CPU 调试可将顶部设备和精度改为
+`cpu`、`float32`，或临时传 `--ppl-device cpu --ppl-dtype float32`。
+评分期间显示逐文件进度、速度与预计剩余时间，缓存命中时会明确提示复用结果。
+
+PPL 的输入字段是 `id`、`prompt`、`answer` 和 `generation`。每条消息列表先按
+**原生成 tokenizer 的 chat template** 恢复当时实际使用的提示，再复现
+`generation.max_prompt_tokens` 的开头截取；旧记录缺少此字段时按原生成脚本的 2048
+预算处理并记录。恢复出的提示文本由参考 tokenizer 重新编码，参考模型不额外套一层
+chat template。仅回答 token 参与损失，不计 prompt、BOS 或 padding，也不额外添加
+EOS 计分。不同回答之间不拼接。该协议固定后，所有实验组都用同一参考模型和格式评分。
+
+默认用顶部固定的 Qwen2.5-0.5B tokenizer 恢复原生成提示（不加载该学生的模型权重），
+前提是训练 checkpoint 保留了同一模板。这个目录的 tokenizer 和聊天模板必须与实际
+生成时一致，不能直接换成评分模型的 tokenizer。
+旧的 `generate_compare_score.py` 会让 student 和 base 共用 student tokenizer，
+但 base 记录只保存 base 的权重路径，所以单凭 base 的 `model_path` 无法证明原模板。
+若 checkpoint 改过模板，应修改顶部 `DEFAULT_PPL_GENERATION_TOKENIZER`，或临时传
+`--ppl-generation-tokenizer /原生成tokenizer目录`。仅当顶部将该项设为 `None` 且没有
+CLI 覆盖时，才从每条记录的 `model_path` 推定 tokenizer；报告会注明这种推定的限制。
+`--tokenizer` 仍是原有水印检测 tokenizer 参数，与 PPL 的两个 tokenizer 角色不同。
+
+默认使用参考模型配置的上下文窗口。修改顶部 `DEFAULT_PPL_MAX_LENGTH` 或使用
+`--ppl-max-length` 可指定更小的评分窗口；超过窗口默认报错，避免静默改变评测文本。
+只有将顶部 `DEFAULT_PPL_OVERFLOW` 改为 `truncate_prompt`，或显式使用
+`--ppl-overflow truncate_prompt` 时，才从提示左侧移除上下文，保留完整回答和至少一个上下文
+token；若回答本身无法完整评分仍会报错。空回答记为跳过，不按 PPL=0 或 1 加入汇总。
+
+每个输入文件会得到独立、带配置指纹的 `*.ppl.*.jsonl` 逐条明细，包含 NLL、
+参考 tokenizer 计分 token 数、逐条 PPL 与实际截断情况。重复评估同样的输入和评分配置
+可复用有效缓存；输入内容、模型/tokenizer 指纹或评分配置改变后不会混用旧结果。
+原始 JSONL 与水印检测缓存保持原样。
+
+每次 evaluate 仍然在 `--output` 指定的 Markdown 结果文档末尾追加记录，默认是
+`wm_test/detection_metrics_history.md`。启用 PPL 后，该次记录还会包含：
+
+- 评分模型、tokenizer、设备、精度及上下文处理协议；
+- 测试 JSONL 的路径和 SHA256、学生模型来源、样本 ID 与生成设置的追溯信息；
+- 学生与 clean 两组的总体 PPL、有效/跳过样本数、平均回答长度、总计分 token 数；
+- 逐条明细路径及缓存是否复用。
+
+总体 PPL 为 `exp(所有有效回答的 NLL 总和 / 回答计分 token 总数)`，
+不是逐条 PPL 的算术平均。它使用完整原始回答，不使用水印统计中的重复过滤或 token 对
+去重。PPL 只支持参考模型下的语言流畅性比较，不能替代下游能力或事实正确性评测；
+不同参考模型/tokenizer 的绝对 PPL 应分开报告。
+
 ## KGW 参数
 
 生成脚本现在要求显式参数；当前 gamma=0.5、delta=3 的实验使用：
