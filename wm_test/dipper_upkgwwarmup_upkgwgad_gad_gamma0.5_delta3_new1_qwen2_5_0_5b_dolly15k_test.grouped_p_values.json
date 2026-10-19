@@ -1,6 +1,6 @@
 {
   "signature": {
-    "schema": "kgw-pan-exact-blocks-simple1-cuda-v1",
+    "schema": "kgw-pan-exact-blocks-simple1-cuda-v2",
     "source_sha256": "b1c02a02c9e074669d99cc9965618971b50b81e66d62c386002cdde73652f192",
     "tokenizer": {
       "path": "/shared/public_models/Qwen2.5-14B-Instruct",
@@ -27,7 +27,7 @@
     ]
   },
   "source_file": "/shared/wwx/EasyGAD/wm_test/dipper_upkgwwarmup_upkgwgad_gad_gamma0.5_delta3_new1_qwen2_5_0_5b_dolly15k_test.jsonl",
-  "method": "teacher-tokenizer answer IDs concatenated without separators; exact disjoint blocks; first token of each block is context only; no repetition deduplication; incomplete tail discarded; upper median of block p-values",
+  "method": "teacher-tokenizer answer IDs concatenated without separators; exact disjoint blocks; first token of each block is context only; no repetition deduplication; incomplete tail discarded; ordinary median of block p-values (arithmetic mean of the two middle p-values for even group counts)",
   "num_answers": 500,
   "total_answer_tokens": 70907,
   "budgets": {
@@ -37,8 +37,8 @@
       "num_groups": 70,
       "total_answer_tokens": 70907,
       "discarded_tail_tokens": 907,
-      "median_p_value": 0.6595743743853253,
-      "median_log10_p_value": -0.1807362257977395,
+      "median_p_value": 0.6478317596858809,
+      "median_log10_p_value": -0.18853776469536945,
       "status": "ok",
       "groups": [
         {
@@ -1615,8 +1615,8 @@
       "num_groups": 2,
       "total_answer_tokens": 70907,
       "discarded_tail_tokens": 10907,
-      "median_p_value": 1.0,
-      "median_log10_p_value": 0.0,
+      "median_p_value": 0.5003522510007945,
+      "median_log10_p_value": -0.30072414205679476,
       "status": "ok",
       "groups": [
         {
@@ -1643,5 +1643,6 @@
         }
       ]
     }
-  }
+  },
+  "aggregation": "ordinary_median"
 }

@@ -1,6 +1,6 @@
 {
   "signature": {
-    "schema": "kgw-pan-exact-blocks-simple1-cuda-v1",
+    "schema": "kgw-pan-exact-blocks-simple1-cuda-v2",
     "source_sha256": "618df1162dbd1bbf770b90baabfd23226ef52fd3028f5fdb6490919cca78b92e",
     "tokenizer": {
       "path": "/shared/public_models/Qwen2.5-14B-Instruct",
@@ -27,7 +27,7 @@
     ]
   },
   "source_file": "/shared/wwx/EasyGAD/wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
-  "method": "teacher-tokenizer answer IDs concatenated without separators; exact disjoint blocks; first token of each block is context only; no repetition deduplication; incomplete tail discarded; upper median of block p-values",
+  "method": "teacher-tokenizer answer IDs concatenated without separators; exact disjoint blocks; first token of each block is context only; no repetition deduplication; incomplete tail discarded; ordinary median of block p-values (arithmetic mean of the two middle p-values for even group counts)",
   "num_answers": 500,
   "total_answer_tokens": 124556,
   "budgets": {
@@ -1413,8 +1413,8 @@
       "num_groups": 62,
       "total_answer_tokens": 124556,
       "discarded_tail_tokens": 556,
-      "median_p_value": 0.023262538509681907,
-      "median_log10_p_value": -1.6333428949131483,
+      "median_p_value": 0.021011201066677636,
+      "median_log10_p_value": -1.677549121238903,
       "status": "ok",
       "groups": [
         {
@@ -2570,8 +2570,8 @@
       "num_groups": 12,
       "total_answer_tokens": 124556,
       "discarded_tail_tokens": 4556,
-      "median_p_value": 0.00014161098937565957,
-      "median_log10_p_value": -3.848903042973794,
+      "median_p_value": 0.00010552043060425137,
+      "median_log10_p_value": -3.976663445203648,
       "status": "ok",
       "groups": [
         {
@@ -2714,8 +2714,8 @@
       "num_groups": 6,
       "total_answer_tokens": 124556,
       "discarded_tail_tokens": 4556,
-      "median_p_value": 4.130014279977983e-09,
-      "median_log10_p_value": -8.384048446720133,
+      "median_p_value": 3.0284724385078573e-09,
+      "median_log10_p_value": -8.518776374405638,
       "status": "ok",
       "groups": [
         {
@@ -2792,8 +2792,8 @@
       "num_groups": 4,
       "total_answer_tokens": 124556,
       "discarded_tail_tokens": 4556,
-      "median_p_value": 6.070355091020732e-11,
-      "median_log10_p_value": -10.216785903725345,
+      "median_p_value": 3.406482841307593e-11,
+      "median_log10_p_value": -10.467693794290765,
       "status": "ok",
       "groups": [
         {
@@ -2842,5 +2842,6 @@
         }
       ]
     }
-  }
+  },
+  "aggregation": "ordinary_median"
 }

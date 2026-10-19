@@ -1,6 +1,6 @@
 {
   "signature": {
-    "schema": "kgw-pan-exact-blocks-simple1-cuda-v1",
+    "schema": "kgw-pan-exact-blocks-simple1-cuda-v2",
     "source_sha256": "597b843d28d31c353c7bb9b94a3b6dccb564cb45ac2c5252f6a1592ccd768efe",
     "tokenizer": {
       "path": "/shared/public_models/Qwen2.5-14B-Instruct",
@@ -27,7 +27,7 @@
     ]
   },
   "source_file": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
-  "method": "teacher-tokenizer answer IDs concatenated without separators; exact disjoint blocks; first token of each block is context only; no repetition deduplication; incomplete tail discarded; upper median of block p-values",
+  "method": "teacher-tokenizer answer IDs concatenated without separators; exact disjoint blocks; first token of each block is context only; no repetition deduplication; incomplete tail discarded; ordinary median of block p-values (arithmetic mean of the two middle p-values for even group counts)",
   "num_answers": 500,
   "total_answer_tokens": 159765,
   "budgets": {
@@ -3601,5 +3601,6 @@
         }
       ]
     }
-  }
+  },
+  "aggregation": "ordinary_median"
 }
