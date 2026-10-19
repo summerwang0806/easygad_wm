@@ -51,6 +51,9 @@ DEFAULT_KGW = "wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new.jsonl"
 # DEFAULT_KGW = "wm_test/dipper_upkgwwarmup_upkgwgad_gad_gamma0.5_delta3_new1_qwen2_5_0_5b_dolly15k_test.jsonl"
 
 
+# cleanwarmup_cleangad
+# DEFAULT_KGW = "wm_test/cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+DEFAULT_KGW = "wm_test/cleanwarmup_cleangad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 
 
 
