@@ -64,6 +64,12 @@ VLLM_USE_V1=0 CUDA_VISIBLE_DEVICES=2 python wm_test/generate_compare_score.py --
 ```bash
 conda activate wm
 python wm_test/evaluate_compare_metrics.py
+
+
+
+CUDA_VISIBLE_DEVICES=2 python wm_test/evaluate_compare_metrics.py
+
+
 ```
 
 默认读取上面的学生模型与基座模型 JSONL，并将每次结果追加到 `wm_test/detection_metrics_history.md`，不会覆盖之前记录。脚本会检查两边样本 ID 是否一致、标签是否正确，再根据 `z_score`（分数越高越像带水印）计算：
