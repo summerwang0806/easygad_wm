@@ -51,6 +51,24 @@ logger = logging.getLogger(__file__)
 logger.setLevel(os.getenv("VERL_LOGGING_LEVEL", "WARN"))
 
 
+def select_warmup_sft_targets(data: DataProto, training_stage: str) -> DataProto:
+    """Route optional warmup SFT targets without changing discriminator data."""
+    if training_stage != "warmup":
+        return data
+    fields = ("response", "input_ids", "attention_mask", "position_ids")
+    present = [f"sft_{field}" in data.batch for field in fields]
+    if not any(present):
+        return data
+    if not all(present):
+        raise ValueError("Separate warmup SFT targets require all four sft_* tensors")
+    # select creates a separate TensorDict container while sharing tensor storage.
+    # Replacing entries here leaves the critic's original teacher_* entries intact.
+    actor_data = data.select(batch_keys=list(data.batch.keys()))
+    for field in fields:
+        actor_data.batch[f"teacher_{field}"] = data.batch[f"sft_{field}"]
+    return actor_data
+
+
 class DataParallelPPOActor(BasePPOActor):
     def __init__(self, config, actor_module: nn.Module, actor_optimizer: torch.optim.Optimizer = None):
         """When optimizer is None, it is Reference Policy"""
@@ -493,6 +511,7 @@ class DataParallelPPOActor(BasePPOActor):
         temperature = data.meta_info["temperature"]  # temperature must be in the data.meta_info to avoid silent error
         multi_turn = data.meta_info.get("multi_turn", False)
         training_stage = data.meta_info.get("training_stage", "warmup")
+        data = select_warmup_sft_targets(data, training_stage)
 
         # TLGAD: Initialize EMA reference at the start of training (before any processing)
         if training_stage == "tlgad" and self.use_ema_reference and self.ema_reference_state is None:

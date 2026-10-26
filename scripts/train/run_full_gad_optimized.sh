@@ -12,9 +12,8 @@ export VLLM_USE_V1=0
 export RAY_TMPDIR="${RAY_TMPDIR:-/tmp/easygad-${USER:-user}}"
 
 
-export SWANLAB_PROJECT='easyGAD-wm'
-export SWANLAB_API_KEY='fJM4mt47P1Zxo1KEipLWe'
-export SWANLAB_MODE='cloud'
+export SWANLAB_PROJECT="${SWANLAB_PROJECT:-easyGAD-wm}"
+export SWANLAB_MODE="${SWANLAB_MODE:-cloud}"
 # export http_proxy=http://127.0.0.1:7890
 # export https_proxy=http://127.0.0.1:7890
 # export HTTP_PROXY="$http_proxy"
@@ -53,14 +52,18 @@ RESUME=False
 SKIP_WARMUP=False
 RESUME_MODE=disable
 RAY_NUM_CPUS=${RAY_NUM_CPUS:-8}
+DRY_RUN=False
+LOGGER=swanlab
 # TRAIN_FILE=data/dolly15k_qwen2_5_14b_kgw_train.parquet
 # VAL_FILE=data/dolly15k_qwen2_5_14b_kgw_test.parquet
 TRAIN_FILE=data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_newtrain.parquet
 VAL_FILE=data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtest.parquet
+WARMUP_TRAIN_FILE=""
+GAD_TRAIN_FILE=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --model|--reward_model|--exp_name|--nnodes|--warmup_epochs|--gad_epochs|--save_freq|--train_batch_size|--lr|--gpus_per_node|--gpu_memory_utilization|--work_dir|--test_freq|--ray_tmpdir|--ray_num_cpus)
+        --model|--reward_model|--exp_name|--nnodes|--warmup_epochs|--gad_epochs|--save_freq|--train_batch_size|--lr|--gpus_per_node|--gpu_memory_utilization|--work_dir|--test_freq|--ray_tmpdir|--ray_num_cpus|--warmup_train_file|--gad_train_file|--val_file|--logger)
             if [ $# -lt 2 ] || [[ "$2" == --* ]]; then
                 echo "Error: $1 requires a value" >&2
                 exit 1
@@ -141,6 +144,11 @@ while [[ $# -gt 0 ]]; do
             RAY_NUM_CPUS="$2"
             shift 2
             ;;
+        --warmup_train_file) WARMUP_TRAIN_FILE="$2"; shift 2 ;;
+        --gad_train_file) GAD_TRAIN_FILE="$2"; shift 2 ;;
+        --val_file) VAL_FILE="$2"; shift 2 ;;
+        --logger) LOGGER="$2"; shift 2 ;;
+        --dry_run) DRY_RUN=True; shift ;;
         *)
             echo "Error: unknown argument: $1" >&2
             exit 1
@@ -154,16 +162,28 @@ if [ -z "$EXP_NAME" ] || [ -z "$NNODES" ]; then
 fi
 # Initialize a separate critic backbone from the same original student model by default.
 REWARD_MODEL_PATH=${REWARD_MODEL_PATH:-$MODEL_PATH}
+WARMUP_TRAIN_FILE=${WARMUP_TRAIN_FILE:-$TRAIN_FILE}
+GAD_TRAIN_FILE=${GAD_TRAIN_FILE:-$TRAIN_FILE}
+case "$LOGGER" in
+    console) TRAINER_LOGGERS="['console']" ;;
+    swanlab) TRAINER_LOGGERS="['console','swanlab']" ;;
+    *) echo "Error: --logger must be console or swanlab" >&2; exit 1 ;;
+esac
 if [ "$N_GPUS_PER_NODE" != 1 ] && [ "$N_GPUS_PER_NODE" != 2 ]; then
     echo "Error: --gpus_per_node must be 1 or 2"
     exit 1
 fi
-for required_path in "$MODEL_PATH/config.json" "$REWARD_MODEL_PATH/config.json" "$TRAIN_FILE" "$VAL_FILE"; do
+for required_path in "$MODEL_PATH/config.json" "$REWARD_MODEL_PATH/config.json" "$WARMUP_TRAIN_FILE" "$GAD_TRAIN_FILE" "$VAL_FILE"; do
     if [ ! -f "$required_path" ]; then
         echo "Error: missing $required_path (run from the EasyGAD root)"
         exit 1
     fi
 done
+VISIBLE_GPU_COUNT=$(awk -F, '{print NF}' <<< "$CUDA_VISIBLE_DEVICES")
+if [ "$VISIBLE_GPU_COUNT" != "$N_GPUS_PER_NODE" ]; then
+    echo "Error: CUDA_VISIBLE_DEVICES count must match --gpus_per_node" >&2
+    exit 1
+fi
 if [ "$SKIP_WARMUP" = True ] && [ "$RESUME" != True ]; then
     echo "Error: --skip_warmup requires --resume and an existing warmup checkpoint" >&2
     exit 1
@@ -246,11 +266,19 @@ if [ "$RESUME" = True ]; then
     fi
 fi
 
+if [ "$DRY_RUN" = True ]; then
+    printf 'Warmup train: %s\nGAD train: %s\nValidation: %s\n' "$WARMUP_TRAIN_FILE" "$GAD_TRAIN_FILE" "$VAL_FILE"
+    printf 'Model: %s\nCritic: %s\nWork directory: %s\n' "$MODEL_PATH" "$REWARD_MODEL_PATH" "$WORK_DIR"
+    printf 'Epochs: warmup=%s, gad=%s; GPUs: %s; logger: %s\n' "$WARMUP_EPOCHS" "$GAD_EPOCHS" "$CUDA_VISIBLE_DEVICES" "$LOGGER"
+    echo "Configuration checks passed. No training, GPU initialization or logging service calls were started."
+    exit 0
+fi
+
 if ! mkdir -p "$RAY_TMPDIR"; then
     echo "Error: cannot create Ray temporary directory: $RAY_TMPDIR" >&2
     exit 1
 fi
-if ! timeout 30 swanlab verify; then
+if [ "$LOGGER" = swanlab ] && ! timeout 30 swanlab verify; then
     echo 'Error: SwanLab authentication failed. Check SwanLab login and network settings.' >&2
     exit 1
 fi
@@ -267,6 +295,7 @@ echo "Nodes: $NNODES"
 echo "Work Directory: $WORK_DIR"
 echo "CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
 echo "Resume mode: $RESUME_MODE; skip warmup: $SKIP_WARMUP"
+echo "Warmup training: $WARMUP_TRAIN_FILE; GAD training: $GAD_TRAIN_FILE; validation: $VAL_FILE"
 echo "Ray temporary directory: $RAY_TMPDIR; CPUs: $RAY_NUM_CPUS"
 echo "GPU profile: constrained_2gpu=$CONSTRAINED_2GPU, vLLM fraction=$GPU_MEMORY_UTILIZATION, actor offload=$ACTOR_OFFLOAD, eager=$ENFORCE_EAGER"
 echo "=============================================="
@@ -284,7 +313,7 @@ python3 -m verl.trainer.main_ppo \
     algorithm.adv_estimator=grpo \
     trainer.training_stage=warmup \
     data.prompt_key=content \
-    data.train_files=${TRAIN_FILE} \
+    "data.train_files=${WARMUP_TRAIN_FILE}" \
     data.val_files=${VAL_FILE} \
     data.train_batch_size=${TRAIN_BATCH_SIZE} \
     data.val_batch_size=${VAL_BATCH_SIZE} \
@@ -321,7 +350,7 @@ python3 -m verl.trainer.main_ppo \
     algorithm.kl_ctrl.kl_coef=${KL_COEF} \
     trainer.val_before_train=True \
     trainer.critic_warmup=10 \
-    trainer.logger=['console','swanlab'] \
+    "trainer.logger=${TRAINER_LOGGERS}" \
     trainer.project_name=${SWANLAB_PROJECT} \
     trainer.experiment_name=${EXP_NAME}_warmup \
     trainer.n_gpus_per_node=${N_GPUS_PER_NODE} \
@@ -414,7 +443,7 @@ python3 -m verl.trainer.main_ppo \
     algorithm.adv_estimator=grpo \
     trainer.training_stage=gad \
     data.prompt_key=content \
-    data.train_files=${TRAIN_FILE} \
+    "data.train_files=${GAD_TRAIN_FILE}" \
     data.val_files=${VAL_FILE} \
     data.train_batch_size=${TRAIN_BATCH_SIZE} \
     data.val_batch_size=${VAL_BATCH_SIZE} \
@@ -452,7 +481,7 @@ python3 -m verl.trainer.main_ppo \
     algorithm.kl_ctrl.kl_coef=${KL_COEF} \
     trainer.val_before_train=True \
     trainer.critic_warmup=0 \
-    trainer.logger=['console','swanlab'] \
+    "trainer.logger=${TRAINER_LOGGERS}" \
     trainer.project_name=${SWANLAB_PROJECT} \
     trainer.experiment_name=${EXP_NAME}_gad \
     trainer.n_gpus_per_node=${N_GPUS_PER_NODE} \

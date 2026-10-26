@@ -64,6 +64,12 @@ if [ "${1-}" = "-m" ] && [ "${2-}" = "verl.trainer.main_ppo" ]; then
     printf 'dummy dataloader state' > "$checkpoint/data.pt"
     printf '5' > "$work_dir/latest_checkpointed_iteration.txt"
     if [ "${WM_FAIL_STAGE-}" = "$stage" ]; then exit 9; fi
+elif [ "${1-}" = "tools/prepare_split_warmup_data.py" ]; then
+    output=
+    while [ $# -gt 0 ]; do
+        if [ "$1" = "--output_file" ]; then output=$2; shift 2; else shift; fi
+    done
+    printf 'dummy paired data' > "$output"
 elif [ "${1-}" = "tools/merge_model2hf.py" ]; then
     local_dir=
     while [ $# -gt 0 ]; do
@@ -103,7 +109,7 @@ class LauncherResumeTests(unittest.TestCase):
         (self.root / "model").mkdir()
         (self.root / "model/config.json").write_text("{}", encoding="utf-8")
         (self.root / "data").mkdir()
-        for split in ("train", "test"):
+        for split in ("up_dipper_newtrain", "newtest"):
             (self.root / f"data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_{split}.parquet").write_text("dummy", encoding="utf-8")
         self.work = self.root / "checkpoints/experiment"
         self.env = os.environ.copy()
@@ -122,7 +128,7 @@ class LauncherResumeTests(unittest.TestCase):
             env["WM_FAIL_STAGE"] = fail_stage
         return subprocess.run(
             [BASH, "launch.sh", "--model", "model", "--exp_name", "experiment", "--nnodes", "1", *args],
-            cwd=self.root, env=env, text=True, capture_output=True, timeout=30,
+            cwd=self.root, env=env, text=True, encoding="utf-8", capture_output=True, timeout=30,
         )
 
     def events(self):
@@ -184,6 +190,60 @@ class LauncherResumeTests(unittest.TestCase):
         self.assertIn("already exists", result.stdout + result.stderr)
         self.assertIn("--resume", result.stdout + result.stderr)
         self.assertEqual(self.events(), [])
+
+    def test_stage_data_overrides_reach_each_trainer(self):
+        for name in ("paired", "para", "validation"):
+            (self.root / f"data/{name}.parquet").write_text("dummy", encoding="utf-8")
+        result = self.launch(
+            "--warmup_train_file", "data/paired.parquet", "--gad_train_file", "data/para.parquet",
+            "--val_file", "data/validation.parquet", "--logger", "console",
+        )
+        self.assertSuccess(result)
+        warmup, gad = self.trainer_calls()
+        self.assertIn("data.train_files=data/paired.parquet", warmup)
+        self.assertIn("data.train_files=data/para.parquet", gad)
+        for args in (warmup, gad):
+            self.assertIn("data.val_files=data/validation.parquet", args)
+            self.assertIn("trainer.logger=['console']", args)
+
+    def test_dry_run_starts_no_training_or_merging(self):
+        result = self.launch("--dry_run", "--logger", "console")
+        self.assertSuccess(result)
+        self.assertIn("Configuration checks passed", result.stdout)
+        self.assertEqual(self.events(), [])
+        self.assertFalse(self.work.exists())
+
+    def test_split_wrapper_preserves_all_non_data_training_arguments(self):
+        self.assertSuccess(self.launch())
+        baseline = self.trainer_calls()
+        self.clear_calls()
+        for name in ("scripts/train", "verl/utils/dataset", "verl/workers/actor"):
+            (self.root / name).mkdir(parents=True, exist_ok=True)
+        wrapper_name = "run_full_gad_kgwD_paraSFT_paraGAD_optimized.sh"
+        shutil.copyfile(REPO_ROOT / "scripts/train" / wrapper_name, self.root / "scripts/train" / wrapper_name)
+        shutil.copyfile(self.root / "launch.sh", self.root / "scripts/train/run_full_gad_optimized.sh")
+        (self.root / "verl/utils/dataset/rl_dataset.py").write_text("build_sft_response_tensors", encoding="utf-8")
+        (self.root / "verl/workers/actor/dp_actor.py").write_text("select_warmup_sft_targets", encoding="utf-8")
+        result = subprocess.run(
+            [BASH, f"scripts/train/{wrapper_name}", "--model", "model", "--exp_name", "experiment", "--work_dir", "compare_split"],
+            cwd=self.root, env=self.env, text=True, encoding="utf-8", capture_output=True, timeout=30,
+        )
+        self.assertSuccess(result)
+        variant = self.trainer_calls()
+        self.assertEqual(len(baseline), 2)
+        self.assertEqual(len(variant), 2)
+        for stage, old, new in zip(("warmup", "gad"), baseline, variant):
+            with self.subTest(stage=stage):
+                if stage == "warmup":
+                    self.assertIn("data.train_files=data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_kgwD_paraSFT_newtrain.parquet", new)
+                else:
+                    self.assertEqual([arg for arg in old if arg.startswith("data.train_files=")],
+                                     [arg for arg in new if arg.startswith("data.train_files=")])
+                def normalized(args):
+                    return [arg.replace("compare_split/experiment/", "checkpoints/experiment/")
+                            for arg in args if not arg.startswith("data.train_files=")]
+                self.assertEqual(normalized(old), normalized(new))
+                self.assertIn("trainer.logger=['console','swanlab']", new)
 
     def test_resume_requires_existing_experiment(self):
         result = self.launch("--resume")

@@ -34,6 +34,40 @@ from verl.utils.model import compute_position_id_with_mask
 logger = logging.getLogger(__name__)
 
 
+def build_sft_response_tensors(
+    tokenizer, response, input_ids, attention_mask, position_ids, max_response_length, truncation, eos_token_id=None
+):
+    """Build an optional actor-only SFT target using the rollout teacher convention."""
+    if not isinstance(response, str) or not response.strip():
+        raise ValueError("sft_response must be a non-empty string")
+    tokenized = tokenizer(response, return_tensors="pt", add_special_tokens=False)
+    response_ids, _ = verl_F.postprocess_data(
+        input_ids=tokenized["input_ids"],
+        attention_mask=tokenized["attention_mask"],
+        max_length=max_response_length,
+        pad_token_id=tokenizer.eos_token_id,
+        left_pad=False,
+        truncation=truncation,
+    )
+    response_ids = response_ids.long()
+    # vLLM uses generation_config EOS IDs for masks, while teacher padding uses
+    # tokenizer EOS. These may differ or include multiple stopping tokens.
+    response_mask = verl_F.get_response_mask(
+        response_id=response_ids,
+        eos_token=tokenizer.eos_token_id if eos_token_id is None else eos_token_id,
+        dtype=attention_mask.dtype,
+    )
+    response_positions = position_ids[..., -1:] + torch.arange(
+        1, response_ids.size(1) + 1, device=position_ids.device
+    ).unsqueeze(0)
+    return {
+        "sft_response": response_ids[0],
+        "sft_input_ids": torch.cat((input_ids, response_ids), dim=-1)[0],
+        "sft_attention_mask": torch.cat((attention_mask, response_mask), dim=-1)[0],
+        "sft_position_ids": torch.cat((position_ids, response_positions), dim=-1)[0],
+    }
+
+
 def collate_fn(data_list: list[dict]) -> dict:
     """
     Collate a batch of sample dicts into batched tensors and arrays.
@@ -124,6 +158,17 @@ class RLHFDataset(Dataset):
 
         self._download()
         self._read_files_and_tokenize()
+        self.sft_eos_token_id = self.tokenizer.eos_token_id
+        if "sft_response" in self.dataframe.column_names:
+            # Match fsdp_workers' rollout EOS source without loading generation
+            # configuration for ordinary datasets that have no separate target.
+            from verl.utils.model import get_generation_config
+
+            generation_config = get_generation_config(
+                self.tokenizer.name_or_path, trust_remote_code=self.config.get("trust_remote_code", False)
+            )
+            if generation_config is not None:
+                self.sft_eos_token_id = generation_config.eos_token_id
 
     def _download(self, use_origin_parquet=False):
         from verl.utils.fs import copy_to_local
@@ -215,6 +260,10 @@ class RLHFDataset(Dataset):
         Note that we also return the raw_input_ids so that it can be combined with other chat template
         """
         row_dict: dict = self.dataframe[item]
+        has_sft_response = "sft_response" in row_dict
+        sft_response = row_dict.pop("sft_response", None)
+        if has_sft_response and (self.processor is not None or self.image_key in row_dict or self.video_key in row_dict):
+            raise ValueError("Separate sft_response targets currently support text-only data")
         messages = self._build_messages(row_dict)
         
         teacher_response = None
@@ -310,6 +359,11 @@ class RLHFDataset(Dataset):
             row_dict["position_ids"] = position_ids[0]
             if teacher_response is not None:
                 row_dict["teacher_response"] = teacher_response_ids[0]
+            if has_sft_response:
+                row_dict.update(build_sft_response_tensors(
+                    self.tokenizer, sft_response, input_ids, attention_mask, position_ids,
+                    self.max_response_length, self.truncation, eos_token_id=self.sft_eos_token_id,
+                ))
         else:
             row_dict["input_ids"] = input_ids
             row_dict["attention_mask"] = attention_mask
