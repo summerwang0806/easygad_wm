@@ -45,6 +45,7 @@ DEFAULT_KGW = "wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new_strength3.jsonl"
 # DEFAULT_KGW = "wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new.jsonl"
 
 
+
 # 没有洗水印的
 # DEFAULT_KGW = "wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl"
 
