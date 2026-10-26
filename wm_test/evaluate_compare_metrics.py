@@ -637,6 +637,7 @@ def main() -> None:
     result["per_group_p_value_files"] = grouped_caches
     nonrepetitive_summaries = {}
     nonrepetitive_caches = {}
+    nonrepetitive_payloads = {}
     for label, path in (("kgw", args.kgw_file), ("clean", args.clean_file)):
         payload, cache = load_nonrepetitive_grouped_pvalues(
             path.resolve(), Path(args.tokenizer or DEFAULT_DETECTOR_TOKENIZER),
@@ -644,6 +645,7 @@ def main() -> None:
         )
         nonrepetitive_summaries[label] = summarize_nonrepetitive_grouped(payload)
         nonrepetitive_caches[label] = str(cache)
+        nonrepetitive_payloads[label] = payload
     result["grouped_p_values_without_severe_repetition"] = nonrepetitive_summaries
     result["grouped_p_value_without_severe_repetition_method"] = NONREPETITIVE_GROUPED_P_VALUE_METHOD
     result["per_group_p_value_without_severe_repetition_files"] = nonrepetitive_caches
@@ -663,6 +665,8 @@ def main() -> None:
                 max_length=args.ppl_max_length,
                 overflow=args.ppl_overflow,
             ),
+            repetition_filters=nonrepetitive_payloads,
+            repetition_filter_files=nonrepetitive_caches,
         )
     timestamp = datetime.now().astimezone().isoformat(timespec="seconds")
     result["evaluated_at"] = timestamp

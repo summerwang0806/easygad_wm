@@ -7,6 +7,7 @@ token-weighted likelihood calculation rather than implementation details.
 
 from copy import deepcopy
 import contextlib
+import hashlib
 import io
 import json
 import math
@@ -172,12 +173,26 @@ class PPLFileTests(unittest.TestCase):
         values.update(overrides)
         return ppl.PPLConfig(**values)
 
-    def evaluate(self, sources, backend=None, config=None):
+    def evaluate(self, sources, backend=None, config=None, **quality_options):
         backend = backend or KnownLikelihoodBackend()
         with patch.object(ppl, "_load_backend", return_value=backend) as loader, \
                 patch.object(ppl, "_load_tokenizer", return_value=CharacterTokenizer()):
-            result = ppl.evaluate_ppl_files(sources, config or self.config())
+            result = ppl.evaluate_ppl_files(sources, config or self.config(), **quality_options)
         return result, backend, loader.call_count
+
+    def repetition_payload(self, source):
+        from wm_test import nonrepetitive_grouped_pvalues as filtered
+
+        rows = [json.loads(line) for line in source.read_text(encoding="utf-8").splitlines() if line.strip()]
+        for row in rows:
+            row["num_tokens"] = len(CharacterTokenizer().encode(row["answer"], add_special_tokens=False))
+        _, filtering = filtered.filter_severely_repetitive_answers(rows, CharacterTokenizer())
+        return {
+            "signature": {"schema": filtered.SCHEMA,
+                          "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+                          "severe_repetition_threshold": 0.5},
+            "filtering": filtering,
+        }
 
 
 class PromptBoundaryTests(PPLFileTests):
@@ -339,6 +354,130 @@ class LikelihoodAndCacheTests(PPLFileTests):
         self.assertIsNone(rows[0]["ppl"])
 
 
+class PPLQualitySummaryTests(PPLFileTests):
+    def quality_fixture(self):
+        # Four answers, two PPL=2 and two PPL=4, with deliberately unequal
+        # lengths. Only the four-token "drop" answer repeats above 50%.
+        return self.write_rows("quality.jsonl", [self.row("a", "a"),
+            self.row("drop", "aaaa"), self.row("b", "bbb"), self.row("other", "bb")])
+
+    def test_median_handles_overflowing_sample_when_even_arithmetic_mean_is_finite(self):
+        finite = {"id": "finite", "status": "ok", "nll_sum": math.log(2),
+                  "scored_tokens": 1, "answer_tokens": 1, "ppl": 2.0}
+        overflow = {"id": "overflow", "status": "ppl_overflow", "nll_sum": 710.0,
+                    "scored_tokens": 1, "answer_tokens": 1, "ppl": None}
+        # exp(710) itself overflows float64, but its half is representable.
+        # The ordinary even median must include that sample, not drop it or
+        # report null merely because the cached individual PPL is null.
+        even = ppl.summarize_ppl_quality([overflow, finite], "offline-source")
+        expected = math.exp(710.0 - math.log(2))
+        self.assertTrue(math.isclose(even["median_per_answer_ppl"], expected, rel_tol=1e-12))
+        self.assertEqual(even["median_samples"], 2)
+        self.assertEqual(even["median_status"], "ok")
+        larger = {**overflow, "id": "larger", "nll_sum": 711.0}
+        odd = ppl.summarize_ppl_quality([larger, finite, overflow], "offline-source")
+        self.assertEqual(odd["median_samples"], 3)
+        self.assertIsNone(odd["median_per_answer_ppl"])
+        self.assertEqual(odd["median_status"], "ppl_overflow")
+        json.dumps({"even": even, "odd": odd}, allow_nan=False)
+
+    def test_even_median_and_filtered_ppl_reuse_original_filter_decisions(self):
+        source = self.quality_fixture()
+        filtering = self.repetition_payload(source)
+        self.assertEqual(filtering["filtering"]["removed_answer_ids"], ["drop"])
+        # Filtering rows are intentionally shuffled: matching must use IDs.
+        filtering["filtering"]["per_answer"].reverse()
+        before = source.read_bytes()
+        filter_file = self.root / "nonrepetitive.json"
+        filter_file.write_text(json.dumps(filtering), encoding="utf-8")
+        result, _, _ = self.evaluate({"kgw": source},
+            repetition_filters={"kgw": filtering}, repetition_filter_files={"kgw": filter_file})
+        summary = result["files"]["kgw"]
+        self.assertAlmostEqual(summary["token_weighted_ppl"], 2 ** 1.5)
+        self.assertEqual(summary["median_samples"], 4)
+        self.assertAlmostEqual(summary["median_per_answer_ppl"], 3.0)
+        filtered = summary["without_severe_repetition"]
+        self.assertEqual(filtered["samples"], 3)
+        self.assertEqual(filtered["valid_samples"], 3)
+        self.assertEqual(filtered["scored_tokens"], 6)
+        self.assertAlmostEqual(filtered["token_weighted_ppl"], 2 ** (11 / 6))
+        self.assertEqual(filtered["num_answers_before"], 4)
+        self.assertEqual(filtered["num_answers_removed"], 1)
+        self.assertEqual(filtered["num_answers_retained"], 3)
+        self.assertEqual(filtered["removed_answer_ids"], ["drop"])
+        self.assertEqual(filtered["filtering_source_file"], str(filter_file))
+        self.assertTrue(filtered["complete"])
+        self.assertEqual(source.read_bytes(), before)
+
+    def test_existing_ppl_cache_adds_quality_stats_without_loading_or_rewriting(self):
+        source = self.quality_fixture()
+        result, _, _ = self.evaluate({"kgw": source})
+        summary = result["files"]["kgw"]
+        cache = Path(summary["per_sample_file"])
+        before = cache.read_bytes(), source.read_bytes()
+        # The derived median/filter values must not be written into the
+        # schema-v1 footer: older scoring runs have exactly this layout.
+        footer = json.loads(cache.read_text(encoding="utf-8").splitlines()[-1])
+        self.assertNotIn("median_per_answer_ppl", footer)
+        self.assertNotIn("without_severe_repetition", footer)
+        filtering = self.repetition_payload(source)
+        with patch.object(ppl, "_load_backend", side_effect=AssertionError("Cached run must not load LM")), \
+                patch.object(ppl, "_load_tokenizer", side_effect=AssertionError("Cached run must not load tokenizer")):
+            cached = ppl.evaluate_ppl_files({"kgw": source}, self.config(),
+                                           repetition_filters={"kgw": filtering})
+        updated = cached["files"]["kgw"]
+        self.assertTrue(updated["cache_reused"])
+        self.assertAlmostEqual(updated["median_per_answer_ppl"], 3.0)
+        self.assertAlmostEqual(updated["without_severe_repetition"]["token_weighted_ppl"], 2 ** (11 / 6))
+        self.assertEqual((cache.read_bytes(), source.read_bytes()), before)
+
+    def test_all_answers_removed_returns_null_filtered_ppl_and_zero_retained_count(self):
+        source = self.write_rows("repetitive.jsonl", [self.row("repeat", "aaaa")])
+        filtering = self.repetition_payload(source)
+        result, _, _ = self.evaluate({"kgw": source}, repetition_filters={"kgw": filtering})
+        filtered = result["files"]["kgw"]["without_severe_repetition"]
+        self.assertEqual(filtered["samples"], 0)
+        self.assertEqual(filtered["num_answers_retained"], 0)
+        self.assertEqual(filtered["scored_tokens"], 0)
+        self.assertIsNone(filtered["token_weighted_ppl"])
+        json.dumps(result, allow_nan=False)
+
+    def test_filter_with_wrong_source_or_inconsistent_ids_is_rejected(self):
+        source = self.quality_fixture()
+        good = self.repetition_payload(source)
+        for change in ("hash", "id", "count", "rule"):
+            filtering = deepcopy(good)
+            if change == "hash":
+                filtering["signature"]["source_sha256"] = "0" * 64
+            elif change == "id":
+                filtering["filtering"]["removed_answer_ids"] = ["absent"]
+            elif change == "count":
+                filtering["filtering"]["num_answers_retained"] = 4
+            else:
+                filtering["filtering"]["per_answer"][0]["excluded"] = True
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                self.evaluate({"kgw": source}, repetition_filters={"kgw": filtering})
+
+    def test_report_displays_student_and_clean_quality_values_and_filter_counts(self):
+        student = self.quality_fixture()
+        clean = self.write_rows("clean.jsonl", [self.row("clean-only", "b")])
+        filters = {"kgw": self.repetition_payload(student), "clean": self.repetition_payload(clean)}
+        result, _, _ = self.evaluate({"kgw": student, "clean": clean}, repetition_filters=filters)
+        handle = io.StringIO()
+        ppl.write_ppl_summary(handle, result)
+        report = handle.getvalue()
+        student_row = next(line for line in report.splitlines() if line.startswith("| kgw |"))
+        clean_row = next(line for line in report.splitlines() if line.startswith("| clean |"))
+        self.assertIn("2.828427", student_row)
+        self.assertIn("3.000000", student_row)
+        self.assertIn(f"{2 ** (11 / 6):.6f}", student_row)
+        self.assertIn("3/4", student_row)
+        self.assertIn("4.000000", clean_row)
+        self.assertIn("1/1", clean_row)
+        self.assertIn("中位数", report)
+        self.assertIn("严重重复", report)
+
+
 class EvaluatorIntegrationTests(PPLFileTests):
     def test_enabled_and_disabled_runs_both_append_history_without_regeneration(self):
         from wm_test import evaluate_compare_metrics as evaluator
@@ -372,7 +511,8 @@ class EvaluatorIntegrationTests(PPLFileTests):
             stack.enter_context(patch.object(evaluator, "load_grouped_pvalues", return_value=({}, self.root / "g.json")))
             stack.enter_context(patch.object(evaluator, "summarize_grouped", return_value={}))
             stack.enter_context(patch.object(evaluator, "write_grouped_summary"))
-            stack.enter_context(patch.object(evaluator, "load_nonrepetitive_grouped_pvalues", return_value=({}, self.root / "n.json")))
+            stack.enter_context(patch.object(evaluator, "load_nonrepetitive_grouped_pvalues",
+                side_effect=lambda path, *args: (self.repetition_payload(path), self.root / "n.json")))
             stack.enter_context(patch.object(evaluator, "summarize_nonrepetitive_grouped", return_value={}))
             stack.enter_context(patch.object(evaluator, "write_nonrepetitive_grouped_summary"))
             calculate = stack.enter_context(patch.object(evaluator, "evaluate_ppl_files", return_value=payload))
@@ -382,6 +522,9 @@ class EvaluatorIntegrationTests(PPLFileTests):
             evaluator.main()
         self.assertEqual(calculate.call_count, 1)
         self.assertEqual(calculate.call_args.args[0], {"kgw": kgw.resolve(), "clean": clean.resolve()})
+        self.assertEqual(set(calculate.call_args.kwargs["repetition_filters"]), {"kgw", "clean"})
+        self.assertEqual(calculate.call_args.kwargs["repetition_filters"]["kgw"]["signature"]["source_sha256"],
+                         hashlib.sha256(kgw.read_bytes()).hexdigest())
         scoring_config = calculate.call_args.args[1]
         self.assertEqual(scoring_config.model_path, Path("/shared/public_models/Llama-3-8B"))
         self.assertEqual(scoring_config.generation_tokenizer, Path("/shared/public_models/Qwen2.5-0.5B"))

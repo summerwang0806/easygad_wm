@@ -304,7 +304,7 @@ def _summarize(records: list[dict[str, Any]]) -> dict[str, Any]:
             "skipped_empty_answers": empty, "complete": nonfinite == 0 and empty == 0,
             "nonfinite_samples": nonfinite, "status": status, "total_nll": nll,
             "scored_tokens": tokens, "mean_nll": mean_nll, "token_weighted_ppl": ppl,
-            "mean_answer_tokens": sum(row["answer_tokens"] for row in records) / len(records),
+            "mean_answer_tokens": sum(row["answer_tokens"] for row in records) / len(records) if records else None,
             "source_prompt_truncated_samples": sum(bool(row["source_prompt_truncated"]) for row in records),
             "reference_prompt_truncated_samples": sum(row["reference_prompt_tokens_removed"] > 0 for row in records),
             "generation_configurations": list(generation_configs.values()),
@@ -315,7 +315,89 @@ def _summarize(records: list[dict[str, Any]]) -> dict[str, Any]:
             "generation_tokenizer_paths": sorted({row["generation_tokenizer"] for row in records if row.get("generation_tokenizer")})}
 
 
-def _read_cache(path: Path, metadata: dict[str, Any], source_rows: list[tuple[int, dict[str, Any], str]]) -> dict[str, Any]:
+def _median_ppl(records: list[dict[str, Any]]) -> dict[str, Any]:
+    # Keep overflowing answers in the ordering. For an even sample, average
+    # the middle PPLs, using log-mean-exp only if a middle PPL overflowed.
+    values = sorted((row for row in records if row["status"] in {"ok", "ppl_overflow"}),
+                    key=lambda row: row["nll_sum"] / row["scored_tokens"])
+    value = None
+    if values:
+        middle = len(values) // 2
+        upper = values[middle]
+        value = upper["ppl"]
+        if len(values) % 2 == 0:
+            lower = values[middle - 1]
+            if lower["ppl"] is not None and upper["ppl"] is not None:
+                value = lower["ppl"] / 2 + upper["ppl"] / 2
+            else:
+                lower_log = lower["nll_sum"] / lower["scored_tokens"]
+                upper_log = upper["nll_sum"] / upper["scored_tokens"]
+                median_log = upper_log + math.log1p(math.exp(lower_log - upper_log)) - math.log(2)
+                value = math.exp(median_log) if median_log <= math.log(sys.float_info.max) else None
+    finite = value is not None and math.isfinite(value)
+    return {"median_per_answer_ppl": value if finite else None,
+            "median_samples": len(values),
+            "median_status": "ok" if finite else "ppl_overflow" if values else "no_scored_answers"}
+
+
+def summarize_ppl_quality(
+    records: list[dict[str, Any]], source_sha256: str,
+    repetition_filter: dict[str, Any] | None = None, filter_file: str | Path | None = None,
+) -> dict[str, Any]:
+    """Derive quality statistics without changing the immutable v1 LM cache.
+
+    Reuse the watermark evaluator's teacher-tokenizer repetition decisions, but
+    aggregate reference-LM NLL and reference-token counts for the retained IDs.
+    """
+    result = {**_median_ppl(records), "without_severe_repetition": None}
+    if repetition_filter is None:
+        return result
+    try:
+        signature = repetition_filter["signature"]
+        filtering = repetition_filter["filtering"]
+        if signature["source_sha256"] != source_sha256:
+            raise ValueError("source SHA256 does not match PPL input")
+        if (signature["severe_repetition_threshold"] != 0.5
+                or filtering["repetition_threshold"] != 0.5 or filtering["comparison"] != ">"
+                or filtering["scope"] != "answer-internal adjacent token pairs; prompt excluded"):
+            raise ValueError("expected answer-internal adjacent-pair repetition > 0.5")
+        ids = [row["id"] for row in records]
+        if len(set(ids)) != len(ids):
+            raise ValueError("duplicate PPL answer IDs")
+        decisions = {}
+        for item in filtering["per_answer"]:
+            sample_id, excluded, ratio = item["id"], item["excluded"], item["repetition_ratio"]
+            if (sample_id in decisions or not isinstance(excluded, bool)
+                    or not isinstance(ratio, (int, float)) or isinstance(ratio, bool)
+                    or not math.isfinite(ratio) or not 0 <= ratio <= 1 or excluded != (ratio > 0.5)):
+                raise ValueError("invalid or duplicate repetition decision")
+            decisions[sample_id] = excluded
+        if set(decisions) != set(ids):
+            raise ValueError("repetition answer IDs do not match PPL answer IDs")
+        removed = [sample_id for sample_id in ids if decisions[sample_id]]
+        declared_removed = filtering["removed_answer_ids"]
+        retained = [row for row in records if not decisions[row["id"]]]
+        if (len(declared_removed) != len(set(declared_removed)) or set(declared_removed) != set(removed)
+                or filtering["num_answers_before"] != len(records)
+                or filtering["num_answers_retained"] != len(retained)
+                or filtering["num_answers_removed"] != len(removed)
+                or filtering["fraction_answers_removed"] != (len(removed) / len(records) if records else 0.0)):
+            raise ValueError("repetition counts or removed answer IDs do not match decisions")
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError(f"invalid PPL repetition filter {filter_file or '<payload>'}: {error}") from error
+    result["without_severe_repetition"] = {
+        **_summarize(retained), **_median_ppl(retained),
+        "num_answers_before": len(records), "num_answers_retained": len(retained),
+        "num_answers_removed": len(removed),
+        "fraction_answers_removed": len(removed) / len(records) if records else 0.0,
+        "repetition_threshold": 0.5, "comparison": ">", "scope": filtering["scope"],
+        "removed_answer_ids": removed, "filtering_source_file": str(filter_file) if filter_file else None,
+        "filtering_source_sha256": source_sha256, "filtering_tokenizer": signature.get("tokenizer"),
+    }
+    return result
+
+
+def _read_cache(path: Path, metadata: dict[str, Any], source_rows: list[tuple[int, dict[str, Any], str]]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     try:
         with path.open(encoding="utf-8") as handle:
             objects = [json.loads(line) for line in handle if line.strip()]
@@ -347,7 +429,7 @@ def _read_cache(path: Path, metadata: dict[str, Any], source_rows: list[tuple[in
         summary = _summarize(records)
         if objects[-1] != {"type": "summary", "records_sha256": _digest(records), **summary}:
             raise ValueError("record integrity or summary mismatch")
-        return summary
+        return summary, records
     except (ValueError, KeyError, TypeError, OverflowError) as error:
         raise ValueError(f"invalid PPL cache {path}: {error}; remove the invalid file explicitly before recomputing") from error
 
@@ -369,9 +451,15 @@ def _write_cache(path: Path, metadata: dict[str, Any], records: list[dict[str, A
             temporary.unlink(missing_ok=True)
 
 
-def evaluate_ppl_files(paths: dict[str, Path], config: PPLConfig) -> dict[str, Any]:
+def evaluate_ppl_files(
+    paths: dict[str, Path], config: PPLConfig, *,
+    repetition_filters: dict[str, dict[str, Any]] | None = None,
+    repetition_filter_files: dict[str, str | Path] | None = None,
+) -> dict[str, Any]:
     """Score each file once; content-addressed complete caches avoid reloading LM."""
     config.validate()
+    if repetition_filters is not None and set(repetition_filters) != set(paths):
+        raise ValueError("PPL repetition filters must cover exactly the evaluated file groups")
     model_path = Path(config.model_path).expanduser().resolve()
     config = PPLConfig(model_path=model_path, device=config.device, dtype=config.dtype,
                        generation_tokenizer=config.generation_tokenizer,
@@ -407,9 +495,14 @@ def evaluate_ppl_files(paths: dict[str, Path], config: PPLConfig) -> dict[str, A
                         "configuration": configuration, "generation_tokenizer_assets": tokenizer_assets}
             cache_path = path.with_name(f"{path.stem}.ppl.{_digest(metadata)[:20]}.jsonl")
             if cache_path.exists():
-                summary = _read_cache(cache_path, metadata, source_rows)
+                summary, records = _read_cache(cache_path, metadata, source_rows)
+                quality = summarize_ppl_quality(
+                    records, source_hash,
+                    repetition_filters[label] if repetition_filters is not None else None,
+                    (repetition_filter_files or {}).get(label),
+                )
                 print(f"[PPL {label}] {len(source_rows)}/{len(source_rows)} cache reused: {cache_path}", file=sys.stderr, flush=True)
-                files[label] = {**summary, "source_path": str(path), "source_sha256": source_hash,
+                files[label] = {**summary, **quality, "source_path": str(path), "source_sha256": source_hash,
                                 "per_sample_file": str(cache_path), "cache_reused": True}
                 continue
             if backend is None:
@@ -459,7 +552,12 @@ def evaluate_ppl_files(paths: dict[str, Path], config: PPLConfig) -> dict[str, A
                 raise RuntimeError(f"PPL input changed during scoring: {path}; no cache was published")
             summary = _summarize(records)
             _write_cache(cache_path, metadata, records, summary)
-            files[label] = {**summary, "source_path": str(path), "source_sha256": source_hash,
+            quality = summarize_ppl_quality(
+                records, source_hash,
+                repetition_filters[label] if repetition_filters is not None else None,
+                (repetition_filter_files or {}).get(label),
+            )
+            files[label] = {**summary, **quality, "source_path": str(path), "source_sha256": source_hash,
                             "per_sample_file": str(cache_path), "cache_reused": False}
     finally:
         if backend is not None:
@@ -474,14 +572,26 @@ def write_ppl_summary(handle: TextIO, result: dict[str, Any]) -> None:
     if not result.get("enabled"):
         return
     handle.write("\n### 固定参考模型 PPL（只评分已保存的回答）\n\n")
-    handle.write("| 文件组 | 总体 PPL ↓ | 有效样本/总样本 | 计分回答 tokens | 平均回答 tokens | 状态 | 缓存复用 |\n")
-    handle.write("|---|---:|---:|---:|---:|---|---|\n")
+    handle.write("| 文件组 | 总体 PPL ↓ | 逐回答 PPL 中位数 ↓ | 剔除严重重复后总体 PPL ↓ | 保留回答数/原回答数 | 有效样本/总样本 | 状态 | 缓存复用 |\n")
+    handle.write("|---|---:|---:|---:|---:|---:|---|---|\n")
+
+    def format_ppl(value: float | None) -> str:
+        return f"{value:.6f}" if value is not None else "null"
+
     for label, summary in result["files"].items():
-        ppl = summary["token_weighted_ppl"]
-        handle.write(f"| {label} | {ppl:.6f}" if ppl is not None else f"| {label} | null")
-        handle.write(f" | {summary['valid_samples']}/{summary['samples']} | {summary['scored_tokens']}"
-                     f" | {summary['mean_answer_tokens']:.2f} | {summary['status']} | {summary['cache_reused']} |\n")
+        filtered = summary["without_severe_repetition"]
+        filtered_ppl = format_ppl(filtered["token_weighted_ppl"]) if filtered is not None else "N/A"
+        retained = f"{filtered['num_answers_retained']}/{filtered['num_answers_before']}" if filtered is not None else "N/A"
+        handle.write(f"| {label} | {format_ppl(summary['token_weighted_ppl'])}"
+                     f" | {format_ppl(summary['median_per_answer_ppl'])} | {filtered_ppl} | {retained}"
+                     f" | {summary['valid_samples']}/{summary['samples']} | {summary['status']} | {summary['cache_reused']} |\n")
     handle.write("\n总体 PPL = exp(全部有效回答 NLL 总和 / 全部计分回答 token 数)，不是逐条 PPL 的算术平均。\n")
+    handle.write("逐回答 PPL 中位数对全量有效回答的 PPL 排序；偶数条取中间两个 PPL 的算术平均，"
+                 "不对平均 NLL 取中位数后再 exp。空回答或异常 loss 不计入，并单独报告数量。\n")
+    handle.write("剔除严重重复后总体 PPL：复用同源重复筛选缓存，按教师 tokenizer 的回答内部相邻 token 对重复率"
+                 "严格 > 50% 剔除整条回答，prompt 不参与判断；只汇总保留回答原有的参考模型 NLL 和参考 tokenizer token 数。"
+                 "保留回答的文本不变，不删除文内 token，不丢弃尾部。KGW 与 clean 各自筛选，保留回答数含未成功评分回答。"
+                 "N/A 表示未提供筛选，null 表示无可计算数值；筛选后结果是子集统计，全量结果另行保留。\n")
     handle.write("原生成 tokenizer 恢复实际生成 prompt；参考 tokenizer 对 prompt/answer 分开编码后拼接；只计回答，包含首回答 token。"
                  "Base 参考模型不再套用 chat template；只添加一次参考 BOS，不额外评分 EOS；输入 JSONL 不修改。\n\n")
     if result["configuration"]["generation_tokenizer"] is None:
@@ -492,9 +602,19 @@ def write_ppl_summary(handle: TextIO, result: dict[str, Any]) -> None:
         handle.write(f"- {label}: `{summary['source_path']}`；SHA256 `{summary['source_sha256']}`；"
                      f"逐条明细 `{summary['per_sample_file']}`；空回答 {summary['skipped_empty_answers']}；"
                      f"异常 loss {summary['nonfinite_samples']}；原生成截断 {summary['source_prompt_truncated_samples']}；"
-                     f"参考上下文截断 {summary['reference_prompt_truncated_samples']}。\n")
+                     f"参考上下文截断 {summary['reference_prompt_truncated_samples']}；计分回答 tokens {summary['scored_tokens']}；"
+                     f"平均回答 tokens {summary['mean_answer_tokens']:.2f}；中位数样本数 {summary['median_samples']}"
+                     f"（状态 {summary['median_status']}）。\n")
         if not summary["complete"]:
             handle.write(f"  **{label} 的评测不完整：总体值只覆盖有效回答，不能作为全量样本 PPL。**\n")
+        filtered = summary["without_severe_repetition"]
+        if filtered is not None:
+            handle.write(f"  剔除严重重复回答 {filtered['num_answers_removed']}（{filtered['fraction_answers_removed']:.2%}）；"
+                         f"保留回答中有效评分 {filtered['valid_samples']}/{filtered['samples']}；"
+                         f"保留回答计分 tokens {filtered['scored_tokens']}；状态 {filtered['status']}；"
+                         f"重复筛选缓存 `{filtered['filtering_source_file']}`。\n")
+            if not filtered["complete"]:
+                handle.write(f"  **{label} 的筛选后评测不完整：筛选后 PPL 仅覆盖成功评分的保留回答。**\n")
         handle.write("\n  生成文本配置（种子逐条保存在明细中）：\n\n```json\n")
         handle.write(json.dumps({"student_model_paths": summary["student_model_paths"],
                                  "generation_tokenizer_paths": summary["generation_tokenizer_paths"],
