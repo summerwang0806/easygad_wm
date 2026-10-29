@@ -1,0 +1,44 @@
+{
+  "metric": "Seq-Rep-3",
+  "method_source": "wm_test/evaluate_compare_metrics.py:evaluate_seq_rep3",
+  "method_source_sha256": "a97dde66bbf40e86b191d7e309db4610710b976696e6acc17bd8f053445415c7",
+  "note": "Warmup computed from saved answers with user authorization; GAD recomputed and matched the saved 2026-10-29T19:45:29+08:00 record; no generation or model calls.",
+  "models": {
+    "warmup": {
+      "mean": 0.10055926909243072,
+      "median": 0.0264557670772676,
+      "num_samples": 500,
+      "num_short_answers": 0,
+      "num_empty_answers": 0,
+      "evaluated_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\cleanD_dipperparaSFT_dipperparagad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": "cf7854f65e800bde67c4cbb0bef89e42beaabd0f5a763438c8f20b453fe56b2b",
+      "ngram_size": 3,
+      "tokenization": "answer.split(); whitespace-delimited words; case and punctuation preserved",
+      "scope": "answer only; overlapping trigrams within each complete original answer; no filtering or cross-answer trigrams",
+      "short_answer_policy": "answers with fewer than 3 words, including empty answers, contribute 0; counts reported",
+      "aggregation": {
+        "mean": "unweighted arithmetic mean of per-answer Seq-Rep-3",
+        "median": "ordinary median of per-answer Seq-Rep-3; arithmetic mean of the middle two for even counts"
+      },
+      "source_sha256_lf": "3d35e43ee786d40ea166608bbea1bab245425c775b54ae5212007fe879431738"
+    },
+    "gad": {
+      "mean": 0.07544276629476974,
+      "median": 0.015268065268065234,
+      "num_samples": 500,
+      "num_short_answers": 1,
+      "num_empty_answers": 1,
+      "evaluated_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\cleanD_dipperparaSFT_dipperparagad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": "bf836f3f45cad7291ba9e1ecd46bb40d05c2015101aaa2ce5b5327b1334b7b93",
+      "ngram_size": 3,
+      "tokenization": "answer.split(); whitespace-delimited words; case and punctuation preserved",
+      "scope": "answer only; overlapping trigrams within each complete original answer; no filtering or cross-answer trigrams",
+      "short_answer_policy": "answers with fewer than 3 words, including empty answers, contribute 0; counts reported",
+      "aggregation": {
+        "mean": "unweighted arithmetic mean of per-answer Seq-Rep-3",
+        "median": "ordinary median of per-answer Seq-Rep-3; arithmetic mean of the middle two for even counts"
+      },
+      "source_sha256_lf": "b6a1c151b66159f7d008c57d2b3b29282beb7dd5d8c0df69cbf24b9432139f54"
+    }
+  }
+}
