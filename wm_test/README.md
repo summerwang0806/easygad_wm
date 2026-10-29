@@ -14,7 +14,7 @@
 cd /shared/wwx/EasyGAD
 conda activate wm
 VLLM_USE_V1=0 CUDA_VISIBLE_DEVICES=3 python wm_test/generate_compare_score.py \
-  --gamma 0.5 --delta 2
+  --gamma 0.5 --delta 3
 
 
 VLLM_USE_V1=0 CUDA_VISIBLE_DEVICES=2 python wm_test/generate_compare_score.py \

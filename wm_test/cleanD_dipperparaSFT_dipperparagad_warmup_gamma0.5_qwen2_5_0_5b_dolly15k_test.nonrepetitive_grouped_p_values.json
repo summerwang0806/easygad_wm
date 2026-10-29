@@ -1,0 +1,5352 @@
+{
+  "signature": {
+    "schema": "kgw-nonrepetitive-answer-blocks-simple1-cuda-v1",
+    "source_sha256": "3d35e43ee786d40ea166608bbea1bab245425c775b54ae5212007fe879431738",
+    "tokenizer": {
+      "path": "/shared/public_models/Qwen2.5-14B-Instruct",
+      "files_sha256": {
+        "config.json": "7362de7db90a1e57fe153e55094e6c2fb7d904a3705d34296ff7de84488235f4",
+        "merges.txt": "0de0bc38a29ea38eef099b677fa1ff52edd181e573529af26c4cd2136e233777",
+        "tokenizer.json": "47ec9be242d3ef39b9c97ac0a3f06c1752f061b234e295bc0a2842067a3fe4f9",
+        "tokenizer_config.json": "fa2a40a9d8c8c4bb7f25ab726eb78ec9cbaaef96d1fa26f1d7f5615e886449a8",
+        "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+      }
+    },
+    "detector": {
+      "gamma": 0.5,
+      "hash_key": 15485863,
+      "seeding": "simple_1 (hash_key * previous_token_id)"
+    },
+    "token_budgets": [
+      1000,
+      2000,
+      3000,
+      10000,
+      20000,
+      30000
+    ],
+    "severe_repetition_threshold": 0.5,
+    "filter": "exclude whole answers; strict >; answer-internal pairs only",
+    "aggregation": "ordinary_median"
+  },
+  "source_file": "/shared/wwx/EasyGAD/wm_test/cleanD_dipperparaSFT_dipperparagad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+  "method": "exclude whole answers whose answer-internal adjacent-token-pair repetition ratio (1 - unique pairs / all pairs) is strictly greater than 0.5; prompts excluded from repetition assessment; filter each label independently; retain original answer order, then concatenate teacher-tokenizer answer IDs without separators; exact disjoint blocks, first token context only; no token-pair deduplication within retained blocks; incomplete tail discarded; ordinary median of block p-values (mean of the middle two for even counts)",
+  "aggregation": "ordinary_median",
+  "filtering": {
+    "repetition_threshold": 0.5,
+    "comparison": ">",
+    "scope": "answer-internal adjacent token pairs; prompt excluded",
+    "num_answers_before": 500,
+    "num_answers_retained": 452,
+    "num_answers_removed": 48,
+    "fraction_answers_removed": 0.096,
+    "total_answer_tokens_before": 99488,
+    "total_answer_tokens_retained": 54146,
+    "total_answer_tokens_removed": 45342,
+    "removed_answer_ids": [
+      "dolly-00423",
+      "dolly-05185",
+      "dolly-01998",
+      "dolly-01089",
+      "dolly-08884",
+      "dolly-00303",
+      "dolly-00275",
+      "dolly-08391",
+      "dolly-10398",
+      "dolly-14859",
+      "dolly-04421",
+      "dolly-05394",
+      "dolly-07027",
+      "dolly-04949",
+      "dolly-08689",
+      "dolly-08574",
+      "dolly-00143",
+      "dolly-04856",
+      "dolly-05555",
+      "dolly-08625",
+      "dolly-01386",
+      "dolly-02128",
+      "dolly-01028",
+      "dolly-09228",
+      "dolly-12027",
+      "dolly-07117",
+      "dolly-10898",
+      "dolly-11987",
+      "dolly-03726",
+      "dolly-04773",
+      "dolly-01979",
+      "dolly-02725",
+      "dolly-14265",
+      "dolly-09609",
+      "dolly-12916",
+      "dolly-02451",
+      "dolly-06824",
+      "dolly-06932",
+      "dolly-14235",
+      "dolly-11386",
+      "dolly-08451",
+      "dolly-09420",
+      "dolly-03624",
+      "dolly-09039",
+      "dolly-00182",
+      "dolly-06562",
+      "dolly-03113",
+      "dolly-01356"
+    ],
+    "per_answer": [
+      {
+        "id": "dolly-13384",
+        "num_tokens": 103,
+        "num_pairs": 102,
+        "num_unique_pairs": 87,
+        "repetition_ratio": 0.14705882352941177,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10119",
+        "num_tokens": 93,
+        "num_pairs": 92,
+        "num_unique_pairs": 65,
+        "repetition_ratio": 0.29347826086956524,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00423",
+        "num_tokens": 481,
+        "num_pairs": 480,
+        "num_unique_pairs": 196,
+        "repetition_ratio": 0.5916666666666667,
+        "excluded": true
+      },
+      {
+        "id": "dolly-10112",
+        "num_tokens": 39,
+        "num_pairs": 38,
+        "num_unique_pairs": 35,
+        "repetition_ratio": 0.07894736842105263,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12021",
+        "num_tokens": 134,
+        "num_pairs": 133,
+        "num_unique_pairs": 108,
+        "repetition_ratio": 0.18796992481203006,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04534",
+        "num_tokens": 118,
+        "num_pairs": 117,
+        "num_unique_pairs": 99,
+        "repetition_ratio": 0.15384615384615385,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12156",
+        "num_tokens": 132,
+        "num_pairs": 131,
+        "num_unique_pairs": 109,
+        "repetition_ratio": 0.16793893129770993,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00135",
+        "num_tokens": 180,
+        "num_pairs": 179,
+        "num_unique_pairs": 133,
+        "repetition_ratio": 0.2569832402234637,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14108",
+        "num_tokens": 36,
+        "num_pairs": 35,
+        "num_unique_pairs": 26,
+        "repetition_ratio": 0.2571428571428571,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09066",
+        "num_tokens": 24,
+        "num_pairs": 23,
+        "num_unique_pairs": 23,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11025",
+        "num_tokens": 24,
+        "num_pairs": 23,
+        "num_unique_pairs": 23,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03759",
+        "num_tokens": 145,
+        "num_pairs": 144,
+        "num_unique_pairs": 127,
+        "repetition_ratio": 0.11805555555555555,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03181",
+        "num_tokens": 208,
+        "num_pairs": 207,
+        "num_unique_pairs": 176,
+        "repetition_ratio": 0.1497584541062802,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13257",
+        "num_tokens": 156,
+        "num_pairs": 155,
+        "num_unique_pairs": 135,
+        "repetition_ratio": 0.12903225806451613,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03060",
+        "num_tokens": 111,
+        "num_pairs": 110,
+        "num_unique_pairs": 103,
+        "repetition_ratio": 0.06363636363636363,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06491",
+        "num_tokens": 157,
+        "num_pairs": 156,
+        "num_unique_pairs": 132,
+        "repetition_ratio": 0.15384615384615385,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10254",
+        "num_tokens": 12,
+        "num_pairs": 11,
+        "num_unique_pairs": 11,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08133",
+        "num_tokens": 19,
+        "num_pairs": 18,
+        "num_unique_pairs": 18,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00286",
+        "num_tokens": 13,
+        "num_pairs": 12,
+        "num_unique_pairs": 12,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10904",
+        "num_tokens": 34,
+        "num_pairs": 33,
+        "num_unique_pairs": 32,
+        "repetition_ratio": 0.030303030303030304,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12241",
+        "num_tokens": 210,
+        "num_pairs": 209,
+        "num_unique_pairs": 150,
+        "repetition_ratio": 0.2822966507177033,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08351",
+        "num_tokens": 270,
+        "num_pairs": 269,
+        "num_unique_pairs": 241,
+        "repetition_ratio": 0.10408921933085502,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00944",
+        "num_tokens": 149,
+        "num_pairs": 148,
+        "num_unique_pairs": 126,
+        "repetition_ratio": 0.14864864864864866,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07923",
+        "num_tokens": 190,
+        "num_pairs": 189,
+        "num_unique_pairs": 95,
+        "repetition_ratio": 0.4973544973544973,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05775",
+        "num_tokens": 79,
+        "num_pairs": 78,
+        "num_unique_pairs": 71,
+        "repetition_ratio": 0.08974358974358974,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05908",
+        "num_tokens": 134,
+        "num_pairs": 133,
+        "num_unique_pairs": 126,
+        "repetition_ratio": 0.05263157894736842,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04979",
+        "num_tokens": 126,
+        "num_pairs": 125,
+        "num_unique_pairs": 110,
+        "repetition_ratio": 0.12,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07106",
+        "num_tokens": 160,
+        "num_pairs": 159,
+        "num_unique_pairs": 142,
+        "repetition_ratio": 0.1069182389937107,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00720",
+        "num_tokens": 113,
+        "num_pairs": 112,
+        "num_unique_pairs": 96,
+        "repetition_ratio": 0.14285714285714285,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04289",
+        "num_tokens": 50,
+        "num_pairs": 49,
+        "num_unique_pairs": 45,
+        "repetition_ratio": 0.08163265306122448,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13700",
+        "num_tokens": 119,
+        "num_pairs": 118,
+        "num_unique_pairs": 76,
+        "repetition_ratio": 0.3559322033898305,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06521",
+        "num_tokens": 186,
+        "num_pairs": 185,
+        "num_unique_pairs": 160,
+        "repetition_ratio": 0.13513513513513514,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12244",
+        "num_tokens": 19,
+        "num_pairs": 18,
+        "num_unique_pairs": 18,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07103",
+        "num_tokens": 41,
+        "num_pairs": 40,
+        "num_unique_pairs": 40,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12249",
+        "num_tokens": 66,
+        "num_pairs": 65,
+        "num_unique_pairs": 43,
+        "repetition_ratio": 0.3384615384615385,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04082",
+        "num_tokens": 31,
+        "num_pairs": 30,
+        "num_unique_pairs": 27,
+        "repetition_ratio": 0.1,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11402",
+        "num_tokens": 182,
+        "num_pairs": 181,
+        "num_unique_pairs": 168,
+        "repetition_ratio": 0.0718232044198895,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05608",
+        "num_tokens": 121,
+        "num_pairs": 120,
+        "num_unique_pairs": 115,
+        "repetition_ratio": 0.041666666666666664,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00304",
+        "num_tokens": 12,
+        "num_pairs": 11,
+        "num_unique_pairs": 11,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12108",
+        "num_tokens": 120,
+        "num_pairs": 119,
+        "num_unique_pairs": 72,
+        "repetition_ratio": 0.3949579831932773,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09720",
+        "num_tokens": 160,
+        "num_pairs": 159,
+        "num_unique_pairs": 132,
+        "repetition_ratio": 0.16981132075471697,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05185",
+        "num_tokens": 258,
+        "num_pairs": 257,
+        "num_unique_pairs": 87,
+        "repetition_ratio": 0.6614785992217899,
+        "excluded": true
+      },
+      {
+        "id": "dolly-03466",
+        "num_tokens": 378,
+        "num_pairs": 377,
+        "num_unique_pairs": 297,
+        "repetition_ratio": 0.21220159151193635,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01134",
+        "num_tokens": 50,
+        "num_pairs": 49,
+        "num_unique_pairs": 44,
+        "repetition_ratio": 0.10204081632653061,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00122",
+        "num_tokens": 123,
+        "num_pairs": 122,
+        "num_unique_pairs": 111,
+        "repetition_ratio": 0.09016393442622951,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10627",
+        "num_tokens": 236,
+        "num_pairs": 235,
+        "num_unique_pairs": 160,
+        "repetition_ratio": 0.3191489361702128,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06748",
+        "num_tokens": 125,
+        "num_pairs": 124,
+        "num_unique_pairs": 121,
+        "repetition_ratio": 0.024193548387096774,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11405",
+        "num_tokens": 18,
+        "num_pairs": 17,
+        "num_unique_pairs": 16,
+        "repetition_ratio": 0.058823529411764705,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07788",
+        "num_tokens": 129,
+        "num_pairs": 128,
+        "num_unique_pairs": 85,
+        "repetition_ratio": 0.3359375,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11310",
+        "num_tokens": 165,
+        "num_pairs": 164,
+        "num_unique_pairs": 125,
+        "repetition_ratio": 0.23780487804878048,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02660",
+        "num_tokens": 135,
+        "num_pairs": 134,
+        "num_unique_pairs": 110,
+        "repetition_ratio": 0.1791044776119403,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06622",
+        "num_tokens": 199,
+        "num_pairs": 198,
+        "num_unique_pairs": 165,
+        "repetition_ratio": 0.16666666666666666,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14389",
+        "num_tokens": 272,
+        "num_pairs": 271,
+        "num_unique_pairs": 211,
+        "repetition_ratio": 0.22140221402214022,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06540",
+        "num_tokens": 57,
+        "num_pairs": 56,
+        "num_unique_pairs": 54,
+        "repetition_ratio": 0.03571428571428571,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07953",
+        "num_tokens": 81,
+        "num_pairs": 80,
+        "num_unique_pairs": 69,
+        "repetition_ratio": 0.1375,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13746",
+        "num_tokens": 38,
+        "num_pairs": 37,
+        "num_unique_pairs": 30,
+        "repetition_ratio": 0.1891891891891892,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04978",
+        "num_tokens": 21,
+        "num_pairs": 20,
+        "num_unique_pairs": 20,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08677",
+        "num_tokens": 81,
+        "num_pairs": 80,
+        "num_unique_pairs": 71,
+        "repetition_ratio": 0.1125,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01998",
+        "num_tokens": 248,
+        "num_pairs": 247,
+        "num_unique_pairs": 104,
+        "repetition_ratio": 0.5789473684210527,
+        "excluded": true
+      },
+      {
+        "id": "dolly-02097",
+        "num_tokens": 131,
+        "num_pairs": 130,
+        "num_unique_pairs": 76,
+        "repetition_ratio": 0.4153846153846154,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06255",
+        "num_tokens": 187,
+        "num_pairs": 186,
+        "num_unique_pairs": 154,
+        "repetition_ratio": 0.17204301075268819,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11071",
+        "num_tokens": 38,
+        "num_pairs": 37,
+        "num_unique_pairs": 33,
+        "repetition_ratio": 0.10810810810810811,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14854",
+        "num_tokens": 19,
+        "num_pairs": 18,
+        "num_unique_pairs": 18,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03614",
+        "num_tokens": 229,
+        "num_pairs": 228,
+        "num_unique_pairs": 189,
+        "repetition_ratio": 0.17105263157894737,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02296",
+        "num_tokens": 74,
+        "num_pairs": 73,
+        "num_unique_pairs": 55,
+        "repetition_ratio": 0.2465753424657534,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07239",
+        "num_tokens": 59,
+        "num_pairs": 58,
+        "num_unique_pairs": 55,
+        "repetition_ratio": 0.05172413793103448,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11368",
+        "num_tokens": 115,
+        "num_pairs": 114,
+        "num_unique_pairs": 98,
+        "repetition_ratio": 0.14035087719298245,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02732",
+        "num_tokens": 21,
+        "num_pairs": 20,
+        "num_unique_pairs": 11,
+        "repetition_ratio": 0.45,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13565",
+        "num_tokens": 377,
+        "num_pairs": 376,
+        "num_unique_pairs": 259,
+        "repetition_ratio": 0.31117021276595747,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13004",
+        "num_tokens": 147,
+        "num_pairs": 146,
+        "num_unique_pairs": 115,
+        "repetition_ratio": 0.21232876712328766,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03460",
+        "num_tokens": 161,
+        "num_pairs": 160,
+        "num_unique_pairs": 137,
+        "repetition_ratio": 0.14375,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06765",
+        "num_tokens": 103,
+        "num_pairs": 102,
+        "num_unique_pairs": 66,
+        "repetition_ratio": 0.35294117647058826,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14666",
+        "num_tokens": 188,
+        "num_pairs": 187,
+        "num_unique_pairs": 135,
+        "repetition_ratio": 0.27807486631016043,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03251",
+        "num_tokens": 52,
+        "num_pairs": 51,
+        "num_unique_pairs": 48,
+        "repetition_ratio": 0.058823529411764705,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00624",
+        "num_tokens": 122,
+        "num_pairs": 121,
+        "num_unique_pairs": 102,
+        "repetition_ratio": 0.15702479338842976,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08709",
+        "num_tokens": 60,
+        "num_pairs": 59,
+        "num_unique_pairs": 49,
+        "repetition_ratio": 0.1694915254237288,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13505",
+        "num_tokens": 22,
+        "num_pairs": 21,
+        "num_unique_pairs": 20,
+        "repetition_ratio": 0.047619047619047616,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01089",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 146,
+        "repetition_ratio": 0.904885993485342,
+        "excluded": true
+      },
+      {
+        "id": "dolly-01947",
+        "num_tokens": 175,
+        "num_pairs": 174,
+        "num_unique_pairs": 113,
+        "repetition_ratio": 0.3505747126436782,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02580",
+        "num_tokens": 113,
+        "num_pairs": 112,
+        "num_unique_pairs": 97,
+        "repetition_ratio": 0.13392857142857142,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08884",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 26,
+        "repetition_ratio": 0.9830618892508143,
+        "excluded": true
+      },
+      {
+        "id": "dolly-01063",
+        "num_tokens": 49,
+        "num_pairs": 48,
+        "num_unique_pairs": 40,
+        "repetition_ratio": 0.16666666666666666,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10746",
+        "num_tokens": 160,
+        "num_pairs": 159,
+        "num_unique_pairs": 118,
+        "repetition_ratio": 0.2578616352201258,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12659",
+        "num_tokens": 38,
+        "num_pairs": 37,
+        "num_unique_pairs": 37,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08283",
+        "num_tokens": 20,
+        "num_pairs": 19,
+        "num_unique_pairs": 19,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00303",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 179,
+        "repetition_ratio": 0.8833876221498371,
+        "excluded": true
+      },
+      {
+        "id": "dolly-01059",
+        "num_tokens": 100,
+        "num_pairs": 99,
+        "num_unique_pairs": 95,
+        "repetition_ratio": 0.04040404040404041,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09590",
+        "num_tokens": 96,
+        "num_pairs": 95,
+        "num_unique_pairs": 78,
+        "repetition_ratio": 0.17894736842105263,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00997",
+        "num_tokens": 80,
+        "num_pairs": 79,
+        "num_unique_pairs": 62,
+        "repetition_ratio": 0.21518987341772153,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09633",
+        "num_tokens": 11,
+        "num_pairs": 10,
+        "num_unique_pairs": 10,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04118",
+        "num_tokens": 105,
+        "num_pairs": 104,
+        "num_unique_pairs": 89,
+        "repetition_ratio": 0.14423076923076922,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00105",
+        "num_tokens": 175,
+        "num_pairs": 174,
+        "num_unique_pairs": 155,
+        "repetition_ratio": 0.10919540229885058,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00420",
+        "num_tokens": 44,
+        "num_pairs": 43,
+        "num_unique_pairs": 34,
+        "repetition_ratio": 0.20930232558139536,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14313",
+        "num_tokens": 16,
+        "num_pairs": 15,
+        "num_unique_pairs": 15,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11014",
+        "num_tokens": 110,
+        "num_pairs": 109,
+        "num_unique_pairs": 92,
+        "repetition_ratio": 0.1559633027522936,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02678",
+        "num_tokens": 93,
+        "num_pairs": 92,
+        "num_unique_pairs": 56,
+        "repetition_ratio": 0.391304347826087,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10208",
+        "num_tokens": 152,
+        "num_pairs": 151,
+        "num_unique_pairs": 115,
+        "repetition_ratio": 0.23841059602649006,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08008",
+        "num_tokens": 46,
+        "num_pairs": 45,
+        "num_unique_pairs": 25,
+        "repetition_ratio": 0.4444444444444444,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08789",
+        "num_tokens": 23,
+        "num_pairs": 22,
+        "num_unique_pairs": 16,
+        "repetition_ratio": 0.2727272727272727,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14385",
+        "num_tokens": 119,
+        "num_pairs": 118,
+        "num_unique_pairs": 77,
+        "repetition_ratio": 0.3474576271186441,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02004",
+        "num_tokens": 42,
+        "num_pairs": 41,
+        "num_unique_pairs": 40,
+        "repetition_ratio": 0.024390243902439025,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02761",
+        "num_tokens": 137,
+        "num_pairs": 136,
+        "num_unique_pairs": 103,
+        "repetition_ratio": 0.2426470588235294,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02186",
+        "num_tokens": 281,
+        "num_pairs": 280,
+        "num_unique_pairs": 185,
+        "repetition_ratio": 0.3392857142857143,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05297",
+        "num_tokens": 126,
+        "num_pairs": 125,
+        "num_unique_pairs": 102,
+        "repetition_ratio": 0.184,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00275",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 138,
+        "repetition_ratio": 0.9100977198697069,
+        "excluded": true
+      },
+      {
+        "id": "dolly-14036",
+        "num_tokens": 257,
+        "num_pairs": 256,
+        "num_unique_pairs": 211,
+        "repetition_ratio": 0.17578125,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08391",
+        "num_tokens": 311,
+        "num_pairs": 310,
+        "num_unique_pairs": 83,
+        "repetition_ratio": 0.7322580645161291,
+        "excluded": true
+      },
+      {
+        "id": "dolly-10398",
+        "num_tokens": 314,
+        "num_pairs": 313,
+        "num_unique_pairs": 137,
+        "repetition_ratio": 0.5623003194888179,
+        "excluded": true
+      },
+      {
+        "id": "dolly-00888",
+        "num_tokens": 234,
+        "num_pairs": 233,
+        "num_unique_pairs": 175,
+        "repetition_ratio": 0.24892703862660945,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00054",
+        "num_tokens": 48,
+        "num_pairs": 47,
+        "num_unique_pairs": 40,
+        "repetition_ratio": 0.14893617021276595,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10415",
+        "num_tokens": 93,
+        "num_pairs": 92,
+        "num_unique_pairs": 80,
+        "repetition_ratio": 0.13043478260869565,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08512",
+        "num_tokens": 35,
+        "num_pairs": 34,
+        "num_unique_pairs": 33,
+        "repetition_ratio": 0.029411764705882353,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04865",
+        "num_tokens": 233,
+        "num_pairs": 232,
+        "num_unique_pairs": 176,
+        "repetition_ratio": 0.2413793103448276,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14060",
+        "num_tokens": 51,
+        "num_pairs": 50,
+        "num_unique_pairs": 48,
+        "repetition_ratio": 0.04,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01174",
+        "num_tokens": 91,
+        "num_pairs": 90,
+        "num_unique_pairs": 75,
+        "repetition_ratio": 0.16666666666666666,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04362",
+        "num_tokens": 99,
+        "num_pairs": 98,
+        "num_unique_pairs": 88,
+        "repetition_ratio": 0.10204081632653061,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11623",
+        "num_tokens": 100,
+        "num_pairs": 99,
+        "num_unique_pairs": 76,
+        "repetition_ratio": 0.23232323232323232,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00996",
+        "num_tokens": 112,
+        "num_pairs": 111,
+        "num_unique_pairs": 104,
+        "repetition_ratio": 0.06306306306306306,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05906",
+        "num_tokens": 23,
+        "num_pairs": 22,
+        "num_unique_pairs": 21,
+        "repetition_ratio": 0.045454545454545456,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07337",
+        "num_tokens": 75,
+        "num_pairs": 74,
+        "num_unique_pairs": 67,
+        "repetition_ratio": 0.0945945945945946,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00844",
+        "num_tokens": 188,
+        "num_pairs": 187,
+        "num_unique_pairs": 100,
+        "repetition_ratio": 0.46524064171123,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04143",
+        "num_tokens": 193,
+        "num_pairs": 192,
+        "num_unique_pairs": 127,
+        "repetition_ratio": 0.3385416666666667,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14859",
+        "num_tokens": 232,
+        "num_pairs": 231,
+        "num_unique_pairs": 99,
+        "repetition_ratio": 0.5714285714285714,
+        "excluded": true
+      },
+      {
+        "id": "dolly-13959",
+        "num_tokens": 58,
+        "num_pairs": 57,
+        "num_unique_pairs": 52,
+        "repetition_ratio": 0.08771929824561403,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09819",
+        "num_tokens": 149,
+        "num_pairs": 148,
+        "num_unique_pairs": 120,
+        "repetition_ratio": 0.1891891891891892,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03608",
+        "num_tokens": 153,
+        "num_pairs": 152,
+        "num_unique_pairs": 135,
+        "repetition_ratio": 0.1118421052631579,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01431",
+        "num_tokens": 160,
+        "num_pairs": 159,
+        "num_unique_pairs": 118,
+        "repetition_ratio": 0.2578616352201258,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09058",
+        "num_tokens": 337,
+        "num_pairs": 336,
+        "num_unique_pairs": 249,
+        "repetition_ratio": 0.25892857142857145,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01461",
+        "num_tokens": 48,
+        "num_pairs": 47,
+        "num_unique_pairs": 33,
+        "repetition_ratio": 0.2978723404255319,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01470",
+        "num_tokens": 161,
+        "num_pairs": 160,
+        "num_unique_pairs": 112,
+        "repetition_ratio": 0.3,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04421",
+        "num_tokens": 160,
+        "num_pairs": 159,
+        "num_unique_pairs": 77,
+        "repetition_ratio": 0.5157232704402516,
+        "excluded": true
+      },
+      {
+        "id": "dolly-01665",
+        "num_tokens": 62,
+        "num_pairs": 61,
+        "num_unique_pairs": 53,
+        "repetition_ratio": 0.13114754098360656,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10290",
+        "num_tokens": 66,
+        "num_pairs": 65,
+        "num_unique_pairs": 61,
+        "repetition_ratio": 0.06153846153846154,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04032",
+        "num_tokens": 46,
+        "num_pairs": 45,
+        "num_unique_pairs": 42,
+        "repetition_ratio": 0.06666666666666667,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02122",
+        "num_tokens": 151,
+        "num_pairs": 150,
+        "num_unique_pairs": 109,
+        "repetition_ratio": 0.2733333333333333,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13749",
+        "num_tokens": 50,
+        "num_pairs": 49,
+        "num_unique_pairs": 46,
+        "repetition_ratio": 0.061224489795918366,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07983",
+        "num_tokens": 186,
+        "num_pairs": 185,
+        "num_unique_pairs": 151,
+        "repetition_ratio": 0.1837837837837838,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09930",
+        "num_tokens": 200,
+        "num_pairs": 199,
+        "num_unique_pairs": 164,
+        "repetition_ratio": 0.17587939698492464,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05394",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 46,
+        "repetition_ratio": 0.9700325732899023,
+        "excluded": true
+      },
+      {
+        "id": "dolly-02286",
+        "num_tokens": 157,
+        "num_pairs": 156,
+        "num_unique_pairs": 140,
+        "repetition_ratio": 0.10256410256410256,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09109",
+        "num_tokens": 94,
+        "num_pairs": 93,
+        "num_unique_pairs": 90,
+        "repetition_ratio": 0.03225806451612903,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01770",
+        "num_tokens": 337,
+        "num_pairs": 336,
+        "num_unique_pairs": 248,
+        "repetition_ratio": 0.2619047619047619,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07027",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 21,
+        "repetition_ratio": 0.9863192182410423,
+        "excluded": true
+      },
+      {
+        "id": "dolly-04127",
+        "num_tokens": 119,
+        "num_pairs": 118,
+        "num_unique_pairs": 90,
+        "repetition_ratio": 0.23728813559322035,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08457",
+        "num_tokens": 207,
+        "num_pairs": 206,
+        "num_unique_pairs": 170,
+        "repetition_ratio": 0.17475728155339806,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01092",
+        "num_tokens": 139,
+        "num_pairs": 138,
+        "num_unique_pairs": 111,
+        "repetition_ratio": 0.1956521739130435,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02223",
+        "num_tokens": 156,
+        "num_pairs": 155,
+        "num_unique_pairs": 133,
+        "repetition_ratio": 0.14193548387096774,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04949",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 42,
+        "repetition_ratio": 0.9726384364820847,
+        "excluded": true
+      },
+      {
+        "id": "dolly-01517",
+        "num_tokens": 169,
+        "num_pairs": 168,
+        "num_unique_pairs": 123,
+        "repetition_ratio": 0.26785714285714285,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00956",
+        "num_tokens": 79,
+        "num_pairs": 78,
+        "num_unique_pairs": 70,
+        "repetition_ratio": 0.10256410256410256,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12764",
+        "num_tokens": 69,
+        "num_pairs": 68,
+        "num_unique_pairs": 43,
+        "repetition_ratio": 0.36764705882352944,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08887",
+        "num_tokens": 140,
+        "num_pairs": 139,
+        "num_unique_pairs": 89,
+        "repetition_ratio": 0.3597122302158273,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01567",
+        "num_tokens": 17,
+        "num_pairs": 16,
+        "num_unique_pairs": 14,
+        "repetition_ratio": 0.125,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08689",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 29,
+        "repetition_ratio": 0.9811074918566776,
+        "excluded": true
+      },
+      {
+        "id": "dolly-09726",
+        "num_tokens": 16,
+        "num_pairs": 15,
+        "num_unique_pairs": 14,
+        "repetition_ratio": 0.06666666666666667,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05637",
+        "num_tokens": 117,
+        "num_pairs": 116,
+        "num_unique_pairs": 97,
+        "repetition_ratio": 0.16379310344827586,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08454",
+        "num_tokens": 153,
+        "num_pairs": 152,
+        "num_unique_pairs": 122,
+        "repetition_ratio": 0.19736842105263158,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11348",
+        "num_tokens": 30,
+        "num_pairs": 29,
+        "num_unique_pairs": 28,
+        "repetition_ratio": 0.034482758620689655,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08574",
+        "num_tokens": 229,
+        "num_pairs": 228,
+        "num_unique_pairs": 94,
+        "repetition_ratio": 0.5877192982456141,
+        "excluded": true
+      },
+      {
+        "id": "dolly-12588",
+        "num_tokens": 67,
+        "num_pairs": 66,
+        "num_unique_pairs": 55,
+        "repetition_ratio": 0.16666666666666666,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08406",
+        "num_tokens": 249,
+        "num_pairs": 248,
+        "num_unique_pairs": 195,
+        "repetition_ratio": 0.21370967741935484,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05364",
+        "num_tokens": 133,
+        "num_pairs": 132,
+        "num_unique_pairs": 113,
+        "repetition_ratio": 0.14393939393939395,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07317",
+        "num_tokens": 188,
+        "num_pairs": 187,
+        "num_unique_pairs": 149,
+        "repetition_ratio": 0.20320855614973263,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04141",
+        "num_tokens": 51,
+        "num_pairs": 50,
+        "num_unique_pairs": 49,
+        "repetition_ratio": 0.02,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02127",
+        "num_tokens": 51,
+        "num_pairs": 50,
+        "num_unique_pairs": 47,
+        "repetition_ratio": 0.06,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02320",
+        "num_tokens": 40,
+        "num_pairs": 39,
+        "num_unique_pairs": 28,
+        "repetition_ratio": 0.28205128205128205,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07314",
+        "num_tokens": 70,
+        "num_pairs": 69,
+        "num_unique_pairs": 65,
+        "repetition_ratio": 0.057971014492753624,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08212",
+        "num_tokens": 82,
+        "num_pairs": 81,
+        "num_unique_pairs": 75,
+        "repetition_ratio": 0.07407407407407407,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03209",
+        "num_tokens": 35,
+        "num_pairs": 34,
+        "num_unique_pairs": 31,
+        "repetition_ratio": 0.08823529411764706,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02887",
+        "num_tokens": 219,
+        "num_pairs": 218,
+        "num_unique_pairs": 149,
+        "repetition_ratio": 0.3165137614678899,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07399",
+        "num_tokens": 34,
+        "num_pairs": 33,
+        "num_unique_pairs": 31,
+        "repetition_ratio": 0.06060606060606061,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06227",
+        "num_tokens": 311,
+        "num_pairs": 310,
+        "num_unique_pairs": 265,
+        "repetition_ratio": 0.14516129032258066,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03157",
+        "num_tokens": 95,
+        "num_pairs": 94,
+        "num_unique_pairs": 86,
+        "repetition_ratio": 0.0851063829787234,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02859",
+        "num_tokens": 118,
+        "num_pairs": 117,
+        "num_unique_pairs": 110,
+        "repetition_ratio": 0.05982905982905983,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07295",
+        "num_tokens": 109,
+        "num_pairs": 108,
+        "num_unique_pairs": 98,
+        "repetition_ratio": 0.09259259259259259,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05033",
+        "num_tokens": 140,
+        "num_pairs": 139,
+        "num_unique_pairs": 116,
+        "repetition_ratio": 0.16546762589928057,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12477",
+        "num_tokens": 16,
+        "num_pairs": 15,
+        "num_unique_pairs": 13,
+        "repetition_ratio": 0.13333333333333333,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14209",
+        "num_tokens": 28,
+        "num_pairs": 27,
+        "num_unique_pairs": 27,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00143",
+        "num_tokens": 159,
+        "num_pairs": 158,
+        "num_unique_pairs": 76,
+        "repetition_ratio": 0.5189873417721519,
+        "excluded": true
+      },
+      {
+        "id": "dolly-12894",
+        "num_tokens": 288,
+        "num_pairs": 287,
+        "num_unique_pairs": 216,
+        "repetition_ratio": 0.24738675958188153,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01452",
+        "num_tokens": 68,
+        "num_pairs": 67,
+        "num_unique_pairs": 65,
+        "repetition_ratio": 0.029850746268656716,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02516",
+        "num_tokens": 27,
+        "num_pairs": 26,
+        "num_unique_pairs": 25,
+        "repetition_ratio": 0.038461538461538464,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02844",
+        "num_tokens": 23,
+        "num_pairs": 22,
+        "num_unique_pairs": 21,
+        "repetition_ratio": 0.045454545454545456,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00342",
+        "num_tokens": 90,
+        "num_pairs": 89,
+        "num_unique_pairs": 69,
+        "repetition_ratio": 0.2247191011235955,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00676",
+        "num_tokens": 265,
+        "num_pairs": 264,
+        "num_unique_pairs": 183,
+        "repetition_ratio": 0.3068181818181818,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02434",
+        "num_tokens": 29,
+        "num_pairs": 28,
+        "num_unique_pairs": 27,
+        "repetition_ratio": 0.03571428571428571,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11078",
+        "num_tokens": 284,
+        "num_pairs": 283,
+        "num_unique_pairs": 201,
+        "repetition_ratio": 0.28975265017667845,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08729",
+        "num_tokens": 94,
+        "num_pairs": 93,
+        "num_unique_pairs": 87,
+        "repetition_ratio": 0.06451612903225806,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09778",
+        "num_tokens": 295,
+        "num_pairs": 294,
+        "num_unique_pairs": 215,
+        "repetition_ratio": 0.2687074829931973,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04025",
+        "num_tokens": 100,
+        "num_pairs": 99,
+        "num_unique_pairs": 89,
+        "repetition_ratio": 0.10101010101010101,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04687",
+        "num_tokens": 159,
+        "num_pairs": 158,
+        "num_unique_pairs": 128,
+        "repetition_ratio": 0.189873417721519,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14483",
+        "num_tokens": 98,
+        "num_pairs": 97,
+        "num_unique_pairs": 86,
+        "repetition_ratio": 0.1134020618556701,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13126",
+        "num_tokens": 99,
+        "num_pairs": 98,
+        "num_unique_pairs": 76,
+        "repetition_ratio": 0.22448979591836735,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04856",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 177,
+        "repetition_ratio": 0.8846905537459283,
+        "excluded": true
+      },
+      {
+        "id": "dolly-00370",
+        "num_tokens": 140,
+        "num_pairs": 139,
+        "num_unique_pairs": 118,
+        "repetition_ratio": 0.1510791366906475,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01888",
+        "num_tokens": 49,
+        "num_pairs": 48,
+        "num_unique_pairs": 46,
+        "repetition_ratio": 0.041666666666666664,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09457",
+        "num_tokens": 11,
+        "num_pairs": 10,
+        "num_unique_pairs": 10,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09465",
+        "num_tokens": 123,
+        "num_pairs": 122,
+        "num_unique_pairs": 110,
+        "repetition_ratio": 0.09836065573770492,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13779",
+        "num_tokens": 210,
+        "num_pairs": 209,
+        "num_unique_pairs": 180,
+        "repetition_ratio": 0.13875598086124402,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09935",
+        "num_tokens": 106,
+        "num_pairs": 105,
+        "num_unique_pairs": 62,
+        "repetition_ratio": 0.4095238095238095,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04624",
+        "num_tokens": 243,
+        "num_pairs": 242,
+        "num_unique_pairs": 225,
+        "repetition_ratio": 0.07024793388429752,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12843",
+        "num_tokens": 36,
+        "num_pairs": 35,
+        "num_unique_pairs": 35,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10839",
+        "num_tokens": 32,
+        "num_pairs": 31,
+        "num_unique_pairs": 28,
+        "repetition_ratio": 0.0967741935483871,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03638",
+        "num_tokens": 91,
+        "num_pairs": 90,
+        "num_unique_pairs": 86,
+        "repetition_ratio": 0.044444444444444446,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08658",
+        "num_tokens": 353,
+        "num_pairs": 352,
+        "num_unique_pairs": 234,
+        "repetition_ratio": 0.3352272727272727,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10697",
+        "num_tokens": 211,
+        "num_pairs": 210,
+        "num_unique_pairs": 183,
+        "repetition_ratio": 0.12857142857142856,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13422",
+        "num_tokens": 23,
+        "num_pairs": 22,
+        "num_unique_pairs": 21,
+        "repetition_ratio": 0.045454545454545456,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13327",
+        "num_tokens": 103,
+        "num_pairs": 102,
+        "num_unique_pairs": 68,
+        "repetition_ratio": 0.3333333333333333,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05752",
+        "num_tokens": 205,
+        "num_pairs": 204,
+        "num_unique_pairs": 109,
+        "repetition_ratio": 0.46568627450980393,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05555",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 162,
+        "repetition_ratio": 0.8944625407166124,
+        "excluded": true
+      },
+      {
+        "id": "dolly-01162",
+        "num_tokens": 207,
+        "num_pairs": 206,
+        "num_unique_pairs": 108,
+        "repetition_ratio": 0.47572815533980584,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05827",
+        "num_tokens": 139,
+        "num_pairs": 138,
+        "num_unique_pairs": 76,
+        "repetition_ratio": 0.4492753623188406,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06025",
+        "num_tokens": 94,
+        "num_pairs": 93,
+        "num_unique_pairs": 84,
+        "repetition_ratio": 0.0967741935483871,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06920",
+        "num_tokens": 221,
+        "num_pairs": 220,
+        "num_unique_pairs": 134,
+        "repetition_ratio": 0.39090909090909093,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02421",
+        "num_tokens": 216,
+        "num_pairs": 215,
+        "num_unique_pairs": 179,
+        "repetition_ratio": 0.16744186046511628,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06595",
+        "num_tokens": 63,
+        "num_pairs": 62,
+        "num_unique_pairs": 62,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06438",
+        "num_tokens": 76,
+        "num_pairs": 75,
+        "num_unique_pairs": 69,
+        "repetition_ratio": 0.08,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06507",
+        "num_tokens": 161,
+        "num_pairs": 160,
+        "num_unique_pairs": 140,
+        "repetition_ratio": 0.125,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14464",
+        "num_tokens": 37,
+        "num_pairs": 36,
+        "num_unique_pairs": 28,
+        "repetition_ratio": 0.2222222222222222,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09311",
+        "num_tokens": 206,
+        "num_pairs": 205,
+        "num_unique_pairs": 168,
+        "repetition_ratio": 0.18048780487804877,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08936",
+        "num_tokens": 250,
+        "num_pairs": 249,
+        "num_unique_pairs": 198,
+        "repetition_ratio": 0.20481927710843373,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02811",
+        "num_tokens": 211,
+        "num_pairs": 210,
+        "num_unique_pairs": 154,
+        "repetition_ratio": 0.26666666666666666,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13981",
+        "num_tokens": 227,
+        "num_pairs": 226,
+        "num_unique_pairs": 161,
+        "repetition_ratio": 0.28761061946902655,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09162",
+        "num_tokens": 82,
+        "num_pairs": 81,
+        "num_unique_pairs": 76,
+        "repetition_ratio": 0.06172839506172839,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08625",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 28,
+        "repetition_ratio": 0.9817589576547231,
+        "excluded": true
+      },
+      {
+        "id": "dolly-02065",
+        "num_tokens": 23,
+        "num_pairs": 22,
+        "num_unique_pairs": 22,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06648",
+        "num_tokens": 71,
+        "num_pairs": 70,
+        "num_unique_pairs": 49,
+        "repetition_ratio": 0.3,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08541",
+        "num_tokens": 35,
+        "num_pairs": 34,
+        "num_unique_pairs": 19,
+        "repetition_ratio": 0.4411764705882353,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05610",
+        "num_tokens": 36,
+        "num_pairs": 35,
+        "num_unique_pairs": 33,
+        "repetition_ratio": 0.05714285714285714,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10067",
+        "num_tokens": 89,
+        "num_pairs": 88,
+        "num_unique_pairs": 79,
+        "repetition_ratio": 0.10227272727272728,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09344",
+        "num_tokens": 265,
+        "num_pairs": 264,
+        "num_unique_pairs": 214,
+        "repetition_ratio": 0.1893939393939394,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10747",
+        "num_tokens": 145,
+        "num_pairs": 144,
+        "num_unique_pairs": 125,
+        "repetition_ratio": 0.13194444444444445,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05605",
+        "num_tokens": 287,
+        "num_pairs": 286,
+        "num_unique_pairs": 224,
+        "repetition_ratio": 0.21678321678321677,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14358",
+        "num_tokens": 45,
+        "num_pairs": 44,
+        "num_unique_pairs": 29,
+        "repetition_ratio": 0.3409090909090909,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06285",
+        "num_tokens": 34,
+        "num_pairs": 33,
+        "num_unique_pairs": 31,
+        "repetition_ratio": 0.06060606060606061,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14084",
+        "num_tokens": 147,
+        "num_pairs": 146,
+        "num_unique_pairs": 106,
+        "repetition_ratio": 0.273972602739726,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01386",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 202,
+        "repetition_ratio": 0.8684039087947882,
+        "excluded": true
+      },
+      {
+        "id": "dolly-09869",
+        "num_tokens": 22,
+        "num_pairs": 21,
+        "num_unique_pairs": 21,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08121",
+        "num_tokens": 243,
+        "num_pairs": 242,
+        "num_unique_pairs": 181,
+        "repetition_ratio": 0.25206611570247933,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02128",
+        "num_tokens": 209,
+        "num_pairs": 208,
+        "num_unique_pairs": 75,
+        "repetition_ratio": 0.6394230769230769,
+        "excluded": true
+      },
+      {
+        "id": "dolly-03250",
+        "num_tokens": 263,
+        "num_pairs": 262,
+        "num_unique_pairs": 225,
+        "repetition_ratio": 0.14122137404580154,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01342",
+        "num_tokens": 275,
+        "num_pairs": 274,
+        "num_unique_pairs": 199,
+        "repetition_ratio": 0.2737226277372263,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14521",
+        "num_tokens": 204,
+        "num_pairs": 203,
+        "num_unique_pairs": 184,
+        "repetition_ratio": 0.09359605911330049,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09918",
+        "num_tokens": 67,
+        "num_pairs": 66,
+        "num_unique_pairs": 61,
+        "repetition_ratio": 0.07575757575757576,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08340",
+        "num_tokens": 62,
+        "num_pairs": 61,
+        "num_unique_pairs": 61,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03530",
+        "num_tokens": 14,
+        "num_pairs": 13,
+        "num_unique_pairs": 13,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14476",
+        "num_tokens": 77,
+        "num_pairs": 76,
+        "num_unique_pairs": 66,
+        "repetition_ratio": 0.13157894736842105,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04438",
+        "num_tokens": 60,
+        "num_pairs": 59,
+        "num_unique_pairs": 55,
+        "repetition_ratio": 0.06779661016949153,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12536",
+        "num_tokens": 159,
+        "num_pairs": 158,
+        "num_unique_pairs": 122,
+        "repetition_ratio": 0.22784810126582278,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04589",
+        "num_tokens": 30,
+        "num_pairs": 29,
+        "num_unique_pairs": 29,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13001",
+        "num_tokens": 97,
+        "num_pairs": 96,
+        "num_unique_pairs": 79,
+        "repetition_ratio": 0.17708333333333334,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03080",
+        "num_tokens": 62,
+        "num_pairs": 61,
+        "num_unique_pairs": 56,
+        "repetition_ratio": 0.08196721311475409,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14329",
+        "num_tokens": 37,
+        "num_pairs": 36,
+        "num_unique_pairs": 35,
+        "repetition_ratio": 0.027777777777777776,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14838",
+        "num_tokens": 115,
+        "num_pairs": 114,
+        "num_unique_pairs": 98,
+        "repetition_ratio": 0.14035087719298245,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01028",
+        "num_tokens": 328,
+        "num_pairs": 327,
+        "num_unique_pairs": 62,
+        "repetition_ratio": 0.8103975535168195,
+        "excluded": true
+      },
+      {
+        "id": "dolly-14916",
+        "num_tokens": 134,
+        "num_pairs": 133,
+        "num_unique_pairs": 112,
+        "repetition_ratio": 0.15789473684210525,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09228",
+        "num_tokens": 166,
+        "num_pairs": 165,
+        "num_unique_pairs": 78,
+        "repetition_ratio": 0.5272727272727272,
+        "excluded": true
+      },
+      {
+        "id": "dolly-04333",
+        "num_tokens": 266,
+        "num_pairs": 265,
+        "num_unique_pairs": 204,
+        "repetition_ratio": 0.23018867924528302,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06945",
+        "num_tokens": 22,
+        "num_pairs": 21,
+        "num_unique_pairs": 20,
+        "repetition_ratio": 0.047619047619047616,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05443",
+        "num_tokens": 66,
+        "num_pairs": 65,
+        "num_unique_pairs": 54,
+        "repetition_ratio": 0.16923076923076924,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14032",
+        "num_tokens": 161,
+        "num_pairs": 160,
+        "num_unique_pairs": 107,
+        "repetition_ratio": 0.33125,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13783",
+        "num_tokens": 76,
+        "num_pairs": 75,
+        "num_unique_pairs": 65,
+        "repetition_ratio": 0.13333333333333333,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10958",
+        "num_tokens": 117,
+        "num_pairs": 116,
+        "num_unique_pairs": 102,
+        "repetition_ratio": 0.1206896551724138,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05489",
+        "num_tokens": 42,
+        "num_pairs": 41,
+        "num_unique_pairs": 39,
+        "repetition_ratio": 0.04878048780487805,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03773",
+        "num_tokens": 68,
+        "num_pairs": 67,
+        "num_unique_pairs": 44,
+        "repetition_ratio": 0.34328358208955223,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06158",
+        "num_tokens": 112,
+        "num_pairs": 111,
+        "num_unique_pairs": 100,
+        "repetition_ratio": 0.0990990990990991,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06269",
+        "num_tokens": 183,
+        "num_pairs": 182,
+        "num_unique_pairs": 128,
+        "repetition_ratio": 0.2967032967032967,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04686",
+        "num_tokens": 360,
+        "num_pairs": 359,
+        "num_unique_pairs": 194,
+        "repetition_ratio": 0.4596100278551532,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04273",
+        "num_tokens": 51,
+        "num_pairs": 50,
+        "num_unique_pairs": 46,
+        "repetition_ratio": 0.08,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14700",
+        "num_tokens": 88,
+        "num_pairs": 87,
+        "num_unique_pairs": 70,
+        "repetition_ratio": 0.19540229885057472,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12371",
+        "num_tokens": 258,
+        "num_pairs": 257,
+        "num_unique_pairs": 221,
+        "repetition_ratio": 0.14007782101167315,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02694",
+        "num_tokens": 124,
+        "num_pairs": 123,
+        "num_unique_pairs": 108,
+        "repetition_ratio": 0.12195121951219512,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08230",
+        "num_tokens": 12,
+        "num_pairs": 11,
+        "num_unique_pairs": 11,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12027",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 54,
+        "repetition_ratio": 0.9648208469055375,
+        "excluded": true
+      },
+      {
+        "id": "dolly-12861",
+        "num_tokens": 130,
+        "num_pairs": 129,
+        "num_unique_pairs": 105,
+        "repetition_ratio": 0.18604651162790697,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04521",
+        "num_tokens": 202,
+        "num_pairs": 201,
+        "num_unique_pairs": 106,
+        "repetition_ratio": 0.472636815920398,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07117",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 6,
+        "repetition_ratio": 0.9960912052117263,
+        "excluded": true
+      },
+      {
+        "id": "dolly-01469",
+        "num_tokens": 229,
+        "num_pairs": 228,
+        "num_unique_pairs": 195,
+        "repetition_ratio": 0.14473684210526316,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01239",
+        "num_tokens": 285,
+        "num_pairs": 284,
+        "num_unique_pairs": 251,
+        "repetition_ratio": 0.11619718309859155,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03696",
+        "num_tokens": 177,
+        "num_pairs": 176,
+        "num_unique_pairs": 126,
+        "repetition_ratio": 0.2840909090909091,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07132",
+        "num_tokens": 27,
+        "num_pairs": 26,
+        "num_unique_pairs": 24,
+        "repetition_ratio": 0.07692307692307693,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07355",
+        "num_tokens": 55,
+        "num_pairs": 54,
+        "num_unique_pairs": 52,
+        "repetition_ratio": 0.037037037037037035,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14739",
+        "num_tokens": 200,
+        "num_pairs": 199,
+        "num_unique_pairs": 145,
+        "repetition_ratio": 0.271356783919598,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03914",
+        "num_tokens": 190,
+        "num_pairs": 189,
+        "num_unique_pairs": 161,
+        "repetition_ratio": 0.14814814814814814,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12951",
+        "num_tokens": 138,
+        "num_pairs": 137,
+        "num_unique_pairs": 103,
+        "repetition_ratio": 0.24817518248175183,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06771",
+        "num_tokens": 11,
+        "num_pairs": 10,
+        "num_unique_pairs": 10,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10178",
+        "num_tokens": 42,
+        "num_pairs": 41,
+        "num_unique_pairs": 34,
+        "repetition_ratio": 0.17073170731707318,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10898",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 77,
+        "repetition_ratio": 0.9498371335504886,
+        "excluded": true
+      },
+      {
+        "id": "dolly-12364",
+        "num_tokens": 190,
+        "num_pairs": 189,
+        "num_unique_pairs": 126,
+        "repetition_ratio": 0.3333333333333333,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11987",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 232,
+        "repetition_ratio": 0.8488599348534202,
+        "excluded": true
+      },
+      {
+        "id": "dolly-03726",
+        "num_tokens": 298,
+        "num_pairs": 297,
+        "num_unique_pairs": 131,
+        "repetition_ratio": 0.5589225589225589,
+        "excluded": true
+      },
+      {
+        "id": "dolly-05761",
+        "num_tokens": 281,
+        "num_pairs": 280,
+        "num_unique_pairs": 207,
+        "repetition_ratio": 0.26071428571428573,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01939",
+        "num_tokens": 68,
+        "num_pairs": 67,
+        "num_unique_pairs": 63,
+        "repetition_ratio": 0.05970149253731343,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05628",
+        "num_tokens": 201,
+        "num_pairs": 200,
+        "num_unique_pairs": 115,
+        "repetition_ratio": 0.425,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11466",
+        "num_tokens": 14,
+        "num_pairs": 13,
+        "num_unique_pairs": 11,
+        "repetition_ratio": 0.15384615384615385,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04773",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 171,
+        "repetition_ratio": 0.888599348534202,
+        "excluded": true
+      },
+      {
+        "id": "dolly-12245",
+        "num_tokens": 28,
+        "num_pairs": 27,
+        "num_unique_pairs": 27,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14861",
+        "num_tokens": 106,
+        "num_pairs": 105,
+        "num_unique_pairs": 101,
+        "repetition_ratio": 0.0380952380952381,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00900",
+        "num_tokens": 73,
+        "num_pairs": 72,
+        "num_unique_pairs": 69,
+        "repetition_ratio": 0.041666666666666664,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01979",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 148,
+        "repetition_ratio": 0.9035830618892509,
+        "excluded": true
+      },
+      {
+        "id": "dolly-01206",
+        "num_tokens": 13,
+        "num_pairs": 12,
+        "num_unique_pairs": 12,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09334",
+        "num_tokens": 116,
+        "num_pairs": 115,
+        "num_unique_pairs": 102,
+        "repetition_ratio": 0.11304347826086956,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10207",
+        "num_tokens": 66,
+        "num_pairs": 65,
+        "num_unique_pairs": 51,
+        "repetition_ratio": 0.2153846153846154,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14970",
+        "num_tokens": 58,
+        "num_pairs": 57,
+        "num_unique_pairs": 51,
+        "repetition_ratio": 0.10526315789473684,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13410",
+        "num_tokens": 36,
+        "num_pairs": 35,
+        "num_unique_pairs": 28,
+        "repetition_ratio": 0.2,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07266",
+        "num_tokens": 188,
+        "num_pairs": 187,
+        "num_unique_pairs": 169,
+        "repetition_ratio": 0.0962566844919786,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10408",
+        "num_tokens": 70,
+        "num_pairs": 69,
+        "num_unique_pairs": 64,
+        "repetition_ratio": 0.07246376811594203,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13339",
+        "num_tokens": 58,
+        "num_pairs": 57,
+        "num_unique_pairs": 42,
+        "repetition_ratio": 0.2631578947368421,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13292",
+        "num_tokens": 7,
+        "num_pairs": 6,
+        "num_unique_pairs": 6,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13068",
+        "num_tokens": 40,
+        "num_pairs": 39,
+        "num_unique_pairs": 32,
+        "repetition_ratio": 0.1794871794871795,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08911",
+        "num_tokens": 192,
+        "num_pairs": 191,
+        "num_unique_pairs": 153,
+        "repetition_ratio": 0.19895287958115182,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13555",
+        "num_tokens": 126,
+        "num_pairs": 125,
+        "num_unique_pairs": 105,
+        "repetition_ratio": 0.16,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02725",
+        "num_tokens": 413,
+        "num_pairs": 412,
+        "num_unique_pairs": 119,
+        "repetition_ratio": 0.7111650485436893,
+        "excluded": true
+      },
+      {
+        "id": "dolly-01054",
+        "num_tokens": 250,
+        "num_pairs": 249,
+        "num_unique_pairs": 196,
+        "repetition_ratio": 0.21285140562248997,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02628",
+        "num_tokens": 84,
+        "num_pairs": 83,
+        "num_unique_pairs": 75,
+        "repetition_ratio": 0.0963855421686747,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05231",
+        "num_tokens": 286,
+        "num_pairs": 285,
+        "num_unique_pairs": 225,
+        "repetition_ratio": 0.21052631578947367,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11030",
+        "num_tokens": 39,
+        "num_pairs": 38,
+        "num_unique_pairs": 37,
+        "repetition_ratio": 0.02631578947368421,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05398",
+        "num_tokens": 241,
+        "num_pairs": 240,
+        "num_unique_pairs": 206,
+        "repetition_ratio": 0.14166666666666666,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07605",
+        "num_tokens": 114,
+        "num_pairs": 113,
+        "num_unique_pairs": 95,
+        "repetition_ratio": 0.1592920353982301,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05324",
+        "num_tokens": 242,
+        "num_pairs": 241,
+        "num_unique_pairs": 165,
+        "repetition_ratio": 0.3153526970954357,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12579",
+        "num_tokens": 204,
+        "num_pairs": 203,
+        "num_unique_pairs": 125,
+        "repetition_ratio": 0.3842364532019704,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01118",
+        "num_tokens": 156,
+        "num_pairs": 155,
+        "num_unique_pairs": 136,
+        "repetition_ratio": 0.12258064516129032,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07971",
+        "num_tokens": 30,
+        "num_pairs": 29,
+        "num_unique_pairs": 28,
+        "repetition_ratio": 0.034482758620689655,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11413",
+        "num_tokens": 13,
+        "num_pairs": 12,
+        "num_unique_pairs": 12,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03239",
+        "num_tokens": 170,
+        "num_pairs": 169,
+        "num_unique_pairs": 111,
+        "repetition_ratio": 0.3431952662721893,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13445",
+        "num_tokens": 114,
+        "num_pairs": 113,
+        "num_unique_pairs": 97,
+        "repetition_ratio": 0.1415929203539823,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12418",
+        "num_tokens": 217,
+        "num_pairs": 216,
+        "num_unique_pairs": 191,
+        "repetition_ratio": 0.11574074074074074,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07936",
+        "num_tokens": 115,
+        "num_pairs": 114,
+        "num_unique_pairs": 94,
+        "repetition_ratio": 0.17543859649122806,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00170",
+        "num_tokens": 106,
+        "num_pairs": 105,
+        "num_unique_pairs": 80,
+        "repetition_ratio": 0.23809523809523808,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09108",
+        "num_tokens": 41,
+        "num_pairs": 40,
+        "num_unique_pairs": 37,
+        "repetition_ratio": 0.075,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06019",
+        "num_tokens": 23,
+        "num_pairs": 22,
+        "num_unique_pairs": 22,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02032",
+        "num_tokens": 52,
+        "num_pairs": 51,
+        "num_unique_pairs": 41,
+        "repetition_ratio": 0.19607843137254902,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01183",
+        "num_tokens": 87,
+        "num_pairs": 86,
+        "num_unique_pairs": 79,
+        "repetition_ratio": 0.08139534883720931,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08934",
+        "num_tokens": 226,
+        "num_pairs": 225,
+        "num_unique_pairs": 161,
+        "repetition_ratio": 0.28444444444444444,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09988",
+        "num_tokens": 322,
+        "num_pairs": 321,
+        "num_unique_pairs": 235,
+        "repetition_ratio": 0.26791277258566976,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02139",
+        "num_tokens": 121,
+        "num_pairs": 120,
+        "num_unique_pairs": 110,
+        "repetition_ratio": 0.08333333333333333,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08401",
+        "num_tokens": 222,
+        "num_pairs": 221,
+        "num_unique_pairs": 140,
+        "repetition_ratio": 0.3665158371040724,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14265",
+        "num_tokens": 155,
+        "num_pairs": 154,
+        "num_unique_pairs": 54,
+        "repetition_ratio": 0.6493506493506493,
+        "excluded": true
+      },
+      {
+        "id": "dolly-09609",
+        "num_tokens": 189,
+        "num_pairs": 188,
+        "num_unique_pairs": 82,
+        "repetition_ratio": 0.5638297872340425,
+        "excluded": true
+      },
+      {
+        "id": "dolly-10197",
+        "num_tokens": 21,
+        "num_pairs": 20,
+        "num_unique_pairs": 18,
+        "repetition_ratio": 0.1,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14697",
+        "num_tokens": 126,
+        "num_pairs": 125,
+        "num_unique_pairs": 111,
+        "repetition_ratio": 0.112,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07122",
+        "num_tokens": 172,
+        "num_pairs": 171,
+        "num_unique_pairs": 120,
+        "repetition_ratio": 0.2982456140350877,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06600",
+        "num_tokens": 32,
+        "num_pairs": 31,
+        "num_unique_pairs": 27,
+        "repetition_ratio": 0.12903225806451613,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13610",
+        "num_tokens": 293,
+        "num_pairs": 292,
+        "num_unique_pairs": 172,
+        "repetition_ratio": 0.410958904109589,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11445",
+        "num_tokens": 245,
+        "num_pairs": 244,
+        "num_unique_pairs": 169,
+        "repetition_ratio": 0.3073770491803279,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07427",
+        "num_tokens": 189,
+        "num_pairs": 188,
+        "num_unique_pairs": 146,
+        "repetition_ratio": 0.22340425531914893,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08999",
+        "num_tokens": 24,
+        "num_pairs": 23,
+        "num_unique_pairs": 23,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08202",
+        "num_tokens": 88,
+        "num_pairs": 87,
+        "num_unique_pairs": 80,
+        "repetition_ratio": 0.08045977011494253,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01593",
+        "num_tokens": 37,
+        "num_pairs": 36,
+        "num_unique_pairs": 31,
+        "repetition_ratio": 0.1388888888888889,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00990",
+        "num_tokens": 21,
+        "num_pairs": 20,
+        "num_unique_pairs": 20,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14972",
+        "num_tokens": 245,
+        "num_pairs": 244,
+        "num_unique_pairs": 171,
+        "repetition_ratio": 0.29918032786885246,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05528",
+        "num_tokens": 63,
+        "num_pairs": 62,
+        "num_unique_pairs": 38,
+        "repetition_ratio": 0.3870967741935484,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14539",
+        "num_tokens": 119,
+        "num_pairs": 118,
+        "num_unique_pairs": 110,
+        "repetition_ratio": 0.06779661016949153,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08595",
+        "num_tokens": 104,
+        "num_pairs": 103,
+        "num_unique_pairs": 95,
+        "repetition_ratio": 0.07766990291262135,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10519",
+        "num_tokens": 141,
+        "num_pairs": 140,
+        "num_unique_pairs": 126,
+        "repetition_ratio": 0.1,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09563",
+        "num_tokens": 15,
+        "num_pairs": 14,
+        "num_unique_pairs": 14,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06895",
+        "num_tokens": 50,
+        "num_pairs": 49,
+        "num_unique_pairs": 47,
+        "repetition_ratio": 0.04081632653061224,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12916",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 165,
+        "repetition_ratio": 0.8925081433224755,
+        "excluded": true
+      },
+      {
+        "id": "dolly-02451",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 65,
+        "repetition_ratio": 0.9576547231270358,
+        "excluded": true
+      },
+      {
+        "id": "dolly-00636",
+        "num_tokens": 15,
+        "num_pairs": 14,
+        "num_unique_pairs": 14,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06006",
+        "num_tokens": 73,
+        "num_pairs": 72,
+        "num_unique_pairs": 61,
+        "repetition_ratio": 0.1527777777777778,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08319",
+        "num_tokens": 111,
+        "num_pairs": 110,
+        "num_unique_pairs": 93,
+        "repetition_ratio": 0.15454545454545454,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13544",
+        "num_tokens": 279,
+        "num_pairs": 278,
+        "num_unique_pairs": 225,
+        "repetition_ratio": 0.1906474820143885,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06238",
+        "num_tokens": 220,
+        "num_pairs": 219,
+        "num_unique_pairs": 195,
+        "repetition_ratio": 0.1095890410958904,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04190",
+        "num_tokens": 16,
+        "num_pairs": 15,
+        "num_unique_pairs": 15,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06824",
+        "num_tokens": 473,
+        "num_pairs": 472,
+        "num_unique_pairs": 193,
+        "repetition_ratio": 0.5911016949152542,
+        "excluded": true
+      },
+      {
+        "id": "dolly-14842",
+        "num_tokens": 48,
+        "num_pairs": 47,
+        "num_unique_pairs": 47,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13162",
+        "num_tokens": 11,
+        "num_pairs": 10,
+        "num_unique_pairs": 10,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00803",
+        "num_tokens": 101,
+        "num_pairs": 100,
+        "num_unique_pairs": 81,
+        "repetition_ratio": 0.19,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01653",
+        "num_tokens": 86,
+        "num_pairs": 85,
+        "num_unique_pairs": 73,
+        "repetition_ratio": 0.1411764705882353,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05312",
+        "num_tokens": 252,
+        "num_pairs": 251,
+        "num_unique_pairs": 164,
+        "repetition_ratio": 0.3466135458167331,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10992",
+        "num_tokens": 169,
+        "num_pairs": 168,
+        "num_unique_pairs": 143,
+        "repetition_ratio": 0.1488095238095238,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05352",
+        "num_tokens": 367,
+        "num_pairs": 366,
+        "num_unique_pairs": 291,
+        "repetition_ratio": 0.20491803278688525,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03231",
+        "num_tokens": 42,
+        "num_pairs": 41,
+        "num_unique_pairs": 40,
+        "repetition_ratio": 0.024390243902439025,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06932",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 44,
+        "repetition_ratio": 0.9713355048859935,
+        "excluded": true
+      },
+      {
+        "id": "dolly-08607",
+        "num_tokens": 375,
+        "num_pairs": 374,
+        "num_unique_pairs": 245,
+        "repetition_ratio": 0.3449197860962567,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09288",
+        "num_tokens": 51,
+        "num_pairs": 50,
+        "num_unique_pairs": 43,
+        "repetition_ratio": 0.14,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07944",
+        "num_tokens": 275,
+        "num_pairs": 274,
+        "num_unique_pairs": 177,
+        "repetition_ratio": 0.354014598540146,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13102",
+        "num_tokens": 180,
+        "num_pairs": 179,
+        "num_unique_pairs": 122,
+        "repetition_ratio": 0.31843575418994413,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05388",
+        "num_tokens": 51,
+        "num_pairs": 50,
+        "num_unique_pairs": 50,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14235",
+        "num_tokens": 168,
+        "num_pairs": 167,
+        "num_unique_pairs": 79,
+        "repetition_ratio": 0.5269461077844312,
+        "excluded": true
+      },
+      {
+        "id": "dolly-07763",
+        "num_tokens": 85,
+        "num_pairs": 84,
+        "num_unique_pairs": 62,
+        "repetition_ratio": 0.2619047619047619,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10500",
+        "num_tokens": 88,
+        "num_pairs": 87,
+        "num_unique_pairs": 78,
+        "repetition_ratio": 0.10344827586206896,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08355",
+        "num_tokens": 41,
+        "num_pairs": 40,
+        "num_unique_pairs": 40,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00609",
+        "num_tokens": 52,
+        "num_pairs": 51,
+        "num_unique_pairs": 45,
+        "repetition_ratio": 0.11764705882352941,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06786",
+        "num_tokens": 77,
+        "num_pairs": 76,
+        "num_unique_pairs": 68,
+        "repetition_ratio": 0.10526315789473684,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04857",
+        "num_tokens": 103,
+        "num_pairs": 102,
+        "num_unique_pairs": 93,
+        "repetition_ratio": 0.08823529411764706,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07633",
+        "num_tokens": 16,
+        "num_pairs": 15,
+        "num_unique_pairs": 14,
+        "repetition_ratio": 0.06666666666666667,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00179",
+        "num_tokens": 141,
+        "num_pairs": 140,
+        "num_unique_pairs": 108,
+        "repetition_ratio": 0.22857142857142856,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11386",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 183,
+        "repetition_ratio": 0.8807817589576548,
+        "excluded": true
+      },
+      {
+        "id": "dolly-02069",
+        "num_tokens": 129,
+        "num_pairs": 128,
+        "num_unique_pairs": 85,
+        "repetition_ratio": 0.3359375,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09439",
+        "num_tokens": 234,
+        "num_pairs": 233,
+        "num_unique_pairs": 189,
+        "repetition_ratio": 0.1888412017167382,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12065",
+        "num_tokens": 329,
+        "num_pairs": 328,
+        "num_unique_pairs": 261,
+        "repetition_ratio": 0.20426829268292682,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00148",
+        "num_tokens": 229,
+        "num_pairs": 228,
+        "num_unique_pairs": 127,
+        "repetition_ratio": 0.44298245614035087,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08451",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 44,
+        "repetition_ratio": 0.9713355048859935,
+        "excluded": true
+      },
+      {
+        "id": "dolly-02687",
+        "num_tokens": 33,
+        "num_pairs": 32,
+        "num_unique_pairs": 31,
+        "repetition_ratio": 0.03125,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08416",
+        "num_tokens": 167,
+        "num_pairs": 166,
+        "num_unique_pairs": 116,
+        "repetition_ratio": 0.30120481927710846,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08211",
+        "num_tokens": 65,
+        "num_pairs": 64,
+        "num_unique_pairs": 61,
+        "repetition_ratio": 0.046875,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01260",
+        "num_tokens": 35,
+        "num_pairs": 34,
+        "num_unique_pairs": 33,
+        "repetition_ratio": 0.029411764705882353,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12186",
+        "num_tokens": 110,
+        "num_pairs": 109,
+        "num_unique_pairs": 70,
+        "repetition_ratio": 0.3577981651376147,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07635",
+        "num_tokens": 112,
+        "num_pairs": 111,
+        "num_unique_pairs": 97,
+        "repetition_ratio": 0.12612612612612611,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10037",
+        "num_tokens": 241,
+        "num_pairs": 240,
+        "num_unique_pairs": 155,
+        "repetition_ratio": 0.3541666666666667,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06110",
+        "num_tokens": 101,
+        "num_pairs": 100,
+        "num_unique_pairs": 80,
+        "repetition_ratio": 0.2,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08268",
+        "num_tokens": 78,
+        "num_pairs": 77,
+        "num_unique_pairs": 62,
+        "repetition_ratio": 0.19480519480519481,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01723",
+        "num_tokens": 242,
+        "num_pairs": 241,
+        "num_unique_pairs": 131,
+        "repetition_ratio": 0.45643153526970953,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03319",
+        "num_tokens": 324,
+        "num_pairs": 323,
+        "num_unique_pairs": 166,
+        "repetition_ratio": 0.48606811145510836,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08546",
+        "num_tokens": 93,
+        "num_pairs": 92,
+        "num_unique_pairs": 60,
+        "repetition_ratio": 0.34782608695652173,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12885",
+        "num_tokens": 233,
+        "num_pairs": 232,
+        "num_unique_pairs": 197,
+        "repetition_ratio": 0.15086206896551724,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03709",
+        "num_tokens": 106,
+        "num_pairs": 105,
+        "num_unique_pairs": 97,
+        "repetition_ratio": 0.0761904761904762,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00852",
+        "num_tokens": 29,
+        "num_pairs": 28,
+        "num_unique_pairs": 26,
+        "repetition_ratio": 0.07142857142857142,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05067",
+        "num_tokens": 30,
+        "num_pairs": 29,
+        "num_unique_pairs": 29,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11665",
+        "num_tokens": 215,
+        "num_pairs": 214,
+        "num_unique_pairs": 184,
+        "repetition_ratio": 0.14018691588785046,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14465",
+        "num_tokens": 27,
+        "num_pairs": 26,
+        "num_unique_pairs": 24,
+        "repetition_ratio": 0.07692307692307693,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09375",
+        "num_tokens": 76,
+        "num_pairs": 75,
+        "num_unique_pairs": 69,
+        "repetition_ratio": 0.08,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01309",
+        "num_tokens": 86,
+        "num_pairs": 85,
+        "num_unique_pairs": 81,
+        "repetition_ratio": 0.047058823529411764,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07407",
+        "num_tokens": 42,
+        "num_pairs": 41,
+        "num_unique_pairs": 40,
+        "repetition_ratio": 0.024390243902439025,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09062",
+        "num_tokens": 186,
+        "num_pairs": 185,
+        "num_unique_pairs": 121,
+        "repetition_ratio": 0.34594594594594597,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03278",
+        "num_tokens": 80,
+        "num_pairs": 79,
+        "num_unique_pairs": 43,
+        "repetition_ratio": 0.45569620253164556,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05234",
+        "num_tokens": 126,
+        "num_pairs": 125,
+        "num_unique_pairs": 118,
+        "repetition_ratio": 0.056,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04853",
+        "num_tokens": 140,
+        "num_pairs": 139,
+        "num_unique_pairs": 120,
+        "repetition_ratio": 0.1366906474820144,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13936",
+        "num_tokens": 190,
+        "num_pairs": 189,
+        "num_unique_pairs": 166,
+        "repetition_ratio": 0.12169312169312169,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09420",
+        "num_tokens": 120,
+        "num_pairs": 119,
+        "num_unique_pairs": 56,
+        "repetition_ratio": 0.5294117647058824,
+        "excluded": true
+      },
+      {
+        "id": "dolly-12124",
+        "num_tokens": 181,
+        "num_pairs": 180,
+        "num_unique_pairs": 147,
+        "repetition_ratio": 0.18333333333333332,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02816",
+        "num_tokens": 90,
+        "num_pairs": 89,
+        "num_unique_pairs": 78,
+        "repetition_ratio": 0.12359550561797752,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01411",
+        "num_tokens": 65,
+        "num_pairs": 64,
+        "num_unique_pairs": 56,
+        "repetition_ratio": 0.125,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08114",
+        "num_tokens": 189,
+        "num_pairs": 188,
+        "num_unique_pairs": 155,
+        "repetition_ratio": 0.17553191489361702,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09430",
+        "num_tokens": 97,
+        "num_pairs": 96,
+        "num_unique_pairs": 79,
+        "repetition_ratio": 0.17708333333333334,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10389",
+        "num_tokens": 19,
+        "num_pairs": 18,
+        "num_unique_pairs": 14,
+        "repetition_ratio": 0.2222222222222222,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03119",
+        "num_tokens": 25,
+        "num_pairs": 24,
+        "num_unique_pairs": 21,
+        "repetition_ratio": 0.125,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02469",
+        "num_tokens": 71,
+        "num_pairs": 70,
+        "num_unique_pairs": 63,
+        "repetition_ratio": 0.1,
+        "excluded": false
+      },
+      {
+        "id": "dolly-07780",
+        "num_tokens": 113,
+        "num_pairs": 112,
+        "num_unique_pairs": 69,
+        "repetition_ratio": 0.38392857142857145,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03916",
+        "num_tokens": 181,
+        "num_pairs": 180,
+        "num_unique_pairs": 167,
+        "repetition_ratio": 0.07222222222222222,
+        "excluded": false
+      },
+      {
+        "id": "dolly-08222",
+        "num_tokens": 71,
+        "num_pairs": 70,
+        "num_unique_pairs": 56,
+        "repetition_ratio": 0.2,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01615",
+        "num_tokens": 58,
+        "num_pairs": 57,
+        "num_unique_pairs": 45,
+        "repetition_ratio": 0.21052631578947367,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12812",
+        "num_tokens": 94,
+        "num_pairs": 93,
+        "num_unique_pairs": 78,
+        "repetition_ratio": 0.16129032258064516,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11437",
+        "num_tokens": 142,
+        "num_pairs": 141,
+        "num_unique_pairs": 110,
+        "repetition_ratio": 0.2198581560283688,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12001",
+        "num_tokens": 150,
+        "num_pairs": 149,
+        "num_unique_pairs": 100,
+        "repetition_ratio": 0.3288590604026846,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09442",
+        "num_tokens": 49,
+        "num_pairs": 48,
+        "num_unique_pairs": 32,
+        "repetition_ratio": 0.3333333333333333,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11241",
+        "num_tokens": 150,
+        "num_pairs": 149,
+        "num_unique_pairs": 92,
+        "repetition_ratio": 0.3825503355704698,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14947",
+        "num_tokens": 203,
+        "num_pairs": 202,
+        "num_unique_pairs": 178,
+        "repetition_ratio": 0.1188118811881188,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03624",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 207,
+        "repetition_ratio": 0.8651465798045602,
+        "excluded": true
+      },
+      {
+        "id": "dolly-14069",
+        "num_tokens": 266,
+        "num_pairs": 265,
+        "num_unique_pairs": 181,
+        "repetition_ratio": 0.3169811320754717,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05632",
+        "num_tokens": 140,
+        "num_pairs": 139,
+        "num_unique_pairs": 125,
+        "repetition_ratio": 0.10071942446043165,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13510",
+        "num_tokens": 24,
+        "num_pairs": 23,
+        "num_unique_pairs": 18,
+        "repetition_ratio": 0.21739130434782608,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02684",
+        "num_tokens": 33,
+        "num_pairs": 32,
+        "num_unique_pairs": 30,
+        "repetition_ratio": 0.0625,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06631",
+        "num_tokens": 99,
+        "num_pairs": 98,
+        "num_unique_pairs": 79,
+        "repetition_ratio": 0.19387755102040816,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10153",
+        "num_tokens": 191,
+        "num_pairs": 190,
+        "num_unique_pairs": 152,
+        "repetition_ratio": 0.2,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06628",
+        "num_tokens": 58,
+        "num_pairs": 57,
+        "num_unique_pairs": 48,
+        "repetition_ratio": 0.15789473684210525,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09735",
+        "num_tokens": 110,
+        "num_pairs": 109,
+        "num_unique_pairs": 104,
+        "repetition_ratio": 0.045871559633027525,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09330",
+        "num_tokens": 116,
+        "num_pairs": 115,
+        "num_unique_pairs": 104,
+        "repetition_ratio": 0.09565217391304348,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03998",
+        "num_tokens": 209,
+        "num_pairs": 208,
+        "num_unique_pairs": 174,
+        "repetition_ratio": 0.16346153846153846,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12034",
+        "num_tokens": 12,
+        "num_pairs": 11,
+        "num_unique_pairs": 11,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09039",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 125,
+        "repetition_ratio": 0.9185667752442996,
+        "excluded": true
+      },
+      {
+        "id": "dolly-11182",
+        "num_tokens": 102,
+        "num_pairs": 101,
+        "num_unique_pairs": 92,
+        "repetition_ratio": 0.0891089108910891,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12273",
+        "num_tokens": 465,
+        "num_pairs": 464,
+        "num_unique_pairs": 269,
+        "repetition_ratio": 0.4202586206896552,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03136",
+        "num_tokens": 272,
+        "num_pairs": 271,
+        "num_unique_pairs": 213,
+        "repetition_ratio": 0.2140221402214022,
+        "excluded": false
+      },
+      {
+        "id": "dolly-03067",
+        "num_tokens": 52,
+        "num_pairs": 51,
+        "num_unique_pairs": 33,
+        "repetition_ratio": 0.35294117647058826,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13829",
+        "num_tokens": 12,
+        "num_pairs": 11,
+        "num_unique_pairs": 11,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-10476",
+        "num_tokens": 129,
+        "num_pairs": 128,
+        "num_unique_pairs": 83,
+        "repetition_ratio": 0.3515625,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05864",
+        "num_tokens": 32,
+        "num_pairs": 31,
+        "num_unique_pairs": 30,
+        "repetition_ratio": 0.03225806451612903,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11047",
+        "num_tokens": 22,
+        "num_pairs": 21,
+        "num_unique_pairs": 20,
+        "repetition_ratio": 0.047619047619047616,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01739",
+        "num_tokens": 110,
+        "num_pairs": 109,
+        "num_unique_pairs": 102,
+        "repetition_ratio": 0.06422018348623854,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00407",
+        "num_tokens": 133,
+        "num_pairs": 132,
+        "num_unique_pairs": 108,
+        "repetition_ratio": 0.18181818181818182,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09175",
+        "num_tokens": 83,
+        "num_pairs": 82,
+        "num_unique_pairs": 75,
+        "repetition_ratio": 0.08536585365853659,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02274",
+        "num_tokens": 131,
+        "num_pairs": 130,
+        "num_unique_pairs": 118,
+        "repetition_ratio": 0.09230769230769231,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02008",
+        "num_tokens": 27,
+        "num_pairs": 26,
+        "num_unique_pairs": 26,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02059",
+        "num_tokens": 254,
+        "num_pairs": 253,
+        "num_unique_pairs": 168,
+        "repetition_ratio": 0.3359683794466403,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02916",
+        "num_tokens": 152,
+        "num_pairs": 151,
+        "num_unique_pairs": 115,
+        "repetition_ratio": 0.23841059602649006,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09816",
+        "num_tokens": 123,
+        "num_pairs": 122,
+        "num_unique_pairs": 101,
+        "repetition_ratio": 0.1721311475409836,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05810",
+        "num_tokens": 112,
+        "num_pairs": 111,
+        "num_unique_pairs": 77,
+        "repetition_ratio": 0.3063063063063063,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00278",
+        "num_tokens": 232,
+        "num_pairs": 231,
+        "num_unique_pairs": 205,
+        "repetition_ratio": 0.11255411255411256,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05355",
+        "num_tokens": 42,
+        "num_pairs": 41,
+        "num_unique_pairs": 32,
+        "repetition_ratio": 0.21951219512195122,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14900",
+        "num_tokens": 116,
+        "num_pairs": 115,
+        "num_unique_pairs": 80,
+        "repetition_ratio": 0.30434782608695654,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01353",
+        "num_tokens": 154,
+        "num_pairs": 153,
+        "num_unique_pairs": 135,
+        "repetition_ratio": 0.11764705882352941,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12693",
+        "num_tokens": 207,
+        "num_pairs": 206,
+        "num_unique_pairs": 152,
+        "repetition_ratio": 0.2621359223300971,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06970",
+        "num_tokens": 117,
+        "num_pairs": 116,
+        "num_unique_pairs": 78,
+        "repetition_ratio": 0.3275862068965517,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00571",
+        "num_tokens": 68,
+        "num_pairs": 67,
+        "num_unique_pairs": 58,
+        "repetition_ratio": 0.13432835820895522,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05634",
+        "num_tokens": 162,
+        "num_pairs": 161,
+        "num_unique_pairs": 117,
+        "repetition_ratio": 0.2732919254658385,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11106",
+        "num_tokens": 84,
+        "num_pairs": 83,
+        "num_unique_pairs": 71,
+        "repetition_ratio": 0.14457831325301204,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06838",
+        "num_tokens": 71,
+        "num_pairs": 70,
+        "num_unique_pairs": 64,
+        "repetition_ratio": 0.08571428571428572,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02500",
+        "num_tokens": 58,
+        "num_pairs": 57,
+        "num_unique_pairs": 55,
+        "repetition_ratio": 0.03508771929824561,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09695",
+        "num_tokens": 50,
+        "num_pairs": 49,
+        "num_unique_pairs": 44,
+        "repetition_ratio": 0.10204081632653061,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05386",
+        "num_tokens": 90,
+        "num_pairs": 89,
+        "num_unique_pairs": 81,
+        "repetition_ratio": 0.0898876404494382,
+        "excluded": false
+      },
+      {
+        "id": "dolly-00182",
+        "num_tokens": 71,
+        "num_pairs": 70,
+        "num_unique_pairs": 30,
+        "repetition_ratio": 0.5714285714285714,
+        "excluded": true
+      },
+      {
+        "id": "dolly-03360",
+        "num_tokens": 45,
+        "num_pairs": 44,
+        "num_unique_pairs": 41,
+        "repetition_ratio": 0.06818181818181818,
+        "excluded": false
+      },
+      {
+        "id": "dolly-02991",
+        "num_tokens": 149,
+        "num_pairs": 148,
+        "num_unique_pairs": 124,
+        "repetition_ratio": 0.16216216216216217,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06562",
+        "num_tokens": 1536,
+        "num_pairs": 1535,
+        "num_unique_pairs": 59,
+        "repetition_ratio": 0.9615635179153095,
+        "excluded": true
+      },
+      {
+        "id": "dolly-03113",
+        "num_tokens": 195,
+        "num_pairs": 194,
+        "num_unique_pairs": 93,
+        "repetition_ratio": 0.520618556701031,
+        "excluded": true
+      },
+      {
+        "id": "dolly-11314",
+        "num_tokens": 114,
+        "num_pairs": 113,
+        "num_unique_pairs": 100,
+        "repetition_ratio": 0.11504424778761062,
+        "excluded": false
+      },
+      {
+        "id": "dolly-01356",
+        "num_tokens": 229,
+        "num_pairs": 228,
+        "num_unique_pairs": 79,
+        "repetition_ratio": 0.6535087719298246,
+        "excluded": true
+      },
+      {
+        "id": "dolly-01718",
+        "num_tokens": 44,
+        "num_pairs": 43,
+        "num_unique_pairs": 43,
+        "repetition_ratio": 0.0,
+        "excluded": false
+      },
+      {
+        "id": "dolly-11440",
+        "num_tokens": 70,
+        "num_pairs": 69,
+        "num_unique_pairs": 58,
+        "repetition_ratio": 0.15942028985507245,
+        "excluded": false
+      },
+      {
+        "id": "dolly-14702",
+        "num_tokens": 46,
+        "num_pairs": 45,
+        "num_unique_pairs": 35,
+        "repetition_ratio": 0.2222222222222222,
+        "excluded": false
+      },
+      {
+        "id": "dolly-12236",
+        "num_tokens": 53,
+        "num_pairs": 52,
+        "num_unique_pairs": 45,
+        "repetition_ratio": 0.1346153846153846,
+        "excluded": false
+      },
+      {
+        "id": "dolly-09299",
+        "num_tokens": 168,
+        "num_pairs": 167,
+        "num_unique_pairs": 135,
+        "repetition_ratio": 0.19161676646706588,
+        "excluded": false
+      },
+      {
+        "id": "dolly-05393",
+        "num_tokens": 121,
+        "num_pairs": 120,
+        "num_unique_pairs": 105,
+        "repetition_ratio": 0.125,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13235",
+        "num_tokens": 52,
+        "num_pairs": 51,
+        "num_unique_pairs": 46,
+        "repetition_ratio": 0.09803921568627451,
+        "excluded": false
+      },
+      {
+        "id": "dolly-13039",
+        "num_tokens": 150,
+        "num_pairs": 149,
+        "num_unique_pairs": 125,
+        "repetition_ratio": 0.1610738255033557,
+        "excluded": false
+      },
+      {
+        "id": "dolly-04223",
+        "num_tokens": 42,
+        "num_pairs": 41,
+        "num_unique_pairs": 36,
+        "repetition_ratio": 0.12195121951219512,
+        "excluded": false
+      },
+      {
+        "id": "dolly-06101",
+        "num_tokens": 91,
+        "num_pairs": 90,
+        "num_unique_pairs": 83,
+        "repetition_ratio": 0.07777777777777778,
+        "excluded": false
+      }
+    ]
+  },
+  "num_answers": 452,
+  "total_answer_tokens": 54146,
+  "budgets": {
+    "1000": {
+      "group_token_count": 1000,
+      "scored_tokens_per_group": 999,
+      "num_groups": 54,
+      "total_answer_tokens": 54146,
+      "discarded_tail_tokens": 146,
+      "median_p_value": 0.44967160674560175,
+      "median_log10_p_value": -0.34710453387525253,
+      "status": "ok",
+      "groups": [
+        {
+          "index": 0,
+          "start_token": 0,
+          "end_token": 1000,
+          "num_tokens_scored": 999,
+          "green_tokens": 514,
+          "green_fraction": 0.5145145145145145,
+          "z_score": 0.9175193958940824,
+          "p_value": 0.17943526697035866,
+          "log10_p_value": -0.7460921948183421
+        },
+        {
+          "index": 1,
+          "start_token": 1000,
+          "end_token": 2000,
+          "num_tokens_scored": 999,
+          "green_tokens": 513,
+          "green_fraction": 0.5135135135135135,
+          "z_score": 0.8542421961772492,
+          "p_value": 0.19648540381447804,
+          "log10_p_value": -0.706669706246699
+        },
+        {
+          "index": 2,
+          "start_token": 2000,
+          "end_token": 3000,
+          "num_tokens_scored": 999,
+          "green_tokens": 488,
+          "green_fraction": 0.48848848848848847,
+          "z_score": -0.7276877967435826,
+          "p_value": 0.7665976389017798,
+          "log10_p_value": -0.11543252269385997
+        },
+        {
+          "index": 3,
+          "start_token": 3000,
+          "end_token": 4000,
+          "num_tokens_scored": 999,
+          "green_tokens": 512,
+          "green_fraction": 0.5125125125125125,
+          "z_score": 0.7909649964604158,
+          "p_value": 0.2144822089744769,
+          "log10_p_value": -0.6686087261583092
+        },
+        {
+          "index": 4,
+          "start_token": 4000,
+          "end_token": 5000,
+          "num_tokens_scored": 999,
+          "green_tokens": 457,
+          "green_fraction": 0.4574574574574575,
+          "z_score": -2.689280987965414,
+          "p_value": 0.9964196941459585,
+          "log10_p_value": -0.0015576972591864436
+        },
+        {
+          "index": 5,
+          "start_token": 5000,
+          "end_token": 6000,
+          "num_tokens_scored": 999,
+          "green_tokens": 467,
+          "green_fraction": 0.4674674674674675,
+          "z_score": -2.0565089907970813,
+          "p_value": 0.980133259718091,
+          "log10_p_value": -0.008714873260818275
+        },
+        {
+          "index": 6,
+          "start_token": 6000,
+          "end_token": 7000,
+          "num_tokens_scored": 999,
+          "green_tokens": 483,
+          "green_fraction": 0.48348348348348347,
+          "z_score": -1.044073795327749,
+          "p_value": 0.8517743756590758,
+          "log10_p_value": -0.06967542915691224
+        },
+        {
+          "index": 7,
+          "start_token": 7000,
+          "end_token": 8000,
+          "num_tokens_scored": 999,
+          "green_tokens": 522,
+          "green_fraction": 0.5225225225225225,
+          "z_score": 1.4237369936287485,
+          "p_value": 0.0772613103142331,
+          "log10_p_value": -1.1120379307056243
+        },
+        {
+          "index": 8,
+          "start_token": 8000,
+          "end_token": 9000,
+          "num_tokens_scored": 999,
+          "green_tokens": 544,
+          "green_fraction": 0.5445445445445446,
+          "z_score": 2.8158353873990807,
+          "p_value": 0.0024325293609298213,
+          "log10_p_value": -2.6139419090399394
+        },
+        {
+          "index": 9,
+          "start_token": 9000,
+          "end_token": 10000,
+          "num_tokens_scored": 999,
+          "green_tokens": 519,
+          "green_fraction": 0.5195195195195195,
+          "z_score": 1.2339053944782488,
+          "p_value": 0.10861907957743243,
+          "log10_p_value": -0.9640938816772133
+        },
+        {
+          "index": 10,
+          "start_token": 10000,
+          "end_token": 11000,
+          "num_tokens_scored": 999,
+          "green_tokens": 505,
+          "green_fraction": 0.5055055055055055,
+          "z_score": 0.348024598442583,
+          "p_value": 0.36391085501356357,
+          "log10_p_value": -0.4390049897498996
+        },
+        {
+          "index": 11,
+          "start_token": 11000,
+          "end_token": 12000,
+          "num_tokens_scored": 999,
+          "green_tokens": 515,
+          "green_fraction": 0.5155155155155156,
+          "z_score": 0.9807965956109157,
+          "p_value": 0.1633465287137027,
+          "log10_p_value": -0.7868900903070166
+        },
+        {
+          "index": 12,
+          "start_token": 12000,
+          "end_token": 13000,
+          "num_tokens_scored": 999,
+          "green_tokens": 522,
+          "green_fraction": 0.5225225225225225,
+          "z_score": 1.4237369936287485,
+          "p_value": 0.0772613103142331,
+          "log10_p_value": -1.1120379307056243
+        },
+        {
+          "index": 13,
+          "start_token": 13000,
+          "end_token": 14000,
+          "num_tokens_scored": 999,
+          "green_tokens": 482,
+          "green_fraction": 0.4824824824824825,
+          "z_score": -1.1073509950445821,
+          "p_value": 0.8659288977499955,
+          "log10_p_value": -0.06251776685396769
+        },
+        {
+          "index": 14,
+          "start_token": 14000,
+          "end_token": 15000,
+          "num_tokens_scored": 999,
+          "green_tokens": 517,
+          "green_fraction": 0.5175175175175175,
+          "z_score": 1.1073509950445821,
+          "p_value": 0.13407110225000457,
+          "log10_p_value": -0.8726648201036298
+        },
+        {
+          "index": 15,
+          "start_token": 15000,
+          "end_token": 16000,
+          "num_tokens_scored": 999,
+          "green_tokens": 518,
+          "green_fraction": 0.5185185185185185,
+          "z_score": 1.1706281947614154,
+          "p_value": 0.12087412957618554,
+          "log10_p_value": -0.9176666402853275
+        },
+        {
+          "index": 16,
+          "start_token": 16000,
+          "end_token": 17000,
+          "num_tokens_scored": 999,
+          "green_tokens": 490,
+          "green_fraction": 0.4904904904904905,
+          "z_score": -0.6011333973099161,
+          "p_value": 0.7261244296496838,
+          "log10_p_value": -0.13898895164168124
+        },
+        {
+          "index": 17,
+          "start_token": 17000,
+          "end_token": 18000,
+          "num_tokens_scored": 999,
+          "green_tokens": 485,
+          "green_fraction": 0.4854854854854855,
+          "z_score": -0.9175193958940824,
+          "p_value": 0.8205647330296413,
+          "log10_p_value": -0.08588715246751383
+        },
+        {
+          "index": 18,
+          "start_token": 18000,
+          "end_token": 19000,
+          "num_tokens_scored": 999,
+          "green_tokens": 513,
+          "green_fraction": 0.5135135135135135,
+          "z_score": 0.8542421961772492,
+          "p_value": 0.19648540381447804,
+          "log10_p_value": -0.706669706246699
+        },
+        {
+          "index": 19,
+          "start_token": 19000,
+          "end_token": 20000,
+          "num_tokens_scored": 999,
+          "green_tokens": 436,
+          "green_fraction": 0.4364364364364364,
+          "z_score": -4.018102182018913,
+          "p_value": 0.9999706656217673,
+          "log10_p_value": -1.2739945456633867e-05
+        },
+        {
+          "index": 20,
+          "start_token": 20000,
+          "end_token": 21000,
+          "num_tokens_scored": 999,
+          "green_tokens": 501,
+          "green_fraction": 0.5015015015015015,
+          "z_score": 0.0949157995752499,
+          "p_value": 0.46219085346560534,
+          "log10_p_value": -0.3351786532505069
+        },
+        {
+          "index": 21,
+          "start_token": 21000,
+          "end_token": 22000,
+          "num_tokens_scored": 999,
+          "green_tokens": 513,
+          "green_fraction": 0.5135135135135135,
+          "z_score": 0.8542421961772492,
+          "p_value": 0.19648540381447804,
+          "log10_p_value": -0.706669706246699
+        },
+        {
+          "index": 22,
+          "start_token": 22000,
+          "end_token": 23000,
+          "num_tokens_scored": 999,
+          "green_tokens": 487,
+          "green_fraction": 0.4874874874874875,
+          "z_score": -0.7909649964604158,
+          "p_value": 0.7855177910255231,
+          "log10_p_value": -0.10484397426918546
+        },
+        {
+          "index": 23,
+          "start_token": 23000,
+          "end_token": 24000,
+          "num_tokens_scored": 999,
+          "green_tokens": 515,
+          "green_fraction": 0.5155155155155156,
+          "z_score": 0.9807965956109157,
+          "p_value": 0.1633465287137027,
+          "log10_p_value": -0.7868900903070166
+        },
+        {
+          "index": 24,
+          "start_token": 24000,
+          "end_token": 25000,
+          "num_tokens_scored": 999,
+          "green_tokens": 492,
+          "green_fraction": 0.4924924924924925,
+          "z_score": -0.4745789978762495,
+          "p_value": 0.6824564606228176,
+          "log10_p_value": -0.16592505053543877
+        },
+        {
+          "index": 25,
+          "start_token": 25000,
+          "end_token": 26000,
+          "num_tokens_scored": 999,
+          "green_tokens": 467,
+          "green_fraction": 0.4674674674674675,
+          "z_score": -2.0565089907970813,
+          "p_value": 0.980133259718091,
+          "log10_p_value": -0.008714873260818275
+        },
+        {
+          "index": 26,
+          "start_token": 26000,
+          "end_token": 27000,
+          "num_tokens_scored": 999,
+          "green_tokens": 488,
+          "green_fraction": 0.48848848848848847,
+          "z_score": -0.7276877967435826,
+          "p_value": 0.7665976389017798,
+          "log10_p_value": -0.11543252269385997
+        },
+        {
+          "index": 27,
+          "start_token": 27000,
+          "end_token": 28000,
+          "num_tokens_scored": 999,
+          "green_tokens": 512,
+          "green_fraction": 0.5125125125125125,
+          "z_score": 0.7909649964604158,
+          "p_value": 0.2144822089744769,
+          "log10_p_value": -0.6686087261583092
+        },
+        {
+          "index": 28,
+          "start_token": 28000,
+          "end_token": 29000,
+          "num_tokens_scored": 999,
+          "green_tokens": 502,
+          "green_fraction": 0.5025025025025025,
+          "z_score": 0.15819299929208316,
+          "p_value": 0.43715236002559815,
+          "log10_p_value": -0.3593671726722999
+        },
+        {
+          "index": 29,
+          "start_token": 29000,
+          "end_token": 30000,
+          "num_tokens_scored": 999,
+          "green_tokens": 507,
+          "green_fraction": 0.5075075075075075,
+          "z_score": 0.4745789978762495,
+          "p_value": 0.31754353937718244,
+          "log10_p_value": -0.4981967188291176
+        },
+        {
+          "index": 30,
+          "start_token": 30000,
+          "end_token": 31000,
+          "num_tokens_scored": 999,
+          "green_tokens": 490,
+          "green_fraction": 0.4904904904904905,
+          "z_score": -0.6011333973099161,
+          "p_value": 0.7261244296496838,
+          "log10_p_value": -0.13898895164168124
+        },
+        {
+          "index": 31,
+          "start_token": 31000,
+          "end_token": 32000,
+          "num_tokens_scored": 999,
+          "green_tokens": 498,
+          "green_fraction": 0.4984984984984985,
+          "z_score": -0.0949157995752499,
+          "p_value": 0.5378091465343946,
+          "log10_p_value": -0.2693718159921566
+        },
+        {
+          "index": 32,
+          "start_token": 32000,
+          "end_token": 33000,
+          "num_tokens_scored": 999,
+          "green_tokens": 507,
+          "green_fraction": 0.5075075075075075,
+          "z_score": 0.4745789978762495,
+          "p_value": 0.31754353937718244,
+          "log10_p_value": -0.4981967188291176
+        },
+        {
+          "index": 33,
+          "start_token": 33000,
+          "end_token": 34000,
+          "num_tokens_scored": 999,
+          "green_tokens": 473,
+          "green_fraction": 0.47347347347347346,
+          "z_score": -1.6768457924960816,
+          "p_value": 0.9532136797396964,
+          "log10_p_value": -0.02080973364321328
+        },
+        {
+          "index": 34,
+          "start_token": 34000,
+          "end_token": 35000,
+          "num_tokens_scored": 999,
+          "green_tokens": 511,
+          "green_fraction": 0.5115115115115115,
+          "z_score": 0.7276877967435826,
+          "p_value": 0.2334023610982202,
+          "log10_p_value": -0.6318947549455685
+        },
+        {
+          "index": 35,
+          "start_token": 35000,
+          "end_token": 36000,
+          "num_tokens_scored": 999,
+          "green_tokens": 498,
+          "green_fraction": 0.4984984984984985,
+          "z_score": -0.0949157995752499,
+          "p_value": 0.5378091465343946,
+          "log10_p_value": -0.2693718159921566
+        },
+        {
+          "index": 36,
+          "start_token": 36000,
+          "end_token": 37000,
+          "num_tokens_scored": 999,
+          "green_tokens": 481,
+          "green_fraction": 0.48148148148148145,
+          "z_score": -1.1706281947614154,
+          "p_value": 0.8791258704238145,
+          "log10_p_value": -0.0559489395827206
+        },
+        {
+          "index": 37,
+          "start_token": 37000,
+          "end_token": 38000,
+          "num_tokens_scored": 999,
+          "green_tokens": 486,
+          "green_fraction": 0.4864864864864865,
+          "z_score": -0.8542421961772492,
+          "p_value": 0.8035145961855219,
+          "log10_p_value": -0.09500622968439155
+        },
+        {
+          "index": 38,
+          "start_token": 38000,
+          "end_token": 39000,
+          "num_tokens_scored": 999,
+          "green_tokens": 459,
+          "green_fraction": 0.4594594594594595,
+          "z_score": -2.5627265885317474,
+          "p_value": 0.9948073101902756,
+          "log10_p_value": -0.0022610320434027463
+        },
+        {
+          "index": 39,
+          "start_token": 39000,
+          "end_token": 40000,
+          "num_tokens_scored": 999,
+          "green_tokens": 467,
+          "green_fraction": 0.4674674674674675,
+          "z_score": -2.0565089907970813,
+          "p_value": 0.980133259718091,
+          "log10_p_value": -0.008714873260818275
+        },
+        {
+          "index": 40,
+          "start_token": 40000,
+          "end_token": 41000,
+          "num_tokens_scored": 999,
+          "green_tokens": 493,
+          "green_fraction": 0.4934934934934935,
+          "z_score": -0.41130179815941625,
+          "p_value": 0.6595743743853253,
+          "log10_p_value": -0.1807362257977395
+        },
+        {
+          "index": 41,
+          "start_token": 41000,
+          "end_token": 42000,
+          "num_tokens_scored": 999,
+          "green_tokens": 510,
+          "green_fraction": 0.5105105105105106,
+          "z_score": 0.6644105970267493,
+          "p_value": 0.2532137761343086,
+          "log10_p_value": -0.5965126701540546
+        },
+        {
+          "index": 42,
+          "start_token": 42000,
+          "end_token": 43000,
+          "num_tokens_scored": 999,
+          "green_tokens": 467,
+          "green_fraction": 0.4674674674674675,
+          "z_score": -2.0565089907970813,
+          "p_value": 0.980133259718091,
+          "log10_p_value": -0.008714873260818275
+        },
+        {
+          "index": 43,
+          "start_token": 43000,
+          "end_token": 44000,
+          "num_tokens_scored": 999,
+          "green_tokens": 492,
+          "green_fraction": 0.4924924924924925,
+          "z_score": -0.4745789978762495,
+          "p_value": 0.6824564606228176,
+          "log10_p_value": -0.16592505053543877
+        },
+        {
+          "index": 44,
+          "start_token": 44000,
+          "end_token": 45000,
+          "num_tokens_scored": 999,
+          "green_tokens": 537,
+          "green_fraction": 0.5375375375375375,
+          "z_score": 2.3728949893812477,
+          "p_value": 0.0088246404562831,
+          "log10_p_value": -2.0543029801082064
+        },
+        {
+          "index": 45,
+          "start_token": 45000,
+          "end_token": 46000,
+          "num_tokens_scored": 999,
+          "green_tokens": 506,
+          "green_fraction": 0.5065065065065065,
+          "z_score": 0.41130179815941625,
+          "p_value": 0.34042562561467477,
+          "log10_p_value": -0.4679777557432465
+        },
+        {
+          "index": 46,
+          "start_token": 46000,
+          "end_token": 47000,
+          "num_tokens_scored": 999,
+          "green_tokens": 505,
+          "green_fraction": 0.5055055055055055,
+          "z_score": 0.348024598442583,
+          "p_value": 0.36391085501356357,
+          "log10_p_value": -0.4390049897498996
+        },
+        {
+          "index": 47,
+          "start_token": 47000,
+          "end_token": 48000,
+          "num_tokens_scored": 999,
+          "green_tokens": 502,
+          "green_fraction": 0.5025025025025025,
+          "z_score": 0.15819299929208316,
+          "p_value": 0.43715236002559815,
+          "log10_p_value": -0.3593671726722999
+        },
+        {
+          "index": 48,
+          "start_token": 48000,
+          "end_token": 49000,
+          "num_tokens_scored": 999,
+          "green_tokens": 517,
+          "green_fraction": 0.5175175175175175,
+          "z_score": 1.1073509950445821,
+          "p_value": 0.13407110225000457,
+          "log10_p_value": -0.8726648201036298
+        },
+        {
+          "index": 49,
+          "start_token": 49000,
+          "end_token": 50000,
+          "num_tokens_scored": 999,
+          "green_tokens": 496,
+          "green_fraction": 0.4964964964964965,
+          "z_score": -0.22147019900891646,
+          "p_value": 0.5876368308863621,
+          "log10_p_value": -0.23089099206926822
+        },
+        {
+          "index": 50,
+          "start_token": 50000,
+          "end_token": 51000,
+          "num_tokens_scored": 999,
+          "green_tokens": 475,
+          "green_fraction": 0.4754754754754755,
+          "z_score": -1.5502913930624151,
+          "p_value": 0.939464203891651,
+          "log10_p_value": -0.02711976303391753
+        },
+        {
+          "index": 51,
+          "start_token": 51000,
+          "end_token": 52000,
+          "num_tokens_scored": 999,
+          "green_tokens": 514,
+          "green_fraction": 0.5145145145145145,
+          "z_score": 0.9175193958940824,
+          "p_value": 0.17943526697035866,
+          "log10_p_value": -0.7460921948183421
+        },
+        {
+          "index": 52,
+          "start_token": 52000,
+          "end_token": 53000,
+          "num_tokens_scored": 999,
+          "green_tokens": 459,
+          "green_fraction": 0.4594594594594595,
+          "z_score": -2.5627265885317474,
+          "p_value": 0.9948073101902756,
+          "log10_p_value": -0.0022610320434027463
+        },
+        {
+          "index": 53,
+          "start_token": 53000,
+          "end_token": 54000,
+          "num_tokens_scored": 999,
+          "green_tokens": 522,
+          "green_fraction": 0.5225225225225225,
+          "z_score": 1.4237369936287485,
+          "p_value": 0.0772613103142331,
+          "log10_p_value": -1.1120379307056243
+        }
+      ]
+    },
+    "2000": {
+      "group_token_count": 2000,
+      "scored_tokens_per_group": 1999,
+      "num_groups": 27,
+      "total_answer_tokens": 54146,
+      "discarded_tail_tokens": 146,
+      "median_p_value": 0.437794275922607,
+      "median_log10_p_value": -0.3587299210492138,
+      "status": "ok",
+      "groups": [
+        {
+          "index": 0,
+          "start_token": 0,
+          "end_token": 2000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1027,
+          "green_fraction": 0.5137568784392196,
+          "z_score": 1.2301449623171072,
+          "p_value": 0.10932141276534658,
+          "log10_p_value": -0.961294764536734
+        },
+        {
+          "index": 1,
+          "start_token": 2000,
+          "end_token": 4000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1000,
+          "green_fraction": 0.5002501250625313,
+          "z_score": 0.02236627204212922,
+          "p_value": 0.4910778923145497,
+          "log10_p_value": -0.30884961679878353
+        },
+        {
+          "index": 2,
+          "start_token": 4000,
+          "end_token": 6000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 924,
+          "green_fraction": 0.4622311155577789,
+          "z_score": -3.3773070783615124,
+          "p_value": 0.9996340035947303,
+          "log10_p_value": -0.00015897931390872845
+        },
+        {
+          "index": 3,
+          "start_token": 6000,
+          "end_token": 8000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1005,
+          "green_fraction": 0.5027513756878439,
+          "z_score": 0.24602899246342144,
+          "p_value": 0.40282989470331043,
+          "log10_p_value": -0.3948783071776932
+        },
+        {
+          "index": 4,
+          "start_token": 8000,
+          "end_token": 10000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1063,
+          "green_fraction": 0.5317658829414708,
+          "z_score": 2.840516549350411,
+          "p_value": 0.002252026794923166,
+          "log10_p_value": -2.647426446494739
+        },
+        {
+          "index": 5,
+          "start_token": 10000,
+          "end_token": 12000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1020,
+          "green_fraction": 0.5102551275637819,
+          "z_score": 0.9170171537272981,
+          "p_value": 0.17956682569517285,
+          "log10_p_value": -0.7457738945523666
+        },
+        {
+          "index": 6,
+          "start_token": 12000,
+          "end_token": 14000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1005,
+          "green_fraction": 0.5027513756878439,
+          "z_score": 0.24602899246342144,
+          "p_value": 0.40282989470331043,
+          "log10_p_value": -0.3948783071776932
+        },
+        {
+          "index": 7,
+          "start_token": 14000,
+          "end_token": 16000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1035,
+          "green_fraction": 0.5177588794397199,
+          "z_score": 1.5880053149911748,
+          "p_value": 0.05614256863552542,
+          "log10_p_value": -1.250707721400277
+        },
+        {
+          "index": 8,
+          "start_token": 16000,
+          "end_token": 18000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 976,
+          "green_fraction": 0.4882441220610305,
+          "z_score": -1.0512147859800733,
+          "p_value": 0.853420023132693,
+          "log10_p_value": -0.06883717184227363
+        },
+        {
+          "index": 9,
+          "start_token": 18000,
+          "end_token": 20000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 949,
+          "green_fraction": 0.4747373686843422,
+          "z_score": -2.258993476255051,
+          "p_value": 0.9880581046580574,
+          "log10_p_value": -0.0052175151387179736
+        },
+        {
+          "index": 10,
+          "start_token": 20000,
+          "end_token": 22000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1014,
+          "green_fraction": 0.5072536268134067,
+          "z_score": 0.6486218892217475,
+          "p_value": 0.25829140176469595,
+          "log10_p_value": -0.5878900507693816
+        },
+        {
+          "index": 11,
+          "start_token": 22000,
+          "end_token": 24000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1003,
+          "green_fraction": 0.5017508754377189,
+          "z_score": 0.15656390429490455,
+          "p_value": 0.437794275922607,
+          "log10_p_value": -0.3587299210492138
+        },
+        {
+          "index": 12,
+          "start_token": 24000,
+          "end_token": 26000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 959,
+          "green_fraction": 0.4797398699349675,
+          "z_score": -1.811668035412467,
+          "p_value": 0.9649812472601735,
+          "log10_p_value": -0.01548112633554527
+        },
+        {
+          "index": 13,
+          "start_token": 26000,
+          "end_token": 28000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1000,
+          "green_fraction": 0.5002501250625313,
+          "z_score": 0.02236627204212922,
+          "p_value": 0.4910778923145497,
+          "log10_p_value": -0.30884961679878353
+        },
+        {
+          "index": 14,
+          "start_token": 28000,
+          "end_token": 30000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1010,
+          "green_fraction": 0.5052526263131566,
+          "z_score": 0.4696917128847136,
+          "p_value": 0.31928764472471033,
+          "log10_p_value": -0.49581788675870236
+        },
+        {
+          "index": 15,
+          "start_token": 30000,
+          "end_token": 32000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 988,
+          "green_fraction": 0.4942471235617809,
+          "z_score": -0.5144242569689721,
+          "p_value": 0.696522298213639,
+          "log10_p_value": -0.15706497567055877
+        },
+        {
+          "index": 16,
+          "start_token": 32000,
+          "end_token": 34000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 980,
+          "green_fraction": 0.49024512256128067,
+          "z_score": -0.8722846096430397,
+          "p_value": 0.8084734342368602,
+          "log10_p_value": -0.09233424607779174
+        },
+        {
+          "index": 17,
+          "start_token": 34000,
+          "end_token": 36000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1010,
+          "green_fraction": 0.5052526263131566,
+          "z_score": 0.4696917128847136,
+          "p_value": 0.31928764472471033,
+          "log10_p_value": -0.49581788675870236
+        },
+        {
+          "index": 18,
+          "start_token": 36000,
+          "end_token": 38000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 968,
+          "green_fraction": 0.4842421210605303,
+          "z_score": -1.409075138654141,
+          "p_value": 0.9205935243506562,
+          "log10_p_value": -0.035932084350439104
+        },
+        {
+          "index": 19,
+          "start_token": 38000,
+          "end_token": 40000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 927,
+          "green_fraction": 0.4637318659329665,
+          "z_score": -3.243109446108737,
+          "p_value": 0.9994088360796285,
+          "log10_p_value": -0.00025681514592328916
+        },
+        {
+          "index": 20,
+          "start_token": 40000,
+          "end_token": 42000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1004,
+          "green_fraction": 0.5022511255627814,
+          "z_score": 0.201296448379163,
+          "p_value": 0.4202333897560288,
+          "log10_p_value": -0.3765094435752584
+        },
+        {
+          "index": 21,
+          "start_token": 42000,
+          "end_token": 44000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 959,
+          "green_fraction": 0.4797398699349675,
+          "z_score": -1.811668035412467,
+          "p_value": 0.9649812472601735,
+          "log10_p_value": -0.01548112633554527
+        },
+        {
+          "index": 22,
+          "start_token": 44000,
+          "end_token": 46000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1044,
+          "green_fraction": 0.5222611305652827,
+          "z_score": 1.9905982117495007,
+          "p_value": 0.023262538509681907,
+          "log10_p_value": -1.6333428949131483
+        },
+        {
+          "index": 23,
+          "start_token": 46000,
+          "end_token": 48000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1008,
+          "green_fraction": 0.5042521260630315,
+          "z_score": 0.3802266247161968,
+          "p_value": 0.35188859855565874,
+          "log10_p_value": -0.45359480439123545
+        },
+        {
+          "index": 24,
+          "start_token": 48000,
+          "end_token": 50000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 1014,
+          "green_fraction": 0.5072536268134067,
+          "z_score": 0.6486218892217475,
+          "p_value": 0.25829140176469595,
+          "log10_p_value": -0.5878900507693816
+        },
+        {
+          "index": 25,
+          "start_token": 50000,
+          "end_token": 52000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 989,
+          "green_fraction": 0.4947473736868434,
+          "z_score": -0.4696917128847136,
+          "p_value": 0.6807123552752896,
+          "log10_p_value": -0.16703636665824256
+        },
+        {
+          "index": 26,
+          "start_token": 52000,
+          "end_token": 54000,
+          "num_tokens_scored": 1999,
+          "green_tokens": 981,
+          "green_fraction": 0.49074537268634316,
+          "z_score": -0.8275520655587811,
+          "p_value": 0.7960378878131416,
+          "log10_p_value": -0.09906626131183685
+        }
+      ]
+    },
+    "3000": {
+      "group_token_count": 3000,
+      "scored_tokens_per_group": 2999,
+      "num_groups": 18,
+      "total_answer_tokens": 54146,
+      "discarded_tail_tokens": 146,
+      "median_p_value": 0.5652698902835346,
+      "median_log10_p_value": -0.24774414709246043,
+      "status": "ok",
+      "groups": [
+        {
+          "index": 0,
+          "start_token": 0,
+          "end_token": 3000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1515,
+          "green_fraction": 0.5051683894631543,
+          "z_score": 0.566074329673738,
+          "p_value": 0.28567162645493016,
+          "log10_p_value": -0.544132892574847
+        },
+        {
+          "index": 1,
+          "start_token": 3000,
+          "end_token": 6000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1436,
+          "green_fraction": 0.4788262754251417,
+          "z_score": -2.319078705437572,
+          "p_value": 0.9898046154175277,
+          "log10_p_value": -0.004450525423134308
+        },
+        {
+          "index": 2,
+          "start_token": 6000,
+          "end_token": 9000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1549,
+          "green_fraction": 0.5165055018339446,
+          "z_score": 1.8077857625064537,
+          "p_value": 0.035319925252621606,
+          "log10_p_value": -1.4519802241887023
+        },
+        {
+          "index": 3,
+          "start_token": 9000,
+          "end_token": 12000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1540,
+          "green_fraction": 0.5135045015005002,
+          "z_score": 1.479097442050735,
+          "p_value": 0.0695571368834916,
+          "log10_p_value": -1.1576583027660976
+        },
+        {
+          "index": 4,
+          "start_token": 12000,
+          "end_token": 15000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1523,
+          "green_fraction": 0.507835945315105,
+          "z_score": 0.8582417256343771,
+          "p_value": 0.1953795000803867,
+          "log10_p_value": -0.7091210059653453
+        },
+        {
+          "index": 5,
+          "start_token": 15000,
+          "end_token": 18000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1495,
+          "green_fraction": 0.49849949983327774,
+          "z_score": -0.16434416022785944,
+          "p_value": 0.5652698902835346,
+          "log10_p_value": -0.24774414709246043
+        },
+        {
+          "index": 6,
+          "start_token": 18000,
+          "end_token": 21000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1451,
+          "green_fraction": 0.4838279426475492,
+          "z_score": -1.7712648380113738,
+          "p_value": 0.9617416641553246,
+          "log10_p_value": -0.016941569229135967
+        },
+        {
+          "index": 7,
+          "start_token": 21000,
+          "end_token": 24000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1516,
+          "green_fraction": 0.5055018339446482,
+          "z_score": 0.6025952541688179,
+          "p_value": 0.27338898914529286,
+          "log10_p_value": -0.5632189808060042
+        },
+        {
+          "index": 8,
+          "start_token": 24000,
+          "end_token": 27000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1447,
+          "green_fraction": 0.48249416472157386,
+          "z_score": -1.9173485359916933,
+          "p_value": 0.972403166172506,
+          "log10_p_value": -0.012153635751151992
+        },
+        {
+          "index": 9,
+          "start_token": 27000,
+          "end_token": 30000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1522,
+          "green_fraction": 0.5075025008336113,
+          "z_score": 0.8217208011392971,
+          "p_value": 0.20561790882977357,
+          "log10_p_value": -0.6869390620151454
+        },
+        {
+          "index": 10,
+          "start_token": 30000,
+          "end_token": 33000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1495,
+          "green_fraction": 0.49849949983327774,
+          "z_score": -0.16434416022785944,
+          "p_value": 0.5652698902835346,
+          "log10_p_value": -0.24774414709246043
+        },
+        {
+          "index": 11,
+          "start_token": 33000,
+          "end_token": 36000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1483,
+          "green_fraction": 0.4944981660553518,
+          "z_score": -0.6025952541688179,
+          "p_value": 0.7266110108547071,
+          "log10_p_value": -0.13869802524951114
+        },
+        {
+          "index": 12,
+          "start_token": 36000,
+          "end_token": 39000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1428,
+          "green_fraction": 0.47615871957319106,
+          "z_score": -2.611246101398211,
+          "p_value": 0.9954893526099089,
+          "log10_p_value": -0.0019633806666992243
+        },
+        {
+          "index": 13,
+          "start_token": 39000,
+          "end_token": 42000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1471,
+          "green_fraction": 0.4904968322774258,
+          "z_score": -1.0408463481097765,
+          "p_value": 0.851026567276137,
+          "log10_p_value": -0.0700568819350042
+        },
+        {
+          "index": 14,
+          "start_token": 42000,
+          "end_token": 45000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1497,
+          "green_fraction": 0.4991663887962654,
+          "z_score": -0.09130231123769969,
+          "p_value": 0.5363738092203686,
+          "log10_p_value": -0.27053243661605963
+        },
+        {
+          "index": 15,
+          "start_token": 45000,
+          "end_token": 48000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1514,
+          "green_fraction": 0.5048349449816606,
+          "z_score": 0.5295534051786581,
+          "p_value": 0.2982108037228306,
+          "log10_p_value": -0.525476626770964
+        },
+        {
+          "index": 16,
+          "start_token": 48000,
+          "end_token": 51000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1490,
+          "green_fraction": 0.4968322774258086,
+          "z_score": -0.3469487827032588,
+          "p_value": 0.6356851015434164,
+          "log10_p_value": -0.1967579669450416
+        },
+        {
+          "index": 17,
+          "start_token": 51000,
+          "end_token": 54000,
+          "num_tokens_scored": 2999,
+          "green_tokens": 1495,
+          "green_fraction": 0.49849949983327774,
+          "z_score": -0.16434416022785944,
+          "p_value": 0.5652698902835346,
+          "log10_p_value": -0.24774414709246043
+        }
+      ]
+    },
+    "10000": {
+      "group_token_count": 10000,
+      "scored_tokens_per_group": 9999,
+      "num_groups": 5,
+      "total_answer_tokens": 54146,
+      "discarded_tail_tokens": 4146,
+      "median_p_value": 0.5909585835499608,
+      "median_log10_p_value": -0.22844295493260433,
+      "status": "ok",
+      "groups": [
+        {
+          "index": 0,
+          "start_token": 0,
+          "end_token": 10000,
+          "num_tokens_scored": 9999,
+          "green_tokens": 5020,
+          "green_fraction": 0.502050205020502,
+          "z_score": 0.41002050153762815,
+          "p_value": 0.34089545421587275,
+          "log10_p_value": -0.46737878997710824
+        },
+        {
+          "index": 1,
+          "start_token": 10000,
+          "end_token": 20000,
+          "num_tokens_scored": 9999,
+          "green_tokens": 4988,
+          "green_fraction": 0.49884988498849886,
+          "z_score": -0.23001150086257188,
+          "p_value": 0.5909585835499608,
+          "log10_p_value": -0.22844295493260433
+        },
+        {
+          "index": 2,
+          "start_token": 20000,
+          "end_token": 30000,
+          "num_tokens_scored": 9999,
+          "green_tokens": 4986,
+          "green_fraction": 0.49864986498649866,
+          "z_score": -0.27001350101258437,
+          "p_value": 0.6064250665240047,
+          "log10_p_value": -0.21722285548276157
+        },
+        {
+          "index": 3,
+          "start_token": 30000,
+          "end_token": 40000,
+          "num_tokens_scored": 9999,
+          "green_tokens": 4875,
+          "green_fraction": 0.48754875487548754,
+          "z_score": -2.490124509338278,
+          "p_value": 0.9936150824621035,
+          "log10_p_value": -0.0027818247959666507
+        },
+        {
+          "index": 4,
+          "start_token": 40000,
+          "end_token": 50000,
+          "num_tokens_scored": 9999,
+          "green_tokens": 5030,
+          "green_fraction": 0.5030503050305031,
+          "z_score": 0.6100305022876906,
+          "p_value": 0.27092080107153255,
+          "log10_p_value": -0.5671576489211619
+        }
+      ]
+    },
+    "20000": {
+      "group_token_count": 20000,
+      "scored_tokens_per_group": 19999,
+      "num_groups": 2,
+      "total_answer_tokens": 54146,
+      "discarded_tail_tokens": 14146,
+      "median_p_value": 0.7103247155407992,
+      "median_log10_p_value": -0.1485430739155219,
+      "status": "ok",
+      "groups": [
+        {
+          "index": 0,
+          "start_token": 0,
+          "end_token": 20000,
+          "num_tokens_scored": 19999,
+          "green_tokens": 10009,
+          "green_fraction": 0.5004750237511876,
+          "z_score": 0.1343536473086133,
+          "p_value": 0.44656146666054,
+          "log10_p_value": -0.350118754481534
+        },
+        {
+          "index": 1,
+          "start_token": 20000,
+          "end_token": 40000,
+          "num_tokens_scored": 19999,
+          "green_tokens": 9862,
+          "green_fraction": 0.49312465623281165,
+          "z_score": -1.9445922636772979,
+          "p_value": 0.9740879644210585,
+          "log10_p_value": -0.01140182265147429
+        }
+      ]
+    },
+    "30000": {
+      "group_token_count": 30000,
+      "scored_tokens_per_group": 29999,
+      "num_groups": 1,
+      "total_answer_tokens": 54146,
+      "discarded_tail_tokens": 24146,
+      "median_p_value": 0.5161189408334832,
+      "median_log10_p_value": -0.2872502026457561,
+      "status": "ok",
+      "groups": [
+        {
+          "index": 0,
+          "start_token": 0,
+          "end_token": 30000,
+          "num_tokens_scored": 29999,
+          "green_tokens": 14996,
+          "green_fraction": 0.4998833294443148,
+          "z_score": -0.04041519243542771,
+          "p_value": 0.5161189408334832,
+          "log10_p_value": -0.2872502026457561
+        }
+      ]
+    }
+  }
+}
