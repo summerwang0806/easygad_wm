@@ -225,7 +225,7 @@ class OfflineWorkerTests(SoftWinRateCase):
         return {"model_path": str(self.root / "local-model"), "tasks_file": str(tasks_file),
                 "results_file": str(self.root / "worker-results.jsonl"),
                 "error_file": str(self.root / "worker-error.json"),
-                "gpu_uuids": ["GPU-test-1"], "max_model_len": 128,
+                "gpu_ids": [1], "gpu_uuids": ["GPU-test-1"], "max_model_len": 128,
                 "max_output_tokens": 16, "max_num_seqs": 2,
                 "gpu_memory_utilization": 0.9, "seed": 42}
 
@@ -261,6 +261,9 @@ class OfflineWorkerTests(SoftWinRateCase):
         def model_loader(**kwargs):
             load_options.append(kwargs)
             self.assertNotIn("OPENAI_API_KEY", os.environ)
+            # Match the numeric parsing used by legacy vLLM's CUDA platform.
+            self.assertEqual([int(item) for item in os.environ["CUDA_VISIBLE_DEVICES"].split(",")], [1])
+            self.assertEqual(os.environ["CUDA_DEVICE_ORDER"], "PCI_BUS_ID")
             return types.SimpleNamespace(generate=lambda batch, sampling, **options: [
                 types.SimpleNamespace(outputs=[types.SimpleNamespace(text='{"winner":"A","reason":"test"}',
                     finish_reason="stop", token_ids=[1, 2])]) for _ in batch])
@@ -278,6 +281,17 @@ class OfflineWorkerTests(SoftWinRateCase):
         self.assertTrue(all(item["finish_reason"] == "stop" for item in results))
         self.assertTrue(all(options["enable_thinking"] is False for options in template_options))
         self.assertEqual(load_options[0]["tensor_parallel_size"], 1)
+
+    def test_uuid_only_config_is_rejected_without_exposing_all_gpus(self):
+        import judge_worker
+        config = self.worker_config(self.tasks())
+        del config["gpu_ids"]
+        with patch.dict(os.environ), contextlib.redirect_stderr(io.StringIO()):
+            code = judge_worker.run_worker(config)
+        self.assertEqual(code, 1)
+        failure = json.loads(Path(config["error_file"]).read_text(encoding="utf-8"))
+        self.assertEqual(failure["stage"], "configuration")
+        self.assertIn("Numeric gpu_ids", failure["message"])
 
 
 class CachedRunAndReportTests(SoftWinRateCase):
@@ -400,6 +414,23 @@ class CachedRunAndReportTests(SoftWinRateCase):
                                    runner=self.winning_results)
             self.assertEqual((candidate.read_bytes(), reference.read_bytes()), original)
 
+    def test_startup_error_is_printed_and_no_null_score_is_presented_as_a_result(self):
+        candidate, reference = self.sources()
+
+        def broken_worker(tasks, config, directory):
+            raise swr.LocalRunError("model_startup: ValueError: invalid literal for int(): GPU-test", [])
+
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            result = swr.run_evaluation(candidate, reference, self.config, self.output, self.history,
+                                        runner=broken_worker)
+        self.assertFalse(result["complete"])
+        self.assertIsNone(result["soft_win_rate"])
+        self.assertIn("model_startup: ValueError", stderr.getvalue())
+        self.assertIn("[FAILED]", stderr.getvalue())
+        self.assertNotIn("Soft Win Rate (half ties): None", stdout.getvalue())
+        self.assertIn("invalid literal", self.history.read_text(encoding="utf-8"))
+
 
     def test_interrupted_worker_results_are_recovered_without_rejudging(self):
         candidate, reference = self.sources()
@@ -499,12 +530,22 @@ class AutomaticWorkerFallbackTests(SoftWinRateCase):
             results = swr.run_auto_gpu(tasks, config, self.root / "auto-attempt")
             self.assertEqual(os.environ["CUDA_VISIBLE_DEVICES"], "original-mask")
         self.assertEqual(len(spawned), 2)
-        self.assertEqual(spawned[0][1]["CUDA_VISIBLE_DEVICES"], "GPU-one")
-        self.assertEqual(spawned[1][1]["CUDA_VISIBLE_DEVICES"], "GPU-zero,GPU-two")
+        self.assertEqual(spawned[0][1]["CUDA_VISIBLE_DEVICES"], "1")
+        self.assertEqual(spawned[1][1]["CUDA_VISIBLE_DEVICES"], "0,2")
+        self.assertEqual(spawned[1][1]["CUDA_DEVICE_ORDER"], "PCI_BUS_ID")
+        self.assertEqual([int(item) for item in spawned[1][1]["CUDA_VISIBLE_DEVICES"].split(",")], [0, 2])
         self.assertNotIn("OPENAI_API_KEY", spawned[1][1])
         self.assertEqual(cleanup.call_count, 2)
         self.assertEqual(len(results), 2)
         self.assertEqual(results[0]["execution"]["tensor_parallel_size"], 2)
+
+    def test_failure_detail_contains_real_stage_and_exception(self):
+        error = {"stage": "model_startup", "error_type": "ValueError",
+                 "message": "invalid literal for int() with base 10: 'GPU-6a564fe0'"}
+        (self.root / "raw_results.jsonl.error.json").write_text(json.dumps(error), encoding="utf-8")
+        detail = swr.worker_failure_detail(self.root, 1)
+        self.assertIn("model_startup: ValueError", detail)
+        self.assertIn("GPU-6a564fe0", detail)
 
 
 if __name__ == "__main__":

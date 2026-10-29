@@ -39,10 +39,13 @@ wm_test/cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl
 ## 自动选卡与显存不足重试
 
 1. 用 `nvidia-smi` 读取真实可用显存，不只看总显存或 GPU 数量。若外部已设置 `CUDA_VISIBLE_DEVICES`，只在其允许的卡中选择。
+   启动子进程时使用数字卡号，并设置 `CUDA_DEVICE_ORDER=PCI_BUS_ID`；UUID 仍保存在执行记录中。这样兼容将 `CUDA_VISIBLE_DEVICES` 强制转换为整数的旧版 vLLM。
 2. 根据本地权重大小、模型层数、KV heads 和窗口估算空间；优先能容纳模型的单卡，之后考虑合法的 TP 组合。
 3. 对 Qwen3-32B，64 attention heads / 8 KV heads 支持常规 TP=1、2、4，六张卡不会被直接配置为 TP=6。
 4. 从实际可用显存计算 vLLM 显存比例，预留余量，不固定请求 90%。如显存不足，可以减小并发到 1，再尝试其他可行卡组。
 5. 只有明确属于显存不足的启动/运行错误才换配置；依赖缺失、数据错误等会停止并指出日志位置。
+
+worker 失败时，终端会直接显示失败阶段、实际异常与 `worker.log` 路径；没有完整有效题目时明确显示 `[FAILED]`，不会把 `None` 当作已完成的胜率。详细 traceback 保存在 worker 日志。
 
 默认窗口 8192、并发上限 2，采用 eager 模式与分块 prefill 减少峰值显存。每对完整输入先用裁判 tokenizer 检查长度；**超窗会停止，不删回答、不静默截断**。需要更长窗口时统一修改 `JudgeConfig.max_model_len`，自动选卡也会按新窗口重新估算。
 

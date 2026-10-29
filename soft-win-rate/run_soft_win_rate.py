@@ -31,7 +31,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 
 # 日常只修改这一行。相对路径始终相对于项目根目录，不受运行目录影响。
-INPUT_JSONL = ROOT / "wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new_strength3.jsonl"
+INPUT_JSONL = ROOT / "wm_test/cleanD_dipperparaSFT_dipperparagad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 # 固定质量参照，与 evaluate 的水印检测 clean-file 独立。
 REFERENCE_JSONL = ROOT / "wm_test/cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 JUDGE_MODEL = Path("/shared/public_models/Qwen3-32B")
@@ -302,7 +302,8 @@ def recover_worker_results(directory: Path, by_key: dict, judgments: dict, cache
     recovered = 0
     execution_keys = ("gpu_ids", "gpu_uuids", "tensor_parallel_size", "gpu_memory_utilization",
                       "max_num_seqs", "max_model_len", "max_num_batched_tokens", "enable_chunked_prefill",
-                      "enforce_eager", "gpu_inventory", "worker_directory", "distributed_executor_backend")
+                      "enforce_eager", "gpu_inventory", "worker_directory", "distributed_executor_backend",
+                      "cuda_visible_devices", "cuda_device_order")
     for raw_file in sorted(directory.glob("workers/*/plan_*/raw_results.jsonl")):
         config_file = raw_file.with_name("worker_config.json")
         if not config_file.is_file():
@@ -405,6 +406,23 @@ def stop_worker(process: subprocess.Popen) -> None:
         process.wait(timeout=10)
 
 
+def worker_failure_detail(directory: Path, returncode: int) -> str:
+    """Surface the worker's real failure instead of hiding it behind null metrics."""
+    error_file = directory / "raw_results.jsonl.error.json"
+    if error_file.is_file():
+        try:
+            error = json.loads(error_file.read_text(encoding="utf-8"))
+            return f"{error.get('stage', 'worker')}: {error.get('error_type', 'Error')}: {error.get('message', '')}"
+        except (ValueError, OSError):
+            pass
+    log_file = directory / "worker.log"
+    if log_file.is_file():
+        tail = "\n".join(log_file.read_text(encoding="utf-8", errors="replace").splitlines()[-20:])
+        if tail.strip():
+            return f"worker exit {returncode}; recent log:\n{tail}"
+    return f"worker exited with code {returncode} without a structured error"
+
+
 def run_auto_gpu(tasks: list[dict], config: JudgeConfig, attempt_dir: Path) -> list[dict]:
     from gpu_runtime import discover_gpus, load_model_spec, plan_gpus
 
@@ -430,6 +448,8 @@ def run_auto_gpu(tasks: list[dict], config: JudgeConfig, attempt_dir: Path) -> l
         tasks_file.write_text("".join(canonical(task) + "\n" for task in pending), encoding="utf-8")
         execution = {**plan.to_dict(), "max_num_seqs": concurrency, "max_model_len": config.max_model_len,
                      "distributed_executor_backend": "mp",
+                     "cuda_visible_devices": ",".join(str(index) for index in plan.gpu_ids),
+                     "cuda_device_order": "PCI_BUS_ID",
                      "max_num_batched_tokens": config.max_num_batched_tokens,
                      "enable_chunked_prefill": config.enable_chunked_prefill,
                      "worker_directory": str(directory.resolve()),
@@ -441,7 +461,9 @@ def run_auto_gpu(tasks: list[dict], config: JudgeConfig, attempt_dir: Path) -> l
         print(f"[GPU] Trying GPUs {plan.gpu_ids}, TP={plan.tensor_parallel_size}, "
               f"memory fraction={plan.gpu_memory_utilization:.3f}, concurrency={concurrency}", flush=True)
         env = os.environ.copy()
-        env.update(CUDA_VISIBLE_DEVICES=",".join(plan.gpu_uuids), HF_HUB_OFFLINE="1",
+        # Older vLLM converts every CUDA_VISIBLE_DEVICES item with int(). Keep
+        # UUIDs as audit metadata, but bind devices with compatible numeric IDs.
+        env.update(CUDA_VISIBLE_DEVICES=execution["cuda_visible_devices"], CUDA_DEVICE_ORDER="PCI_BUS_ID", HF_HUB_OFFLINE="1",
                    TRANSFORMERS_OFFLINE="1", VLLM_NO_USAGE_STATS="1", VLLM_WORKER_MULTIPROC_METHOD="spawn")
         for name in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "SWANLAB_API_KEY"):
             env.pop(name, None)
@@ -489,8 +511,10 @@ def run_auto_gpu(tasks: list[dict], config: JudgeConfig, attempt_dir: Path) -> l
         memory_failure = process.returncode == 42 or any(term in log_text for term in (
             "cuda out of memory", "no available memory for the cache blocks", "free memory on device",
             "larger than the maximum number of tokens that can be stored in kv cache"))
+        detail = worker_failure_detail(directory, process.returncode)
         if not memory_failure:
-            raise LocalRunError(f"Local judge failed (exit {process.returncode}); inspect {directory / 'worker.log'}", results)
+            raise LocalRunError(f"Local judge failed: {detail}\nWorker log: {directory / 'worker.log'}", results)
+        print(f"[GPU] {detail}", file=sys.stderr, flush=True)
         print("[GPU] Insufficient memory on this plan; own worker exited, trying the next feasible plan.", flush=True)
     raise LocalRunError("All feasible GPU plans failed from memory pressure; completed results remain reusable", results)
 
@@ -583,6 +607,7 @@ def run_evaluation(input_path: Path, reference_path: Path, config: JudgeConfig, 
                 raw_results = (runner or run_auto_gpu)(pending, config, attempt_dir)
             except LocalRunError as error:
                 raw_results, failure = error.results, str(error)
+                print(f"[Judge ERROR] {failure}", file=sys.stderr, flush=True)
             new_count += save_judgments(raw_results, {task["key"]: task for task in pending},
                                        judgments, cached_rows, cache_file, directory / "errors.jsonl")
             print(f"[Cache] {sum(task['key'] in judgments for task in chosen)}/{len(chosen)} valid orders saved", flush=True)
@@ -614,7 +639,10 @@ def run_evaluation(input_path: Path, reference_path: Path, config: JudgeConfig, 
                 handle.write(render_report(result))
                 handle.flush()
                 os.fsync(handle.fileno())
-        print(f"Soft Win Rate (half ties): {metrics['soft_win_rate']}; complete={metrics['complete']}")
+        if metrics["num_valid_samples"] == 0:
+            print("[FAILED] No complete answer pairs were judged; no valid Soft Win Rate is available.", file=sys.stderr)
+        else:
+            print(f"Soft Win Rate (half ties): {metrics['soft_win_rate']:.2%}; complete={metrics['complete']}")
         print(f"Appended: {history_file}")
         return result
 

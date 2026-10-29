@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import sys
 import time
+import traceback
 from typing import Any
 
 
@@ -38,9 +39,19 @@ def run_worker(config: dict[str, Any]) -> int:
     results_file.parent.mkdir(parents=True, exist_ok=True)
     stage = "configuration"
     try:
-        uuids = config.get("gpu_uuids")
-        if uuids:
-            os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(uuids)
+        device_ids = config.get("gpu_ids")
+        if device_ids is None and config.get("gpu_uuids"):
+            raise ValueError("Numeric gpu_ids are required; UUIDs are audit metadata, not the CUDA device mask")
+        if device_ids is not None:
+            if (not isinstance(device_ids, list) or not device_ids
+                    or any(not isinstance(index, int) or isinstance(index, bool) or index < 0 for index in device_ids)
+                    or len(set(device_ids)) != len(device_ids)):
+                raise ValueError("Worker requires a list of distinct numeric GPU IDs")
+            os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(index) for index in device_ids)
+        mask = os.environ.get("CUDA_VISIBLE_DEVICES", "")
+        if mask and any(not item.strip().isdecimal() for item in mask.split(",")):
+            raise ValueError("This vLLM-compatible worker needs numeric CUDA_VISIBLE_DEVICES; rerun the updated launcher")
+        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ["HF_HUB_OFFLINE"] = "1"
         os.environ["TRANSFORMERS_OFFLINE"] = "1"
         os.environ["VLLM_NO_USAGE_STATS"] = "1"
@@ -150,6 +161,7 @@ def run_worker(config: dict[str, Any]) -> int:
         error_file.parent.mkdir(parents=True, exist_ok=True)
         error_file.write_text(json.dumps(failure, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"[Local judge] {stage}: {type(error).__name__}: {error}", file=sys.stderr, flush=True)
+        traceback.print_exc(file=sys.stderr)
         return 42 if memory_error else 1
 
 
