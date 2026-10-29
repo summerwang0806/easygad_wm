@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluate KGW detection, reference ROUGE-L and optional saved-answer PPL."""
+"""Evaluate KGW detection, reference ROUGE-L, Seq-Rep-3 and saved-answer PPL."""
 
 from __future__ import annotations
 
@@ -339,6 +339,63 @@ def evaluate_teacher_clean_rouge(sample_path: Path, reference_path: Path) -> dic
     )
 
 
+def evaluate_seq_rep3(sample_path: Path) -> dict[str, Any]:
+    """Word-level Seq-Rep-3 on complete saved answers, with equal answer weight."""
+    source = sample_path.read_bytes()
+    values = []
+    seen_ids = set()
+    short_answers = empty_answers = 0
+    for line_number, line in enumerate(source.decode("utf-8").splitlines(), 1):
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError as error:
+            raise ValueError(f"Invalid JSON at {sample_path}:{line_number}") from error
+        if not isinstance(row, dict) or not isinstance(row.get("answer"), str):
+            raise ValueError(f"Missing answer text at {sample_path}:{line_number}")
+        sample_id = row.get("id")
+        if not isinstance(sample_id, str) or not sample_id or sample_id in seen_ids:
+            raise ValueError(f"Missing or duplicate answer id at {sample_path}:{line_number}")
+        seen_ids.add(sample_id)
+        words = row["answer"].split()
+        num_trigrams = max(len(words) - 2, 0)
+        num_unique = len(set(zip(words, words[1:], words[2:])))
+        values.append(1.0 - num_unique / num_trigrams if num_trigrams else 0.0)
+        short_answers += len(words) < 3
+        empty_answers += not words
+    if not values:
+        raise ValueError(f"No answers found in {sample_path}")
+    return {
+        "mean": math.fsum(values) / len(values), "median": statistics.median(values),
+        "num_samples": len(values), "num_short_answers": short_answers,
+        "num_empty_answers": empty_answers, "evaluated_file": str(sample_path.resolve()),
+        "source_sha256": hashlib.sha256(source).hexdigest(), "ngram_size": 3,
+        "tokenization": "answer.split(); whitespace-delimited words; case and punctuation preserved",
+        "scope": "answer only; overlapping trigrams within each complete original answer; no filtering or cross-answer trigrams",
+        "short_answer_policy": "answers with fewer than 3 words, including empty answers, contribute 0; counts reported",
+        "aggregation": {
+            "mean": "unweighted arithmetic mean of per-answer Seq-Rep-3",
+            "median": "ordinary median of per-answer Seq-Rep-3; arithmetic mean of the middle two for even counts",
+        },
+    }
+
+
+def write_seq_rep3_summary(handle: Any, summaries: dict[str, Any]) -> None:
+    handle.write("\n### Seq-Rep-3（全量回答，词级三元组重复率）\n\n")
+    handle.write("每条回答单独计算 1 - 不同三元组数 / 全部三元组数，再汇总逐回答算术平均和普通中位数；"
+                 "偶数条的中位数取中间两个值的算术平均。只对 answer 使用 split() 空白分词，保留大小写和标点；"
+                 "不包含 prompt，不跨回答拼接，不剔除严重重复回答，不按长度加权。"
+                 "少于 3 个词（含空回答）按 0 计入，数量单独列出；空回答数包含在短回答数内。数值以 0–1 比例报告。\n\n")
+    handle.write("| 文件组 | 样本数 | Seq-Rep-3 逐回答算术平均 ↓ | Seq-Rep-3 逐回答普通中位数 ↓ | 少于3词回答数 | 空回答数 |\n")
+    handle.write("|---|---:|---:|---:|---:|---:|\n")
+    for label, summary in summaries.items():
+        handle.write(f"| {label} | {summary['num_samples']} | {summary['mean']:.6f} | {summary['median']:.6f}"
+                     f" | {summary['num_short_answers']} | {summary['num_empty_answers']} |\n")
+    for label, summary in summaries.items():
+        handle.write(f"\n- {label}: `{summary['evaluated_file']}`；SHA256 `{summary['source_sha256']}`。\n")
+
+
 def p_from_z(z_score: float | None) -> float | None:
     if z_score is None:
         return None
@@ -612,6 +669,10 @@ def main() -> None:
     result["rouge_l_teacher_clean"] = evaluate_teacher_clean_rouge(
         args.kgw_file.resolve(), args.teacher_clean_reference_file.resolve()
     )
+    result["seq_rep_3"] = {
+        label: evaluate_seq_rep3(path.resolve())
+        for label, path in (("kgw", args.kgw_file), ("clean", args.clean_file))
+    }
     rescorer = LegacyRescorer(args)
     p_kgw, kgw_cache = load_pvalue_records(args.kgw_file.resolve(), rescorer)
     p_clean, clean_cache = load_pvalue_records(args.clean_file.resolve(), rescorer)
@@ -706,6 +767,7 @@ def main() -> None:
                 f"  | {target} | {metrics['fpr']:.6f} | {metrics['tpr']:.6f} | "
                 f"{metrics['f1']:.6f} | {metrics['threshold']} |\n"
             )
+        write_seq_rep3_summary(handle, result["seq_rep_3"])
         write_pvalue_summary(handle, result["p_values"])
         handle.write(f"\n逐条 p-value：`{kgw_cache}`；`{clean_cache}`\n")
         write_grouped_summary(handle, grouped_summaries)
@@ -734,6 +796,7 @@ def main() -> None:
         f"ROUGE-L（14B clean 教师参考）: {teacher_rouge['mean']:.6f} "
         f"| samples: {teacher_rouge['num_samples']} | per-sample F1 mean, use_stemmer=True"
     )
+    write_seq_rep3_summary(sys.stdout, result["seq_rep_3"])
     print(
         f"Best F1: {best['f1']:.6f} | z threshold: {best['threshold']} | "
         f"TPR: {best['tpr']:.6f} | FPR: {best['fpr']:.6f}"

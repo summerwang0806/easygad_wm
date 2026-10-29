@@ -87,6 +87,79 @@ class FileTestCase(unittest.TestCase):
         return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
+class SequenceRepetitionTests(FileTestCase):
+    def row(self, sample_id, answer, prompt="repeated prompt " * 100):
+        return {"id": sample_id, "prompt": prompt, "answer": answer}
+
+    def test_formula_uses_overlapping_word_trigrams_and_preserves_source(self):
+        source = self.write_rows("answers.jsonl", [self.row("a", "a b c a b c")])
+        before = source.read_bytes()
+        result = evaluator.evaluate_seq_rep3(source)
+        # Four overlapping trigrams: abc, bca, cab, abc; three are distinct.
+        self.assertAlmostEqual(result["mean"], 1 / 4)
+        self.assertAlmostEqual(result["median"], 1 / 4)
+        self.assertEqual(result["num_samples"], 1)
+        self.assertEqual(result["ngram_size"], 3)
+        self.assertEqual(result["source_sha256"], hashlib.sha256(before).hexdigest())
+        self.assertEqual(result["evaluated_file"], str(source.resolve()))
+        self.assertEqual(source.read_bytes(), before)
+
+    def test_macro_average_does_not_length_weight_or_drop_repetitive_answers(self):
+        source = self.write_rows("unequal.jsonl", [self.row("short", "a b c"),
+            self.row("severely-repetitive", "x x x x x x x x")])
+        result = evaluator.evaluate_seq_rep3(source)
+        # First answer 0; second answer 1 - 1/6. Both get equal weight,
+        # including the answer that a severe-repetition filter would remove.
+        self.assertAlmostEqual(result["mean"], 5 / 12)
+        self.assertAlmostEqual(result["median"], 5 / 12)
+        self.assertNotAlmostEqual(result["mean"], 5 / 7)
+        self.assertEqual(result["num_samples"], 2)
+
+    def test_even_median_averages_middle_two_values(self):
+        source = self.write_rows("even.jsonl", [
+            self.row("r80", "z z z z z z z"), self.row("r00", "a b c"),
+            self.row("r50", "x x x x"), self.row("r25", "a b c a b c"),
+        ])
+        result = evaluator.evaluate_seq_rep3(source)
+        # Sorted scores: 0, .25, .5, .8. Ordinary median is .375, not .5.
+        self.assertAlmostEqual(result["mean"], 0.3875)
+        self.assertAlmostEqual(result["median"], 0.375)
+
+    def test_split_keeps_case_and_punctuation_excludes_prompt_and_answer_boundaries(self):
+        for answer in ("A\t a\nA  a\tA\na", "a, a a, a a, a"):
+            with self.subTest(answer=answer):
+                source = self.write_rows("split.jsonl", [self.row("a", answer)])
+                result = evaluator.evaluate_seq_rep3(source)
+                # Alternating case/punctuation yields two unique trigrams out
+                # of four; normalizing case or stripping punctuation gives .75.
+                self.assertAlmostEqual(result["mean"], 0.5)
+        separate = self.write_rows("separate.jsonl", [self.row("one", "a b c"), self.row("two", "a b c")])
+        result = evaluator.evaluate_seq_rep3(separate)
+        self.assertEqual(result["mean"], 0)
+        self.assertEqual(result["median"], 0)
+
+    def test_empty_and_short_answers_contribute_zero_and_are_counted(self):
+        source = self.write_rows("short.jsonl", [self.row("empty", ""),
+            self.row("whitespace", " \t\n"), self.row("one", "a"),
+            self.row("two", "a b"), self.row("four", "q q q q")])
+        result = evaluator.evaluate_seq_rep3(source)
+        self.assertEqual(result["num_samples"], 5)
+        self.assertEqual(result["num_short_answers"], 4)
+        self.assertEqual(result["num_empty_answers"], 2)
+        self.assertAlmostEqual(result["mean"], 0.1)
+        self.assertEqual(result["median"], 0)
+        json.dumps(result, allow_nan=False)
+
+    def test_invalid_answer_or_id_and_empty_file_are_rejected(self):
+        for rows in ([{"id": "a", "answer": None}],
+                     [self.row("same", "a b c"), self.row("same", "d e f")],
+                     [self.row("", "a b c")], []):
+            with self.subTest(rows=rows):
+                source = self.write_rows("invalid.jsonl", rows)
+                with self.assertRaises(ValueError):
+                    evaluator.evaluate_seq_rep3(source)
+
+
 class DetectorMetadataTests(FileTestCase):
     def test_consistent_metadata_is_loaded_without_cuda(self):
         source = self.write_rows("scores.jsonl", [answer_row("1"), answer_row("2")])
@@ -175,8 +248,12 @@ class DetectorMetadataTests(FileTestCase):
         calculate.assert_not_called()
 
     def test_main_report_displays_actual_detector_config(self):
-        positive = self.write_rows("student.jsonl", [answer_row(label="kgw", gamma=0.5, delta=3.0)])
-        negative = self.write_rows("clean.jsonl", [answer_row(label="clean", gamma=0.5, delta=3.0)])
+        positive_row = answer_row(label="kgw", gamma=0.5, delta=3.0)
+        positive_row["answer"] = "repeat repeat repeat repeat repeat repeat repeat repeat"
+        negative_row = answer_row(label="clean", gamma=0.5, delta=3.0)
+        negative_row["answer"] = "all words different today"
+        positive = self.write_rows("student.jsonl", [positive_row])
+        negative = self.write_rows("clean.jsonl", [negative_row])
         report = self.root / "report.md"
         report.write_text("Existing history must remain intact.\n", encoding="utf-8")
         args = argparse.Namespace(
@@ -184,6 +261,8 @@ class DetectorMetadataTests(FileTestCase):
             dolly_reference_file=self.root / "dolly.jsonl",
             teacher_clean_reference_file=self.root / "teacher.jsonl",
             tokenizer=None, score_device="cuda",
+            ppl=False, ppl_model=self.root / "offline-reference", ppl_device="cpu", ppl_dtype="float32",
+            ppl_generation_tokenizer=None, ppl_max_length=None, ppl_overflow="error",
         )
         rouge = {"mean": 0.7, "num_samples": 1, "reference_file": "offline-reference"}
         from wm_test.grouped_pvalues import group_token_flags
@@ -200,11 +279,13 @@ class DetectorMetadataTests(FileTestCase):
             },
         }
         source_before = (positive.read_bytes(), negative.read_bytes())
-        with patch.object(evaluator, "parse_args", return_value=args), patch.object(evaluator, "evaluate_dolly_rouge", return_value=rouge), patch.object(evaluator, "evaluate_teacher_clean_rouge", return_value=rouge), patch.object(evaluator, "load_grouped_pvalues", return_value=(grouped_payload, self.root / "grouped.json")), patch.object(evaluator, "load_nonrepetitive_grouped_pvalues", return_value=(filtered_payload, self.root / "filtered.json")) as filtered_loader, contextlib.redirect_stdout(io.StringIO()) as stdout:
+        with patch.object(evaluator, "parse_args", return_value=args), patch.object(evaluator, "evaluate_dolly_rouge", return_value=rouge), patch.object(evaluator, "evaluate_teacher_clean_rouge", return_value=rouge), patch.object(evaluator, "load_grouped_pvalues", return_value=(grouped_payload, self.root / "grouped.json")), patch.object(evaluator, "load_nonrepetitive_grouped_pvalues", return_value=(filtered_payload, self.root / "filtered.json")) as filtered_loader, patch.object(evaluator, "evaluate_ppl_files", return_value={"enabled": False}) as ppl_loader, contextlib.redirect_stdout(io.StringIO()) as stdout:
             evaluator.main()
+            args.ppl = True
             evaluator.main()
         self.assertEqual((positive.read_bytes(), negative.read_bytes()), source_before)
         self.assertEqual(filtered_loader.call_count, 4)
+        self.assertEqual(ppl_loader.call_count, 1)
         self.assertEqual([call.args[0] for call in filtered_loader.call_args_list],
                          [positive, negative, positive, negative])
         text = report.read_text(encoding="utf-8")
@@ -229,6 +310,22 @@ class DetectorMetadataTests(FileTestCase):
         for budget in (1000, 2000, 3000, 10000, 20000, 30000):
             self.assertIn(f"| {budget} | {budget - 1} |", text)
         self.assertIn("N/A", text)
+        self.assertEqual(text.count("### Seq-Rep-3"), 2)
+        self.assertEqual(stdout.getvalue().count("### Seq-Rep-3"), 2)
+        for rendered in (text, stdout.getvalue()):
+            self.assertIn("| kgw | 1 | 0.833333 | 0.833333 | 0 | 0 |", rendered)
+            self.assertIn("| clean | 1 | 0.000000 | 0.000000 | 0 | 0 |", rendered)
+            self.assertIn("逐回答算术平均", rendered)
+            self.assertIn("逐回答普通中位数", rendered)
+        runs = [json.loads(block.split("\n```", 1)[0]) for block in text.split("```json\n")[1:]]
+        self.assertEqual(len(runs), 2)
+        for run in runs:
+            self.assertEqual(set(run["seq_rep_3"]), {"kgw", "clean"})
+            self.assertAlmostEqual(run["seq_rep_3"]["kgw"]["mean"], 5 / 6)
+            self.assertEqual(run["seq_rep_3"]["clean"]["median"], 0)
+            self.assertEqual(run["seq_rep_3"]["kgw"]["source_sha256"], hashlib.sha256(source_before[0]).hexdigest())
+            self.assertIn("tokenization", run["seq_rep_3"]["kgw"])
+            self.assertIn("short_answer_policy", run["seq_rep_3"]["kgw"])
 
 
 class SavedAnswerRescoringTests(FileTestCase):
