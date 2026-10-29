@@ -208,6 +208,59 @@ class GPUPlanningTests(unittest.TestCase):
         self.assertTrue(all(plan.tensor_parallel_size in (2, 4) for plan in plans))
         self.assertEqual(plan_gpus([self.gpu(0, free=4000)], self.model()), [])
 
+    def test_legacy_mode_is_limited_to_verified_vllm_release_and_v1(self):
+        from gpu_runtime import detect_memory_accounting
+        for version in ("0.8.5", "0.8.5.post1", "0.8.5+cu126"):
+            self.assertEqual(detect_memory_accounting(version, "1"), "legacy_v1_total")
+            self.assertEqual(detect_memory_accounting(version, "0"), "per_instance")
+        for version in ("0.8.4", "0.8.6", "0.8.50", "0.10.0", "unavailable"):
+            self.assertEqual(detect_memory_accounting(version, "1"), "per_instance")
+        with patch("gpu_runtime.importlib.metadata.version", return_value="0.8.5"), \
+                patch.dict(os.environ, {"VLLM_USE_V1": "0"}):
+            self.assertEqual(detect_memory_accounting(), "per_instance")
+
+    def test_reported_inventory_uses_legacy_budget_without_double_subtraction(self):
+        from gpu_runtime import plan_gpus, MIB
+        devices = [self.gpu(index, total=81920 if index == 1 else 40960, free=free)
+                   for index, free in enumerate((33440, 70778, 9041, 16028, 12500, 12502))]
+        previous = plan_gpus(devices, self.model())[0]
+        occupied = devices[1].total_mib - devices[1].free_mib
+        # With the previous fraction the legacy engine cannot even budget
+        # the weights after counting existing occupancy again, before KV.
+        self.assertLess(devices[1].total_mib * previous.gpu_memory_utilization - occupied,
+                        self.model().weight_bytes / MIB)
+        plans = plan_gpus(devices, self.model(), memory_accounting="legacy_v1_total")
+        self.assertEqual(len(plans), 1)
+        plan = plans[0]
+        self.assertEqual(plan.gpu_ids, (1,))
+        self.assertEqual(plan.gpu_memory_utilization, .98)
+        self.assertEqual(plan.memory_accounting, "legacy_v1_total")
+        self.assertAlmostEqual(plan.available_per_gpu_mib, 81920 * .98 - occupied, places=2)
+        self.assertGreater(plan.available_per_gpu_mib, plan.estimated_per_gpu_mib)
+
+    def test_legacy_mode_checks_own_budget_and_never_uses_occupied_memory(self):
+        from gpu_runtime import plan_gpus
+        # Physical free minus the small admission reserve alone passes, but
+        # the effective .98 global cap leaves too little of it for this model.
+        device = self.gpu(1, total=81920, free=67500)
+        self.assertEqual(plan_gpus([device], self.model(), max_num_seqs=1,
+                                   memory_accounting="legacy_v1_total"), [])
+        devices = [self.gpu(1, total=81920, free=12000), self.gpu(2), self.gpu(3)]
+        plans = plan_gpus(devices, self.model(), memory_accounting="legacy_v1_total")
+        self.assertTrue(plans)
+        self.assertTrue(all(1 not in plan.gpu_ids for plan in plans))
+
+    def test_legacy_mixed_card_groups_use_each_ranks_own_budget(self):
+        from gpu_runtime import plan_gpus
+        devices = [self.gpu(0, total=81920, free=44000), self.gpu(1, free=40000)]
+        plans = plan_gpus(devices, self.model(), memory_accounting="legacy_v1_total")
+        self.assertTrue(plans)
+        for plan in plans:
+            budgets = [device.total_mib * plan.gpu_memory_utilization - (device.total_mib - device.free_mib)
+                       for device in devices if device.index in plan.gpu_ids]
+            self.assertGreaterEqual(min(budgets), plan.estimated_per_gpu_mib)
+            self.assertAlmostEqual(plan.available_per_gpu_mib, min(budgets), places=2)
+
 
     def test_existing_cuda_mask_is_respected_including_uuid_masks(self):
         from gpu_runtime import filter_visible_gpus
@@ -502,8 +555,8 @@ class AutomaticWorkerFallbackTests(SoftWinRateCase):
         self.model = self.root / "local-model"
         self.config = swr.JudgeConfig(model_path=self.model)
         tasks = self.tasks()
-        plans = [gpu.GPUPlan((1,), ("GPU-one",), 1, .8, 68000),
-                 gpu.GPUPlan((0, 2), ("GPU-zero", "GPU-two"), 2, .8, 35000)]
+        plans = [gpu.GPUPlan((1,), ("GPU-one",), 1, .98, 68000, memory_accounting="legacy_v1_total"),
+                 gpu.GPUPlan((0, 2), ("GPU-zero", "GPU-two"), 2, .98, 35000, memory_accounting="legacy_v1_total")]
         inventory = [gpu.GPU(1, "GPU-one", "A100", 81920, 75000, 0),
                      gpu.GPU(0, "GPU-zero", "A100", 40960, 40000, 0),
                      gpu.GPU(2, "GPU-two", "A100", 40960, 40000, 0)]
@@ -512,7 +565,12 @@ class AutomaticWorkerFallbackTests(SoftWinRateCase):
         def fake_process(command, **kwargs):
             config = json.loads(Path(command[-1]).read_text(encoding="utf-8"))
             spawned.append((config, kwargs["env"]))
-            code = 42 if len(spawned) == 1 else 0
+            code = 42 if len(spawned) == 1 else (1 if len(spawned) == 2 else 0)
+            if len(spawned) == 2:
+                # Engine wrappers hide the cause; the parent must classify
+                # the causal cache error in the log as a memory failure.
+                kwargs["stdout"].write("ValueError: No available memory for the cache blocks.\n"
+                                       "RuntimeError: Engine core initialization failed.\n")
             if code == 0:
                 batch = [json.loads(line) for line in Path(config["tasks_file"]).read_text(encoding="utf-8").splitlines()]
                 rows = self.winning_results(batch, self.config, self.root)
@@ -522,6 +580,7 @@ class AutomaticWorkerFallbackTests(SoftWinRateCase):
         config = swr.JudgeConfig(model_path=self.model, max_num_seqs=1, bootstrap=20)
         with patch.object(gpu, "discover_gpus", return_value=inventory), \
                 patch.object(gpu, "load_model_spec", return_value=None), \
+                patch.object(gpu, "detect_memory_accounting", return_value="legacy_v1_total"), \
                 patch.object(gpu, "plan_gpus", return_value=plans), \
                 patch.object(swr.subprocess, "Popen", side_effect=fake_process), \
                 patch.object(swr, "stop_worker") as cleanup, \
@@ -529,13 +588,20 @@ class AutomaticWorkerFallbackTests(SoftWinRateCase):
                 contextlib.redirect_stdout(io.StringIO()):
             results = swr.run_auto_gpu(tasks, config, self.root / "auto-attempt")
             self.assertEqual(os.environ["CUDA_VISIBLE_DEVICES"], "original-mask")
-        self.assertEqual(len(spawned), 2)
+        self.assertEqual(len(spawned), 3)
         self.assertEqual(spawned[0][1]["CUDA_VISIBLE_DEVICES"], "1")
-        self.assertEqual(spawned[1][1]["CUDA_VISIBLE_DEVICES"], "0,2")
-        self.assertEqual(spawned[1][1]["CUDA_DEVICE_ORDER"], "PCI_BUS_ID")
-        self.assertEqual([int(item) for item in spawned[1][1]["CUDA_VISIBLE_DEVICES"].split(",")], [0, 2])
-        self.assertNotIn("OPENAI_API_KEY", spawned[1][1])
-        self.assertEqual(cleanup.call_count, 2)
+        self.assertEqual(spawned[1][1]["CUDA_VISIBLE_DEVICES"], "1")
+        self.assertEqual(spawned[2][1]["CUDA_VISIBLE_DEVICES"], "0,2")
+        self.assertEqual([item[0]["max_num_batched_tokens"] for item in spawned], [4096, 1024, 4096])
+        self.assertTrue(all(item[0]["max_model_len"] == 8192 for item in spawned))
+        self.assertTrue(all(item[0]["dtype"] == "bfloat16" for item in spawned))
+        self.assertTrue(all(item[1]["VLLM_USE_V1"] == "1" for item in spawned))
+        self.assertTrue(all(item[0]["vllm_use_v1"] == "1" for item in spawned))
+        self.assertTrue(all(item[0]["memory_accounting"] == "legacy_v1_total" for item in spawned))
+        self.assertEqual(spawned[2][1]["CUDA_DEVICE_ORDER"], "PCI_BUS_ID")
+        self.assertEqual([int(item) for item in spawned[2][1]["CUDA_VISIBLE_DEVICES"].split(",")], [0, 2])
+        self.assertNotIn("OPENAI_API_KEY", spawned[2][1])
+        self.assertEqual(cleanup.call_count, 3)
         self.assertEqual(len(results), 2)
         self.assertEqual(results[0]["execution"]["tensor_parallel_size"], 2)
 
@@ -546,6 +612,29 @@ class AutomaticWorkerFallbackTests(SoftWinRateCase):
         detail = swr.worker_failure_detail(self.root, 1)
         self.assertIn("model_startup: ValueError", detail)
         self.assertIn("GPU-6a564fe0", detail)
+
+    def test_failure_detail_includes_causal_cache_error_under_engine_wrapper(self):
+        error = {"stage": "model_startup", "error_type": "RuntimeError",
+                 "message": "Engine core initialization failed. See root cause above."}
+        (self.root / "raw_results.jsonl.error.json").write_text(json.dumps(error), encoding="utf-8")
+        (self.root / "worker.log").write_text(
+            "ERROR [core.py:396] ValueError: No available memory for the cache blocks.\n"
+            "RuntimeError: Engine core initialization failed. See root cause above.\n", encoding="utf-8")
+        detail = swr.worker_failure_detail(self.root, 1)
+        self.assertIn("model_startup: RuntimeError", detail)
+        self.assertIn("Root cause:", detail)
+        self.assertIn("No available memory for the cache blocks", detail)
+
+    def test_low_prefill_profile_is_not_duplicated_or_used_without_chunking(self):
+        import gpu_runtime as gpu
+        plan = gpu.GPUPlan((1,), ("GPU-one",), 1, .98, 68000)
+        with patch.object(gpu, "plan_gpus", return_value=[plan]), \
+                patch.object(gpu, "detect_memory_accounting", return_value="legacy_v1_total"):
+            low = swr.plan_judge_execution([], None, swr.JudgeConfig(max_num_seqs=1, max_num_batched_tokens=1024))
+            self.assertEqual(len(low), 1)
+            unchunked = swr.plan_judge_execution([], None, swr.JudgeConfig(
+                max_num_batched_tokens=8192, enable_chunked_prefill=False))
+            self.assertEqual([(seqs, prefill) for seqs, prefill, _ in unchunked], [(2, 8192), (1, 8192)])
 
 
 if __name__ == "__main__":

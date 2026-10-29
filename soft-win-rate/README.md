@@ -42,16 +42,19 @@ wm_test/cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl
    启动子进程时使用数字卡号，并设置 `CUDA_DEVICE_ORDER=PCI_BUS_ID`；UUID 仍保存在执行记录中。这样兼容将 `CUDA_VISIBLE_DEVICES` 强制转换为整数的旧版 vLLM。
 2. 根据本地权重大小、模型层数、KV heads 和窗口估算空间；优先能容纳模型的单卡，之后考虑合法的 TP 组合。
 3. 对 Qwen3-32B，64 attention heads / 8 KV heads 支持常规 TP=1、2、4，六张卡不会被直接配置为 TP=6。
-4. 从实际可用显存计算 vLLM 显存比例，预留余量，不固定请求 90%。如显存不足，可以减小并发到 1，再尝试其他可行卡组。
+4. 自动识别 vLLM 的显存计算方式。普通模式从实际空闲显存计算分配比例；已核对的 **vLLM 0.8.5 V1** 使用全卡已占用预算，因此以总显存预留至少 2% 计算比例，避免原有占用被重复扣减。两种模式都逐卡检查当前空闲显存是否足够，不把已有进程的显存计为可用。显式设置 `VLLM_USE_V1=0` 时保留普通模式；旧版 V1 方案只在自己的子进程设置 `VLLM_USE_V1=1`，确保计算方式一致。
+   若显存不足，先以并发 1、分块 prefill 上限 1024 token 的方案降低预热峰值，再尝试其他可行卡组；这不会缩短 8192 的上下文窗口。
 5. 只有明确属于显存不足的启动/运行错误才换配置；依赖缺失、数据错误等会停止并指出日志位置。
 
-worker 失败时，终端会直接显示失败阶段、实际异常与 `worker.log` 路径；没有完整有效题目时明确显示 `[FAILED]`，不会把 `None` 当作已完成的胜率。详细 traceback 保存在 worker 日志。
+worker 失败时，终端会直接显示失败阶段、实际异常与 `worker.log` 路径；如果 vLLM 外层只报 `Engine core initialization failed`，还会提取日志内的 KV 缓存或 OOM 原因。没有完整有效题目时明确显示 `[FAILED]`，不会把 `None` 当作已完成的胜率。详细 traceback 保存在 worker 日志。启动阶段显示 `first judgment pending`，此时 0/1000 表示尚未完成第一轮判断。
 
 默认窗口 8192、并发上限 2，采用 eager 模式与分块 prefill 减少峰值显存。每对完整输入先用裁判 tokenizer 检查长度；**超窗会停止，不删回答、不静默截断**。需要更长窗口时统一修改 `JudgeConfig.max_model_len`，自动选卡也会按新窗口重新估算。
 
-内存估算不保证每个计划都能启动，最终以 vLLM profiling 为准。脚本不结束已有 GPU 任务，只清理自己创建的 worker 进程组。每条判断记录实际 GPU、TP、并发、窗口和日志路径；更换 GPU/TP 可能带来数值差异，greedy 不代表跨硬件逐字一致。
+内存估算不保证每个计划都能启动，最终以 vLLM profiling 为准。脚本不结束已有 GPU 任务，只清理自己创建的 worker 进程组。每条判断记录实际 GPU、TP、并发、窗口、prefill 上限、显存计算模式和日志路径，并随汇总追加到结果文档；更换 GPU/TP 可能带来数值差异，greedy 不代表跨硬件逐字一致。
 
-在给出的 1×80GB＋5×40GB 快照的 CPU 模拟中，首选物理 GPU 1 的 80GB 卡，并会依据它已占用的显存降低分配比例。此结论是规划器测试，不是服务器实测启动结果。
+在 80GB 卡剩余 70778 MiB 的六卡快照中，旧版 V1 方案选 GPU 1、比例约 0.980：这是全卡占用上限；再扣已有占用后，本 worker 的实际预算约 67.52 GiB。其他卡组因每卡空闲显存不足被排除。此结论是规划器测试，不是服务器实测启动结果。
+
+旧版 V1 的公式依据：[vLLM v0.8.5 gpu_worker.py](https://github.com/vllm-project/vllm/blob/v0.8.5/vllm/v1/worker/gpu_worker.py#L149-L191)。该兼容规则不自动外推到其他版本。
 
 ## 保存、缓存与续跑
 

@@ -303,7 +303,8 @@ def recover_worker_results(directory: Path, by_key: dict, judgments: dict, cache
     execution_keys = ("gpu_ids", "gpu_uuids", "tensor_parallel_size", "gpu_memory_utilization",
                       "max_num_seqs", "max_model_len", "max_num_batched_tokens", "enable_chunked_prefill",
                       "enforce_eager", "gpu_inventory", "worker_directory", "distributed_executor_backend",
-                      "cuda_visible_devices", "cuda_device_order")
+                      "cuda_visible_devices", "cuda_device_order", "memory_accounting", "available_per_gpu_mib",
+                      "vllm_use_v1")
     for raw_file in sorted(directory.glob("workers/*/plan_*/raw_results.jsonl")):
         config_file = raw_file.with_name("worker_config.json")
         if not config_file.is_file():
@@ -406,39 +407,67 @@ def stop_worker(process: subprocess.Popen) -> None:
         process.wait(timeout=10)
 
 
+MEMORY_FAILURE_TERMS = (
+    "out of memory", "no available memory for the cache blocks", "free memory on device",
+    "larger than the maximum number of tokens that can be stored in kv cache",
+    "no memory available for cache", "insufficient kv cache memory",
+)
+
+
 def worker_failure_detail(directory: Path, returncode: int) -> str:
     """Surface the worker's real failure instead of hiding it behind null metrics."""
     error_file = directory / "raw_results.jsonl.error.json"
+    detail = None
     if error_file.is_file():
         try:
             error = json.loads(error_file.read_text(encoding="utf-8"))
-            return f"{error.get('stage', 'worker')}: {error.get('error_type', 'Error')}: {error.get('message', '')}"
+            detail = f"{error.get('stage', 'worker')}: {error.get('error_type', 'Error')}: {error.get('message', '')}"
         except (ValueError, OSError):
             pass
     log_file = directory / "worker.log"
     if log_file.is_file():
-        tail = "\n".join(log_file.read_text(encoding="utf-8", errors="replace").splitlines()[-20:])
+        lines = log_file.read_text(encoding="utf-8", errors="replace").splitlines()
+        # vLLM's parent can report only "Engine core initialization failed".
+        # Preserve the causal cache/OOM exception from its engine subprocess.
+        for line in reversed(lines):
+            if (re.search(r"\b(?:\w*Error|Exception):", line)
+                    and any(term in line.lower() for term in MEMORY_FAILURE_TERMS)):
+                return f"{detail or f'worker exit {returncode}'}\nRoot cause: {line.strip()}"
+        if detail:
+            return detail
+        tail = "\n".join(lines[-20:])
         if tail.strip():
             return f"worker exit {returncode}; recent log:\n{tail}"
-    return f"worker exited with code {returncode} without a structured error"
+    return detail or f"worker exited with code {returncode} without a structured error"
+
+
+def plan_judge_execution(inventory: list, spec: Any, config: JudgeConfig) -> list[tuple]:
+    from gpu_runtime import detect_memory_accounting, plan_gpus
+
+    accounting = detect_memory_accounting()
+    # Keep the full context and precision. Chunked prefill lets the fallback
+    # reduce profiling/activation peaks without discarding any input tokens.
+    fallback_prefill = min(config.max_num_batched_tokens, 1024) if config.enable_chunked_prefill else config.max_num_batched_tokens
+    profiles = list(dict.fromkeys(((config.max_num_seqs, config.max_num_batched_tokens), (1, fallback_prefill))))
+    plans = [(concurrency, prefill, plan) for concurrency, prefill in profiles
+             for plan in plan_gpus(inventory, spec, max_model_len=config.max_model_len,
+                                   max_num_seqs=concurrency, memory_accounting=accounting)]
+    plans.sort(key=lambda item: (item[2].tensor_parallel_size, -item[0], -item[1]))
+    return plans
 
 
 def run_auto_gpu(tasks: list[dict], config: JudgeConfig, attempt_dir: Path) -> list[dict]:
-    from gpu_runtime import discover_gpus, load_model_spec, plan_gpus
+    from gpu_runtime import discover_gpus, load_model_spec
 
     inventory = discover_gpus()
     spec = load_model_spec(Path(config.model_path))
-    plans = []
-    for concurrency in sorted({config.max_num_seqs, 1}, reverse=True):
-        plans.extend((concurrency, plan) for plan in plan_gpus(
-            inventory, spec, max_model_len=config.max_model_len, max_num_seqs=concurrency))
-    plans.sort(key=lambda pair: (pair[1].tensor_parallel_size, -pair[0]))
+    plans = plan_judge_execution(inventory, spec, config)
     attempt_dir.mkdir(parents=True, exist_ok=True)
     (attempt_dir / "gpu_inventory.json").write_text(json.dumps([row.to_dict() for row in inventory], indent=2), encoding="utf-8")
     if not plans:
         raise LocalRunError("No visible GPU combination has enough free VRAM; existing processes were not stopped", [])
     results, completed = [], set()
-    for index, (concurrency, plan) in enumerate(plans):
+    for index, (concurrency, prefill, plan) in enumerate(plans):
         pending = [task for task in tasks if task["key"] not in completed]
         if not pending:
             return results
@@ -450,7 +479,8 @@ def run_auto_gpu(tasks: list[dict], config: JudgeConfig, attempt_dir: Path) -> l
                      "distributed_executor_backend": "mp",
                      "cuda_visible_devices": ",".join(str(index) for index in plan.gpu_ids),
                      "cuda_device_order": "PCI_BUS_ID",
-                     "max_num_batched_tokens": config.max_num_batched_tokens,
+                     "vllm_use_v1": "1" if plan.memory_accounting == "legacy_v1_total" else os.environ.get("VLLM_USE_V1"),
+                     "max_num_batched_tokens": prefill,
                      "enable_chunked_prefill": config.enable_chunked_prefill,
                      "worker_directory": str(directory.resolve()),
                      "gpu_inventory": [row.to_dict() for row in inventory if row.uuid in plan.gpu_uuids]}
@@ -459,12 +489,18 @@ def run_auto_gpu(tasks: list[dict], config: JudgeConfig, attempt_dir: Path) -> l
         config_file = directory / "worker_config.json"
         config_file.write_text(json.dumps(engine_config, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"[GPU] Trying GPUs {plan.gpu_ids}, TP={plan.tensor_parallel_size}, "
-              f"memory fraction={plan.gpu_memory_utilization:.3f}, concurrency={concurrency}", flush=True)
+              f"memory fraction={plan.gpu_memory_utilization:.3f}, accounting={plan.memory_accounting}, "
+              f"concurrency={concurrency}, prefill={prefill}", flush=True)
+        print(f"[Judge] Initializing; first judgment pending. Log: {directory / 'worker.log'}", flush=True)
         env = os.environ.copy()
         # Older vLLM converts every CUDA_VISIBLE_DEVICES item with int(). Keep
         # UUIDs as audit metadata, but bind devices with compatible numeric IDs.
         env.update(CUDA_VISIBLE_DEVICES=execution["cuda_visible_devices"], CUDA_DEVICE_ORDER="PCI_BUS_ID", HF_HUB_OFFLINE="1",
                    TRANSFORMERS_OFFLINE="1", VLLM_NO_USAGE_STATS="1", VLLM_WORKER_MULTIPROC_METHOD="spawn")
+        if plan.memory_accounting == "legacy_v1_total":
+            # Bind the engine to the exact accounting formula selected above.
+            # An explicitly requested V0 engine is never planned in this mode.
+            env["VLLM_USE_V1"] = "1"
         for name in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "SWANLAB_API_KEY"):
             env.pop(name, None)
         process = None
@@ -508,13 +544,12 @@ def run_auto_gpu(tasks: list[dict], config: JudgeConfig, attempt_dir: Path) -> l
         if process.returncode == 0:
             return results
         log_text = (directory / "worker.log").read_text(encoding="utf-8", errors="replace").lower()
-        memory_failure = process.returncode == 42 or any(term in log_text for term in (
-            "cuda out of memory", "no available memory for the cache blocks", "free memory on device",
-            "larger than the maximum number of tokens that can be stored in kv cache"))
+        memory_failure = process.returncode == 42 or any(term in log_text for term in MEMORY_FAILURE_TERMS)
         detail = worker_failure_detail(directory, process.returncode)
         if not memory_failure:
             raise LocalRunError(f"Local judge failed: {detail}\nWorker log: {directory / 'worker.log'}", results)
         print(f"[GPU] {detail}", file=sys.stderr, flush=True)
+        print(f"[GPU] Worker log: {directory / 'worker.log'}", file=sys.stderr, flush=True)
         print("[GPU] Insufficient memory on this plan; own worker exited, trying the next feasible plan.", flush=True)
     raise LocalRunError("All feasible GPU plans failed from memory pressure; completed results remain reusable", results)
 
@@ -664,10 +699,10 @@ def main() -> int:
         if not Path(config.model_path).is_dir():
             print(f"Local model not present on this machine: {config.model_path}; GPU readiness is NOT verified.")
             return 0
-        from gpu_runtime import discover_gpus, load_model_spec, plan_gpus
-        plans = plan_gpus(discover_gpus(), load_model_spec(Path(config.model_path)),
-                         max_model_len=config.max_model_len, max_num_seqs=config.max_num_seqs)
-        print(json.dumps([plan.to_dict() for plan in plans], indent=2))
+        from gpu_runtime import discover_gpus, load_model_spec
+        plans = plan_judge_execution(discover_gpus(), load_model_spec(Path(config.model_path)), config)
+        print(json.dumps([{**plan.to_dict(), "max_num_seqs": concurrency, "max_num_batched_tokens": prefill}
+                          for concurrency, prefill, plan in plans], indent=2))
         return 0 if plans else 1
     result = run_evaluation(path, REFERENCE_JSONL, config, RESULTS_DIR, HISTORY_FILE,
                             limit=args.limit, summary_only=args.summary_only)
