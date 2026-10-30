@@ -539,6 +539,133 @@ class CachedRunAndReportTests(SoftWinRateCase):
         self.assertEqual(full["num_valid_samples"], 2)
 
 
+class AutomaticContextTests(SoftWinRateCase):
+    winning_results = CachedRunAndReportTests.winning_results
+
+    def setUp(self):
+        super().setUp()
+        self.model = self.root / "local-model"
+        self.model.mkdir()
+        self.metadata = {"model_type": "qwen3", "max_position_embeddings": 32768}
+        (self.model / "config.json").write_text(json.dumps(self.metadata), encoding="utf-8")
+        (self.model / "tokenizer.json").write_text("{}", encoding="utf-8")
+        (self.model / "model.safetensors").write_bytes(b"offline context test weights")
+        self.config = swr.JudgeConfig(model_path=self.model, bootstrap=20, retries=0)
+        self.output = self.root / "results"
+        self.history = self.root / "history.md"
+
+    def evaluate(self, candidate, reference, runner=None, **kwargs):
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            return swr.run_evaluation(candidate, reference, self.config, self.output, self.history,
+                                      runner=runner, **kwargs)
+
+    def test_real_worker_context_failure_is_routed_to_automatic_recovery(self):
+        import gpu_runtime as gpu
+        tasks = self.tasks()
+        inventory = [gpu.GPU(1, "GPU-one", "A100", 81920, 75000, 0)]
+        plan = gpu.GPUPlan((1,), ("GPU-one",), 1, .98, 68000)
+
+        def failed_worker(command, **kwargs):
+            config = json.loads(Path(command[-1]).read_text(encoding="utf-8"))
+            error_path = Path(config["results_file"] + ".error.json")
+            error_path.write_text(json.dumps({"stage": "preflight", "error_type": "ValueError",
+                "message": "Judge input too long for task test: prompt=8646, output_budget=512, window=8192; no text was truncated"}), encoding="utf-8")
+            return types.SimpleNamespace(pid=1234, returncode=1, poll=lambda: 1, wait=lambda **options: 1)
+
+        with patch.object(gpu, "discover_gpus", return_value=inventory), \
+                patch.object(gpu, "load_model_spec", return_value=None), \
+                patch.object(gpu, "plan_gpus", return_value=[plan]), \
+                patch.object(swr.subprocess, "Popen", side_effect=failed_worker) as spawn, \
+                patch.object(swr, "stop_worker") as cleanup, contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaises(swr.ContextLengthError) as caught:
+                swr.run_auto_gpu(tasks, self.config, self.root / "context-worker")
+        self.assertEqual(caught.exception.required_model_len, 9158)
+        self.assertEqual(spawn.call_count, 1)
+        self.assertEqual(cleanup.call_count, 1)
+
+    def test_long_input_grows_then_resumes_without_changing_other_file_caches(self):
+        short, reference = self.sources()
+        first = self.evaluate(short, reference, self.winning_results)
+        old_cache = Path(first["cache_file"]).read_bytes()
+        long_file = self.write_rows("long.jsonl", [self.row(answer="A different complete answer")])
+        calls = []
+
+        def runner(tasks, config, attempt_dir):
+            calls.append(config.max_model_len)
+            if config.max_model_len == 8192:
+                raise swr.ContextLengthError("prompt=8646 + output=512", 9158)
+            return self.winning_results(tasks, config, attempt_dir)
+
+        result = self.evaluate(long_file, reference, runner)
+        self.assertEqual(calls, [8192, 16384])
+        self.assertTrue(result["complete"])
+        self.assertEqual(result["judge_configuration"]["max_model_len"], 16384)
+        self.assertEqual(result["context_adjustment"]["required_model_len"], 9158)
+        self.assertEqual(self.config.max_model_len, 8192)
+        self.assertIn("自动窗口调整：8192 → 16384", self.history.read_text(encoding="utf-8"))
+        self.assertEqual(json.loads(Path(result["run_file"]).read_text(encoding="utf-8"))["context_adjustment"],
+                         result["context_adjustment"])
+
+        def forbidden_runner(*args, **kwargs):
+            self.fail("A completed cache must not start another judge worker")
+
+        resumed = self.evaluate(long_file, reference, forbidden_runner)
+        summary = self.evaluate(long_file, reference, forbidden_runner, summary_only=True)
+        self.assertEqual(resumed["cache_file"], result["cache_file"])
+        self.assertTrue(summary["complete"])
+        self.assertEqual(resumed["new_judgments"], 0)
+        unchanged = self.evaluate(short, reference, forbidden_runner)
+        self.assertEqual(unchanged["cache_file"], first["cache_file"])
+        self.assertEqual(unchanged["judge_configuration"]["max_model_len"], 8192)
+        self.assertIsNone(unchanged["context_adjustment"])
+        self.assertEqual(Path(first["cache_file"]).read_bytes(), old_cache)
+
+    def test_all_inputs_are_rechecked_until_a_longer_window_really_fits(self):
+        candidate, reference = self.sources()
+        calls = []
+
+        def runner(tasks, config, attempt_dir):
+            calls.append(config.max_model_len)
+            if config.max_model_len == 8192:
+                raise swr.ContextLengthError("First overlong pair", 9158)
+            if config.max_model_len == 16384:
+                raise swr.ContextLengthError("A later, longer pair", 20000)
+            return self.winning_results(tasks, config, attempt_dir)
+
+        result = self.evaluate(candidate, reference, runner)
+        self.assertEqual(calls, [8192, 16384, 32768])
+        self.assertTrue(result["complete"])
+        self.assertEqual(result["context_adjustment"]["required_model_len"], 20000)
+
+    def test_native_context_limit_is_respected_without_truncating_text(self):
+        self.metadata["max_position_embeddings"] = 9000
+        (self.model / "config.json").write_text(json.dumps(self.metadata), encoding="utf-8")
+        candidate, reference = self.sources()
+        original = candidate.read_bytes(), reference.read_bytes()
+        with self.assertRaisesRegex(ValueError, "9158.*configured limit 9000.*no text was truncated"):
+            self.evaluate(candidate, reference, lambda *args: (_ for _ in ()).throw(
+                swr.ContextLengthError("Complete long input", 9158)))
+        self.assertEqual((candidate.read_bytes(), reference.read_bytes()), original)
+        self.assertFalse((self.output / "context_plans").exists())
+
+    def test_changed_tokenizer_invalidates_saved_context_and_judgment_identity(self):
+        candidate, reference = self.sources()
+        calls = []
+
+        def runner(tasks, config, attempt_dir):
+            calls.append(config.max_model_len)
+            if config.max_model_len == 8192:
+                raise swr.ContextLengthError("Tokenizer length check", 9158)
+            return self.winning_results(tasks, config, attempt_dir)
+
+        first = self.evaluate(candidate, reference, runner)
+        (self.model / "tokenizer.json").write_text('{"changed":true}', encoding="utf-8")
+        second = self.evaluate(candidate, reference, runner)
+        self.assertEqual(calls, [8192, 16384, 8192, 16384])
+        self.assertNotEqual(first["cache_file"], second["cache_file"])
+        self.assertEqual(len(list((self.output / "context_plans").glob("*.json"))), 2)
+
+
 class AutomaticWorkerFallbackTests(SoftWinRateCase):
     winning_results = CachedRunAndReportTests.winning_results
 

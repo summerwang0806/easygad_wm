@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 from contextlib import contextmanager
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import datetime, timedelta, timezone
 import hashlib
 import importlib.metadata
@@ -31,7 +31,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 
 # 日常只修改这一行。相对路径始终相对于项目根目录，不受运行目录影响。
-INPUT_JSONL = ROOT / "wm_test/cleanD_dipperparaSFT_dipperparagad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+INPUT_JSONL = ROOT / "wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl"
 # 固定质量参照，与 evaluate 的水印检测 clean-file 独立。
 REFERENCE_JSONL = ROOT / "wm_test/cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 JUDGE_MODEL = Path("/shared/public_models/Qwen3-32B")
@@ -372,6 +372,36 @@ class LocalRunError(RuntimeError):
         self.results = results
 
 
+class ContextLengthError(ValueError):
+    """A complete pair needs a longer window, before any model generation."""
+    def __init__(self, message: str, required_model_len: int):
+        super().__init__(message)
+        self.required_model_len = required_model_len
+
+
+def worker_context_error(directory: Path) -> ContextLengthError | None:
+    """Read the existing worker's exact tokenizer counts, without guessing tokens."""
+    path = directory / "raw_results.jsonl.error.json"
+    if not path.is_file():
+        return None
+    try:
+        error = json.loads(path.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return None
+    if not isinstance(error, dict):
+        return None
+    message = error.get("message", "")
+    if error.get("stage") != "preflight" or not isinstance(message, str):
+        return None
+    counts = re.search(r"Judge input too long.*prompt=(\d+), output_budget=(\d+), window=(\d+)", message)
+    if not counts:
+        return None
+    prompt, output, window = map(int, counts.groups())
+    if prompt + output <= window:
+        raise ValueError("Worker reported inconsistent context-length counts")
+    return ContextLengthError(f"{message}\nWorker log: {directory / 'worker.log'}", prompt + output)
+
+
 def stop_worker(process: subprocess.Popen) -> None:
     if os.name == "nt":
         if process.poll() is None:
@@ -543,6 +573,11 @@ def run_auto_gpu(tasks: list[dict], config: JudgeConfig, attempt_dir: Path) -> l
                         completed.add(row["key"])
         if process.returncode == 0:
             return results
+        context_error = worker_context_error(directory)
+        if context_error is not None:
+            # This is an input-window problem, not a reason to try more GPUs
+            # with the same undersized window. The public evaluator grows it.
+            raise context_error
         log_text = (directory / "worker.log").read_text(encoding="utf-8", errors="replace").lower()
         memory_failure = process.returncode == 42 or any(term in log_text for term in MEMORY_FAILURE_TERMS)
         detail = worker_failure_detail(directory, process.returncode)
@@ -577,16 +612,104 @@ def render_report(result: dict) -> str:
         f"缓存：`{result['cache_file']}`；本次归档：`{result['run_file']}`。", ""]
     if result.get("failure"):
         lines += [f"**本次未完成：{result['failure']}** 成功判断已缓存，重新运行可续跑。", ""]
+    if result.get("context_adjustment"):
+        adjustment = result["context_adjustment"]
+        lines += [f"自动窗口调整：{adjustment['base_window']} → {adjustment['max_model_len']} token；"
+                  f"已发现的输入及输出预留至少需要 {adjustment['required_model_len']} token。"
+                  "保留完整文本，实际并发与 GPU 见执行配置。", ""]
     lines += ["评分配置及实际执行配置：", "", "```json", json.dumps({
         "judge_configuration": result["judge_configuration"], "execution_plans": result["execution_plans"],
         "input_generation": result["input_generation"], "reference_generation": result["reference_generation"],
-        "rubric_sha256": digest(JUDGE_SYSTEM), "model_fingerprint": result["model_fingerprint"]},
+        "rubric_sha256": digest(JUDGE_SYSTEM), "model_fingerprint": result["model_fingerprint"],
+        "context_adjustment": result.get("context_adjustment")},
         ensure_ascii=False, indent=2, allow_nan=False), "```", ""]
     return "\n".join(lines)
 
 
+def model_context_limit(model_path: Path) -> int:
+    metadata = json.loads((model_path / "config.json").read_text(encoding="utf-8"))
+    if isinstance(metadata.get("text_config"), dict):
+        metadata = metadata["text_config"]
+    value = metadata.get("max_position_embeddings")
+    if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+        raise ValueError("Cannot safely expand judge context: local config.json has no valid max_position_embeddings")
+    return value
+
+
+def context_plan_location(input_path: Path, reference_path: Path, config: JudgeConfig, output_dir: Path) -> tuple[Path, str]:
+    config_data = {**asdict(config), "model_path": str(Path(config.model_path).resolve())}
+    protocol = {"schema": SCHEMA, "model": fingerprint_model(Path(config.model_path)),
+                "scoring_configuration": {key: value for key, value in config_data.items()
+                                          if key not in {"bootstrap", "retries", "startup_timeout"}},
+                "rubric": JUDGE_SYSTEM, "input_sha256": file_hash(input_path),
+                "reference_sha256": file_hash(reference_path)}
+    identity = digest(protocol)
+    return output_dir.resolve() / "context_plans" / (identity + ".json"), identity
+
+
+def load_context_plan(path: Path, identity: str, config: JudgeConfig) -> dict | None:
+    if not path.is_file():
+        return None
+    plan = json.loads(path.read_text(encoding="utf-8"))
+    maximum, required = plan.get("max_model_len"), plan.get("required_model_len")
+    if (plan.get("base_protocol_sha256") != identity or plan.get("base_window") != config.max_model_len
+            or not isinstance(maximum, int) or isinstance(maximum, bool)
+            or not isinstance(required, int) or isinstance(required, bool)
+            or not config.max_model_len < required <= maximum <= model_context_limit(Path(config.model_path))):
+        raise ValueError(f"Invalid automatic context plan: {path}")
+    return plan
+
+
 def run_evaluation(input_path: Path, reference_path: Path, config: JudgeConfig, output_dir: Path,
                    history_file: Path, runner=None, *, limit: int | None = None, summary_only: bool = False) -> dict:
+    """Keep short-file caches intact; grow only this input's window if needed."""
+    config.validate()
+    if limit is not None and (not isinstance(limit, int) or isinstance(limit, bool) or limit < 1):
+        raise ValueError("limit must be a positive integer")
+    input_path, reference_path = Path(input_path).resolve(), Path(reference_path).resolve()
+    plan_file, identity = context_plan_location(input_path, reference_path, config, output_dir)
+    adjustment = load_context_plan(plan_file, identity, config)
+    effective = replace(config, max_model_len=adjustment["max_model_len"]) if adjustment else config
+    if adjustment:
+        print(f"[Context] Reusing this input's saved window: {config.max_model_len} -> {effective.max_model_len}", flush=True)
+    while True:
+        try:
+            return _run_evaluation(input_path, reference_path, effective, output_dir, history_file, runner,
+                                   limit=limit, summary_only=summary_only, context_adjustment=adjustment)
+        except ContextLengthError as error:
+            if summary_only:
+                raise  # Summary-only never starts a tokenizer/model worker.
+            native_limit = model_context_limit(Path(config.model_path))
+            required = error.required_model_len
+            if required <= effective.max_model_len:
+                raise ValueError("Worker context error does not exceed the selected window") from error
+            if required > native_limit:
+                raise ValueError(f"Complete judge input plus output requires {required} tokens, exceeding the model's "
+                                 f"configured limit {native_limit}; no text was truncated. {error}") from error
+            # Grow geometrically, then let the worker preflight ALL selected
+            # full pairs again. Never enable RoPE scaling or crop either answer.
+            maximum = min(native_limit, max(effective.max_model_len * 2, ((required + 1023) // 1024) * 1024))
+            _, current_identity = context_plan_location(input_path, reference_path, config, output_dir)
+            if current_identity != identity:
+                raise RuntimeError("Input/reference/model changed during context selection; rerun with stable files") from error
+            adjustment = {"base_protocol_sha256": identity, "base_window": config.max_model_len,
+                          "required_model_len": required, "max_model_len": maximum, "selected_at": now()}
+            plan_file.parent.mkdir(parents=True, exist_ok=True)
+            with evaluation_lock(plan_file.with_suffix(".lock")):
+                temporary = plan_file.with_name(plan_file.name + "." + uuid.uuid4().hex[:8] + ".tmp")
+                with temporary.open("w", encoding="utf-8", newline="\n") as handle:
+                    handle.write(json.dumps(adjustment, ensure_ascii=False, indent=2))
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                temporary.replace(plan_file)
+            print(f"[Context] Complete input needs at least {required} tokens; automatically increasing "
+                  f"{effective.max_model_len} -> {maximum}. Full-text preflight and GPU planning will run again.", flush=True)
+            effective = replace(effective, max_model_len=maximum)
+
+
+def _run_evaluation(input_path: Path, reference_path: Path, config: JudgeConfig, output_dir: Path,
+                    history_file: Path, runner=None, *, limit: int | None = None, summary_only: bool = False,
+                    context_adjustment: dict | None = None) -> dict:
     config.validate()
     input_path, reference_path = input_path.resolve(), reference_path.resolve()
     history_file = history_file.resolve()
@@ -661,6 +784,7 @@ def run_evaluation(input_path: Path, reference_path: Path, config: JudgeConfig, 
                   "input_file": str(input_path), "input_sha256": before[str(input_path)],
                   "reference_file": str(reference_path), "reference_sha256": before[str(reference_path)],
                   "judge_configuration": config_data, "model_fingerprint": model, "failure": failure,
+                  "context_adjustment": context_adjustment,
                   "input_generation": describe_dataset(candidate), "reference_generation": describe_dataset(reference),
                   "execution_plans": list(executions.values()), "cache_file": str(cache_file),
                   "cache_reused_rounds": reused, "recovered_judgments": recovered,
@@ -699,6 +823,13 @@ def main() -> int:
         if not Path(config.model_path).is_dir():
             print(f"Local model not present on this machine: {config.model_path}; GPU readiness is NOT verified.")
             return 0
+        plan_file, identity = context_plan_location(path, REFERENCE_JSONL, config, RESULTS_DIR)
+        adjustment = load_context_plan(plan_file, identity, config)
+        if adjustment:
+            config = replace(config, max_model_len=adjustment["max_model_len"])
+            print(f"[Context] Saved window for this input: {config.max_model_len}")
+        else:
+            print(f"[Context] Starting window: {config.max_model_len}; exact token preflight will auto-expand if needed.")
         from gpu_runtime import discover_gpus, load_model_spec
         plans = plan_judge_execution(discover_gpus(), load_model_spec(Path(config.model_path)), config)
         print(json.dumps([{**plan.to_dict(), "max_num_seqs": concurrency, "max_num_batched_tokens": prefill}

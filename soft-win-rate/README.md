@@ -48,7 +48,15 @@ wm_test/cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl
 
 worker 失败时，终端会直接显示失败阶段、实际异常与 `worker.log` 路径；如果 vLLM 外层只报 `Engine core initialization failed`，还会提取日志内的 KV 缓存或 OOM 原因。没有完整有效题目时明确显示 `[FAILED]`，不会把 `None` 当作已完成的胜率。详细 traceback 保存在 worker 日志。启动阶段显示 `first judgment pending`，此时 0/1000 表示尚未完成第一轮判断。
 
-默认窗口 8192、并发上限 2，采用 eager 模式与分块 prefill 减少峰值显存。每对完整输入先用裁判 tokenizer 检查长度；**超窗会停止，不删回答、不静默截断**。需要更长窗口时统一修改 `JudgeConfig.max_model_len`，自动选卡也会按新窗口重新估算。
+默认从窗口 8192、并发上限 2 开始，采用 eager 模式与分块 prefill 减少峰值显存。每对完整输入先用裁判 tokenizer 检查长度；若超窗，单文件入口会根据 worker 报告的实际 token 数自动扩大**当前文件**的窗口，再检查全部待评输入并重新选卡。比如本轮 KGW GAD 的 `8646 + 512 > 8192` 会触发 `8192 → 16384`；显存紧张时自动选卡器会尝试并发 1。**保留完整问题和回答，不静默截断，不自动开启 RoPE 扩展**。超过模型本地配置的 `max_position_embeddings` 才会停止并明确报错。
+
+之后仍然只需修改顶部的 `INPUT_JSONL` 并运行原命令，不需要手动追加窗口或 GPU 参数。当前默认输入已经设为待补测的：
+
+```text
+wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl
+```
+
+首次发现长输入时会看到 `[Context] ... automatically increasing 8192 -> 16384`，属于自动恢复。最终窗口写入 Markdown 和每次运行的 JSON，并保存在 `results/context_plans/` 中；同一文件重跑会直接采用已保存的窗口，继续复用成功判断。选择另一个短文件时仍从原协议读取缓存，已完成的 Para、WN 2.5、WN 3 不会因为其他文件扩窗而失效。
 
 内存估算不保证每个计划都能启动，最终以 vLLM profiling 为准。脚本不结束已有 GPU 任务，只清理自己创建的 worker 进程组。每条判断记录实际 GPU、TP、并发、窗口、prefill 上限、显存计算模式和日志路径，并随汇总追加到结果文档；更换 GPU/TP 可能带来数值差异，greedy 不代表跨硬件逐字一致。
 
@@ -63,6 +71,7 @@ worker 失败时，终端会直接显示失败阶段、实际异常与 `worker.l
 - 同一目录的 `runs/*.json`：每次运行独立归档，包括逐题偏好。
 - `workers/*/plan_*/`：具体选卡、worker 配置、原始输出与 `worker.log`。
 - `errors.jsonl`：不合格的裁判输出；成功判断不因重试而重算。
+- `results/context_plans/*.json`：按输入、参照、裁判资产和原评分协议绑定的自动窗口选择；续跑长输入时保留此目录。
 
 中断时 worker 已逐条 flush/fsync 的原始输出也会在下次启动时恢复到主缓存。主缓存若只剩最后一条未写完的数据，会保留该尾部备份后恢复完整行。改变输入、参照、裁判资产、提示或评分配置会使用不同缓存，旧记录保留。权重指纹采用文件名、大小和修改时间，配置/tokenizer 采用内容哈希；不全量读取几十 GB 权重做哈希。
 
