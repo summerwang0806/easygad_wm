@@ -121,10 +121,12 @@ def run_worker(config: dict[str, Any]) -> int:
             max_num_batched_tokens=max_batched_tokens,
             enable_chunked_prefill=chunked_prefill,
             enforce_eager=bool(config.get("enforce_eager", True)),
+            disable_custom_all_reduce=bool(config.get("disable_custom_all_reduce", False)),
             distributed_executor_backend="mp",
             seed=int(config.get("seed", 42)), generation_config="vllm",
             disable_log_stats=True,
         )
+        print("[Local judge] Model ready; starting first judgment", file=sys.stderr, flush=True)
         sampling = SamplingParams(
             temperature=0.0, top_p=1.0, max_tokens=max_output,
             seed=int(config.get("seed", 42)),

@@ -44,9 +44,15 @@ wm_test/cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl
 3. 对 Qwen3-32B，64 attention heads / 8 KV heads 支持常规 TP=1、2、4，六张卡不会被直接配置为 TP=6。
 4. 自动识别 vLLM 的显存计算方式。普通模式从实际空闲显存计算分配比例；已核对的 **vLLM 0.8.5 V1** 使用全卡已占用预算，因此以总显存预留至少 2% 计算比例，避免原有占用被重复扣减。两种模式都逐卡检查当前空闲显存是否足够，不把已有进程的显存计为可用。显式设置 `VLLM_USE_V1=0` 时保留普通模式；旧版 V1 方案只在自己的子进程设置 `VLLM_USE_V1=1`，确保计算方式一致。
    若显存不足，先以并发 1、分块 prefill 上限 1024 token 的方案降低预热峰值，再尝试其他可行卡组；这不会缩短 8192 的上下文窗口。
-5. 只有明确属于显存不足的启动/运行错误才换配置；依赖缺失、数据错误等会停止并指出日志位置。
+5. 显存不足时尝试下一可行配置；多卡通信初始化持续 180 秒没有进入后续阶段时，清理本次自己的 worker，跳过同一卡组的其余并发变体，再尝试其他可行卡组。依赖缺失、数据错误等会停止并指出日志位置。
 
-worker 失败时，终端会直接显示失败阶段、实际异常与 `worker.log` 路径；如果 vLLM 外层只报 `Engine core initialization failed`，还会提取日志内的 KV 缓存或 OOM 原因。没有完整有效题目时明确显示 `[FAILED]`，不会把 `None` 当作已完成的胜率。详细 traceback 保存在 worker 日志。启动阶段显示 `first judgment pending`，此时 0/1000 表示尚未完成第一轮判断。
+本地多卡使用 `mp` 后端，默认采用 PCIe 兼容通信配置：仅在自己的子进程中禁用 NCCL P2P、InfiniBand 和 vLLM 自定义 all-reduce，启用共享内存，并绑定本机回环接口。用于处理跨 NUMA/PCIe 卡组在 NCCL 初始化阶段停滞的情况，可能降低多卡吞吐。单卡不覆盖这些通信环境变量，所有通信设置均写入实际执行记录。不会修改系统设置、全局 shell 环境或其他 GPU 进程。
+
+该处理依据 [vLLM 0.8.5 排障说明](https://docs.vllm.ai/en/v0.8.5/getting_started/troubleshooting.html#incorrect-hardware-driver) 和 [NCCL 2.21.5 环境变量说明](https://docs.nvidia.com/deeplearning/nccl/archives/nccl_2215/user-guide/docs/env.html)。兼容配置属于通信故障的应对措施，服务器实测仍是启动成功的依据。
+
+worker 失败时，终端会直接显示失败阶段、实际异常与 `worker.log` 路径；如果 vLLM 外层只报 `Engine core initialization failed`，还会提取日志内的 KV 缓存或 OOM 原因。没有完整有效题目时明确显示 `[FAILED]`，不会把 `None` 当作已完成的胜率。详细 traceback 保存在 worker 日志。进度条会显示当前处于 tokenizer 检查、多卡通信初始化、权重加载、显存预热或首轮判断阶段；0/1000 表示尚未完成第一轮判断。
+
+部署通信修复时需要同时更新 `run_soft_win_rate.py` 和 `judge_worker.py`，后者负责把 `disable_custom_all_reduce` 传给 vLLM。之后仍只需修改入口顶部的 `INPUT_JSONL` 并执行原命令。
 
 默认从窗口 8192、并发上限 2 开始，采用 eager 模式与分块 prefill 减少峰值显存。每对完整输入先用裁判 tokenizer 检查长度；若超窗，单文件入口会根据 worker 报告的实际 token 数自动扩大**当前文件**的窗口，再检查全部待评输入并重新选卡。比如本轮 KGW GAD 的 `8646 + 512 > 8192` 会触发 `8192 → 16384`；显存紧张时自动选卡器会尝试并发 1。**保留完整问题和回答，不静默截断，不自动开启 RoPE 扩展**。超过模型本地配置的 `max_position_embeddings` 才会停止并明确报错。
 

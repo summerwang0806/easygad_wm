@@ -261,6 +261,18 @@ class GPUPlanningTests(unittest.TestCase):
             self.assertGreaterEqual(min(budgets), plan.estimated_per_gpu_mib)
             self.assertAlmostEqual(plan.available_per_gpu_mib, min(budgets), places=2)
 
+    def test_current_busy_snapshot_requires_the_reported_four_card_group(self):
+        from gpu_runtime import plan_gpus
+        devices = [self.gpu(index, total=81920 if index == 1 else 40960, free=free)
+                   for index, free in enumerate((33440, 66401, 20392, 29441, 12500, 12502))]
+        self.assertEqual(plan_gpus(devices, self.model(), max_model_len=16384, max_num_seqs=2,
+                                   memory_accounting="legacy_v1_total"), [])
+        plans = plan_gpus(devices, self.model(), max_model_len=16384, max_num_seqs=1,
+                          memory_accounting="legacy_v1_total")
+        self.assertEqual([plan.gpu_ids for plan in plans], [(0, 1, 2, 3)])
+        self.assertEqual(plans[0].tensor_parallel_size, 4)
+        self.assertAlmostEqual(plans[0].available_per_gpu_mib, 19572.8, places=1)
+
 
     def test_existing_cuda_mask_is_respected_including_uuid_masks(self):
         from gpu_runtime import filter_visible_gpus
@@ -300,6 +312,7 @@ class OfflineWorkerTests(SoftWinRateCase):
     def test_offline_worker_preserves_order_flags_and_reports_finish_reason(self):
         import judge_worker
         config = self.worker_config(self.tasks())
+        config["disable_custom_all_reduce"] = True
         template_options = []
         load_options = []
 
@@ -334,6 +347,7 @@ class OfflineWorkerTests(SoftWinRateCase):
         self.assertTrue(all(item["finish_reason"] == "stop" for item in results))
         self.assertTrue(all(options["enable_thinking"] is False for options in template_options))
         self.assertEqual(load_options[0]["tensor_parallel_size"], 1)
+        self.assertTrue(load_options[0]["disable_custom_all_reduce"])
 
     def test_uuid_only_config_is_rejected_without_exposing_all_gpus(self):
         import judge_worker
@@ -668,6 +682,75 @@ class AutomaticContextTests(SoftWinRateCase):
 
 class AutomaticWorkerFallbackTests(SoftWinRateCase):
     winning_results = CachedRunAndReportTests.winning_results
+
+    def test_startup_stage_identifies_nccl_wait_and_later_progress(self):
+        log = "[Local judge] Preflight passed: 1000 tasks\nInitializing a V1 LLM engine\nvLLM is using nccl==2.21.5\n"
+        self.assertEqual(swr.worker_startup_stage(log, 4), "distributed_init")
+        self.assertEqual(swr.worker_startup_stage(log, 1), "engine_setup")
+        log += "Starting to load model /shared/public_models/Qwen3-32B...\n"
+        self.assertEqual(swr.worker_startup_stage(log, 4), "loading_weights")
+        log += "Model loading took 16.0 GiB\n"
+        self.assertEqual(swr.worker_startup_stage(log, 4), "profiling_memory")
+        log += "[Local judge] Model ready; starting first judgment\n"
+        self.assertEqual(swr.worker_startup_stage(log, 4), "first_judgment")
+
+    def test_multigpu_stall_cleans_own_worker_skips_same_group_and_tries_another(self):
+        import gpu_runtime as gpu
+        config = swr.JudgeConfig(model_path=self.root / "local-model")
+        first = gpu.GPUPlan((0, 1, 2, 3), tuple(f"GPU-{i}" for i in (0, 1, 2, 3)), 4, .98, 18000)
+        other = gpu.GPUPlan((2, 3, 4, 5), tuple(f"GPU-{i}" for i in (2, 3, 4, 5)), 4, .98, 18000)
+        # A prefill/concurrency variation cannot repair this group's communicator.
+        plans = [(2, 4096, first), (1, 1024, first), (1, 1024, other)]
+        spawned, clock = [], [0]
+
+        def now():
+            clock[0] += 5
+            return clock[0]
+
+        def process(command, **kwargs):
+            options = json.loads(Path(command[-1]).read_text(encoding="utf-8"))
+            spawned.append((options, kwargs["env"]))
+            if len(spawned) == 1:
+                kwargs["stdout"].write("[Local judge] Preflight passed: 1000 tasks\nvLLM is using nccl==2.21.5\n")
+                kwargs["stdout"].flush()
+                return types.SimpleNamespace(pid=1234, returncode=None, poll=lambda: None)
+            tasks = [json.loads(line) for line in Path(options["tasks_file"]).read_text(encoding="utf-8").splitlines()]
+            rows = self.winning_results(tasks, config, self.root)
+            Path(options["results_file"]).write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+            return types.SimpleNamespace(pid=1235, returncode=0, poll=lambda: 0)
+
+        def cleanup(process):
+            if process.returncode is None:
+                process.returncode = -15
+
+        with patch.object(gpu, "discover_gpus", return_value=[]), \
+                patch.object(gpu, "load_model_spec", return_value=None), \
+                patch.object(swr, "plan_judge_execution", return_value=plans), \
+                patch.object(swr.subprocess, "Popen", side_effect=process), \
+                patch.object(swr, "stop_worker", side_effect=cleanup) as stop, \
+                patch.object(swr.time, "monotonic", side_effect=now), \
+                patch.object(swr.time, "sleep"), patch.object(swr, "COMMUNICATION_INIT_TIMEOUT", 10), \
+                patch.dict(os.environ, {"NCCL_P2P_DISABLE": "0", "VLLM_HOST_IP": "original-host"}), \
+                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            results = swr.run_auto_gpu(self.tasks(), config, self.root / "comm-fallback")
+            self.assertEqual(os.environ["NCCL_P2P_DISABLE"], "0")
+            self.assertEqual(os.environ["VLLM_HOST_IP"], "original-host")
+        self.assertEqual(len(spawned), 2)
+        self.assertEqual(stop.call_count, 2)
+        self.assertEqual(spawned[1][0]["gpu_ids"], [2, 3, 4, 5])
+        for options, environment in spawned:
+            self.assertTrue(options["disable_custom_all_reduce"])
+            self.assertEqual(options["communication_mode"], "local_pcie_compatible")
+            self.assertEqual(environment["NCCL_P2P_DISABLE"], "1")
+            self.assertEqual(environment["NCCL_IB_DISABLE"], "1")
+            self.assertEqual(environment["NCCL_SOCKET_IFNAME"], "lo")
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0]["execution"]["communication_environment"]["NCCL_P2P_DISABLE"], "1")
+
+    def test_single_gpu_does_not_override_communication_environment(self):
+        options = swr.local_communication_settings(1)
+        self.assertEqual(options["communication_environment"], {})
+        self.assertFalse(options["disable_custom_all_reduce"])
 
     def test_own_process_group_is_cleaned_even_if_top_worker_already_exited(self):
         process = types.SimpleNamespace(pid=9876, poll=lambda: 0, wait=lambda **kwargs: 0)
