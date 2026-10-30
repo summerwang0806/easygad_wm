@@ -34,7 +34,7 @@ class Job:
 
 # Only this batch launcher uses this list. The single-file defaults stay intact.
 JOBS = (
-    Job("未清洗（KGW GAD）", ROOT / "wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl"),
+    Job("kgw_gad", ROOT / "wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl"),
     Job("Para", ROOT / "wm_test/dipper_upkgwwarmup_upkgwgad_gad_gamma0.5_delta3_new1_qwen2_5_0_5b_dolly15k_test.jsonl"),
     Job("WN strength=2.5", ROOT / "wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new.jsonl"),
     Job("WN strength=3", ROOT / "wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new_strength3.jsonl"),
