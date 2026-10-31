@@ -48,15 +48,16 @@ DEFAULT_KGW = "wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new_strength3.jsonl"
 
 # 没有洗水印的
 # DEFAULT_KGW = "wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl"
+# DEFAULT_KGW = "wm_test/kgwwarmup_kgwgad_warmup_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl"
 
 
 # dipper para之后的
 # DEFAULT_KGW = "wm_test/dipper_upkgwwarmup_upkgwgad_gad_gamma0.5_delta3_new1_qwen2_5_0_5b_dolly15k_test.jsonl"
-
+DEFAULT_KGW = "wm_test/dipper_upkgwwarmup_upkgwgad_warmup_gamma0.5_delta3_new1_qwen2_5_0_5b_dolly15k_test.jsonl"
 
 # cleanwarmup_cleangad
 # DEFAULT_KGW = "wm_test/cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
-DEFAULT_KGW = "wm_test/cleanwarmup_cleangad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+# DEFAULT_KGW = "wm_test/cleanwarmup_cleangad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 
 
 # 测试判别器是否会被para伤害的
