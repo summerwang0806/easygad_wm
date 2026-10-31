@@ -29,9 +29,13 @@ from typing import Any
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
-
 # 日常只修改这一行。相对路径始终相对于项目根目录，不受运行目录影响。
-INPUT_JSONL = ROOT / "wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl"
+# INPUT_JSONL = ROOT / "wm_test/cleanD_dipperparaSFT_dipperparagad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+
+INPUT_JSONL = ROOT / "wm_test/dipper_upkgwwarmup_upkgwgad_warmup_gamma0.5_delta3_new1_qwen2_5_0_5b_dolly15k_test.jsonl"
+
+
+
 # 固定质量参照，与 evaluate 的水印检测 clean-file 独立。
 REFERENCE_JSONL = ROOT / "wm_test/cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 JUDGE_MODEL = Path("/shared/public_models/Qwen3-32B")
