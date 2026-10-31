@@ -5,8 +5,10 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -87,6 +89,21 @@ class ParquetTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Existing output differs"):
             split_data.prepare(self.original, self.para, self.output)
 
+    def test_neutral_and_legacy_cli_options_produce_the_same_paired_data(self):
+        for discriminator_flag, sft_flag in [
+            ("--discriminator_train_file", "--sft_train_file"),
+            ("--original_train_file", "--para_train_file"),
+        ]:
+            with self.subTest(discriminator_flag=discriminator_flag), patch.object(sys, "argv", [
+                "prepare_split_warmup_data.py", discriminator_flag, str(self.original),
+                sft_flag, str(self.para), "--output_file", str(self.output), "--val_file", str(self.val),
+            ]):
+                split_data.main()
+                table = pq.read_table(self.output)
+                self.assertEqual(table["teacher_response"].to_pylist(), ["KGW A", "KGW B"])
+                self.assertEqual(table["sft_response"].to_pylist(), ["Para a", "Para b"])
+        self.assertEqual(table.schema.metadata[b"source"], b"keep")
+
     def test_input_overwrite_and_validation_overlap_rejected(self):
         with self.assertRaisesRegex(ValueError, "Output must differ"):
             split_data.prepare(self.original, self.para, self.original)
@@ -97,12 +114,30 @@ class ParquetTests(unittest.TestCase):
 @unittest.skipUnless(BASH, "Shell checks require Git Bash/Bash")
 class WrapperTests(unittest.TestCase):
     def test_wrapper_forwards_separate_stage_files_to_parent(self):
+        self.check_wrapper(
+            "run_full_gad_kgwD_paraSFT_paraGAD_optimized.sh",
+            "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_kgwD_paraSFT_newtrain.parquet",
+            "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_newtrain.parquet",
+            ("--original_train_file", "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet"),
+            ("--para_train_file", "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_newtrain.parquet"),
+        )
+
+    def test_clean_wrapper_routes_clean_discriminator_and_kgw_sft_gad(self):
+        self.check_wrapper(
+            "run_full_gad_cleanD_kgwSFT_kgwGAD_optimized.sh",
+            "data/dolly15k_qwen2_5_14b_cleanD_kgwSFT_gamma0.5_delta3_newtrain.parquet",
+            "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet",
+            ("--discriminator_train_file", "data/dolly15k_qwen2_5_14b_clean_train.parquet"),
+            ("--sft_train_file", "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet"),
+        )
+
+    def check_wrapper(self, wrapper_name, warmup_file, gad_file, discriminator, sft):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             for name in ("scripts/train", "tools", "verl/utils/dataset", "verl/workers/actor", "bin"):
                 (root / name).mkdir(parents=True, exist_ok=True)
-            wrapper_name = "run_full_gad_kgwD_paraSFT_paraGAD_optimized.sh"
             shutil.copyfile(ROOT / "scripts/train" / wrapper_name, root / "scripts/train" / wrapper_name)
+            (root / "tools/prepare_split_warmup_data.py").write_text("--discriminator_train_file", encoding="utf-8")
             (root / "verl/utils/dataset/rl_dataset.py").write_text("build_sft_response_tensors", encoding="utf-8")
             (root / "verl/workers/actor/dp_actor.py").write_text("select_warmup_sft_targets", encoding="utf-8")
             (root / "scripts/train/run_full_gad_optimized.sh").write_text(
@@ -112,17 +147,19 @@ class WrapperTests(unittest.TestCase):
             python.chmod(0o755)
             env = os.environ.copy()
             env.update({"PATH": str(root / "bin") + os.pathsep + env.get("PATH", ""), "CUDA_VISIBLE_DEVICES": "4,7"})
-            result = subprocess.run([BASH, f"scripts/train/{wrapper_name}", "--dry_run"], cwd=root, env=env, text=True, capture_output=True, timeout=20)
+            result = subprocess.run([BASH, f"scripts/train/{wrapper_name}", "--dry_run"], cwd=root, env=env, text=True, encoding="utf-8", capture_output=True, timeout=20)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             lines = result.stdout.splitlines()
             for key, value in [
-                ("--warmup_train_file", "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_kgwD_paraSFT_newtrain.parquet"),
-                ("--gad_train_file", "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_newtrain.parquet"),
+                ("--warmup_train_file", warmup_file),
+                ("--gad_train_file", gad_file),
+                ("--val_file", "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtest.parquet"),
                 ("--logger", "swanlab"),
             ]:
                 self.assertEqual(lines[lines.index(key) + 1], value)
             self.assertIn("--dry_run", lines)
-            self.assertIn("PREPARE:--original_train_file", lines)
+            for flag, path in (discriminator, sft):
+                self.assertEqual(lines[lines.index(f"PREPARE:{flag}") + 1], f"PREPARE:{path}")
 
 
 if __name__ == "__main__":

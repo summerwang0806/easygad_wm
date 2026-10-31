@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pair original KGW discriminator targets with paraphrased warmup SFT targets.
+"""Pair discriminator targets with separate student warmup SFT targets.
 
 Only CPU data preparation is performed. Neither input Parquet is modified.
 """
@@ -13,7 +13,7 @@ import tempfile
 
 
 def pair_sft_responses(original_rows, para_rows):
-    """Return para answers in original order after checking IDs and prompts."""
+    """Return SFT answers in discriminator order after checking IDs and prompts."""
     if not original_rows or not para_rows:
         raise ValueError("Training inputs must be nonempty")
 
@@ -31,12 +31,12 @@ def pair_sft_responses(original_rows, para_rows):
             indexed[identifier] = row
         return indexed
 
-    original = index_rows(original_rows, "Original KGW")
-    para = index_rows(para_rows, "Para")
+    original = index_rows(original_rows, "Discriminator")
+    para = index_rows(para_rows, "SFT")
     if original.keys() != para.keys():
         missing = len(original.keys() - para.keys())
         extra = len(para.keys() - original.keys())
-        raise ValueError(f"Training IDs differ: para is missing {missing} IDs and has {extra} extra IDs")
+        raise ValueError(f"Training IDs differ: SFT is missing {missing} IDs and has {extra} extra IDs")
     result = []
     for row in original_rows:
         paired = para[row["id"]]
@@ -103,19 +103,20 @@ def prepare(original_path, para_path, output_path, val_path=None):
         finally:
             temporary.unlink(missing_ok=True)
         print(f"Prepared paired warmup data: {output_path}")
-    print(f"Rows: {merged.num_rows}; changed para answers: {changed}")
-    print("Warmup discriminator teacher_response = original KGW; actor sft_response = para")
+    print(f"Rows: {merged.num_rows}; differing discriminator/SFT answers: {changed}")
+    print(f"Warmup discriminator teacher_response <- {original_path}")
+    print(f"Warmup actor sft_response <- {para_path}")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--original_train_file", required=True, type=Path)
-    parser.add_argument("--para_train_file", required=True, type=Path)
+    parser.add_argument("--discriminator_train_file", "--original_train_file", dest="discriminator_train_file", required=True, type=Path)
+    parser.add_argument("--sft_train_file", "--para_train_file", dest="sft_train_file", required=True, type=Path)
     parser.add_argument("--output_file", required=True, type=Path)
     parser.add_argument("--val_file", type=Path)
     args = parser.parse_args()
     try:
-        prepare(args.original_train_file, args.para_train_file, args.output_file, args.val_file)
+        prepare(args.discriminator_train_file, args.sft_train_file, args.output_file, args.val_file)
     except (ImportError, OSError, ValueError, KeyError) as error:
         parser.exit(2, f"Split warmup preparation failed: {error}\n")
 

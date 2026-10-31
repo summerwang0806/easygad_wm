@@ -1,0 +1,297 @@
+{
+  "models": [
+    {
+      "stage": "warmup",
+      "source_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\cleanwarmup_cleangad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_lf_sha256": "a544802bd1d1b310dec9bb254958b3386c3692ae848346b77eb36bfe64d96c74",
+      "evaluated_at": "2026-10-19T17:15:07+08:00",
+      "auroc": 0.4626040000000001,
+      "tpr_at_fpr": {
+        "1%": {
+          "threshold": null,
+          "fpr": 0.0,
+          "tpr": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "tp": 0,
+          "fp": 0,
+          "tn": 500,
+          "fn": 500,
+          "target_fpr": 0.01
+        },
+        "5%": {
+          "threshold": 2.2283440581246223,
+          "fpr": 0.05,
+          "tpr": 0.03,
+          "precision": 0.375,
+          "f1": 0.05555555555555555,
+          "tp": 15,
+          "fp": 25,
+          "tn": 475,
+          "fn": 485,
+          "target_fpr": 0.05
+        },
+        "10%": {
+          "threshold": 1.7008401285415224,
+          "fpr": 0.1,
+          "tpr": 0.07,
+          "precision": 0.4117647058823529,
+          "f1": 0.11965811965811966,
+          "tp": 35,
+          "fp": 50,
+          "tn": 450,
+          "fn": 465,
+          "target_fpr": 0.1
+        }
+      },
+      "rouge_l_dolly": {
+        "mean": 0.20911479663899177,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/cleanwarmup_cleangad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl",
+        "reference_source": "databricks/databricks-dolly-15k:response",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "rouge_l_teacher_clean": {
+        "mean": 0.30996181867715505,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/cleanwarmup_cleangad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet",
+        "reference_source": "Qwen2.5-14B clean teacher responses",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "seq_rep_3": {
+        "mean": 0.05314098910455279,
+        "median": 0.0259751212312882,
+        "num_samples": 500,
+        "num_short_answers": 1,
+        "num_empty_answers": 0,
+        "evaluated_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\cleanwarmup_cleangad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "source_sha256": "3fc3fbf33fd9f079638ec54fbf0879739d2833e7577473abca4dbc07d907ec8b",
+        "ngram_size": 3,
+        "tokenization": "answer.split(); whitespace-delimited words; case and punctuation preserved",
+        "scope": "answer only; overlapping trigrams within each complete original answer; no filtering or cross-answer trigrams",
+        "short_answer_policy": "answers with fewer than 3 words, including empty answers, contribute 0; counts reported",
+        "aggregation": {
+          "mean": "unweighted arithmetic mean of per-answer Seq-Rep-3",
+          "median": "ordinary median of per-answer Seq-Rep-3; arithmetic mean of the middle two for even counts"
+        }
+      },
+      "ppl_median": 3.727752959839494,
+      "ppl_valid_samples": 500,
+      "ppl_reference_model": "/shared/public_models/Llama-3-8B",
+      "ppl_cache": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\cleanwarmup_cleangad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.ppl.3f65ad2ad246b50e822c.jsonl",
+      "llm_as_judge_qwen32b": null,
+      "llm_mt_bench": null,
+      "missing_judge_note": "No matching scored run found locally. Clean GAD appears as a fixed reference for other candidates, not a measured candidate score.",
+      "grouped_p_values": {
+        "1000": {
+          "median": 0.8517743756590758,
+          "num_groups": 110
+        },
+        "2000": {
+          "median": 0.9683017588985491,
+          "num_groups": 55
+        },
+        "3000": {
+          "median": 0.9804642099767789,
+          "num_groups": 36
+        }
+      },
+      "grouped_p_values_without_severe_repetition": {
+        "1000": {
+          "median": 0.8517743756590758,
+          "num_groups": 99
+        },
+        "2000": {
+          "median": 0.9613804838256327,
+          "num_groups": 49
+        },
+        "3000": {
+          "median": 0.9617416641553246,
+          "num_groups": 33
+        }
+      },
+      "severe_repetition": {
+        "repetition_threshold": 0.5,
+        "comparison": ">",
+        "scope": "answer-internal adjacent token pairs; prompt excluded",
+        "num_answers_before": 500,
+        "num_answers_retained": 485,
+        "num_answers_removed": 15,
+        "fraction_answers_removed": 0.03,
+        "total_answer_tokens_before": 110315,
+        "total_answer_tokens_retained": 99517,
+        "total_answer_tokens_removed": 10798,
+        "removed_answer_ids": [
+          "dolly-07923",
+          "dolly-08884",
+          "dolly-01092",
+          "dolly-02516",
+          "dolly-02725",
+          "dolly-03239",
+          "dolly-13445",
+          "dolly-03231",
+          "dolly-08607",
+          "dolly-11386",
+          "dolly-03319",
+          "dolly-05355",
+          "dolly-01356",
+          "dolly-12236",
+          "dolly-13235"
+        ]
+      }
+    },
+    {
+      "stage": "gad",
+      "source_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_lf_sha256": "dd4cfdbe540e2227bbad3b46f6a64e34bb1a46b7e7d24860ef8be90ec03efd48",
+      "evaluated_at": "2026-10-19T17:13:34+08:00",
+      "auroc": 0.45282199999999984,
+      "tpr_at_fpr": {
+        "1%": {
+          "threshold": 9.593834825900782,
+          "fpr": 0.01,
+          "tpr": 0.002,
+          "precision": 0.16666666666666666,
+          "f1": 0.003952569169960474,
+          "tp": 1,
+          "fp": 5,
+          "tn": 495,
+          "fn": 499,
+          "target_fpr": 0.01
+        },
+        "5%": {
+          "threshold": 2.2662573397778742,
+          "fpr": 0.046,
+          "tpr": 0.024,
+          "precision": 0.34285714285714286,
+          "f1": 0.044859813084112146,
+          "tp": 12,
+          "fp": 23,
+          "tn": 477,
+          "fn": 488,
+          "target_fpr": 0.05
+        },
+        "10%": {
+          "threshold": 1.697749375254331,
+          "fpr": 0.1,
+          "tpr": 0.07,
+          "precision": 0.4117647058823529,
+          "f1": 0.11965811965811966,
+          "tp": 35,
+          "fp": 50,
+          "tn": 450,
+          "fn": 465,
+          "target_fpr": 0.1
+        }
+      },
+      "rouge_l_dolly": {
+        "mean": 0.2295929496951247,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl",
+        "reference_source": "databricks/databricks-dolly-15k:response",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "rouge_l_teacher_clean": {
+        "mean": 0.33062936890217354,
+        "num_samples": 500,
+        "evaluated_file": "/shared/wwx/EasyGAD/wm_test/cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "reference_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet",
+        "reference_source": "Qwen2.5-14B clean teacher responses",
+        "metric": "rougeL",
+        "measure": "fmeasure",
+        "use_stemmer": true,
+        "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+      },
+      "seq_rep_3": {
+        "mean": 0.0424920159990153,
+        "median": 0.013770383010997311,
+        "num_samples": 500,
+        "num_short_answers": 0,
+        "num_empty_answers": 0,
+        "evaluated_file": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "source_sha256": "e893ca4d7522eaa95f42a505cf3e5fdcea214f71d5103de3154b3c45f45e8d5a",
+        "ngram_size": 3,
+        "tokenization": "answer.split(); whitespace-delimited words; case and punctuation preserved",
+        "scope": "answer only; overlapping trigrams within each complete original answer; no filtering or cross-answer trigrams",
+        "short_answer_policy": "answers with fewer than 3 words, including empty answers, contribute 0; counts reported",
+        "aggregation": {
+          "mean": "unweighted arithmetic mean of per-answer Seq-Rep-3",
+          "median": "ordinary median of per-answer Seq-Rep-3; arithmetic mean of the middle two for even counts"
+        }
+      },
+      "ppl_median": 3.16032674637607,
+      "ppl_valid_samples": 500,
+      "ppl_reference_model": "/shared/public_models/Llama-3-8B",
+      "ppl_cache": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.ppl.2fbd37ec395a4c387a8e.jsonl",
+      "llm_as_judge_qwen32b": null,
+      "llm_mt_bench": null,
+      "missing_judge_note": "No matching scored run found locally. Clean GAD appears as a fixed reference for other candidates, not a measured candidate score.",
+      "grouped_p_values": {
+        "1000": {
+          "median": 0.9532136797396964,
+          "num_groups": 108
+        },
+        "2000": {
+          "median": 0.9727708620407867,
+          "num_groups": 54
+        },
+        "3000": {
+          "median": 0.98765196739754,
+          "num_groups": 36
+        }
+      },
+      "grouped_p_values_without_severe_repetition": {
+        "1000": {
+          "median": 0.8913809204225676,
+          "num_groups": 96
+        },
+        "2000": {
+          "median": 0.9822191552453498,
+          "num_groups": 48
+        },
+        "3000": {
+          "median": 0.993786531657336,
+          "num_groups": 32
+        }
+      },
+      "severe_repetition": {
+        "repetition_threshold": 0.5,
+        "comparison": ">",
+        "scope": "answer-internal adjacent token pairs; prompt excluded",
+        "num_answers_before": 500,
+        "num_answers_retained": 489,
+        "num_answers_removed": 11,
+        "fraction_answers_removed": 0.022,
+        "total_answer_tokens_before": 108189,
+        "total_answer_tokens_retained": 96120,
+        "total_answer_tokens_removed": 12069,
+        "removed_answer_ids": [
+          "dolly-08884",
+          "dolly-09935",
+          "dolly-04624",
+          "dolly-14700",
+          "dolly-08911",
+          "dolly-13445",
+          "dolly-02451",
+          "dolly-08607",
+          "dolly-11386",
+          "dolly-12065",
+          "dolly-01739"
+        ]
+      }
+    }
+  ],
+  "grouped_dedup_semantics": "remove severe whole answers then regroup; no unique-pair deduplication"
+}

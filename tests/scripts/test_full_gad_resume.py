@@ -214,16 +214,36 @@ class LauncherResumeTests(unittest.TestCase):
         self.assertFalse(self.work.exists())
 
     def test_split_wrapper_preserves_all_non_data_training_arguments(self):
+        self.check_split_wrapper_arguments(
+            "run_full_gad_kgwD_paraSFT_paraGAD_optimized.sh",
+            "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_kgwD_paraSFT_newtrain.parquet",
+            "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_newtrain.parquet",
+            ("--original_train_file", "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet"),
+            ("--para_train_file", "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_newtrain.parquet"),
+        )
+
+    def test_clean_split_wrapper_preserves_all_non_data_training_arguments(self):
+        self.check_split_wrapper_arguments(
+            "run_full_gad_cleanD_kgwSFT_kgwGAD_optimized.sh",
+            "data/dolly15k_qwen2_5_14b_cleanD_kgwSFT_gamma0.5_delta3_newtrain.parquet",
+            "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet",
+            ("--discriminator_train_file", "data/dolly15k_qwen2_5_14b_clean_train.parquet"),
+            ("--sft_train_file", "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet"),
+        )
+
+    def check_split_wrapper_arguments(self, wrapper_name, warmup_file, gad_file, discriminator, sft):
         self.assertSuccess(self.launch())
         baseline = self.trainer_calls()
         self.clear_calls()
-        for name in ("scripts/train", "verl/utils/dataset", "verl/workers/actor"):
+        for name in ("scripts/train", "tools", "verl/utils/dataset", "verl/workers/actor"):
             (self.root / name).mkdir(parents=True, exist_ok=True)
-        wrapper_name = "run_full_gad_kgwD_paraSFT_paraGAD_optimized.sh"
         shutil.copyfile(REPO_ROOT / "scripts/train" / wrapper_name, self.root / "scripts/train" / wrapper_name)
         shutil.copyfile(self.root / "launch.sh", self.root / "scripts/train/run_full_gad_optimized.sh")
         (self.root / "verl/utils/dataset/rl_dataset.py").write_text("build_sft_response_tensors", encoding="utf-8")
         (self.root / "verl/workers/actor/dp_actor.py").write_text("select_warmup_sft_targets", encoding="utf-8")
+        (self.root / "tools/prepare_split_warmup_data.py").write_text("--discriminator_train_file", encoding="utf-8")
+        for path in (discriminator[1], sft[1]):
+            (self.root / path).write_text("dummy", encoding="utf-8")
         result = subprocess.run(
             [BASH, f"scripts/train/{wrapper_name}", "--model", "model", "--exp_name", "experiment", "--work_dir", "compare_split"],
             cwd=self.root, env=self.env, text=True, encoding="utf-8", capture_output=True, timeout=30,
@@ -232,13 +252,16 @@ class LauncherResumeTests(unittest.TestCase):
         variant = self.trainer_calls()
         self.assertEqual(len(baseline), 2)
         self.assertEqual(len(variant), 2)
+        preparation = [args for args in self.calls() if args[0] == "tools/prepare_split_warmup_data.py"]
+        self.assertEqual(len(preparation), 1)
+        for flag, path in (discriminator, sft):
+            self.assertEqual(preparation[0][preparation[0].index(flag) + 1], path)
         for stage, old, new in zip(("warmup", "gad"), baseline, variant):
             with self.subTest(stage=stage):
                 if stage == "warmup":
-                    self.assertIn("data.train_files=data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_kgwD_paraSFT_newtrain.parquet", new)
+                    self.assertIn(f"data.train_files={warmup_file}", new)
                 else:
-                    self.assertEqual([arg for arg in old if arg.startswith("data.train_files=")],
-                                     [arg for arg in new if arg.startswith("data.train_files=")])
+                    self.assertIn(f"data.train_files={gad_file}", new)
                 def normalized(args):
                     return [arg.replace("compare_split/experiment/", "checkpoints/experiment/")
                             for arg in args if not arg.startswith("data.train_files=")]
