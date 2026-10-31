@@ -5,6 +5,7 @@ import contextlib
 from dataclasses import replace
 import io
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -130,7 +131,7 @@ class APIPreferenceTests(unittest.TestCase):
     def test_invalid_outputs_are_not_ties_and_other_questions_continue(self):
         def factory(config):
             return FakeClient(config, lambda pair, _: {"winner": "invalid", "reason": "Bad format"}
-                              if "one" in pair["conversation"][0]["content"] else {"winner": "tie", "reason": "Equivalent"})
+                              if "two" in pair["conversation"][0]["content"] else {"winner": "tie", "reason": "Equivalent"})
 
         result = self.run_evaluation(factory=factory)
         self.assertFalse(result["complete"])
@@ -182,8 +183,11 @@ class APIPreferenceTests(unittest.TestCase):
                 with self.call_lock:
                     self.calls += 1
                     number = self.calls
-                barrier.wait(timeout=5)
                 if number == 1:
+                    return {"content": '{"winner":"tie","reason":"Readiness probe"}',
+                            "usage": {}, "actual_model": "fake-api-judge", "response_id": "probe"}
+                barrier.wait(timeout=5)
+                if number == 2:
                     raise KeyboardInterrupt
                 # Finish only after the parent has stopped scheduling. This
                 # paid/in-flight success must still be flushed to the cache.
@@ -194,9 +198,9 @@ class APIPreferenceTests(unittest.TestCase):
         result = self.run_evaluation(factory=InterruptingClient)
         self.assertTrue(result["interrupted"])
         self.assertFalse(result["complete"])
-        self.assertEqual(result["api_calls"], 2)
-        self.assertEqual(result["new_judgments"], 1)
-        self.assertEqual(len(Path(result["cache_file"]).read_text(encoding="utf-8").splitlines()), 1)
+        self.assertEqual(result["api_calls"], 3)
+        self.assertEqual(result["new_judgments"], 2)
+        self.assertEqual(len(Path(result["cache_file"]).read_text(encoding="utf-8").splitlines()), 2)
 
     def test_check_only_has_no_writes_and_no_client_or_local_model_access(self):
         with patch.object(api, "REFERENCE_JSONL", self.reference), patch.object(api, "RESULTS_DIR", self.output), \
@@ -233,6 +237,11 @@ class APIPreferenceTests(unittest.TestCase):
         path = self.root / "test.key"
         path.write_text("offline-placeholder-not-a-real-key", encoding="utf-8")
         return api.PreferenceAPIClient(replace(self.config, api_key_file=path, **kwargs))
+
+    def test_missing_new_key_file_does_not_fall_back_to_old_environment_key(self):
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "old-offline-placeholder"}):
+            with self.assertRaisesRegex(ValueError, "API key file not found"):
+                api.PreferenceAPIClient(self.config)
 
     class Reply(io.BytesIO):
         def __enter__(self):

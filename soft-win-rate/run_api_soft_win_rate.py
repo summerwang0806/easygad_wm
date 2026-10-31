@@ -11,6 +11,7 @@ import argparse
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 import json
 import math
 import os
@@ -40,7 +41,7 @@ REFERENCE_JSONL = common.REFERENCE_JSONL
 API_BASE_URL = "http://43.159.131.189:8080/v1"
 JUDGE_MODEL = "gpt-5.5"
 API_STYLE = "responses"
-API_KEY_FILE = ROOT / "text_quality/.relay_api.key"
+API_KEY_FILE = HERE / ".api_judge.key"
 REASONING_EFFORT = "low"
 MAX_OUTPUT_TOKENS = 4096
 CONCURRENCY = 4
@@ -73,6 +74,10 @@ class APIConfig:
     max_api_calls: int = MAX_API_CALLS
     timeout: float = REQUEST_TIMEOUT
     retries: int = RETRIES
+    rate_limit_base_delay: float = 30
+    max_rate_limit_wait: float = 300
+    max_consecutive_429: int = 6
+    post_429_interval: float = 5
     bootstrap: int = 2000
     seed: int = 42
 
@@ -87,7 +92,7 @@ class APIConfig:
             raise ValueError("api_style must be responses or chat_completions")
         if self.response_format not in {"json_schema", "json_object", "text"}:
             raise ValueError("Unsupported response format")
-        for name in ("max_output_tokens", "concurrency", "max_api_calls", "bootstrap"):
+        for name in ("max_output_tokens", "concurrency", "max_api_calls", "bootstrap", "max_consecutive_429"):
             value = getattr(self, name)
             if not isinstance(value, int) or isinstance(value, bool) or value < 1:
                 raise ValueError(f"{name} must be a positive integer")
@@ -97,6 +102,11 @@ class APIConfig:
             raise ValueError("Invalid retry count or request timeout")
         if self.reasoning_effort not in {"none", "low", "medium", "high", "xhigh"}:
             raise ValueError("Invalid reasoning effort")
+        for name in ("rate_limit_base_delay", "max_rate_limit_wait", "post_429_interval"):
+            value = getattr(self, name)
+            if (not isinstance(value, (int, float)) or isinstance(value, bool)
+                    or not math.isfinite(value) or value < 0):
+                raise ValueError(f"{name} must be finite and nonnegative")
 
     def public_dict(self) -> dict:
         return {**asdict(self), "api_key_file": str(self.api_key_file) if self.api_key_file else None}
@@ -120,44 +130,212 @@ class APIConfig:
         return payload
 
 
+class APIRateLimitError(RuntimeError):
+    def __init__(self, details: dict):
+        self.details = details
+        super().__init__("API HTTP 429: " + rate_limit_summary(details))
+
+
+def rate_limit_summary(details: dict) -> str:
+    return (f"category={details['category']}, provider_code={details.get('provider_code') or 'not supplied'}, "
+            f"provider_type={details.get('provider_type') or 'not supplied'}, "
+            f"provider_reason={details.get('provider_reason') or 'not supplied'}")
+
+
+def parse_rate_limit_error(body: bytes, headers, secret: str = "") -> dict:
+    """Classify errors without printing/saving provider messages or credentials."""
+    try:
+        data = json.loads(body)
+    except (ValueError, TypeError):
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    nested = data.get("error")
+    detail = nested if isinstance(nested, dict) else data
+    code, kind = detail.get("code"), detail.get("type")
+    message = detail.get("message") or detail.get("msg") or (nested if isinstance(nested, str) else "")
+    hint = " ".join(str(value) for value in (code, kind, message) if value is not None).casefold()
+    quota_codes = {"insufficient_quota", "billing_hard_limit_reached", "insufficient_balance",
+                   "credit_balance_exhausted", "organization_spend_limit_exceeded", "project_spend_limit_exceeded",
+                   "organization_usage_limit_exceeded"}
+    if str(code).lower() in quota_codes or str(kind).lower() in quota_codes or any(word in hint for word in (
+            "insufficient quota", "insufficient balance", "credit balance exhausted", "余额不足")):
+        category = "quota"
+    elif "request too large" in hint and any(word in hint for word in ("tpm", "tokens per min", "token rate")):
+        category = "request_too_large"
+    elif any(word in hint for word in ("no available channel", "no available provider", "no available upstream",
+            "no available route", "no active channel", "无可用渠道", "无可用通道", "没有可用渠道", "渠道不可用",
+            "通道不可用", "当前分组无可用模型")):
+        category = "capacity"
+    elif any(word in hint for word in ("rate_limit", "rate limit", "slow_down", "too many requests", "rpm", "tpm",
+                                      "限流", "速率", "请求过于频繁", "请求频率", "并发限制", "每分钟", "每秒")):
+        category = "rate_limit"
+    elif any(word in hint for word in ("额度不足", "配额不足", "quota exhausted")):
+        category = "quota"
+    else:
+        category = "unknown_429"
+
+    def identifier(value):
+        if value is None:
+            return None
+        text = str(value)
+        if (secret and secret in text) or text.lower().startswith(("sk-", "sess-", "bearer ")):
+            return "redacted"
+        return text if re.fullmatch(r"[A-Za-z0-9_.:-]{1,100}", text) else "unrecognized"
+
+    retry_after = None
+    if headers is not None:
+        value = headers.get("Retry-After") or headers.get("retry-after")
+        if value:
+            try:
+                retry_after = float(value)
+            except (ValueError, TypeError):
+                try:
+                    date = parsedate_to_datetime(value)
+                    if date.tzinfo is None:
+                        date = date.replace(tzinfo=timezone.utc)
+                    retry_after = (date - datetime.now(timezone.utc)).total_seconds()
+                except (ValueError, TypeError, OverflowError):
+                    pass
+        milliseconds = headers.get("retry-after-ms")
+        if milliseconds:
+            try:
+                hint_seconds = float(milliseconds) / 1000
+                if math.isfinite(hint_seconds):
+                    retry_after = max(retry_after or 0, hint_seconds)
+            except (ValueError, TypeError):
+                pass
+    if retry_after is not None:
+        retry_after = max(0.0, retry_after) if math.isfinite(retry_after) else None
+    provider_reason = ("all_upstream_accounts_rate_limited" if "all available accounts" in hint
+                       and any(word in hint for word in ("rate-limited", "rate limited", "rate_limit")) else None)
+    return {"http_status": 429, "category": category, "provider_reason": provider_reason, "provider_code": identifier(code),
+            "provider_type": identifier(kind), "retry_after_seconds": retry_after}
+
+
 class PreferenceAPIClient(quality.APIClient):
     def __init__(self, config: APIConfig):
         self.config = config
-        # Preserve the old text_quality credential and proxy handling. Only
-        # instantiate this client when uncached network requests are needed.
+        # Keep this evaluator's new key separate from the old text_quality key.
+        # A missing configured file must not silently select another account.
         key_file = Path(config.api_key_file).expanduser() if config.api_key_file else None
+        if key_file is not None and not key_file.is_file():
+            raise ValueError(f"API key file not found: {key_file}; create it with the new key")
+        if key_file is None and not os.environ.get("OPENAI_API_KEY", "").strip():
+            raise ValueError("API key missing: set OPENAI_API_KEY or configure a key file")
         args = SimpleNamespace(base_url=config.base_url, judge_model=config.judge_model,
-            api_style=config.api_style, api_key_file=key_file if key_file and key_file.is_file() else None,
+            api_style=config.api_style, api_key_file=key_file,
             run_api=True, backend="api", max_api_calls=config.max_api_calls, timeout=config.timeout,
             retries=config.retries, judge_max_tokens=config.max_output_tokens,
             reference_max_tokens=config.max_output_tokens, reasoning_effort=config.reasoning_effort,
             response_format=config.response_format)
         super().__init__(args)
         if not self.key.strip():
-            raise ValueError("API key missing: use text_quality/.relay_api.key or OPENAI_API_KEY")
+            raise ValueError("API key file is empty")
         if any(character.isspace() for character in self.key):
             raise ValueError("API key must be a single token, without embedded whitespace")
+        self._rate_condition = threading.Condition()
+        self._active_requests = 0
+        self._limited = False
+        self._cooldown_until = self._next_start = 0.0
+        self._rate_epoch = self._cooldown_rounds = self._consecutive_429 = 0
+        self._last_rate_limit = None
+        self.fatal_reason = None
+        self.credential_source = str(key_file) if key_file else "environment:OPENAI_API_KEY"
+
+    def stop_with_reason(self, message: str) -> None:
+        with self._rate_condition:
+            if not self.fatal_reason:
+                self.fatal_reason = message
+            self.stop.set()
+            self._rate_condition.notify_all()
+
+    def rate_limit_status(self) -> dict:
+        with self._rate_condition:
+            return {"cooldown_seconds": max(0.0, self._cooldown_until - time.monotonic()),
+                    "effective_concurrency": 1 if self._limited else self.config.concurrency,
+                    "consecutive_429": self._consecutive_429, "last_rate_limit": self._last_rate_limit}
+
+    def _enter_http(self) -> int:
+        with self._rate_condition:
+            while True:
+                if self.stop.is_set():
+                    raise quality.FatalAPIError(self.fatal_reason or "Stopping; successful judgments remain cached")
+                now = time.monotonic()
+                delay = max(self._cooldown_until, self._next_start) - now
+                cap = 1 if self._limited else self.config.concurrency
+                if delay <= 0 and self._active_requests < cap:
+                    self._active_requests += 1
+                    if self._limited:
+                        self._next_start = now + self.config.post_429_interval
+                    return self._rate_epoch
+                self._rate_condition.wait(timeout=min(delay, .25) if delay > 0 else .25)
+
+    def _record_429(self, details: dict, epoch: int) -> None:
+        with self._rate_condition:
+            if not self._limited or epoch == self._rate_epoch:
+                self._rate_epoch += 1
+                self._cooldown_rounds += 1
+            self._limited = True
+            self._consecutive_429 += 1
+            self._last_rate_limit = details
+            category = details["category"]
+            summary = rate_limit_summary(details)
+            if category == "quota":
+                reason = "API provider reports exhausted quota/balance/spend limit: " + summary
+            elif category == "request_too_large":
+                reason = "One API request exceeds the provider's token-rate limit; waiting or concurrency alone may not fix it: " + summary
+            elif self._consecutive_429 >= self.config.max_consecutive_429:
+                reason = f"API returned {self._consecutive_429} consecutive HTTP 429 responses; stopped new requests: " + summary
+            elif (details["retry_after_seconds"] or 0) > self.config.max_rate_limit_wait:
+                reason = f"API requests waiting at least {details['retry_after_seconds']:.0f}s; stopped instead of retrying early: " + summary
+            else:
+                reason = None
+            if reason:
+                self.stop_with_reason(reason)
+                raise quality.FatalAPIError(reason)
+            delay = max(details["retry_after_seconds"] or 0,
+                        min(self.config.max_rate_limit_wait,
+                            self.config.rate_limit_base_delay * 2 ** max(0, min(self._cooldown_rounds - 1, 12))))
+            self._cooldown_until = max(self._cooldown_until, time.monotonic() + delay)
+            self._rate_condition.notify_all()
+            print(f"[API 429] {summary}; all workers cooling down for at least {delay:.1f}s; "
+                  "subsequent HTTP requests use concurrency=1.", file=sys.stderr, flush=True)
+
+    def _record_success(self, epoch: int) -> None:
+        with self._rate_condition:
+            # A late response started BEFORE a 429 remains valid, but must not
+            # release the new global cooldown or reset its failure streak.
+            if epoch == self._rate_epoch:
+                self._consecutive_429 = self._cooldown_rounds = 0
+                self._cooldown_until = 0
 
     def payload(self, messages: list[dict], judging: bool = True) -> dict:
         return self.config.payload(messages)
 
     def complete(self, payload: dict) -> dict:
+        epoch = self._enter_http()
         try:
-            return super().complete(payload)
+            response = super().complete(payload)
+            self._record_success(epoch)
+            return response
         except RuntimeError as exc:
             cause = exc.__cause__
             if isinstance(cause, error.HTTPError) and cause.code == 429:
-                # A quota error needs more credit, not 1000 repetitions. Never
-                # print provider bodies, which may echo credentials or text.
                 try:
-                    body = json.loads(cause.read(65536))
-                    code = (body.get("error") or {}).get("code")
-                except (ValueError, TypeError, AttributeError, OSError):
-                    code = None
-                if code in {"insufficient_quota", "billing_hard_limit_reached", "quota_exceeded"}:
-                    self.stop.set()
-                    raise quality.FatalAPIError("API quota exhausted; successful judgments are cached") from None
+                    body = cause.read(65536)
+                except OSError:
+                    body = b""
+                details = parse_rate_limit_error(body, cause.headers, self.key)
+                self._record_429(details, epoch)
+                raise APIRateLimitError(details) from cause
+            if isinstance(exc, quality.FatalAPIError):
+                self.stop_with_reason(str(exc))
             raise
+        finally:
+            with self._rate_condition:
+                self._active_requests -= 1
+                self._rate_condition.notify_all()
 
 
 def prepare(input_path: Path, reference_path: Path, config: APIConfig, output_dir: Path,
@@ -207,6 +385,7 @@ def score_pending(tasks: list[dict], rows: dict, cache_file: Path, config: APICo
     """Bound in-flight requests; persist each valid result inside its worker."""
     lock = threading.RLock()
     failures, latencies = [], []
+    ready = threading.Event()
     started = last_progress = time.monotonic()
     fatal, interrupted = None, False
     rng = random.Random(config.seed)
@@ -237,6 +416,7 @@ def score_pending(tasks: list[dict], rows: dict, cache_file: Path, config: APICo
                         raise quality.FatalAPIError("Cannot write API judgment cache; stopped new requests") from None
                     rows[task["key"]] = row
                     latencies.append(row["seconds"])
+                    ready.set()
                 return
             except quality.FatalAPIError:
                 client.stop.set()
@@ -245,16 +425,30 @@ def score_pending(tasks: list[dict], rows: dict, cache_file: Path, config: APICo
                 # Do not serialize exception text or provider bodies into logs.
                 cause = exc.__cause__
                 http_status = cause.code if isinstance(cause, error.HTTPError) else None
+                rate_error = isinstance(exc, APIRateLimitError)
                 with lock:
                     common.append_jsonl(events_file, {"key": task["key"], "id": task["id"],
                         "swapped": task["swapped"], "attempt": attempt + 1,
-                        "error_type": type(exc).__name__, "http_status": http_status, "at": common.now()})
+                        "error_type": type(exc).__name__, "http_status": http_status,
+                        "api_error": exc.details if rate_error else None, "at": common.now()})
                     if attempt == config.retries:
                         failures.append(task["key"])
                 if attempt == config.retries:
+                    if rate_error or not ready.is_set():
+                        reason = ("API kept returning 429 after bounded retries; stopped before trying other texts: "
+                                  + rate_limit_summary(exc.details)) if rate_error else (
+                                  f"Initial API judgment failed after retries ({type(exc).__name__}, HTTP={http_status}); "
+                                  "stopped before launching the full dataset")
+                        if hasattr(client, "stop_with_reason"):
+                            client.stop_with_reason(reason)
+                        else:
+                            client.stop.set()
+                        raise quality.FatalAPIError(reason) from None
                     print(f"[API WARNING] id={task['id']!r}, swapped={task['swapped']}: "
                           f"{type(exc).__name__}, HTTP={http_status}; retries exhausted, continuing.", file=sys.stderr, flush=True)
                     return
+                if rate_error:
+                    continue  # The client's shared HTTP gate owns 429 backoff.
                 client.stop.wait(min(5 * 2 ** attempt, 60) + rng.random())
 
     executor = ThreadPoolExecutor(max_workers=config.concurrency)
@@ -262,7 +456,10 @@ def score_pending(tasks: list[dict], rows: dict, cache_file: Path, config: APICo
     futures = set()
 
     def fill():
-        while not client.stop.is_set() and len(futures) < config.concurrency:
+        # Verify ONE real judgment with this account/model before the full
+        # queue, without buying an extra synthetic health-check request.
+        cap = config.concurrency if ready.is_set() else 1
+        while not client.stop.is_set() and len(futures) < cap:
             task = next(queue, None)
             if task is None:
                 return
@@ -270,7 +467,8 @@ def score_pending(tasks: list[dict], rows: dict, cache_file: Path, config: APICo
 
     try:
         fill()
-        print(f"[API] {len(tasks)} missing orders; concurrency={config.concurrency}; request budget={config.max_api_calls}", flush=True)
+        print(f"[API] {len(tasks)} missing orders; first real judgment is a single readiness probe; "
+              f"then concurrency<={config.concurrency}; request budget={config.max_api_calls}", flush=True)
         while futures:
             done, _ = wait(futures, timeout=5, return_when=FIRST_COMPLETED)
             for future in done:
@@ -278,7 +476,7 @@ def score_pending(tasks: list[dict], rows: dict, cache_file: Path, config: APICo
                 try:
                     future.result()
                 except quality.FatalAPIError as exc:
-                    fatal = str(exc)
+                    fatal = fatal or str(exc)
                     client.stop.set()
                 except Exception as exc:
                     fatal = f"API worker failed: {type(exc).__name__}"
@@ -291,9 +489,12 @@ def score_pending(tasks: list[dict], rows: dict, cache_file: Path, config: APICo
                 with client.call_lock:
                     calls = client.calls
                 elapsed = time.monotonic() - started
+                status = client.rate_limit_status() if hasattr(client, "rate_limit_status") else {}
+                rate_note = (f"; effective_concurrency={status['effective_concurrency']}; "
+                             f"cooldown={status['cooldown_seconds']:.0f}s; 429_streak={status['consecutive_429']}") if status else ""
                 print(f"[API] |{'#' * (20 * completed // len(tasks))}{'-' * (20 - 20 * completed // len(tasks))}| "
                       f"{completed}/{len(tasks)} new orders saved; requests={calls}/{config.max_api_calls}; "
-                      f"inflight={len(futures)}; failed={failed}; elapsed={elapsed:.0f}s", flush=True)
+                      f"inflight={len(futures)}; failed={failed}; elapsed={elapsed:.0f}s{rate_note}", flush=True)
                 last_progress = time.monotonic()
     except KeyboardInterrupt:
         interrupted, fatal = True, "Interrupted by user; saved judgments can be resumed"
@@ -303,9 +504,11 @@ def score_pending(tasks: list[dict], rows: dict, cache_file: Path, config: APICo
         for future in futures:
             future.cancel()
         executor.shutdown(wait=True, cancel_futures=True)
+    fatal = getattr(client, "fatal_reason", None) or fatal
     if not fatal and failures:
         fatal = f"{len(failures)} orders exhausted retries; successful judgments remain cached"
     return {"failure": fatal, "interrupted": interrupted, "api_calls": client.calls,
+            "rate_limit_status": client.rate_limit_status() if hasattr(client, "rate_limit_status") else None,
             "failed_orders_this_run": len(failures), "elapsed_seconds": round(time.monotonic() - started, 2),
             "mean_successful_request_seconds": sum(latencies) / len(latencies) if latencies else None}
 
@@ -335,6 +538,7 @@ def render_report(result: dict) -> str:
     lines += ["API 配置、生成配置与使用量（不含密钥）：", "", "```json", json.dumps({
         "api_configuration": result["api_configuration"], "input_generation": result["input_generation"],
         "reference_generation": result["reference_generation"], "usage_in_successful_cache": result["usage_in_successful_cache"],
+        "rate_limit_status": result.get("rate_limit_status"), "credential_source": result.get("credential_source"),
         "elapsed_seconds": result["elapsed_seconds"], "failed_orders_this_run": result["failed_orders_this_run"],
         "rubric_sha256": common.digest(common.JUDGE_SYSTEM)}, ensure_ascii=False, indent=2), "```", ""]
     return "\n".join(lines)
@@ -371,8 +575,11 @@ def run_evaluation(input_path: Path, reference_path: Path, config: APIConfig, ou
                    "elapsed_seconds": 0, "mean_successful_request_seconds": None}
         if pending and not summary_only:
             client = (client_factory or PreferenceAPIClient)(config)
+            print(f"[API] endpoint={prepared['protocol']['endpoint']}; model={config.judge_model}; "
+                  f"key_source={getattr(client, 'credential_source', 'injected client')}", flush=True)
             try:
                 runtime = score_pending(pending, rows, cache_file, config, client, directory / "errors.jsonl")
+                runtime["credential_source"] = getattr(client, "credential_source", None)
             finally:
                 client.close()
         if any(common.file_hash(Path(path)) != sha for path, sha in prepared["hashes"].items()):

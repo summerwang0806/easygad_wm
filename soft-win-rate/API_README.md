@@ -2,7 +2,7 @@
 
 入口为 `run_api_soft_win_rate.py`。本地只需 Python 标准库和已有项目文件，不加载 Qwen3 权重、不查询 GPU、不启动 vLLM，也不需要安装 OpenAI SDK。
 
-复用 `text_quality/evaluate_quality.py` 的 API 客户端、密钥读取和代理处理；评分提示与统计逻辑复用 `run_soft_win_rate.py` 的纯函数。两份原评测程序的入口都不会被执行。默认沿用 `text_quality/run_quality.sh` 中的中转地址、`gpt-5.5`、Responses API、`reasoning.effort=low`、4096 输出 token 和 `store=false`。中转返回的模型标识会保存，但程序不能独立验证中转站实际使用的模型。
+复用 `text_quality/evaluate_quality.py` 的 HTTP 客户端和代理处理；评分提示与统计逻辑复用 `run_soft_win_rate.py` 的纯函数。两份原评测程序的入口都不会被执行。默认沿用 `text_quality/run_quality.sh` 中的中转地址、`gpt-5.5`、Responses API、`reasoning.effort=low`、4096 输出 token 和 `store=false`。本入口的新密钥独立保存，不回退到旧 `text_quality` 账号。中转返回的模型标识会保存，但程序不能独立验证中转站实际使用的模型。
 
 ## 直接运行
 
@@ -18,9 +18,11 @@ INPUT_JSONL = ROOT / "wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0
 python soft-win-rate/run_api_soft_win_rate.py
 ```
 
-**这个命令会真正提交题目和回答到配置的 API，并可能产生费用。** 默认并发 4、每次请求超时 120 秒、最多重试 2 次，每轮执行最多发出 1500 次请求（含失败与重试）。500 道题在没有缓存时正常需要 1000 次请求。1500 是请求次数上限，不能解释为金额或 token 上限。
+**这个命令会真正提交题目和回答到配置的 API，并可能产生费用。** 先验证 1 个实际待评判断，成功并写入缓存后才启动默认并发 4；不会额外购买一条合成健康检查。每次请求超时 120 秒、最多重试 2 次，每轮执行最多发出 1500 次请求（含失败与重试）。500 道题在没有缓存时正常需要 1000 次请求。1500 是请求次数上限，不能解释为金额或 token 上限。首次判断重试后仍失败，会停止全量队列，而非再把所有文本逐条试一遍。
 
-密钥继续从 `text_quality/.relay_api.key` 读取；文件不存在时使用 `OPENAI_API_KEY`，也兼容旧客户端的默认密钥文件回退。密钥不写入源代码、日志或结果。更换服务时修改顶部的 `API_BASE_URL`、`JUDGE_MODEL`、`API_STYLE`、`API_KEY_FILE` 等常量。密钥和评测文本会发往 `API_BASE_URL`；当前地址的 HTTP 协议沿用旧配置，可按服务方提供的 HTTPS 地址更新。
+新密钥读取位置为 **`soft-win-rate/.api_judge.key`**，文件里只放一行密钥，不放 JSON、引号或 `OPENAI_API_KEY=`。该文件已加入 Git 忽略，需单独同步到服务器同一路径。配置的密钥文件缺失或为空会直接停止，不自动改用旧文件或环境变量。仅当你显式把 `API_KEY_FILE` 改为 `None` 时，才从 `OPENAI_API_KEY` 环境变量读取。
+
+密钥不写入源代码、日志或结果。更换服务时修改顶部的 `API_BASE_URL`、`JUDGE_MODEL`、`API_STYLE`、`API_KEY_FILE` 等常量。密钥和评测文本会发往 `API_BASE_URL`；当前地址的 HTTP 协议沿用旧配置，可按服务方提供的 HTTPS 地址更新。启动时显示接口、模型和密钥文件路径，不显示密钥内容。
 
 沿用 Python 的代理环境变量。若服务器仍需要此前的 SSH 代理隧道，保持旧 API 评测时相同的网络配置即可。
 
@@ -59,7 +61,11 @@ wm_test/cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl
 
 API 缓存与本地 Qwen3 缓存分开。换模型、接口、提示、输入或参考会生成不同缓存；调整并发、超时、请求预算或先 `--limit` 试跑不改变已有成功缓存。改变 API 密钥也不会强制重算同一协议的成功判断。
 
-再次执行原命令会只补缺失判断。Ctrl+C 后停止新请求，让已在途的回复写入缓存再退出（最多需等待一次请求超时）。身份验证错误、明确额度耗尽或本轮请求次数用尽会停止新请求，成功判断仍保留。普通失败按有限次数退避重试，重试耗尽后继续其余题目。
+再次执行原命令会只补缺失判断。Ctrl+C 后停止新请求，让已在途的回复写入缓存再退出（最多需等待一次请求超时）。身份验证错误、明确额度耗尽或本轮请求次数用尽会停止新请求，成功判断仍保留。完成首次验证后的普通单题失败按有限次数重试，失败不记平局。
+
+HTTP 429 使用共享的 HTTP 请求入口处理：全部线程共同冷却，默认从 30 秒指数退避，尊重 `Retry-After`（支持秒数和 HTTP 日期）；之后整个本轮保持实际 HTTP 并发 1、请求启动间隔至少 5 秒。单个判断重试耗尽仍是 429，或全局连续 429 达阈值时停止新请求，避免换下一条文本继续重复。服务端要求的等待时间超过自动等待上限时直接停止，不提前重试。迟到的旧请求成功仍保存，但不能提前解除新的全局冷却。
+
+日志只给出安全的提供方 `code/type` 和固定类别，不输出原始错误正文或密钥。类别包括速率限制、额度/余额/支出上限、可用通道不足、单次请求超过 TPM、未知 429；单凭 429 不推断需要充值。若提示 `provider_reason=all_upstream_accounts_rate_limited`，表示中转返回“所有可用上游账号均限流”，应等待通道恢复或联系服务方。运行参数不改变评分缓存身份。
 
 使用量只汇总成功缓存的记录，包含复用判断；未返回或失败请求的提供方计费不能从这些记录完整推断，不应把该汇总当作账单。
 
@@ -76,4 +82,4 @@ python soft-win-rate/run_api_soft_win_rate.py --limit 5
 python soft-win-rate/run_api_soft_win_rate.py --summary-only
 ```
 
-默认运行不需要追加上述参数。实现仅完成无网络模拟测试，尚未向真实中转发送评测请求。
+默认运行不需要追加上述参数。2026-10-30 的新密钥现场验证共发出 2 次真实请求：一次使用本入口，一次使用原 `text_quality` 客户端和评分格式，均收到 429；原格式返回的具体消息为“所有可用上游账号均处于限流”。因此该次没有得到有效评判，不能认定真实服务已调用成功。现场记录保存在本地忽略的 `results/api_connection_checks/`。
