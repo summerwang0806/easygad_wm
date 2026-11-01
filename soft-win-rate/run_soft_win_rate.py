@@ -121,6 +121,25 @@ def normalize_prompt(raw: Any) -> list[dict[str, str]]:
 
 
 def load_answers(path: Path) -> dict[str, dict[str, Any]]:
+    if path.suffix.lower() == ".parquet":
+        # Lazy import: the original JSONL-only entry points remain stdlib-only.
+        try:
+            import pyarrow.parquet as pq
+        except ImportError as error:
+            raise RuntimeError("Reading the teacher Parquet requires pyarrow in the current Python environment") from error
+        table = pq.read_table(path, columns=["id", "content", "teacher_response"])
+        rows = {}
+        for row_number, row in enumerate(table.to_pylist(), 1):
+            sample_id = row["id"]
+            if not isinstance(sample_id, str) or not sample_id or sample_id in rows:
+                raise ValueError(f"{path}:row {row_number}: missing or duplicate id")
+            if not isinstance(row["teacher_response"], str):
+                raise ValueError(f"{path}:row {row_number}: textual teacher_response required")
+            rows[sample_id] = {"id": sample_id, "prompt": normalize_prompt(row["content"]),
+                               "answer": row["teacher_response"]}
+        if not rows:
+            raise ValueError(f"No answers in {path}")
+        return rows
     rows = {}
     with path.open(encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, 1):
@@ -653,9 +672,11 @@ def render_report(result: dict) -> str:
     pct = lambda value: f"{value:.2%}" if value is not None else "N/A"
     ci = result["ci95"]
     interval = f"[{pct(ci[0])}, {pct(ci[1])}]" if ci else "N/A"
+    reference_label = ("固定 clean 教师参照（Parquet）" if Path(result["reference_file"]).suffix.lower() == ".parquet"
+                       else "固定 Clean-KD 参照")
     lines = [f"\n## 评测记录：{result['evaluated_at']}（{result['run_id']}）", "",
         f"- 待测 JSONL：`{result['input_file']}`；SHA256 `{result['input_sha256']}`",
-        f"- 固定 Clean-KD 参照：`{result['reference_file']}`；SHA256 `{result['reference_sha256']}`",
+        f"- {reference_label}：`{result['reference_file']}`；SHA256 `{result['reference_sha256']}`",
         f"- 本地裁判：`{result['judge_configuration']['model_path']}`；协议 `{SCHEMA}`",
         "- 只评已保存完整回答，不生成学生或参照回答，不调用外部 API。", "",
         "| Soft Win Rate ↑（平局半分） | 95% CI | 有效/计划题目 | 单轮胜/平/负 | 双顺序一致率 | 本次复用/新增判断 |",
@@ -866,24 +887,31 @@ def _run_evaluation(input_path: Path, reference_path: Path, config: JudgeConfig,
         return result
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input-file", type=Path, default=INPUT_JSONL)
+def main(argv=None, *, input_jsonl=None, reference_file=None, results_dir=None, history_file=None,
+         description=None) -> int:
+    parser = argparse.ArgumentParser(description=description or __doc__)
+    parser.add_argument("--input-file", type=Path, default=INPUT_JSONL if input_jsonl is None else input_jsonl)
     parser.add_argument("--check-only", action="store_true", help="Validate data and print GPU plan without inference or result writes")
     parser.add_argument("--summary-only", action="store_true", help="Append a summary using existing cache only; no GPU/model loading")
     parser.add_argument("--limit", type=int, default=None, help="Optional first-N smoke test; full run reuses these judgments")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.limit is not None and args.limit < 1:
         parser.error("--limit must be positive")
     path = args.input_file if args.input_file.is_absolute() else ROOT / args.input_file
+    reference_path = Path(REFERENCE_JSONL if reference_file is None else reference_file)
+    reference_path = reference_path if reference_path.is_absolute() else ROOT / reference_path
+    output_path = Path(RESULTS_DIR if results_dir is None else results_dir)
+    output_path = output_path if output_path.is_absolute() else ROOT / output_path
+    history_path = Path(HISTORY_FILE if history_file is None else history_file)
+    history_path = history_path if history_path.is_absolute() else ROOT / history_path
     config = JudgeConfig()
     if args.check_only:
-        ids = align_answers(load_answers(path), load_answers(REFERENCE_JSONL))
-        print(f"Data aligned: {len(ids)} IDs. Fixed reference: {REFERENCE_JSONL}")
+        ids = align_answers(load_answers(path), load_answers(reference_path))
+        print(f"Data aligned: {len(ids)} IDs. Fixed reference: {reference_path}")
         if not Path(config.model_path).is_dir():
             print(f"Local model not present on this machine: {config.model_path}; GPU readiness is NOT verified.")
             return 0
-        plan_file, identity = context_plan_location(path, REFERENCE_JSONL, config, RESULTS_DIR)
+        plan_file, identity = context_plan_location(path, reference_path, config, output_path)
         adjustment = load_context_plan(plan_file, identity, config)
         if adjustment:
             config = replace(config, max_model_len=adjustment["max_model_len"])
@@ -895,7 +923,7 @@ def main() -> int:
         print(json.dumps([{**plan.to_dict(), "max_num_seqs": concurrency, "max_num_batched_tokens": prefill}
                           for concurrency, prefill, plan in plans], indent=2))
         return 0 if plans else 1
-    result = run_evaluation(path, REFERENCE_JSONL, config, RESULTS_DIR, HISTORY_FILE,
+    result = run_evaluation(path, reference_path, config, output_path, history_path,
                             limit=args.limit, summary_only=args.summary_only)
     return 0 if result["complete"] else 1
 

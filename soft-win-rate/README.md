@@ -1,5 +1,7 @@
 # 本地固定参照 Soft Win Rate
 
+如需改用 `data/dolly15k_qwen2_5_14b_clean_test.parquet` 中的 clean 教师回答作为固定参照，使用新增的 `run_teacher_soft_win_rate.py`；仍只需修改该入口顶部的 `INPUT_JSONL`。详见 [教师参照入口说明](TEACHER_README.md)。
+
 使用本地 `/shared/public_models/Qwen3-32B` 评判已经保存的学生回答。没有外部 API 请求、API key、模型下载或重新生成学生回答。
 
 ## 正常使用
