@@ -15,6 +15,12 @@ checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_step_1813/acto
 固定使用官方 `lm-evaluation-harness==0.4.9.2`，均为 0-shot、候选答案条件对数似然评分，不添加聊天模板或推理时水印。
 HellaSwag 的公开 test 集没有可用于本评测的答案标签，采用官方 harness 配置的 validation 集。
 
+模型加载使用 Transformers 的 `torch_dtype` 参数，加载后再交给 HFLM 评分。
+这避免了 lm-eval 0.4.9.2 内部使用 `dtype` 与较旧 Transformers 4.x 的接口冲突。
+遇到 `Qwen2ForCausalLM.__init__() got an unexpected keyword argument 'dtype'` 时，
+同步修复后的两个入口脚本即可，无需为此升级服务器训练环境中的 Transformers。
+若服务器已修改 `MODEL_PATH` / `TOKENIZER_PATH`，同步时保留这些本地配置。
+
 ## 服务器运行
 
 Python >= 3.10，并使用已有可用 CUDA PyTorch 的环境。在项目根目录安装一次即可用于两个任务：

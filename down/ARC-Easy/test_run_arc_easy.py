@@ -69,11 +69,20 @@ class ArcEasyChecks(unittest.TestCase):
         evaluator = Mock(return_value=harness_result(total=2376))
         tokenizer = Mock()
         auto_tokenizer = SimpleNamespace(from_pretrained=Mock(return_value=tokenizer))
+        loaded_model = Mock()
+        loaded_model.to.return_value = loaded_model
+
+        # Reproduce the server's legacy Transformers API: dtype= is not accepted.
+        def legacy_load(path, *, torch_dtype, local_files_only, trust_remote_code, low_cpu_mem_usage):
+            return loaded_model
+
+        model_loader = Mock(side_effect=legacy_load)
         backend = Mock(return_value=object())
         modules = {}
         for name in ("torch", "transformers", "lm_eval", "lm_eval.models", "lm_eval.models.huggingface", "lm_eval.utils"):
             modules[name] = ModuleType(name)
         modules["transformers"].AutoTokenizer = auto_tokenizer
+        modules["transformers"].AutoModelForCausalLM = SimpleNamespace(from_pretrained=model_loader)
         modules["lm_eval"].simple_evaluate = evaluator
         modules["lm_eval.models.huggingface"].HFLM = backend
         modules["lm_eval.utils"].handle_non_serializable = str
@@ -94,8 +103,15 @@ class ArcEasyChecks(unittest.TestCase):
             self.assertEqual(options["num_fewshot"], 0)
             self.assertFalse(options["apply_chat_template"])
             self.assertTrue(options["log_samples"])
-            self.assertTrue(backend.call_args.kwargs["local_files_only"])
-            self.assertEqual(backend.call_args.kwargs["pretrained"], str(model.resolve()))
+            self.assertEqual(model_loader.call_count, 2)  # Exactly one load per run.
+            self.assertEqual(model_loader.call_args.args, (str(model.resolve()),))
+            self.assertTrue(model_loader.call_args.kwargs["local_files_only"])
+            self.assertEqual(model_loader.call_args.kwargs["torch_dtype"], entry.DTYPE)
+            self.assertNotIn("dtype", model_loader.call_args.kwargs)
+            self.assertIs(backend.call_args.kwargs["pretrained"], loaded_model)
+            self.assertNotIn("dtype", backend.call_args.kwargs)
+            loaded_model.to.assert_called_with("cpu")
+            self.assertEqual(loaded_model.eval.call_count, 2)
             reports = list((root / "results").glob("*/*/summary.json"))
             self.assertEqual(len(reports), 2)  # Repeated runs must not overwrite.
             for report in reports:

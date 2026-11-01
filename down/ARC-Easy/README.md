@@ -1,5 +1,9 @@
 # ARC-Easy 学生模型下游能力评测
 
+兼容较旧 Transformers 4.x：入口先通过 `AutoModelForCausalLM.from_pretrained(torch_dtype=...)`
+加载本地模型，再把模型对象交给 HFLM。若旧脚本报 `unexpected keyword argument 'dtype'`，
+更新本入口即可，无需为该问题升级依赖；保留服务器上自己配置的 `MODEL_PATH` 和 `TOKENIZER_PATH`。
+
 平时只修改 `run_arc_easy.py` 顶部的 `MODEL_PATH`，然后运行：
 
 ```bash

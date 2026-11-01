@@ -191,7 +191,7 @@ def main(argv: list[str] | None = None) -> int:
             "请运行: python -m pip install -r down/HellaSwag/requirements.txt"
         )
     import torch
-    from transformers import AutoTokenizer
+    from transformers import AutoModelForCausalLM, AutoTokenizer
     from lm_eval import simple_evaluate
     from lm_eval.models.huggingface import HFLM
     from lm_eval.utils import handle_non_serializable
@@ -211,10 +211,17 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     started = time.monotonic()
+    # lm-eval 0.4.9.2 passes dtype= to Transformers internally, whereas older
+    # Transformers 4.x consumes torch_dtype=. Preload with the compatible public
+    # API, then use HFLM's supported pre-initialized-model path (no second load).
+    model = AutoModelForCausalLM.from_pretrained(
+        str(model_path), torch_dtype=DTYPE, local_files_only=True,
+        trust_remote_code=False, low_cpu_mem_usage=True,
+    ).to(DEVICE)
+    model.eval()
     lm = HFLM(
-        pretrained=str(model_path), tokenizer=tokenizer, backend="causal", device=DEVICE,
-        dtype=DTYPE, batch_size=BATCH_SIZE, max_length=MAX_LENGTH,
-        trust_remote_code=False, parallelize=False, local_files_only=True,
+        pretrained=model, tokenizer=tokenizer, backend="causal",
+        batch_size=BATCH_SIZE, max_length=MAX_LENGTH,
     )
     result = simple_evaluate(
         model=lm, tasks=[TASK], num_fewshot=0, batch_size=BATCH_SIZE, device=DEVICE,
@@ -232,6 +239,7 @@ def main(argv: list[str] | None = None) -> int:
         "watermark_at_inference": False, "normalization": "answer_character_length",
         "device": DEVICE, "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
         "batch_size": BATCH_SIZE, "dtype_requested": DTYPE, "max_length": MAX_LENGTH,
+        "model_loader": "transformers_torch_dtype_preloaded",
         "seed": SEED, "versions": versions, "elapsed_seconds": time.monotonic() - started,
     })
     output = save_results(result, summary, model_path, handle_non_serializable)
