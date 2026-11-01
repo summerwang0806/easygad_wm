@@ -77,10 +77,10 @@ CUDA_VISIBLE_DEVICES=1 python wn/probe_strength.py \
 在服务器项目根目录运行：
 
 ```bash
-W=/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_step_1813/actor/huggingface
-RULES=wn/acl_rules_gad_Qwen2.5-0.5B_gamma0.5_delta3_fp32.json
+W=/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/warmup/global_step_1813/actor/huggingface
+RULES=wn/acl_rules_warmup_Qwen2.5-0.5B_gamma0.5_delta3_fp32.json
 TEST=data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtest.parquet
-OUT=wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_pan_baseline_strength2.5.jsonl
+OUT=wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_warmup_pan_baseline_strength2.5.jsonl
 
 python wm_test/generate_wn_score.py \
   --student-model "$W" --tokenizer /shared/public_models/Qwen2.5-0.5B \
@@ -91,7 +91,7 @@ python wm_test/generate_wn_score.py \
 VLLM_USE_V1=0 CUDA_VISIBLE_DEVICES=1 python wm_test/generate_wn_score.py \
   --student-model "$W" --tokenizer /shared/public_models/Qwen2.5-0.5B \
   --rules "$RULES" --input "$TEST" --output "$OUT" \
-  --strength 2.5 --gamma 0.5 --kgw-delta 3 \
+  --strength 2.5 --gamma 0.5 --kgw-delta 2.5 \
   --max-prompt-tokens 6144
 
 CUDA_VISIBLE_DEVICES=1 python wm_test/evaluate_compare_metrics.py \
