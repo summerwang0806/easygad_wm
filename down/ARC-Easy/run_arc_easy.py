@@ -27,7 +27,7 @@ MODEL_PATH = "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_
 
 # 默认使用模型目录中的 tokenizer。若导出的权重没有 tokenizer，可改为同一学生
 # 基座的本地目录，例如 /shared/public_models/Qwen2.5-0.5B；不要使用教师 tokenizer。
-TOKENIZER_PATH = None
+TOKENIZER_PATH = "/shared/public_models/Qwen2.5-0.5B"
 DEVICE = "cuda:0"  # CUDA_VISIBLE_DEVICES=3 时，这里仍为 cuda:0。
 BATCH_SIZE = 8  # 显存不足先改成 1；不改变任务/指标定义。
 DTYPE = "auto"
