@@ -80,6 +80,19 @@ CUDA_VISIBLE_DEVICES=3 python baseline_acl/steal_watermark.py \
   --device cuda \
   --dtype float32 \
   --batch-size 16
+
+
+CUDA_VISIBLE_DEVICES=1 python baseline_acl/steal_watermark.py \
+  --model-before /shared/public_models/Qwen2.5-0.5B \
+  --model-after checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/warmup/global_step_1813/actor/huggingface \
+  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet \
+  --output wn/acl_rules_tp_warmup_Qwen2.5-0.5B_gamma0.5_delta3_fp32.json \
+  --device cuda \
+  --dtype float32 \
+  --batch-size 16
+
+
+
 ```
 
 `--device cpu` 也可执行实际估计，但仍需要 PyTorch 和模型权重；它与 `--preflight` 不同。

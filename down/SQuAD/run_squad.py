@@ -30,7 +30,7 @@ ROOT = HERE.parents[1]
 
 # cleanwarmup_cleangad
 MODEL_PATH = "checkpoints/gad_05b_cleanwarmup_cleangad_control/warmup/global_step_1813/actor/huggingface"
-
+MODEL_PATH = "checkpoints/gad_05b_cleanwarmup_cleangad_control/gad/global_step_1813/actor/huggingface"
 
 
 # kgwwarmup_kgwgad
