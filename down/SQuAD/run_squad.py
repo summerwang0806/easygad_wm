@@ -26,8 +26,27 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 
 # 日常只改这一行。相对路径以项目根目录为基准，也支持服务器绝对路径。
-MODEL_PATH = "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_step_1813/actor/huggingface"
-TOKENIZER_PATH = None  # 缺少 tokenizer 时，指定相同学生基座的本地目录。
+
+# cleanwarmup_cleangad
+MODEL_PATH = "checkpoints/gad_05b_cleanwarmup_cleangad_control/warmup/global_step_1813/actor/huggingface"
+
+
+
+# kgwwarmup_kgwgad
+# MODEL_PATH = "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_step_1813/actor/huggingface"
+# MODEL_PATH = "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/warmup/global_step_1813/actor/huggingface"
+
+
+# para
+# MODEL_PATH = "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new1_dipper2stage/gad/global_step_1813/actor/huggingface"
+
+
+
+
+
+
+
+TOKENIZER_PATH = "/shared/public_models/Qwen2.5-0.5B"  # 缺少 tokenizer 时，指定相同学生基座的本地目录。
 DEVICE = "cuda:0"
 DTYPE = "auto"
 MAX_INPUT_TOKENS = 4096

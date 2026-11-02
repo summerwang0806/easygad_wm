@@ -23,11 +23,31 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 
 # 日常只修改这里：相对路径始终以项目根目录为基准，也支持服务器绝对路径。
-MODEL_PATH = "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_step_1813/actor/huggingface"
+
+
+
+
+# cleanwarmup_cleangad
+# MODEL_PATH = "checkpoints/gad_05b_cleanwarmup_cleangad_control/warmup/global_step_1813/actor/huggingface"
+MODEL_PATH = "checkpoints/gad_05b_cleanwarmup_cleangad_control/gad/global_step_1813/actor/huggingface"
+
+# kgwwarmup_kgwgad
+# MODEL_PATH = "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_step_1813/actor/huggingface"
+# MODEL_PATH = "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/warmup/global_step_1813/actor/huggingface"
+
+
+# para
+# MODEL_PATH = "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new1_dipper2stage/gad/global_step_1813/actor/huggingface"
+
+
+
+
+
+
 
 # 默认使用模型目录中的 tokenizer。若导出的权重没有 tokenizer，可改为同一学生
 # 基座的本地目录，例如 /shared/public_models/Qwen2.5-0.5B；不要使用教师 tokenizer。
-TOKENIZER_PATH = None
+TOKENIZER_PATH = "/shared/public_models/Qwen2.5-0.5B"
 DEVICE = "cuda:0"  # CUDA_VISIBLE_DEVICES=3 时，这里仍为 cuda:0。
 BATCH_SIZE = 8  # 显存不足先改成 1；不改变任务/指标定义。
 DTYPE = "auto"
