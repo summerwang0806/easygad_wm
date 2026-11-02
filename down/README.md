@@ -1,7 +1,7 @@
 # 学生模型下游能力评测
 
 四个任务分别维护入口、顶部模型配置及结果目录。平时修改对应脚本顶部的 `MODEL_PATH`。
-相对模型路径始终相对于项目根目录，不受当前工作目录影响。学生入口默认都使用：
+相对模型路径始终相对于项目根目录，不受当前工作目录影响。学生模型路径例如：
 
 ```text
 checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_step_1813/actor/huggingface
@@ -17,7 +17,8 @@ checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_step_1813/acto
 ARC-Easy 和 HellaSwag 固定使用官方 `lm-evaluation-harness==0.4.9.2`，均为 0-shot、候选答案条件对数似然评分，不添加聊天模板或推理时水印。
 HellaSwag 的公开 test 集没有可用于本评测的答案标签，采用官方 harness 配置的 validation 集。
 
-SQuAD 生成短答案，以官方规范化规则计算精确匹配 EM 与词级 F1，无需裁判。
+SQuAD 默认固定 3-shot：先展示官方训练集的三个短答示例，再生成测试答案；以官方规范化规则计算 EM 与词级 F1，无需裁判。
+`--num-fewshot 0` 可使用原来的零样例提示；新旧协议分别保存，完整生成文本仍直接评分。
 MT-Bench 生成两轮回答，然后用本地 `JUDGE_MODEL_PATH` 评分，默认 `/shared/public_models/Qwen3-32B`，无需 API。
 该本地裁判分数应标明裁判模型，不能直接当作原版 GPT-4 裁判分数引用。
 两个生成任务共用 `generation_utils.py`，支持给学生启用现有 WN logits processor；需要在入口设置 `WN_RULES_PATH` 和 `WN_STRENGTH > 0`。
@@ -84,7 +85,7 @@ MT-Bench 可先 `--generate-only`，再在有充足显存的设备上以相同�
 ```bash
 python -m unittest discover -s down/ARC-Easy -p test_run_arc_easy.py -v
 python -m unittest discover -s down/HellaSwag -p test_run_hellaswag.py -v
-python -m unittest discover -s down/SQuAD -p test_run_squad.py -v
+python -m unittest discover -s down/SQuAD -p 'test_*.py' -v
 python -m unittest discover -s down/MT-Bench -p test_run_mt_bench.py -v
 python -m unittest discover -s down -p test_generation_utils.py -v
 ```

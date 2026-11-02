@@ -1,0 +1,390 @@
+{
+  "models": [
+    {
+      "directory": "C:\\Users\\wenxin\\Desktop\\elta3_new_gad_global_step_1813_actor_huggingface.0b9e5135c9c1b918",
+      "run": "C:\\Users\\wenxin\\Desktop\\elta3_new_gad_global_step_1813_actor_huggingface.0b9e5135c9c1b918\\runs\\20261102-154001-9febd43c",
+      "count": 10570,
+      "em_percent": 0.17029328287606432,
+      "f1_percent": 29.26364861089018,
+      "stats": {
+        "exact_correct": {
+          "count": 18,
+          "percent": 0.17029328287606432
+        },
+        "contains_gold": {
+          "count": 7966,
+          "percent": 75.36423841059603
+        },
+        "contains_gold_but_EM_zero": {
+          "count": 7948,
+          "percent": 75.19394512771996
+        },
+        "contains_multword_gold_but_EM_zero": {
+          "count": 5327,
+          "percent": 50.397350993377486
+        },
+        "zero_word_overlap": {
+          "count": 1332,
+          "percent": 12.601702932828761
+        },
+        "pred_normalized_le_5_words": {
+          "count": 327,
+          "percent": 3.0936613055818354
+        },
+        "length_limited": {
+          "count": 237,
+          "percent": 2.242194891201514
+        },
+        "has_answer_prefix": {
+          "count": 9,
+          "percent": 0.08514664143803216
+        },
+        "has_newline": {
+          "count": 99,
+          "percent": 0.9366130558183539
+        }
+      },
+      "mean_prediction_words": 14.44976348155156,
+      "median_prediction_words": 12.0,
+      "mean_min_gold_words": 2.1319772942289497,
+      "median_min_gold_words": 2.0,
+      "mean_completion_tokens": 23.114096499526962,
+      "median_completion_tokens": 20.0,
+      "examples": [
+        {
+          "id": "56be4db0acb8001400a502ec",
+          "question": "Which NFL team represented the AFC at Super Bowl 50?",
+          "references": [
+            "Denver Broncos",
+            "Denver Broncos",
+            "Denver Broncos"
+          ],
+          "prediction": "The AFC champion team at Super Bowl 50 was the Denver Broncos.",
+          "exact_match": 0.0,
+          "f1": 0.33333333333333337
+        },
+        {
+          "id": "56be4db0acb8001400a502ed",
+          "question": "Which NFL team represented the NFC at Super Bowl 50?",
+          "references": [
+            "Carolina Panthers",
+            "Carolina Panthers",
+            "Carolina Panthers"
+          ],
+          "prediction": "The NFL team that represented the NFC at Super Bowl 50 was the Carolina Panthers.",
+          "exact_match": 0.0,
+          "f1": 0.2857142857142857
+        },
+        {
+          "id": "56be4db0acb8001400a502ee",
+          "question": "Where did Super Bowl 50 take place?",
+          "references": [
+            "Santa Clara, California",
+            "Levi's Stadium",
+            "Levi's Stadium in the San Francisco Bay Area at Santa Clara, California."
+          ],
+          "prediction": "Super Bowl 50 took place at Levi's Stadium in the San Francisco Bay Area at Santa Clara, California.",
+          "exact_match": 0.0,
+          "f1": 0.7857142857142858
+        },
+        {
+          "id": "56be4db0acb8001400a502ef",
+          "question": "Which NFL team won Super Bowl 50?",
+          "references": [
+            "Denver Broncos",
+            "Denver Broncos",
+            "Denver Broncos"
+          ],
+          "prediction": "The NFL team that won Super Bowl 50 was the Denver Broncos.",
+          "exact_match": 0.0,
+          "f1": 0.33333333333333337
+        },
+        {
+          "id": "56be4db0acb8001400a502f0",
+          "question": "What color was used to emphasize the 50th anniversary of the Super Bowl?",
+          "references": [
+            "gold",
+            "gold",
+            "gold"
+          ],
+          "prediction": "The color used to emphasize the 50th anniversary of the Super Bowl was gold.",
+          "exact_match": 0.0,
+          "f1": 0.16666666666666669
+        },
+        {
+          "id": "56be8e613aeaaa14008c90d1",
+          "question": "What was the theme of Super Bowl 50?",
+          "references": [
+            "\"golden anniversary\"",
+            "gold-themed",
+            "\"golden anniversary"
+          ],
+          "prediction": "The theme of Super Bowl 50 was \"Golden Anniversary.\"",
+          "exact_match": 0.0,
+          "f1": 0.4
+        },
+        {
+          "id": "56be8e613aeaaa14008c90d2",
+          "question": "What day was the game played on?",
+          "references": [
+            "February 7, 2016",
+            "February 7",
+            "February 7, 2016"
+          ],
+          "prediction": "The game was played on February 7, 2016.",
+          "exact_match": 0.0,
+          "f1": 0.6
+        },
+        {
+          "id": "56be8e613aeaaa14008c90d3",
+          "question": "What is the AFC short for?",
+          "references": [
+            "American Football Conference",
+            "American Football Conference",
+            "American Football Conference"
+          ],
+          "prediction": "The AFC short for American Football Conference is American Football Conference.",
+          "exact_match": 0.0,
+          "f1": 0.4615384615384615
+        }
+      ],
+      "zero_overlap_examples": [
+        {
+          "id": "56bf10f43aeaaa14008c9500",
+          "question": "What was the final score of Super Bowl 50? ",
+          "references": [
+            "24–10",
+            "24–10",
+            "24–10"
+          ],
+          "prediction": "The final score of Super Bowl 50 was 24-10."
+        },
+        {
+          "id": "56bf159b3aeaaa14008c9507",
+          "question": "What was the win/loss ratio in 2015 for the Carolina Panthers during their regular season?",
+          "references": [
+            "15–1",
+            "15–1",
+            "15–1"
+          ],
+          "prediction": "The win/loss ratio for the Carolina Panthers during their regular season in 2015 was 15-1."
+        },
+        {
+          "id": "56bf159b3aeaaa14008c9509",
+          "question": "What were the win/loss game stats for the Denver Bronco's regular season in 2015?",
+          "references": [
+            "12–4",
+            "12–4",
+            "12–4"
+          ],
+          "prediction": "The Denver Broncos finished the regular season with a 12-4 record."
+        },
+        {
+          "id": "56bf159b3aeaaa14008c950a",
+          "question": "How many teams have played in the Super Bowl eight times?",
+          "references": [
+            "4",
+            "four",
+            "four"
+          ],
+          "prediction": "Eight teams have played in the Super Bowl eight times."
+        }
+      ],
+      "all_saved_scores_and_predictions_verified": true
+    },
+    {
+      "directory": "C:\\Users\\wenxin\\Desktop\\per2stage_gad_global_step_1813_actor_huggingface.26a446b88671e909",
+      "run": "C:\\Users\\wenxin\\Desktop\\per2stage_gad_global_step_1813_actor_huggingface.26a446b88671e909\\runs\\20261102-174158-c948fd8c",
+      "count": 10570,
+      "em_percent": 0.6433301797540208,
+      "f1_percent": 24.712055122979265,
+      "stats": {
+        "exact_correct": {
+          "count": 68,
+          "percent": 0.6433301797540208
+        },
+        "contains_gold": {
+          "count": 6536,
+          "percent": 61.83538315988647
+        },
+        "contains_gold_but_EM_zero": {
+          "count": 6468,
+          "percent": 61.19205298013245
+        },
+        "contains_multword_gold_but_EM_zero": {
+          "count": 3873,
+          "percent": 36.64143803216651
+        },
+        "zero_word_overlap": {
+          "count": 1715,
+          "percent": 16.225165562913908
+        },
+        "pred_normalized_le_5_words": {
+          "count": 433,
+          "percent": 4.096499526963103
+        },
+        "length_limited": {
+          "count": 463,
+          "percent": 4.380321665089877
+        },
+        "has_answer_prefix": {
+          "count": 22,
+          "percent": 0.20813623462630085
+        },
+        "has_newline": {
+          "count": 0,
+          "percent": 0.0
+        }
+      },
+      "mean_prediction_words": 15.736329233680227,
+      "median_prediction_words": 13.0,
+      "mean_min_gold_words": 2.1319772942289497,
+      "median_min_gold_words": 2.0,
+      "mean_completion_tokens": 25.243424787133396,
+      "median_completion_tokens": 21.0,
+      "examples": [
+        {
+          "id": "56be4db0acb8001400a502ec",
+          "question": "Which NFL team represented the AFC at Super Bowl 50?",
+          "references": [
+            "Denver Broncos",
+            "Denver Broncos",
+            "Denver Broncos"
+          ],
+          "prediction": "The AFC champion Denver Broncos won the Super Bowl 50.",
+          "exact_match": 0.0,
+          "f1": 0.4
+        },
+        {
+          "id": "56be4db0acb8001400a502ed",
+          "question": "Which NFL team represented the NFC at Super Bowl 50?",
+          "references": [
+            "Carolina Panthers",
+            "Carolina Panthers",
+            "Carolina Panthers"
+          ],
+          "prediction": "The NFC champion was the Carolina Panthers.",
+          "exact_match": 0.0,
+          "f1": 0.5714285714285715
+        },
+        {
+          "id": "56be4db0acb8001400a502ee",
+          "question": "Where did Super Bowl 50 take place?",
+          "references": [
+            "Santa Clara, California",
+            "Levi's Stadium",
+            "Levi's Stadium in the San Francisco Bay Area at Santa Clara, California."
+          ],
+          "prediction": "The Super Bowl 50 took place in San Francisco, in the city of Santa Clara, in the state of California.",
+          "exact_match": 0.0,
+          "f1": 0.42857142857142855
+        },
+        {
+          "id": "56be4db0acb8001400a502ef",
+          "question": "Which NFL team won Super Bowl 50?",
+          "references": [
+            "Denver Broncos",
+            "Denver Broncos",
+            "Denver Broncos"
+          ],
+          "prediction": "The NFC champion Carolina Panthers won Super Bowl 50.",
+          "exact_match": 0.0,
+          "f1": 0.0
+        },
+        {
+          "id": "56be4db0acb8001400a502f0",
+          "question": "What color was used to emphasize the 50th anniversary of the Super Bowl?",
+          "references": [
+            "gold",
+            "gold",
+            "gold"
+          ],
+          "prediction": "The color used to emphasize the 50th anniversary of the Super Bowl was gold.",
+          "exact_match": 0.0,
+          "f1": 0.16666666666666669
+        },
+        {
+          "id": "56be8e613aeaaa14008c90d1",
+          "question": "What was the theme of Super Bowl 50?",
+          "references": [
+            "\"golden anniversary\"",
+            "gold-themed",
+            "\"golden anniversary"
+          ],
+          "prediction": "The theme of Super Bowl 50 was “Golden Anniversary.”",
+          "exact_match": 0.0,
+          "f1": 0.0
+        },
+        {
+          "id": "56be8e613aeaaa14008c90d2",
+          "question": "What day was the game played on?",
+          "references": [
+            "February 7, 2016",
+            "February 7",
+            "February 7, 2016"
+          ],
+          "prediction": "The game was played on February 7, 2016.",
+          "exact_match": 0.0,
+          "f1": 0.6
+        },
+        {
+          "id": "56be8e613aeaaa14008c90d3",
+          "question": "What is the AFC short for?",
+          "references": [
+            "American Football Conference",
+            "American Football Conference",
+            "American Football Conference"
+          ],
+          "prediction": "The AFC stands for American Football Conference.",
+          "exact_match": 0.0,
+          "f1": 0.6666666666666666
+        }
+      ],
+      "zero_overlap_examples": [
+        {
+          "id": "56be4db0acb8001400a502ef",
+          "question": "Which NFL team won Super Bowl 50?",
+          "references": [
+            "Denver Broncos",
+            "Denver Broncos",
+            "Denver Broncos"
+          ],
+          "prediction": "The NFC champion Carolina Panthers won Super Bowl 50."
+        },
+        {
+          "id": "56be8e613aeaaa14008c90d1",
+          "question": "What was the theme of Super Bowl 50?",
+          "references": [
+            "\"golden anniversary\"",
+            "gold-themed",
+            "\"golden anniversary"
+          ],
+          "prediction": "The theme of Super Bowl 50 was “Golden Anniversary.”"
+        },
+        {
+          "id": "56bea9923aeaaa14008c91b9",
+          "question": "What was the theme of Super Bowl 50?",
+          "references": [
+            "\"golden anniversary\"",
+            "gold-themed",
+            "gold"
+          ],
+          "prediction": "The theme of Super Bowl 50 was “Golden Anniversary.”"
+        },
+        {
+          "id": "56beace93aeaaa14008c91e1",
+          "question": "What city did Super Bowl 50 take place in?",
+          "references": [
+            "Santa Clara",
+            "Santa Clara",
+            "Santa Clara"
+          ],
+          "prediction": "The Super Bowl 50 took place in San Francisco."
+        }
+      ],
+      "all_saved_scores_and_predictions_verified": true
+    }
+  ],
+  "same_question_ids": true,
+  "note": "Contains-gold is a diagnostic string statistic, not a standard metric or semantic correctness rate. No saved predictions were altered."
+}

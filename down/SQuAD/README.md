@@ -6,14 +6,14 @@
 CUDA_VISIBLE_DEVICES=3 python down/SQuAD/run_squad.py
 ```
 
-默认模型：
+常用模型路径示例（以脚本中你当前设置的路径为准）：
 
 ```text
 checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_step_1813/actor/huggingface
 ```
 
-相对路径始终相对于项目根目录；也支持服务器绝对路径。默认使用模型目录中的 tokenizer；
-若缺失，将 `TOKENIZER_PATH` 指向同一个学生基座的本地目录。
+相对路径始终相对于项目根目录；也支持服务器绝对路径。`TOKENIZER_PATH=None` 时使用模型目录中的 tokenizer；
+显式设置时使用该目录。导出目录缺少 tokenizer 时，将其指向同一个学生基座的本地目录，并保持所有对照一致。
 
 ## 准备与试跑
 
@@ -23,7 +23,7 @@ checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_step_1813/acto
 ```bash
 python -m pip install -r down/SQuAD/requirements.txt
 
-# 仅下载和核验官方 dev 数据，不占 GPU。
+# 默认准备官方 dev 与 train 数据；train 只用于选取固定 3 个示例，不训练模型。
 python down/SQuAD/run_squad.py --prepare-data
 
 # 仅检查数据、模型/tokenizer 和设备；不加载权重或推理。
@@ -32,21 +32,48 @@ CUDA_VISIBLE_DEVICES=3 python down/SQuAD/run_squad.py --check-only
 # 前 8 题试跑。
 CUDA_VISIBLE_DEVICES=3 python down/SQuAD/run_squad.py --limit 8
 
+# 进一步检查短答格式；前 100 题只用于格式/运行检查，不代表总体能力。
+CUDA_VISIBLE_DEVICES=3 python down/SQuAD/run_squad.py --limit 100
+
 # 全量 10570 题；顶部 LIMIT 保持 None。
 CUDA_VISIBLE_DEVICES=3 python down/SQuAD/run_squad.py
 ```
 
-也可以进入 `down/SQuAD` 后运行 `python run_squad.py`。运行时必须保留上一级 `down/generation_utils.py`；
+也可以进入 `down/SQuAD` 后运行 `python run_squad.py`。需要同步本目录的 `fewshot.py` 和上一级 `down/generation_utils.py`；
 开启 WN 时还需要项目现有 `baseline_acl/inverse_watermark.py`。
 
-首次下载需要能访问 Stanford 官方站点。原始数据保存在 `down/SQuAD/data/dev-v1.1.json`；
-也可在联网机器从下面的官方链接下载该文件，再复制到服务器这个位置。已有文件只读取核验，不覆盖。
+首次下载需要能访问 Stanford 官方站点。原始数据保存在 `down/SQuAD/data/dev-v1.1.json` 和 `train-v1.1.json`；
+也可在联网机器从下面的官方链接下载这两个文件，再复制到服务器这些位置。已有文件只读取核验，不覆盖。
 默认正式运行在缺少数据时也会下载；`--check-only` 不下载。
+
+## 当前默认：固定 3-shot 生成式评测
+
+旧的零样例结果出现大量“包含正确答案，但输出完整句子”的现象。当前默认 `NUM_FEWSHOT = 3`、
+`FEWSHOT_SEED = 42`，在测试问题前展示三段训练集问答，示例回答只有原文答案片段。
+这是新的 few-shot 评测协议，不修改权重，也不修改官方 EM/F1 公式；不能保证达到经过 SQuAD 监督微调的 BERT 分数。
+
+- 示例从官方 **SQuAD 1.1 train 的 87599 题**中选取，不使用 dev 参考答案或 dev 得分挑选。
+- 固定排序后按种子抽取，选自不同文章/段落；上下文最多 1800 字符、问题最多 300 字符、首个标注答案最多 8 个词，并且是原文连续片段。
+- 所有学生必须使用相同 `NUM_FEWSHOT`、`FEWSHOT_SEED`、示例顺序、模板和生成设置。
+- chat 模式使用真实的 user/assistant 示范对话，最后仅给出待测段落和问题；completion 模式用相同的训练示例拼接。
+- `protocol.json` 和 `fewshot_examples.json` 保存示例原文、ID、训练文件 SHA256、选择代码指纹等。
+- 输入长度检查包含全部示例和测试段落，过长会报错，不自动丢弃示例或截断上下文。
+- 结果增加预测/参考答案词数的诊断字段，帮助检查模型是否仍然输出长句；它们不是新的准确率指标。
+
+需要原来的零样例提示时：
+
+```bash
+python down/SQuAD/run_squad.py --prepare-data --num-fewshot 0
+CUDA_VISIBLE_DEVICES=3 python down/SQuAD/run_squad.py --num-fewshot 0
+```
+
+零样例不需要 train 文件，`--score-only` 也不需要训练集或模型。新协议使用新的缓存标识，旧结果不会被覆盖或混入。
+论文中应分别标注 0-shot / 3-shot。先在小样本检查格式和运行，再以同一固定设置完整评测所有模型。
 
 ## 固定协议
 
 - 数据为 **SQuAD 1.1 dev**，不是 SQuAD 2.0，也不是训练集。程序校验 1.1 版本、10570 个唯一问题、人工答案和位置字段；评分采用标注答案文本，不依赖字符偏移。
-- 将文章和问题提供给学生，要求只输出最短答案片段。没有示例，也不会把人工参考答案发送给模型。
+- 将文章和问题提供给学生，要求只输出最短答案片段。默认先展示固定训练集示例，待测题目的参考答案不会发送给模型。
 - 默认 `PROMPT_STYLE = "chat"`，使用学生自身 tokenizer 的聊天模板；缺少模板时明确报错。
   若要评测纯 completion 模型，可以把该配置显式改成 `"completion"`，所有对照都保持相同设置。
 - 默认 greedy（temperature=0）、最多生成 64 token；最大输入 4096 token。输入过长会报错，不静默截断。
@@ -90,10 +117,11 @@ WN 在学生每步生成时实际修改 logits，沿用项目现有 inverse-wate
 | 文件 | 内容 |
 |---|---|
 | `protocol.json` | 模型与 tokenizer 指纹、依赖版本/运行时代码指纹、数据 SHA256、提示、生成和 WN 配置 |
+| `fewshot_examples.json` | 固定训练示例、选择种子和规则、来源哈希；零样例时示例为空 |
 | `generations.jsonl` | 每题完整原始预测与生成信息，完成一题即刷新到磁盘 |
 | `runs/<时间-标识>/predictions.json` | 标准 `question_id -> 完整生成答案`，可交给其他 SQuAD 评分程序 |
 | 同目录 `scores.jsonl` | 每题原始预测、归一化预测、参考答案、EM 与 F1 |
-| 同目录 `summary.json` / `report.md` | 总体 EM/F1、覆盖率、试跑标志、长度上限命中数量和配置 |
+| 同目录 `summary.json` / `report.md` | 总体 EM/F1、shot 数、试跑标志、答案词数、长度上限命中数量和配置 |
 
 每次独立创建 `runs` 归档，不覆盖旧汇总。相同协议下重新运行会复用成功答案；8 题试跑到全量也可续用。
 同一配置不能同时运行；异常退出通常会释放 `.lock`，若进程被强制结束，只能在确认旧进程已结束后手动移除对应锁。
@@ -113,11 +141,12 @@ python down/SQuAD/run_squad.py --score-only --predictions-file /path/to/predicti
 
 - [SQuAD 官方任务与数据说明](https://rajpurkar.github.io/SQuAD-explorer/)
 - [官方 dev-v1.1.json](https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json)
+- [官方 train-v1.1.json](https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json)
 - [SQuAD 原始论文](https://aclanthology.org/D16-1264/)
 
 ```bash
-python -m unittest discover -s down/SQuAD -p test_run_squad.py -v
+python -m unittest discover -s down/SQuAD -p 'test_*.py' -v
 ```
 
-本地测试覆盖归一化、多参考、重复词、缺失预测、数据校验及续跑/归档流程，使用模拟生成后端。
+本地测试覆盖归一化、多参考、重复词、缺失预测、训练示例选择、提示无测试答案、协议缓存隔离及续跑/归档流程，使用模拟生成后端。
 当前开发环境没有服务器 checkpoint/CUDA，不能据此声称已完成真实模型全量评测。

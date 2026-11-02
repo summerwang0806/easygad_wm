@@ -15,6 +15,7 @@ import json
 import os
 from pathlib import Path
 import re
+import statistics
 import string
 import sys
 import time
@@ -54,6 +55,8 @@ MAX_NEW_TOKENS = 64
 TEMPERATURE = 0.0
 SEED = 42
 PROMPT_STYLE = "chat"  # chat 使用学生 tokenizer 模板；completion 使用下方纯文本提示。
+NUM_FEWSHOT = 3  # 固定训练集短答示例；0 可复现原先的零样例提示。
+FEWSHOT_SEED = 42  # 所有对照固定相同的示例和顺序，不根据 dev 得分挑选。
 LIMIT = None  # None = 全量 10570 题；也可用 --limit 8 试跑。
 
 # WN 是生成时处理器；未洗组/UP/TP 学生保持 0。WN 组设置规则路径及正强度。
@@ -62,9 +65,12 @@ WN_STRENGTH = 0.0
 
 DATASET_FILE = HERE / "data" / "dev-v1.1.json"
 DATASET_URL = "https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json"
+TRAIN_DATASET_FILE = HERE / "data" / "train-v1.1.json"
+TRAIN_DATASET_URL = "https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json"
 RESULTS_DIR = HERE / "results"
 EXPECTED_DEV_COUNT = 10570
-PROTOCOL = "squad-v1.1-generative-short-answer-v1"
+EXPECTED_TRAIN_COUNT = 87599
+PROTOCOL = "squad-v1.1-generative-short-answer-v2"
 PROMPT_TEMPLATE = (
     "Read the passage and answer the question. The answer is a span from the passage. "
     "Output only the shortest answer span, with no explanation or prefix.\n\n"
@@ -148,25 +154,26 @@ def parse_dataset(document: dict, expected_count: int | None = EXPECTED_DEV_COUN
                              "question": question, "references": references})
                 seen.add(identity)
     if not rows or (expected_count is not None and len(rows) != expected_count):
-        raise ValueError(f"SQuAD 1.1 官方 dev 应为 {expected_count} 题，读取到 {len(rows)} 题。")
+        raise ValueError(f"SQuAD 1.1 文件应为 {expected_count} 题，读取到 {len(rows)} 题。")
     return rows
 
 
-def load_data(path: Path) -> list[dict]:
-    return parse_dataset(json.loads(path.read_text(encoding="utf-8")))
+def load_data(path: Path, expected_count: int = EXPECTED_DEV_COUNT) -> list[dict]:
+    return parse_dataset(json.loads(path.read_text(encoding="utf-8")), expected_count=expected_count)
 
 
-def prepare_data(path: Path) -> list[dict]:
+def prepare_data(path: Path, *, url: str = DATASET_URL, expected_count: int = EXPECTED_DEV_COUNT,
+                 max_bytes: int = 20 * 1024 * 1024) -> list[dict]:
     if path.is_file():
-        rows = load_data(path)
+        rows = load_data(path, expected_count=expected_count)
         print(f"[Data] Reusing {path} ({len(rows)} questions)", flush=True)
         return rows
-    print(f"[Data] Downloading official SQuAD 1.1 dev: {DATASET_URL}", flush=True)
-    with urlopen(DATASET_URL, timeout=90) as response:
-        data = response.read(20 * 1024 * 1024 + 1)
-    if len(data) > 20 * 1024 * 1024:
+    print(f"[Data] Downloading official SQuAD 1.1: {url}", flush=True)
+    with urlopen(url, timeout=90) as response:
+        data = response.read(max_bytes + 1)
+    if len(data) > max_bytes:
         raise ValueError("下载超过预期大小，尚未保存。")
-    rows = parse_dataset(json.loads(data.decode("utf-8")))
+    rows = parse_dataset(json.loads(data.decode("utf-8")), expected_count=expected_count)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
     try:
@@ -178,12 +185,48 @@ def prepare_data(path: Path) -> list[dict]:
     return rows
 
 
-def make_prompt(row: dict):
+def prepare_examples(num_fewshot: int, dev_rows: list[dict], *, check_only: bool = False) -> tuple[list[dict], dict]:
+    if str(HERE) not in sys.path:
+        sys.path.insert(0, str(HERE))
+    import fewshot
+
+    # This does not inspect dev references or scores when selecting demonstrations.
+    provenance = {"num_fewshot": num_fewshot, "selection_seed": FEWSHOT_SEED,
+                  "source_split": "train" if num_fewshot else None,
+                  "selection_code_sha256": hashlib.sha256(Path(fewshot.__file__).read_bytes()).hexdigest(),
+                  "selection_limits": {"max_context_chars": fewshot.MAX_CONTEXT_CHARS,
+                                       "max_question_chars": fewshot.MAX_QUESTION_CHARS,
+                                       "max_answer_words": fewshot.MAX_ANSWER_WORDS}}
+    if not num_fewshot:
+        return [], {**provenance, "examples": [], "train_sha256": None}
+    train_path = resolve_path(TRAIN_DATASET_FILE)
+    if check_only and not train_path.is_file():
+        raise FileNotFoundError("few-shot 需要 train-v1.1.json；请先运行 --prepare-data。")
+    train = prepare_data(train_path, url=TRAIN_DATASET_URL, expected_count=EXPECTED_TRAIN_COUNT,
+                         max_bytes=50 * 1024 * 1024)
+    examples = fewshot.select_examples(train, num_fewshot, FEWSHOT_SEED,
+                                      exclude_ids={row["id"] for row in dev_rows})
+    provenance.update({"examples": examples,
+                       "train_sha256": hashlib.sha256(train_path.read_bytes()).hexdigest()})
+    print(f"[Few-shot] {num_fewshot} fixed TRAIN examples: {[example['id'] for example in examples]}", flush=True)
+    return examples, provenance
+
+
+def make_prompt(row: dict, examples: list[dict] | None = None):
+    examples = examples or []
     prompt = PROMPT_TEMPLATE.format(context=row["context"], question=row["question"])
     if PROMPT_STYLE == "chat":
-        return [{"role": "user", "content": prompt}]
+        messages = []
+        for example in examples:
+            messages.extend([
+                {"role": "user", "content": PROMPT_TEMPLATE.format(context=example["context"], question=example["question"])},
+                {"role": "assistant", "content": example["answer"]},
+            ])
+        return messages + [{"role": "user", "content": prompt}]
     if PROMPT_STYLE == "completion":
-        return prompt
+        demonstrations = [PROMPT_TEMPLATE.format(context=example["context"], question=example["question"])
+                          + " " + example["answer"] for example in examples]
+        return "\n\n".join([*demonstrations, prompt])
     raise ValueError("PROMPT_STYLE 只能为 chat 或 completion。")
 
 
@@ -238,10 +281,15 @@ def evaluate_predictions(rows: list[dict], predictions: dict[str, str]) -> tuple
         raise ValueError("没有待评问题。")
     em = sum(row["exact_match"] for row in scores) / count
     f1 = sum(row["f1"] for row in scores) / count
+    prediction_lengths = [len(normalize_answer(value).split()) for value in predictions.values()]
+    reference_lengths = [min(len(normalize_answer(ref).split()) for ref in row["references"]) for row in rows]
     return {"evaluated_examples": count, "exact_match": em * 100, "f1": f1 * 100,
             "exact_match_fraction": em, "f1_fraction": f1,
             "exact_match_correct": int(sum(row["exact_match"] for row in scores)),
-            "empty_predictions": sum(not value.strip() for value in predictions.values())}, scores
+            "empty_predictions": sum(not value.strip() for value in predictions.values()),
+            "prediction_words_mean": statistics.mean(prediction_lengths),
+            "prediction_words_median": statistics.median(prediction_lengths),
+            "shortest_reference_words_median": statistics.median(reference_lengths)}, scores
 
 
 def write_results(directory: Path, summary: dict, scores: list[dict], predictions: dict) -> Path:
@@ -256,6 +304,8 @@ def write_results(directory: Path, summary: dict, scores: list[dict], prediction
         f"# SQuAD 1.1 {'LIMITED RUN' if summary['limited_run'] else 'full dev'}\n\n"
         f"- Model: `{summary.get('model_path', 'external predictions')}`\n"
         f"- Questions: {summary['evaluated_examples']} / {summary['total_dev_examples']}\n"
+        f"- Fixed train demonstrations: {summary.get('num_fewshot', 'external/unknown')}\n"
+        f"- Median normalized answer words: prediction={summary['prediction_words_median']}, shortest reference={summary['shortest_reference_words_median']}\n"
         f"- WN strength: {summary.get('wn_strength', 'external/unknown')}\n"
         f"- Output-token limit hits: {summary.get('length_limited_predictions', 'external/unknown')}\n\n"
         "| Metric | Score (0-100) |\n|---|---:|\n"
@@ -271,19 +321,25 @@ def write_results(directory: Path, summary: dict, scores: list[dict], prediction
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     modes = parser.add_mutually_exclusive_group()
-    modes.add_argument("--prepare-data", action="store_true", help="只下载官方 dev 数据，不加载模型/GPU")
+    modes.add_argument("--prepare-data", action="store_true", help="准备官方 dev 和 few-shot 所需 train 数据，不加载模型/GPU")
     modes.add_argument("--check-only", action="store_true", help="只检查数据、配置、模型和 tokenizer，不生成")
     modes.add_argument("--score-only", action="store_true", help="只评测已有 id->answer 的 predictions.json")
     parser.add_argument("--predictions-file", type=Path, help="--score-only 使用的预测文件")
     parser.add_argument("--limit", type=int, default=LIMIT, help="只取官方顺序前 N 题试跑")
+    parser.add_argument("--num-fewshot", type=int, default=NUM_FEWSHOT, help="固定训练集示例数，默认 3；0 为原先零样例提示")
     args = parser.parse_args(argv)
     if args.limit is not None and (type(args.limit) is not int or args.limit < 1):
         parser.error("LIMIT / --limit 必须为正整数或 None。")
+    if type(args.num_fewshot) is not int or args.num_fewshot < 0:
+        parser.error("NUM_FEWSHOT / --num-fewshot 必须为非负整数。")
+    if type(FEWSHOT_SEED) is not int or FEWSHOT_SEED < 0:
+        parser.error("FEWSHOT_SEED 必须为非负整数。")
     if args.score_only != (args.predictions_file is not None):
         parser.error("--score-only 和 --predictions-file 必须一起使用。")
     data_path = resolve_path(DATASET_FILE)
     if args.prepare_data:
-        prepare_data(data_path)
+        dev = prepare_data(data_path)
+        prepare_examples(args.num_fewshot, dev)
         return 0
     if args.check_only and not data_path.is_file():
         raise FileNotFoundError("请先运行 python down/SQuAD/run_squad.py --prepare-data")
@@ -300,6 +356,7 @@ def main(argv: list[str] | None = None) -> int:
                         "predictions_file": str(resolve_path(args.predictions_file))})
         output = write_results(RESULTS_DIR / "external", summary, scores, predictions)
     else:
+        examples, fewshot_protocol = prepare_examples(args.num_fewshot, all_rows, check_only=args.check_only)
         if str(HERE.parent) not in sys.path:
             sys.path.insert(0, str(HERE.parent))
         from generation_utils import LocalGenerator, sha256_file
@@ -324,13 +381,14 @@ def main(argv: list[str] | None = None) -> int:
                 "runtime_versions": metadata["versions"], "runtime_sha256": metadata.get("runtime_sha256"),
                 "runner_sha256": sha256_file(Path(__file__)),
                 "prompt_template": PROMPT_TEMPLATE, "prompt_style": PROMPT_STYLE,
+                "fewshot": fewshot_protocol,
                 "max_input_tokens": MAX_INPUT_TOKENS, "max_new_tokens": MAX_NEW_TOKENS,
                 "temperature": TEMPERATURE, "seed": SEED, "dtype": DTYPE,
                 "rules_sha256": sha256_file(rules_path) if rules_path is not None else None,
                 "wn_strength": WN_STRENGTH,
             }
             protocol_hash = digest(protocol)
-            print(f"[Protocol] SQuAD 1.1 dev, {len(rows)}/{len(all_rows)} questions; prompt={PROMPT_STYLE}, WN={WN_STRENGTH}", flush=True)
+            print(f"[Protocol] SQuAD 1.1 dev, {len(rows)}/{len(all_rows)} questions; prompt={PROMPT_STYLE}, {args.num_fewshot}-shot, WN={WN_STRENGTH}", flush=True)
             if args.check_only:
                 print("[OK] 数据和本地模型检查通过，尚未加载权重/生成。", flush=True)
                 return 0
@@ -341,13 +399,14 @@ def main(argv: list[str] | None = None) -> int:
             with cache_lock(cache_dir):
                 cached = load_cached(cache_dir / "generations.jsonl", all_rows, protocol_hash)
                 (cache_dir / "protocol.json").write_text(json.dumps(protocol, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+                (cache_dir / "fewshot_examples.json").write_text(json.dumps(fewshot_protocol, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
                 reused = sum(row["id"] in cached for row in rows)
                 print(f"[Resume] Reusing {reused}/{len(rows)} answers", flush=True)
                 with (cache_dir / "generations.jsonl").open("a", encoding="utf-8") as stream:
                     for index, row in enumerate(rows):
                         identity = row["id"]
                         if identity not in cached:
-                            answer = generator.generate(make_prompt(row), temperature=TEMPERATURE, seed=SEED + index)
+                            answer = generator.generate(make_prompt(row, examples), temperature=TEMPERATURE, seed=SEED + index)
                             if not isinstance(answer.get("text"), str):
                                 raise ValueError(f"生成器未返回文本: {identity}")
                             record = {"id": identity, "protocol_hash": protocol_hash,
@@ -364,6 +423,7 @@ def main(argv: list[str] | None = None) -> int:
                                 "model_path": str(model_path), "tokenizer_path": str(tokenizer_path),
                                 "protocol_hash": protocol_hash, "dataset_sha256": data_hash,
                                 "total_dev_examples": len(all_rows), "limited_run": args.limit is not None,
+                                "num_fewshot": args.num_fewshot, "fewshot": fewshot_protocol,
                                 "wn_strength": WN_STRENGTH, "rules_path": str(rules_path) if rules_path is not None else None,
                                 "generation_metadata": metadata, "reused_answers": reused,
                                 "length_limited_predictions": sum(cached[row["id"]]["generation"].get("finish_reason") == "length" for row in rows),
