@@ -31,12 +31,6 @@ def fixture():
 
 
 class SquadChecks(unittest.TestCase):
-    def setUp(self):
-        # Legacy tests exercise the unchanged zero-shot/scoring behavior.
-        self.zero_shot_default = patch.object(entry, "NUM_FEWSHOT", 0)
-        self.zero_shot_default.start()
-        self.addCleanup(self.zero_shot_default.stop)
-
     def test_original_v11_normalization(self):
         self.assertEqual(entry.normalize_answer("  The NEW-YORK, an apple!  "), "newyork apple")
         self.assertEqual(entry.exact_match_score("The New York!", "new york"), 1.0)
@@ -128,7 +122,8 @@ class SquadChecks(unittest.TestCase):
             self.assertNotIn("q1", {item["id"] for item in examples})
 
     def test_zero_shot_and_score_only_do_not_require_training_data(self):
-        with patch.object(entry, "prepare_data", side_effect=AssertionError("TRAIN must not be accessed")):
+        with patch.object(entry, "prepare_data", side_effect=AssertionError("TRAIN must not be accessed")), \
+                patch.dict("sys.modules", {"fewshot": None}):
             examples, provenance = entry.prepare_examples(0, questions())
             self.assertEqual(examples, [])
             self.assertIsNone(provenance["train_sha256"])
@@ -193,6 +188,8 @@ class SquadChecks(unittest.TestCase):
                 self.assertEqual(entry.main([]), 0)
             self.assertEqual(backend.generate.call_count, 2)
             self.assertEqual(backend.close.call_count, 2)
+            self.assertTrue(all(len(call.args[0]) == 1 and call.args[0][0]["role"] == "user"
+                                for call in backend.generate.call_args_list))
             summaries = [json.loads(path.read_text(encoding="utf-8")) for path in (root / "results").glob("*/runs/*/summary.json")]
             self.assertEqual(len(summaries), 2)
             full = next(row for row in summaries if not row["limited_run"])
@@ -200,6 +197,9 @@ class SquadChecks(unittest.TestCase):
             self.assertEqual(full["exact_match"], 50.0)
             self.assertAlmostEqual(full["f1"], 90.0)
             self.assertEqual(full["length_limited_predictions"], 1)
+            self.assertEqual(full["num_fewshot"], 0)
+            self.assertEqual(full["fewshot"]["examples"], [])
+            self.assertIsNone(full["fewshot"]["train_sha256"])
             cache = next((root / "results").glob("*/generations.jsonl"))
             lines = [json.loads(line) for line in cache.read_text(encoding="utf-8").splitlines()]
             self.assertEqual(len(lines), 2)

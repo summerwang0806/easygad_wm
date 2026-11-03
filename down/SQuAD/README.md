@@ -23,7 +23,7 @@ checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/gad/global_step_1813/acto
 ```bash
 python -m pip install -r down/SQuAD/requirements.txt
 
-# 默认准备官方 dev 与 train 数据；train 只用于选取固定 3 个示例，不训练模型。
+# 默认只准备官方 dev 数据，不需要训练集或 GPU。
 python down/SQuAD/run_squad.py --prepare-data
 
 # 仅检查数据、模型/tokenizer 和设备；不加载权重或推理。
@@ -39,18 +39,23 @@ CUDA_VISIBLE_DEVICES=3 python down/SQuAD/run_squad.py --limit 100
 CUDA_VISIBLE_DEVICES=3 python down/SQuAD/run_squad.py
 ```
 
-也可以进入 `down/SQuAD` 后运行 `python run_squad.py`。需要同步本目录的 `fewshot.py` 和上一级 `down/generation_utils.py`；
+也可以进入 `down/SQuAD` 后运行 `python run_squad.py`。需要同步上一级 `down/generation_utils.py`；
+只有显式开启 few-shot 时才需要本目录的 `fewshot.py`。
 开启 WN 时还需要项目现有 `baseline_acl/inverse_watermark.py`。
 
-首次下载需要能访问 Stanford 官方站点。原始数据保存在 `down/SQuAD/data/dev-v1.1.json` 和 `train-v1.1.json`；
-也可在联网机器从下面的官方链接下载这两个文件，再复制到服务器这些位置。已有文件只读取核验，不覆盖。
+首次下载需要能访问 Stanford 官方站点。默认只使用 `down/SQuAD/data/dev-v1.1.json`；
+也可在联网机器从下面的官方链接下载该文件，再复制到服务器。已有文件只读取核验，不覆盖。
 默认正式运行在缺少数据时也会下载；`--check-only` 不下载。
 
-## 当前默认：固定 3-shot 生成式评测
+## 当前默认：恢复原始 0-shot 评测
 
-旧的零样例结果出现大量“包含正确答案，但输出完整句子”的现象。当前默认 `NUM_FEWSHOT = 3`、
-`FEWSHOT_SEED = 42`，在测试问题前展示三段训练集问答，示例回答只有原文答案片段。
-这是新的 few-shot 评测协议，不修改权重，也不修改官方 EM/F1 公式；不能保证达到经过 SQuAD 监督微调的 BERT 分数。
+当前 `NUM_FEWSHOT = 0`。直接运行即可使用原来的段落/问题提示、chat 模板和 greedy 解码；
+不加载训练集、不插入示例，标准 EM/F1 公式与原始版本一致。模型路径和 tokenizer 配置以脚本当前设置为准。
+已有的 0-shot / 3-shot 结果保留，缓存按协议区分。
+
+### 可选：复现此前的 3-shot 实验
+
+只有显式设置 `--num-fewshot 3` 或修改顶部配置才会使用训练示例。以下规则仅适用于该可选模式：
 
 - 示例从官方 **SQuAD 1.1 train 的 87599 题**中选取，不使用 dev 参考答案或 dev 得分挑选。
 - 固定排序后按种子抽取，选自不同文章/段落；上下文最多 1800 字符、问题最多 300 字符、首个标注答案最多 8 个词，并且是原文连续片段。
@@ -60,11 +65,11 @@ CUDA_VISIBLE_DEVICES=3 python down/SQuAD/run_squad.py
 - 输入长度检查包含全部示例和测试段落，过长会报错，不自动丢弃示例或截断上下文。
 - 结果增加预测/参考答案词数的诊断字段，帮助检查模型是否仍然输出长句；它们不是新的准确率指标。
 
-需要原来的零样例提示时：
+复现该实验的命令：
 
 ```bash
-python down/SQuAD/run_squad.py --prepare-data --num-fewshot 0
-CUDA_VISIBLE_DEVICES=3 python down/SQuAD/run_squad.py --num-fewshot 0
+python down/SQuAD/run_squad.py --prepare-data --num-fewshot 3
+CUDA_VISIBLE_DEVICES=3 python down/SQuAD/run_squad.py --num-fewshot 3
 ```
 
 零样例不需要 train 文件，`--score-only` 也不需要训练集或模型。新协议使用新的缓存标识，旧结果不会被覆盖或混入。
@@ -73,7 +78,7 @@ CUDA_VISIBLE_DEVICES=3 python down/SQuAD/run_squad.py --num-fewshot 0
 ## 固定协议
 
 - 数据为 **SQuAD 1.1 dev**，不是 SQuAD 2.0，也不是训练集。程序校验 1.1 版本、10570 个唯一问题、人工答案和位置字段；评分采用标注答案文本，不依赖字符偏移。
-- 将文章和问题提供给学生，要求只输出最短答案片段。默认先展示固定训练集示例，待测题目的参考答案不会发送给模型。
+- 将文章和问题直接提供给学生，要求只输出最短答案片段。默认不展示示例，待测题目的参考答案不会发送给模型。
 - 默认 `PROMPT_STYLE = "chat"`，使用学生自身 tokenizer 的聊天模板；缺少模板时明确报错。
   若要评测纯 completion 模型，可以把该配置显式改成 `"completion"`，所有对照都保持相同设置。
 - 默认 greedy（temperature=0）、最多生成 64 token；最大输入 4096 token。输入过长会报错，不静默截断。

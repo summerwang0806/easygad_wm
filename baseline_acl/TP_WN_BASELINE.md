@@ -49,8 +49,13 @@ CUDA_VISIBLE_DEVICES=1 python baseline_acl/steal_watermark.py \
 ```bash
 CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_tp.py \
   --input "$TRAIN" --output "$TP_DATA" --rules "$RULES" \
-  --model "$MODEL" --num-gpus 2 --inverse-strength 2.5 --max-attempts 3
+  --model "$MODEL" --num-gpus 2 --inverse-strength 2.5 --max-attempts 3 \
+  --generation-policy efficient-v1
 ```
+
+`efficient-v1` 按原文 token 数分配输出预算，并在长段重复或提示词回显时提前终止本次尝试、记失败重试。规则 tensor 自动缓存到 GPU；保留原始规则公式。旧任务可以保持原命令的输入、输出、模型、规则、FP32 和采样参数，追加 `--generation-policy efficient-v1 --resume` 继续；旧完成行不重写，失败行从已保存次数的下一次继续。断点会追加策略升级记录，最终审计的 `generation_phases` 列出各策略对应的配置和行号。已有完成行采用旧策略、后续行采用新策略时，`mixed_generation_policies=true`。
+
+详细续跑命令和同步文件见 [TP_FAST_RESUME.md](TP_FAST_RESUME.md)。
 
 默认每条最多生成 3 次（首次生成加两次换 seed 重试）。最后一次仅因与原文相同而失败时，写回精确原文并继续下一条；空白差异也按相同处理。终端进度条实时显示 `unchanged`（最终保存为原文的数量）和 `unchanged_fallbacks`（重试后仍相同而保留原文的数量）。最终 `<TP_DATA>.audit.json` 保存 `unchanged_teacher_responses`、`unchanged_response_rows`（从 0 开始）、`unchanged_response_ids` 和 `unchanged_fallback_count`。
 

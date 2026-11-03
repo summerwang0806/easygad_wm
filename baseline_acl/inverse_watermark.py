@@ -6,6 +6,8 @@ loads models. Rule estimation lives in ``steal_watermark.py``.
 
 from __future__ import annotations
 
+from collections import OrderedDict
+
 import hashlib
 import json
 import math
@@ -292,9 +294,61 @@ score and every matching suffix's weighted score; D is intentionally not capped.
 class VLLMInverseWatermarkProcessor:
     """vLLM V0 three-argument logits hook: logits -= strength * estimated D."""
 
-    def __init__(self, rules: RuleTable, strength: float = 2.5):
+    def __init__(self, rules: RuleTable, strength: float = 2.5, *, cache_tensors: bool = False):
         self.rules = rules
         self.strength = _number(strength, "strength")
+        self.cache_tensors = cache_tensors
+        self._device_cache = {}
+
+    def _tensor_bias(self, context, logits):
+        """Cache static GPU data; preserve the original Python score arithmetic.
+
+        Conditional token logits are saved before applying the global bias,
+        then replaced using the full combined penalty. This avoids changing
+        rounding by subtracting the global and conditional parts separately.
+        """
+        import torch
+
+        key = (logits.device, logits.dtype)
+        cache = self._device_cache.get(key)
+        if cache is None:
+            global_scores = {token: value for token, value in self.rules.global_scores.items() if value}
+            indices = torch.tensor(list(global_scores), dtype=torch.long, device=logits.device)
+            amounts = torch.tensor([self.strength * value for value in global_scores.values()],
+                                   dtype=logits.dtype, device=logits.device)
+            cache = (indices, amounts, OrderedDict())
+            self._device_cache[key] = cache
+        global_indices, global_amounts, conditional_cache = cache
+        context = tuple(context[-self.rules.max_prefix:]) if self.rules.max_prefix else ()
+        if any(type(token) is not int or not 0 <= token < self.rules.vocab_size for token in context):
+            raise ValueError("prefix token IDs must be integers within the tokenizer vocabulary")
+        matches = tuple(context[-length:] for length in range(1, len(context) + 1)
+                        if context[-length:] in self.rules.prefix_scores)
+        conditional = conditional_cache.get(matches)
+        if conditional is None:
+            combined = {}
+            for prefix in matches:
+                weight, scores = self.rules.prefix_scores[prefix]
+                for token, value in scores.items():
+                    if weight and value:
+                        combined[token] = combined.get(token, self.rules.global_scores.get(token, 0.0)) + weight * value
+            if any(not math.isfinite(value) for value in combined.values()):
+                raise ValueError("combined watermark scores overflowed")
+            conditional = (torch.tensor(list(combined), dtype=torch.long, device=logits.device),
+                           torch.tensor([self.strength * value for value in combined.values()],
+                                        dtype=logits.dtype, device=logits.device))
+            conditional_cache[matches] = conditional
+            if len(conditional_cache) > 128:
+                conditional_cache.popitem(last=False)
+        else:
+            conditional_cache.move_to_end(matches)
+        indices, amounts = conditional
+        original = logits[indices] if indices.numel() else None
+        if global_indices.numel():
+            logits[global_indices] -= global_amounts
+        if original is not None:
+            logits[indices] = original - amounts
+        return logits
 
     def __call__(self, prompt_token_ids: list[int], generated_token_ids: list[int], logits: Any) -> Any:
         if self.strength == 0:
@@ -302,6 +356,10 @@ class VLLMInverseWatermarkProcessor:
         # Concatenating is essential while generated context is shorter than two
         # tokens; the first output uses the prompt's final token(s).
         context = list(prompt_token_ids[-self.rules.max_prefix:]) + list(generated_token_ids[-self.rules.max_prefix:]) if self.rules.max_prefix else []
+        if self.cache_tensors and hasattr(logits, "device"):
+            if len(logits) < self.rules.vocab_size:
+                raise ValueError("logits vocabulary is smaller than the rule tokenizer")
+            return self._tensor_bias(context, logits)
         penalties = self.rules.penalties(context)
         if not penalties:
             return logits
@@ -309,11 +367,8 @@ class VLLMInverseWatermarkProcessor:
             raise ValueError("logits vocabulary is smaller than the rule tokenizer")
         if hasattr(logits, "device"):
             import torch
-
-            token_ids = list(penalties)
-            indices = torch.tensor(token_ids, dtype=torch.long, device=logits.device)
-            amounts = torch.tensor([self.strength * penalties[token_id] for token_id in token_ids],
-                                   dtype=logits.dtype, device=logits.device)
+            indices = torch.tensor(list(penalties), dtype=torch.long, device=logits.device)
+            amounts = torch.tensor([self.strength * value for value in penalties.values()], dtype=logits.dtype, device=logits.device)
             logits[indices] -= amounts
         else:
             for token_id, score in penalties.items():
@@ -333,7 +388,7 @@ class TransformersInverseWatermarkProcessor:
     def __init__(self, rules: RuleTable, strength: float = 2.5):
         self.rules = rules
         self.strength = _number(strength, "strength")
-        self._direct_bias = VLLMInverseWatermarkProcessor(rules, self.strength)
+        self._direct_bias = VLLMInverseWatermarkProcessor(rules, self.strength, cache_tensors=True)
 
     def __call__(self, input_ids: Any, scores: Any) -> Any:
         if self.strength == 0:
@@ -345,8 +400,13 @@ class TransformersInverseWatermarkProcessor:
             raise ValueError("logits vocabulary is smaller than the rule tokenizer")
         if len(input_ids) != score_shape[0]:
             raise ValueError("input_ids and scores must have the same batch size")
-        for row in range(score_shape[0]):
-            suffix = input_ids[row][-self.rules.max_prefix:] if self.rules.max_prefix else []
-            context = suffix.tolist() if hasattr(suffix, "tolist") else list(suffix)
+        if hasattr(input_ids, "tolist"):
+            contexts = input_ids[:, -self.rules.max_prefix:].tolist() if self.rules.max_prefix else [[] for _ in range(score_shape[0])]
+        else:
+            contexts = []
+            for row in input_ids:
+                suffix = row[-self.rules.max_prefix:] if self.rules.max_prefix else []
+                contexts.append(suffix.tolist() if hasattr(suffix, "tolist") else list(suffix))
+        for row, context in enumerate(contexts):
             self._direct_bias(context, [], scores[row])
         return scores

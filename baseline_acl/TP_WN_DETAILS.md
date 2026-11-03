@@ -140,6 +140,12 @@ CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_tp.py \
 
 每张显式选中的 GPU 加载完整学生 O，显存不会合并。断点加 `--resume`；可把旧任务的 `--max-attempts 1` 提高到 `3`，保留成功行并继续失败行的后续尝试，重试上限变更会持久化到断点。其它模型、tokenizer、规则文件内容、反向强度、转述 prompt、采样预算或原数据改变时，拒绝继续旧断点。旧 Dipper TP 断点不能在新入口继续；请使用新的输出路径。每个 worker 校验规则 SHA-256，确保使用同一份规则。默认审计文件是 `<output>.audit.json`，方法标签是 `targeted_student_paraphrasing`，其中 `cross_tokenizer=false`、`projection=null`，并记录原始学生 O 角色及 tokenizer 身份校验。
 
+新增显式 `--generation-policy efficient-v1`：输出预算为 `min(max_new_tokens, max(256, 2 * source_tokens + 128))`；每 16 个新 token 检查最多 384 个生成 token 的后缀，检测长度 8–128 token 的连续三次重复，以及再次出现转述提示语等情况。提前结束的输出标为失败，仍受最多两次换 seed 重试的上限约束；仅最终与原文相同这一类失败自动保留原文，其它耗尽失败仍遵守 `--on-failure`。
+
+该策略允许从旧 `legacy` 断点升级到 `efficient-v1`。升级只调整上述输出预算与早停策略，输入、模型、规则、精度、prompt 和采样设置保持不变。断点追加 `generation_policy` 元数据记录；每条新尝试保存对应 `generation_config`，旧记录按原元数据阶段校验。最终审计记录 `generation_phases`、`mixed_generation_policies`、`attempt_policy_counts` 和 `early_aborted_attempts`，保证前后策略可追溯。旧的已完成结果不会因新检查自动重写；历史语义错误也不会因此修复。`legacy` 保留旧生成策略，可用于完成未升级的旧实验。
+
+正式 TP 的规则扣分使用有界 tensor 缓存：全局项只上传一次，前缀组合使用最多 128 项 LRU 缓存。条件项先保存原始 logits，再按完整合成惩罚覆盖，保持原先 Python 浮点合成后转换到 logits 精度的算术顺序。CPU tensor 测试覆盖 FP32、FP64、FP16 和 BF16 与原算法逐位相等；未实测服务器 CUDA 性能。此缓存默认仅用于 Transformers TP，WN 默认路径保持原有实现。当前继续保持每卡逐条生成，`--batch-size` 不会启用真正的 GPU 批量推理。
+
 训练启动器复用现有流程，每组默认 Warmup 1 epoch + GAD 1 epoch：
 
 ```bash

@@ -55,7 +55,7 @@ MAX_NEW_TOKENS = 64
 TEMPERATURE = 0.0
 SEED = 42
 PROMPT_STYLE = "chat"  # chat 使用学生 tokenizer 模板；completion 使用下方纯文本提示。
-NUM_FEWSHOT = 3  # 固定训练集短答示例；0 可复现原先的零样例提示。
+NUM_FEWSHOT = 0  # 恢复原始零样例评测；直接运行不使用训练集示例。
 FEWSHOT_SEED = 42  # 所有对照固定相同的示例和顺序，不根据 dev 得分挑选。
 LIMIT = None  # None = 全量 10570 题；也可用 --limit 8 试跑。
 
@@ -186,6 +186,10 @@ def prepare_data(path: Path, *, url: str = DATASET_URL, expected_count: int = EX
 
 
 def prepare_examples(num_fewshot: int, dev_rows: list[dict], *, check_only: bool = False) -> tuple[list[dict], dict]:
+    if num_fewshot == 0:
+        # Original evaluation needs only dev; no training data or selection module.
+        return [], {"num_fewshot": 0, "selection_seed": None, "source_split": None,
+                    "examples": [], "train_sha256": None}
     if str(HERE) not in sys.path:
         sys.path.insert(0, str(HERE))
     import fewshot
@@ -197,8 +201,6 @@ def prepare_examples(num_fewshot: int, dev_rows: list[dict], *, check_only: bool
                   "selection_limits": {"max_context_chars": fewshot.MAX_CONTEXT_CHARS,
                                        "max_question_chars": fewshot.MAX_QUESTION_CHARS,
                                        "max_answer_words": fewshot.MAX_ANSWER_WORDS}}
-    if not num_fewshot:
-        return [], {**provenance, "examples": [], "train_sha256": None}
     train_path = resolve_path(TRAIN_DATASET_FILE)
     if check_only and not train_path.is_file():
         raise FileNotFoundError("few-shot 需要 train-v1.1.json；请先运行 --prepare-data。")
@@ -321,12 +323,12 @@ def write_results(directory: Path, summary: dict, scores: list[dict], prediction
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     modes = parser.add_mutually_exclusive_group()
-    modes.add_argument("--prepare-data", action="store_true", help="准备官方 dev 和 few-shot 所需 train 数据，不加载模型/GPU")
+    modes.add_argument("--prepare-data", action="store_true", help="准备官方 dev；显式开启 few-shot 时另准备 train，不加载模型/GPU")
     modes.add_argument("--check-only", action="store_true", help="只检查数据、配置、模型和 tokenizer，不生成")
     modes.add_argument("--score-only", action="store_true", help="只评测已有 id->answer 的 predictions.json")
     parser.add_argument("--predictions-file", type=Path, help="--score-only 使用的预测文件")
     parser.add_argument("--limit", type=int, default=LIMIT, help="只取官方顺序前 N 题试跑")
-    parser.add_argument("--num-fewshot", type=int, default=NUM_FEWSHOT, help="固定训练集示例数，默认 3；0 为原先零样例提示")
+    parser.add_argument("--num-fewshot", type=int, default=NUM_FEWSHOT, help="训练示例数，默认 %(default)s（原始零样例）；3 用于复现 few-shot 实验")
     args = parser.parse_args(argv)
     if args.limit is not None and (type(args.limit) is not int or args.limit < 1):
         parser.error("LIMIT / --limit 必须为正整数或 None。")

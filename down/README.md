@@ -23,8 +23,8 @@ BoolQ 比较 `no/yes`，PIQA 比较两个解决方案，均不要求模型生成
 LAMBADA 预测末尾单词，报告准确率和 `exp(-mean(target_word_loglikelihood))`；不是整篇语料的 token PPL。
 这些入口测量 checkpoint 自身的概率分布，不会自动启用 WN 解码处理器；同一 checkpoint 的原始似然无法体现仅在解码阶段施加的影响。
 
-SQuAD 默认固定 3-shot：先展示官方训练集的三个短答示例，再生成测试答案；以官方规范化规则计算 EM 与词级 F1，无需裁判。
-`--num-fewshot 0` 可使用原来的零样例提示；新旧协议分别保存，完整生成文本仍直接评分。
+SQuAD 已恢复默认 0-shot：直接提供段落和问题，生成答案后以官方规范化规则计算 EM 与词级 F1，无需裁判，也不需要训练集。
+`--num-fewshot 3` 仅用于显式复现此前的 few-shot 实验；两种协议分别保存，完整生成文本直接评分。
 MT-Bench 生成两轮回答，然后用本地 `JUDGE_MODEL_PATH` 评分，默认 `/shared/public_models/Qwen3-32B`，无需 API。
 该本地裁判分数应标明裁判模型，不能直接当作原版 GPT-4 裁判分数引用。
 两个生成任务共用 `generation_utils.py`，支持给学生启用现有 WN logits processor；需要在入口设置 `WN_RULES_PATH` 和 `WN_STRENGTH > 0`。

@@ -53,6 +53,7 @@ class GenerationConfig:
     seed: int = 42
     on_failure: str = "error"
     max_attempts: int = 3
+    generation_policy: str = "legacy"
 
     def validate(self):
         for name in ("batch_size", "max_input_tokens", "max_new_tokens", "context_window", "max_attempts"):
@@ -60,6 +61,8 @@ class GenerationConfig:
                 raise ValueError(f"{name} must be a positive integer")
         if self.max_attempts > 3:
             raise ValueError("TP permits at most 3 total attempts (initial generation plus two retries)")
+        if self.generation_policy not in ("legacy", "efficient-v1"):
+            raise ValueError("unknown TP generation policy")
         if self.prompt_mode not in ("completion", "chat"):
             raise ValueError("resolved prompt mode must be completion or chat")
         if self.dtype not in ("float32", "bfloat16"):
@@ -97,16 +100,36 @@ def prompt_ids(tokenizer, prompt: str, config: GenerationConfig) -> list[int]:
     return tokenizer.encode(prompt, add_special_tokens=config.prompt_mode != "chat")
 
 
+def config_document(config):
+    result = asdict(config)
+    # Preserve the exact metadata shape/fingerprint of old checkpoints.
+    if config.generation_policy == "legacy":
+        result.pop("generation_policy")
+    return result
+
+
+def output_budget(source_tokens, config):
+    if config.generation_policy == "legacy":
+        return config.max_new_tokens
+    return min(config.max_new_tokens, max(256, 2 * source_tokens + 128))
+
+
+def echo_markers(source):
+    return [marker for marker in ("Rewritten answer:", "<source_answer>", "</source_answer>",
+                                   INSTRUCTION, "You are an AI assistant.") if marker not in source]
+
+
 def prepare_response(tokenizer, response: str, config: GenerationConfig) -> dict:
     prompt = render_prompt(tokenizer, response, config)
     count = len(prompt_ids(tokenizer, prompt, config))
     issues = []
     if count > config.max_input_tokens:
         issues.append("full_prompt_exceeds_input_budget")
-    if count + config.max_new_tokens > config.context_window:
+    source_tokens = len(tokenizer.encode(response, add_special_tokens=False))
+    if count + output_budget(source_tokens, config) > config.context_window:
         issues.append("prompt_plus_output_exceeds_context_window")
     return {"source": response, "prompt": prompt, "prompt_tokens": count,
-            "source_tokens": len(tokenizer.encode(response, add_special_tokens=False)),
+            "source_tokens": source_tokens,
             "issues": issues}
 
 
@@ -120,6 +143,8 @@ def candidate_issues(candidate: GeneratedResponse, source: str, config: Generati
             issues.append("prompt_or_instruction_echo")
         if re.match(r"^\s*(?:original|source)\s+answer\s*:", candidate.text, flags=re.IGNORECASE):
             issues.append("source_answer_preface")
+        if config.generation_policy != "legacy" and any(marker in candidate.text for marker in echo_markers(source)):
+            issues.append("generation_prompt_echo")
     if type(candidate.output_tokens) is int and candidate.output_tokens > config.max_new_tokens:
         issues.append("output_exceeds_new_token_budget")
     return list(dict.fromkeys(issues))
@@ -136,6 +161,11 @@ def generate_response(prepared, generate_prompt, tokenizer, config, index, attem
               "input_tokens": prepared["prompt_tokens"], "source_tokens": prepared["source_tokens"],
               "seed": seed, "output_text": candidate.text, "output_tokens": candidate.output_tokens,
               "finish_reason": candidate.finish_reason, "issues": issues}
+    if config.generation_policy != "legacy":
+        record.update(generation_policy=config.generation_policy,
+                      effective_max_new_tokens=output_budget(prepared["source_tokens"], config))
+        if type(candidate.output_tokens) is int and candidate.output_tokens > record["effective_max_new_tokens"]:
+            issues.append("output_exceeds_row_budget")
     return GeneratedResponse(candidate.text, candidate.finish_reason, candidate.output_tokens, [record], issues)
 
 
@@ -149,9 +179,15 @@ def validate_audit(candidate, prepared, tokenizer, config, index, attempt):
                 "seed": up.generation_seed(config.seed, index, attempt),
                 "output_text": candidate.text, "output_tokens": candidate.output_tokens,
                 "finish_reason": candidate.finish_reason, "issues": candidate.issues}
+    if config.generation_policy != "legacy":
+        expected.update(generation_policy=config.generation_policy,
+                        effective_max_new_tokens=output_budget(prepared["source_tokens"], config))
     issues = []
     if record != expected:
         issues.append("causal_generation_audit_mismatch")
+    if (config.generation_policy != "legacy" and type(candidate.output_tokens) is int
+            and candidate.output_tokens > expected["effective_max_new_tokens"]):
+        issues.append("output_exceeds_row_budget")
     if len(prompt_ids(tokenizer, prepared["prompt"], config)) != prepared["prompt_tokens"]:
         issues.append("prompt_tokenization_changed")
     if prepared["issues"]:
@@ -202,7 +238,7 @@ def metadata_builder(input_path, source, identity, config, prepared):
     return {"kind": "meta", "format_version": FORMAT_VERSION,
             "input": {"path": str(input_path), "sha256": up.file_sha256(input_path), "rows": source.num_rows,
                       "schema_sha256": hashlib.sha256(source.schema.serialize().to_pybytes()).hexdigest()},
-            "model": identity, "config": asdict(config),
+            "model": identity, "config": config_document(config),
             "input_template_sha256": up.text_sha256(INSTRUCTION + COMPLETION_TEMPLATE),
             "prompts_sha256": up.text_sha256(up.canonical_json([row["prompt"] for row in prepared])),
             "generation_contract": {"architecture": "causal_LM", "paraphrase_mode": "whole_response",
@@ -213,9 +249,20 @@ def metadata_builder(input_path, source, identity, config, prepared):
 
 
 def validate_resume_metadata(previous, requested):
-    if previous.get("config", {}).get("on_failure") != requested["config"]["on_failure"]:
-        raise ValueError("checkpoint fingerprint differs from input/model/config; only increasing max_attempts is allowed")
-    up.validate_resume_metadata(previous, requested)
+    before, after = previous.get("config", {}), requested["config"]
+    old_policy, new_policy = before.get("generation_policy", "legacy"), after.get("generation_policy", "legacy")
+    original = {key: value for key, value in previous.items() if key != "fingerprint"}
+    updated_config = {**before, "max_attempts": after.get("max_attempts")}
+    if new_policy != "legacy":
+        updated_config["generation_policy"] = new_policy
+    compatible = {**original, "config": updated_config}
+    compatible["fingerprint"] = up.text_sha256(up.canonical_json(compatible))
+    old_limit, new_limit = before.get("max_attempts"), after.get("max_attempts")
+    if (type(old_limit) is not int or type(new_limit) is not int or not 1 <= old_limit <= new_limit <= 3
+            or old_policy != new_policy and (old_policy, new_policy) != ("legacy", "efficient-v1")
+            or previous.get("fingerprint") != up.text_sha256(up.canonical_json(original))
+            or compatible != requested):
+        raise ValueError("checkpoint fingerprint differs from input/model/config; only more attempts or legacy to efficient-v1 policy upgrades are allowed")
 
 
 def _read_checkpoint(path, expected_meta, source_values, ids):
@@ -234,15 +281,22 @@ def _read_checkpoint(path, expected_meta, source_values, ids):
         lines.pop()
     for line in lines[1:]:
         entry = json.loads(line)
-        if entry.get("kind") == "retry_limit":
+        if entry.get("kind") in ("retry_limit", "generation_policy"):
             updated = entry.get("metadata")
             if (not isinstance(updated, dict) or entry.get("previous_fingerprint") != active_meta["fingerprint"]
                     or updated == active_meta):
                 raise ValueError("invalid checkpoint retry limit update")
+            policy_changed = active_meta["config"].get("generation_policy", "legacy") != updated.get("config", {}).get("generation_policy", "legacy")
+            if policy_changed != (entry["kind"] == "generation_policy"):
+                raise ValueError("checkpoint policy change has the wrong record kind")
             validate_resume_metadata(active_meta, updated)
             validate_resume_metadata(updated, expected_meta)
             active_meta = updated
             continue
+        active_config = GenerationConfig(**active_meta["config"])
+        if "generation_config" in entry and entry["generation_config"] != active_meta["config"]:
+            raise ValueError("checkpoint row generation config differs from its metadata phase")
+        entry["generation_config"] = active_meta["config"]
         index, attempt = entry.get("row_index"), entry.get("attempt")
         if type(index) is not int or not 0 <= index < len(source_values):
             raise ValueError("invalid checkpoint row")
@@ -273,13 +327,13 @@ def _read_checkpoint(path, expected_meta, source_values, ids):
             unchanged = (set(entry.get("issues", [])) == {"unchanged_source_answer"}
                          and isinstance(entry.get("candidate"), str)
                          and " ".join(entry["candidate"].split()) == " ".join(source_values[index].split()))
-            if ((config.on_failure != "keep-original" and not unchanged)
+            if ((active_config.on_failure != "keep-original" and not unchanged)
                     or entry["paraphrase"] != source_values[index] or not entry.get("issues")
                     or not budget_fallback and attempt != active_meta["config"]["max_attempts"]):
                 raise ValueError("unauthorized/invalid fallback")
         else:
             candidate = GeneratedResponse(entry["paraphrase"], entry.get("finish_reason"), entry.get("output_tokens"))
-            if entry.get("issues") or candidate_issues(candidate, source_values[index], config):
+            if entry.get("issues") or candidate_issues(candidate, source_values[index], active_config):
                 raise ValueError("invalid accepted checkpoint generation")
         complete[index] = entry
     # Older TP versions stopped on unchanged answers. Reclassify only an
@@ -310,6 +364,7 @@ class TPProgress:
         self.counted = set()
         self.unchanged = 0
         self.unchanged_fallbacks = 0
+        self.restored = None
 
     def __call__(self, complete, source_values, *, record=None, started):
         rows = complete.items() if record is None else [(record["row_index"], record)]
@@ -322,12 +377,17 @@ class TPProgress:
                 if result["status"] == "fallback" and "unchanged_source_answer" in result["issues"]:
                     self.unchanged_fallbacks += 1
         total, done = len(source_values), len(complete)
+        if self.restored is None:
+            self.restored = done
         filled = 24 * done // total
         bar = "#" * filled + "-" * (24 - filled)
         attempt = f", row={record['row_index']}, attempt={record['attempt']}" if record is not None else ""
+        elapsed = max(time.monotonic() - started, 0.001)
+        rate = (done - self.restored) / elapsed
+        eta = f"{(total - done) / rate / 3600:.1f}h" if rate > 0 else "warming-up"
         print(f"[TP progress] [{bar}] completed={done}/{total} ({100 * done / total:.1f}%), "
               f"unchanged={self.unchanged}, unchanged_fallbacks={self.unchanged_fallbacks}{attempt}, "
-              f"elapsed={time.monotonic() - started:.1f}s", flush=True)
+              f"rate={rate * 3600:.1f}/h, eta={eta}, elapsed={elapsed:.1f}s", flush=True)
 
 
 def write_final_outputs(source, responses, records, rejected, output_path, audit_path, meta, started, *, resume=False):
@@ -383,6 +443,22 @@ def write_final_outputs(source, responses, records, rejected, output_path, audit
                   "duration_seconds": round(time.monotonic() - started, 3), "paraphrase_mode": "whole_response",
                   "semantic_preservation": "Requested by prompt; automatic checks do not prove factual equivalence",
                   "parameter_provenance": "Project TP variant: original student O paraphrases with shared WN rules, replacing paper Dipper"}
+        if meta["config"].get("generation_policy", "legacy") != "legacy":
+            phases = {}
+            for index, record in sorted(records.items()):
+                configuration = record.get("generation_config", meta["config"])
+                key = up.canonical_json(configuration)
+                phase = phases.setdefault(key, {"config": configuration, "row_indices": [], "status_counts": Counter()})
+                phase["row_indices"].append(index)
+                phase["status_counts"][record["status"]] += 1
+            report.update(generation_phases=list(phases.values()),
+                          mixed_generation_policies=len({phase["config"].get("generation_policy", "legacy") for phase in phases.values()}) > 1,
+                          attempt_policy_counts=dict(Counter(record.get("generation_config", meta["config"]).get("generation_policy", "legacy")
+                                                             for record in attempted.values())),
+                          early_aborted_attempts=sum(record["finish_reason"] == "early_stop" for record in attempted.values()),
+                          efficient_policy={"version": "efficient-v1", "output_budget": "min(max_new_tokens, max(256, 2 * source_tokens + 128))",
+                                            "guard_interval_tokens": 16, "abort_is_failure": True},
+                          rule_bias_implementation="cached_tensor_bias_v1")
         if audit_path.exists():
             if not resume:
                 raise FileExistsError(f"refusing to overwrite {audit_path}")
@@ -417,7 +493,9 @@ def run_paraphrasing(input_path, output_path, config, tokenizer, generator_facto
                               validate_audit_fn=validate_audit, metadata_builder=metadata_builder,
                               final_writer=write_final_outputs, checkpoint_loader=_read_checkpoint,
                               keep_original_issues=frozenset({"unchanged_source_answer"}),
-                              progress_callback=TPProgress(), **kwargs)
+                              progress_callback=TPProgress(),
+                              record_metadata={"generation_config": config_document(config)},
+                              resume_config_fn=lambda record: GenerationConfig(**record["generation_config"]), **kwargs)
 
 
 def preflight_source(path, tokenizer, config):
@@ -432,6 +510,36 @@ def preflight_source(path, tokenizer, config):
             "max_source_response_tokens": max(item["source_tokens"] for item in prepared),
             "invalid_rows": invalid, "valid": not invalid, "model_weights_loaded": False,
             "tokenizer_preflight": True, "token_budget_checked": True, "prompt_truncation": False}
+
+
+class EarlyStopGuard:
+    """Inspect a small generated suffix every 16 tokens, never the prompt.
+
+    An early abort is a rejected attempt, not an accepted answer boundary.
+    """
+
+    def __init__(self, tokenizer, prompt_length, source=""):
+        self.tokenizer = tokenizer
+        self.prompt_length = prompt_length
+        self.reason = None
+        self.markers = echo_markers(source)
+
+    def __call__(self, input_ids, scores=None, **kwargs):
+        if self.reason is not None:
+            return True
+        length = input_ids.shape[1] - self.prompt_length
+        if length < 16 or length % 16:
+            return False
+        suffix = input_ids[0, -min(length, 384):].tolist()
+        for width in range(8, 129):
+            if len(suffix) >= 3 * width and suffix[-width:] == suffix[-2 * width:-width] == suffix[-3 * width:-2 * width]:
+                self.reason = "repetition_loop"
+                return True
+        text = self.tokenizer.decode(suffix, skip_special_tokens=True)
+        if any(marker in text for marker in self.markers):
+            self.reason = "generation_prompt_echo"
+            return True
+        return False
 
 
 class StudentGenerator:
@@ -452,32 +560,44 @@ class StudentGenerator:
         if not self.eos_ids:
             raise ValueError("student TP requires an EOS token to detect natural completion")
 
-    def generate_prompt(self, prompt, seed):
+    def generate_prompt(self, prompt, seed, *, max_new_tokens=None, source=""):
         torch, config = self.torch, self.config
         torch.manual_seed(seed)
         ids = prompt_ids(self.tokenizer, prompt, config)
-        if len(ids) > config.max_input_tokens or len(ids) + config.max_new_tokens > config.context_window:
+        budget = config.max_new_tokens if max_new_tokens is None else max_new_tokens
+        if len(ids) > config.max_input_tokens or len(ids) + budget > config.context_window:
             raise RuntimeError("full student prompt exceeds its prechecked input/context budget")
         inputs = torch.tensor([ids], dtype=torch.long, device="cuda:0")
+        guard = EarlyStopGuard(self.tokenizer, len(ids), source) if config.generation_policy != "legacy" else None
+        extra = {"stopping_criteria": [guard], "use_cache": True} if guard is not None else {}
         with torch.inference_mode():
             sequence = self.model.generate(
                 input_ids=inputs, attention_mask=torch.ones_like(inputs), do_sample=True,
                 temperature=config.temperature, top_p=config.top_p, top_k=0,
-                max_new_tokens=config.max_new_tokens, logits_processor=[self.logits_processor],
+                max_new_tokens=budget, logits_processor=[self.logits_processor],
                 eos_token_id=sorted(self.eos_ids), pad_token_id=(self.tokenizer.pad_token_id if self.tokenizer.pad_token_id is not None else min(self.eos_ids)),
                 # A forced last EOS can conceal length truncation, so disable it.
-                forced_eos_token_id=None)
+                forced_eos_token_id=None, **extra)
         tokens = sequence[0].tolist()
         if tokens[:len(ids)] != ids:
             raise RuntimeError("causal model returned an unexpected prompt prefix")
         new_tokens = tokens[len(ids):]
         reason = "stop" if new_tokens and new_tokens[-1] in self.eos_ids else "length"
         text = self.tokenizer.decode(new_tokens, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+        if guard is not None and guard.reason is not None:
+            return GeneratedResponse(text, "early_stop", len(new_tokens), issues=[guard.reason])
         return GeneratedResponse(text, reason, len(new_tokens))
 
     def generate(self, rows, indices, attempts):
-        return [generate_response(row, self.generate_prompt, self.tokenizer, self.config, index, attempt)
-                for row, index, attempt in zip(rows, indices, attempts, strict=True)]
+        results = []
+        for row, index, attempt in zip(rows, indices, attempts, strict=True):
+            if self.config.generation_policy == "legacy":
+                generate = self.generate_prompt
+            else:
+                budget = output_budget(row["source_tokens"], self.config)
+                generate = lambda prompt, seed: self.generate_prompt(prompt, seed, max_new_tokens=budget, source=row["source"])
+            results.append(generate_response(row, generate, self.tokenizer, self.config, index, attempt))
+        return results
 
 
 @dataclass(frozen=True)
@@ -506,6 +626,8 @@ def parse_args(argv=None):
     parser.add_argument("--inverse-strength", type=float, default=2.5)
     parser.add_argument("--prompt-mode", choices=("auto", "completion", "chat"), default="completion",
                         help="Base O defaults to completion; explicit auto chooses chat solely when a chat template exists")
+    parser.add_argument("--generation-policy", choices=("legacy", "efficient-v1"), default="legacy",
+                        help="efficient-v1 uses per-row token budgets and aborts repetition/prompt echo; --resume preserves completed legacy rows and records the policy upgrade")
     parser.add_argument("--context-window", type=int, help="Context cap no larger than model max_position_embeddings")
     parser.add_argument("--num-gpus", type=int)
     parser.add_argument("--dtype", choices=("auto", "float32", "bfloat16"), default="auto")

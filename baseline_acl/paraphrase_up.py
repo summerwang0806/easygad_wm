@@ -837,7 +837,8 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                      candidate_issues_fn: Callable | None = None, validate_audit_fn: Callable | None = None,
                      metadata_builder: Callable | None = None, final_writer: Callable | None = None,
                      checkpoint_loader: Callable | None = None, truncate_overlong: bool = False,
-                     keep_original_issues: frozenset[str] = frozenset(), progress_callback: Callable | None = None) -> dict:
+                     keep_original_issues: frozenset[str] = frozenset(), progress_callback: Callable | None = None,
+                     record_metadata: dict | None = None, resume_config_fn: Callable | None = None) -> dict:
     """Durable row orchestration with explicit model-specific contracts.
 
     The defaults retain the Dipper UP/backup TP behavior. A causal student TP
@@ -905,7 +906,9 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
             loaded = checkpoint_loader(checkpoint_path, meta, values, ids)
             complete, attempts_done, rejected = loaded[:3]
             if len(loaded) == 4 and loaded[3] != meta:
-                retry_update = {"kind": "retry_limit", "previous_fingerprint": loaded[3]["fingerprint"], "metadata": meta}
+                changed_policy = loaded[3]["config"].get("generation_policy", "legacy") != meta["config"].get("generation_policy", "legacy")
+                retry_update = {"kind": "generation_policy" if changed_policy else "retry_limit",
+                                "previous_fingerprint": loaded[3]["fingerprint"], "metadata": meta}
         else:
             complete, attempts_done, rejected = {}, {}, []
         for index, record in complete.items():
@@ -914,13 +917,15 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
             generated_fallback = (record["status"] == "fallback" and record["attempt"] > 0
                                   and bool(keep_original_issues))
             if record["status"] == "ok" or generated_fallback:
+                validation_config = resume_config_fn(record) if resume_config_fn is not None else config
+                validation_prepared = prepare_fn(tokenizer, values[index], validation_config) if resume_config_fn is not None else prepared[index]
                 candidate_text = record.get("candidate", record["paraphrase"]) if generated_fallback else record["paraphrase"]
                 candidate = GeneratedResponse(candidate_text, record["finish_reason"], record["output_tokens"],
                                               record.get("windows", []), record.get("generation_issues", []))
-                issues = candidate_issues(candidate, values[index], config)
+                issues = candidate_issues(candidate, values[index], validation_config)
                 allowed_fallback = (generated_fallback and bool(issues) and record.get("issues") == issues
-                                    and (config.on_failure == "keep-original" or set(issues) <= keep_original_issues))
-                if (issues and not allowed_fallback) or validate_audit(candidate, prepared[index], tokenizer, config, index, record["attempt"]):
+                                    and (validation_config.on_failure == "keep-original" or set(issues) <= keep_original_issues))
+                if (issues and not allowed_fallback) or validate_audit(candidate, validation_prepared, tokenizer, validation_config, index, record["attempt"]):
                     raise ValueError(f"invalid accepted window audit at row {index}")
         if audit_path.exists():
             validate_orphan_audit(audit_path, output_path, meta, source.num_rows, len(complete))
@@ -929,7 +934,8 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                 append_record(handle, meta)
             elif retry_update is not None:
                 append_record(handle, retry_update)
-                print(f"[resume] max_attempts={config.max_attempts}, on_failure={config.on_failure}; completed rows are retained", flush=True)
+                print(f"[resume] max_attempts={config.max_attempts}, on_failure={config.on_failure}, "
+                      f"generation_policy={getattr(config, 'generation_policy', 'default')}; completed rows are retained", flush=True)
             print(f"[resume] accepted {len(complete)}/{source.num_rows} completed rows", flush=True)
             pending = []
             for index, info in enumerate(prepared):
@@ -939,7 +945,7 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                     record = {"kind": "result", "row_index": index, "id": ids[index], "source_sha256": text_sha256(values[index]),
                               "status": "fallback", "paraphrase": values[index], "issues": info["issues"], "finish_reason": "not_generated",
                               "prompt_tokens": info["prompt_tokens"], "source_tokens": info["source_tokens"], "output_tokens": info["source_tokens"],
-                              "attempt": 0, "seed": None, "windows": [], "generation_issues": info["issues"]}
+                              "attempt": 0, "seed": None, "windows": [], "generation_issues": info["issues"], **(record_metadata or {})}
                     append_record(handle, record)
                     complete[index] = record
                 else:
@@ -1000,7 +1006,7 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                                       "status": "ok", "paraphrase": candidate.text, "issues": issues, "finish_reason": candidate.finish_reason,
                                       "prompt_tokens": info["prompt_tokens"], "source_tokens": info["source_tokens"], "output_tokens": candidate.output_tokens,
                                       "attempt": attempt, "seed": generation_seed(config.seed, index, attempt),
-                                      "windows": candidate.windows, "generation_issues": candidate.issues}
+                                      "windows": candidate.windows, "generation_issues": candidate.issues, **(record_metadata or {})}
                             if issues:
                                 record["candidate"] = record.pop("paraphrase")
                                 if attempt >= config.max_attempts and (config.on_failure == "keep-original"
