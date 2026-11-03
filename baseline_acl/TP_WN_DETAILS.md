@@ -122,6 +122,20 @@ CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_tp.py \
   --output data/dolly15k_qwen2_5_14b_kgw_tp_student_train.parquet \
   --rules data/acl_estimated_rules.json \
   --model models/Qwen2.5-0.5B --num-gpus 2
+
+
+CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_tp.py \
+  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet \
+  --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_tp_warmup_student_newtrain_strengh3.parquet \
+  --rules wn/acl_rules_tp_warmup_Qwen2.5-0.5B_gamma0.5_delta3_fp32.json \
+  --model /shared/public_models/Qwen2.5-0.5B \
+  --num-gpus 1 \
+  --dtype float32 \
+  --prompt-mode completion \
+  --inverse-strength 3 --num-gpus 2
+
+
+
 ```
 
 每张显式选中的 GPU 加载完整学生 O，显存不会合并。断点加 `--resume`；模型、tokenizer、规则文件内容、反向强度、转述 prompt、采样预算或原数据改变时，拒绝继续旧断点。旧 Dipper TP 断点不能在新入口继续；请使用新的输出路径。每个 worker 校验规则 SHA-256，确保使用同一份规则。默认审计文件是 `<output>.audit.json`，方法标签是 `targeted_student_paraphrasing`，其中 `cross_tokenizer=false`、`projection=null`，并记录原始学生 O 角色及 tokenizer 身份校验。
