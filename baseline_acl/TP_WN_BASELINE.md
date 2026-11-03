@@ -49,8 +49,12 @@ CUDA_VISIBLE_DEVICES=1 python baseline_acl/steal_watermark.py \
 ```bash
 CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_tp.py \
   --input "$TRAIN" --output "$TP_DATA" --rules "$RULES" \
-  --model "$MODEL" --num-gpus 2 --inverse-strength 2.5
+  --model "$MODEL" --num-gpus 2 --inverse-strength 2.5 --max-attempts 3
 ```
+
+默认每条最多生成 3 次（首次生成加两次换 seed 重试）。最后一次仅因与原文相同而失败时，写回精确原文并继续下一条；空白差异也按相同处理。终端进度条实时显示 `unchanged`（最终保存为原文的数量）和 `unchanged_fallbacks`（重试后仍相同而保留原文的数量）。最终 `<TP_DATA>.audit.json` 保存 `unchanged_teacher_responses`、`unchanged_response_rows`（从 0 开始）、`unchanged_response_ids` 和 `unchanged_fallback_count`。
+
+旧的单次尝试任务可在原命令加 `--max-attempts 3 --resume`，保留已完成行，并从失败行的下一次尝试继续。除提高尝试次数外，模型、规则、输入和采样参数必须保持一致；最多允许 3 次总尝试。其它类型的失败在三次耗尽后仍报错。
 
 重新从原始学生 O 开始，Warmup 和 GAD 均使用 TP 数据：
 

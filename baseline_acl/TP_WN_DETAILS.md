@@ -109,7 +109,7 @@ CUDA_VISIBLE_DEVICES=1 python baseline_acl/steal_watermark.py \
 
 每步采样前执行 `logit -= inverse_strength * D`，默认强度 2.5，直接使用生成上下文的学生 token ID 查表。正式 TP 不使用 Dipper、T5、NLTK、候选文本投影、投影 top-k 或投影上下文窗口。转述 prompt 使用完整原回答；默认 `--prompt-mode completion` 使用纯文本转述指令，适用于原始 base 学生 O。只有模型经过 chat/instruct 训练时才适合显式选择 `chat`；`auto` 作为可选项，仅按 chat template 是否存在选择格式，模板存在本身不证明模型有对话能力。
 
-保留完整回答一次改写、top_p=0.75、temperature=1、逐行 seed、断点恢复和严格 Parquet 数据契约。只替换 `teacher_response`，保护其余字段、schema metadata、ID 和行顺序；默认遇到失败停止，不默默保留原回答。`--max-input-tokens 4096` 限制包含转述指令的输入长度；`--max-new-tokens 4096` 仅表示新生成回答的上限，不含 prompt。程序还检查输入加输出预算是否超过模型 context window，不静默截断回答；可用 `--context-window` 指定更小的窗口上限，但不得超过模型配置的 `max_position_embeddings`。
+保留完整回答一次改写、top_p=0.75、temperature=1、逐行 seed、断点恢复和严格 Parquet 数据契约。只替换 `teacher_response`，保护其余字段、schema metadata、ID 和行顺序。默认 `--max-attempts 3`：首次失败后最多换 seed 重试两次；第三次若仅有 `unchanged_source_answer`，则写回精确原文并标记 `fallback`，继续后续行。空白归一化后相同也采用此策略；如果同时有截断、提示词回显或审计不匹配等问题，仍按普通失败处理。最终审计保存 `unchanged_teacher_responses`、`unchanged_response_rows`、`unchanged_response_ids` 和 `unchanged_fallback_count`；进度条显示最终未改写数量，恢复断点时重建计数，不重复累计失败尝试。`--max-input-tokens 4096` 限制包含转述指令的输入长度；`--max-new-tokens 4096` 仅表示新生成回答的上限，不含 prompt。程序还检查输入加输出预算是否超过模型 context window，不静默截断回答；可用 `--context-window` 指定更小的窗口上限，但不得超过模型配置的 `max_position_embeddings`。
 
 ```bash
 python baseline_acl/paraphrase_tp.py \
@@ -138,7 +138,7 @@ CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_tp.py \
 
 ```
 
-每张显式选中的 GPU 加载完整学生 O，显存不会合并。断点加 `--resume`；模型、tokenizer、规则文件内容、反向强度、转述 prompt、采样预算或原数据改变时，拒绝继续旧断点。旧 Dipper TP 断点不能在新入口继续；请使用新的输出路径。每个 worker 校验规则 SHA-256，确保使用同一份规则。默认审计文件是 `<output>.audit.json`，方法标签是 `targeted_student_paraphrasing`，其中 `cross_tokenizer=false`、`projection=null`，并记录原始学生 O 角色及 tokenizer 身份校验。
+每张显式选中的 GPU 加载完整学生 O，显存不会合并。断点加 `--resume`；可把旧任务的 `--max-attempts 1` 提高到 `3`，保留成功行并继续失败行的后续尝试，重试上限变更会持久化到断点。其它模型、tokenizer、规则文件内容、反向强度、转述 prompt、采样预算或原数据改变时，拒绝继续旧断点。旧 Dipper TP 断点不能在新入口继续；请使用新的输出路径。每个 worker 校验规则 SHA-256，确保使用同一份规则。默认审计文件是 `<output>.audit.json`，方法标签是 `targeted_student_paraphrasing`，其中 `cross_tokenizer=false`、`projection=null`，并记录原始学生 O 角色及 tokenizer 身份校验。
 
 训练启动器复用现有流程，每组默认 Warmup 1 epoch + GAD 1 epoch：
 

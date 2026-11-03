@@ -82,6 +82,7 @@ class EntryTests(unittest.TestCase):
         args = tp.parse_args(self.argv("--inspect"))
         self.assertEqual(args.tokenizer, args.model)
         self.assertEqual((args.inverse_strength, args.max_new_tokens, args.prompt_mode), (2.5, 4096, "completion"))
+        self.assertEqual((args.max_attempts, tp.GenerationConfig().max_attempts), (3, 3))
         for obsolete in ("--rule-tokenizer", "--candidate-top-k", "--lex-diversity", "--nltk-data"):
             with self.subTest(obsolete=obsolete), patch("sys.stderr", new_callable=io.StringIO), self.assertRaises(SystemExit):
                 tp.parse_args(self.argv("--inspect", obsolete, "0"))
@@ -300,6 +301,145 @@ class DataContractTests(unittest.TestCase):
     def run_job(self, candidate=None, factory=None, **kwargs):
         return tp.run_paraphrasing(self.source, self.output, self.config, Tokenizer(),
                                   factory or (lambda: Generator(self.config, candidate=candidate)), self.identity, **kwargs)
+
+    def scripted_factory(self, choose, calls):
+        config, tokenizer = self.config, Tokenizer()
+
+        class ScriptedGenerator:
+            def generate(self, rows, indices, attempts):
+                results = []
+                for row, index, attempt in zip(rows, indices, attempts, strict=True):
+                    def generate(prompt, seed):
+                        calls.append((index, attempt, seed))
+                        return choose(row, index, attempt)
+                    results.append(tp.generate_response(row, generate, tokenizer, config, index, attempt))
+                return results
+
+        return ScriptedGenerator
+
+    def test_unchanged_retries_twice_then_preserves_source_and_continues(self):
+        calls = []
+        def choose(row, index, attempt):
+            text = row["source"] if index == 0 else "A successfully revised second answer."
+            return up.GeneratedResponse(text, "stop", 5)
+
+        with patch("sys.stdout", new_callable=io.StringIO) as output:
+            report = self.run_job(factory=self.scripted_factory(choose, calls))
+        self.assertEqual(calls, [(0, attempt, up.generation_seed(42, 0, attempt)) for attempt in (1, 2, 3)]
+                         + [(1, 1, up.generation_seed(42, 1, 1))])
+        self.assertEqual(len({seed for index, attempt, seed in calls if index == 0}), 3)
+        self.assertEqual(pq.read_table(self.output)["teacher_response"].to_pylist(),
+                         ["Original answer a.", "A successfully revised second answer."])
+        self.assertEqual(report["status_counts"], {"fallback": 1, "ok": 1})
+        self.assertEqual(report["changed_teacher_responses"], 1)
+        self.assertEqual(report["unchanged_teacher_responses"], 1)
+        self.assertEqual(report["unchanged_response_rows"], [0])
+        self.assertEqual(report["unchanged_response_ids"], ["a"])
+        self.assertEqual(report["unchanged_fallback_count"], 1)
+        self.assertEqual(report["identical_accepted_responses"], 0)
+        saved = json.loads(self.output.with_suffix(".parquet.audit.json").read_text(encoding="utf-8"))
+        self.assertEqual(saved["unchanged_teacher_responses"], 1)
+        self.assertIn("unchanged=1", output.getvalue())
+        self.assertIn("unchanged_fallbacks=1", output.getvalue())
+        self.assertIn("[TP progress] [########################]", output.getvalue())
+
+    def test_whitespace_equal_fallback_writes_byte_exact_original(self):
+        original = "  Original\tanswer a.\n"
+        self.table = self.table.set_column(self.table.schema.get_field_index("teacher_response"),
+                                           "teacher_response", pa.array([original, "Original answer b."]))
+        pq.write_table(self.table, self.source)
+        def choose(row, index, attempt):
+            return up.GeneratedResponse("Original answer a." if index == 0 else "A revised second answer.", "stop", 5)
+
+        report = self.run_job(factory=self.scripted_factory(choose, []))
+        self.assertEqual(pq.read_table(self.output)["teacher_response"][0].as_py(), original)
+        self.assertEqual(report["unchanged_teacher_responses"], 1)
+        self.assertEqual(report["unchanged_fallback_count"], 1)
+
+    def test_changed_third_attempt_succeeds_without_unchanged_fallback(self):
+        calls = []
+        def choose(row, index, attempt):
+            text = row["source"] if index == 0 and attempt < 3 else "A successfully revised answer."
+            return up.GeneratedResponse(text, "stop", 5)
+
+        report = self.run_job(factory=self.scripted_factory(choose, calls))
+        self.assertEqual([attempt for index, attempt, seed in calls if index == 0], [1, 2, 3])
+        self.assertEqual(len({seed for index, attempt, seed in calls if index == 0}), 3)
+        self.assertEqual(report["status_counts"], {"ok": 2})
+        self.assertEqual(report["unchanged_teacher_responses"], 0)
+        self.assertEqual(report["unchanged_fallback_count"], 0)
+        self.assertEqual(report["unchanged_response_rows"], [])
+        self.assertEqual(pq.read_table(self.output)["teacher_response"][0].as_py(), "A successfully revised answer.")
+
+    def test_unchanged_with_another_failure_still_stops_after_two_retries(self):
+        calls = []
+        def choose(row, index, attempt):
+            return up.GeneratedResponse(row["source"], "length", 5)
+
+        with self.assertRaisesRegex(RuntimeError, "exhausted"):
+            self.run_job(factory=self.scripted_factory(choose, calls))
+        self.assertEqual([attempt for _, attempt, _ in calls], [1, 2, 3])
+        self.assertFalse(self.output.exists())
+        self.assertFalse(self.output.with_suffix(".parquet.audit.json").exists())
+
+    def test_legacy_one_attempt_checkpoint_resumes_with_two_new_seeds(self):
+        self.config = replace(self.config, max_attempts=1)
+        def choose(row, index, attempt):
+            return up.GeneratedResponse("A revised first answer." if index == 0 else row["source"], "stop", 5)
+
+        with patch.object(up, "publish_new_file", side_effect=RuntimeError("interrupt publication")), self.assertRaises(RuntimeError):
+            self.run_job(factory=self.scripted_factory(choose, []))
+        checkpoint = self.output.with_suffix(".parquet.progress.jsonl")
+        entries = [json.loads(line) for line in checkpoint.read_text(encoding="utf-8").splitlines()]
+        # Before this fix, an unchanged final attempt was persisted as a failure.
+        entries[-1]["kind"], entries[-1]["status"] = "failure", "rejected"
+        entries[-1].pop("paraphrase", None)
+        checkpoint.write_text("".join(up.canonical_json(entry) + "\n" for entry in entries), encoding="utf-8")
+        self.config = replace(self.config, max_attempts=3)
+        calls = []
+        report = self.run_job(resume=True, factory=self.scripted_factory(choose, calls))
+        self.assertEqual(calls, [(1, attempt, up.generation_seed(42, 1, attempt)) for attempt in (2, 3)])
+        self.assertEqual(report["unchanged_response_rows"], [1])
+        self.assertEqual(report["unchanged_fallback_count"], 1)
+        self.assertEqual(pq.read_table(self.output)["teacher_response"][0].as_py(), "A revised first answer.")
+
+    def test_resume_retains_unchanged_count_without_regeneration(self):
+        def choose(row, index, attempt):
+            return up.GeneratedResponse(row["source"], "stop", 5)
+
+        with patch.object(up, "publish_new_file", side_effect=RuntimeError("interrupt publication")), self.assertRaises(RuntimeError):
+            self.run_job(factory=self.scripted_factory(choose, []))
+        with patch("sys.stdout", new_callable=io.StringIO) as output:
+            report = self.run_job(resume=True, factory=lambda: self.fail("completed fallbacks must not regenerate"))
+        self.assertEqual(report["unchanged_teacher_responses"], 2)
+        self.assertEqual(report["unchanged_fallback_count"], 2)
+        self.assertIn("unchanged=2", output.getvalue())
+
+    def test_resume_rejects_tampered_unchanged_fallback_audit(self):
+        def choose(row, index, attempt):
+            return up.GeneratedResponse(row["source"], "stop", 5)
+
+        with patch.object(up, "publish_new_file", side_effect=RuntimeError("interrupt publication")), self.assertRaises(RuntimeError):
+            self.run_job(factory=self.scripted_factory(choose, []))
+        checkpoint = self.output.with_suffix(".parquet.progress.jsonl")
+        entries = [json.loads(line) for line in checkpoint.read_text(encoding="utf-8").splitlines()]
+        fallback = next(entry for entry in entries if entry.get("status") == "fallback")
+        fallback["windows"][0]["prompt_sha256"] = "tampered"
+        checkpoint.write_text("".join(up.canonical_json(entry) + "\n" for entry in entries), encoding="utf-8")
+        with self.assertRaises(ValueError):
+            self.run_job(resume=True)
+
+    def test_resume_does_not_use_injected_candidate_to_hide_tampered_accepted_text(self):
+        with patch.object(up, "publish_new_file", side_effect=RuntimeError("interrupt publication")), self.assertRaises(RuntimeError):
+            self.run_job()
+        checkpoint = self.output.with_suffix(".parquet.progress.jsonl")
+        entries = [json.loads(line) for line in checkpoint.read_text(encoding="utf-8").splitlines()]
+        accepted = next(entry for entry in entries if entry.get("status") == "ok")
+        accepted["candidate"] = accepted["paraphrase"]
+        accepted["paraphrase"] = "An unrelated answer that still passes text-only quality checks."
+        checkpoint.write_text("".join(up.canonical_json(entry) + "\n" for entry in entries), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "invalid accepted"):
+            self.run_job(resume=True)
 
     def test_only_response_changes_and_formal_audit_has_no_dipper_contract(self):
         with patch.object(up, "load_sentence_splitter", side_effect=AssertionError("NLTK")):

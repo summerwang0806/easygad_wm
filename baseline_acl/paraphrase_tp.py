@@ -52,12 +52,14 @@ class GenerationConfig:
     dtype: str = "float32"
     seed: int = 42
     on_failure: str = "error"
-    max_attempts: int = 1
+    max_attempts: int = 3
 
     def validate(self):
         for name in ("batch_size", "max_input_tokens", "max_new_tokens", "context_window", "max_attempts"):
             if type(getattr(self, name)) is not int or getattr(self, name) < 1:
                 raise ValueError(f"{name} must be a positive integer")
+        if self.max_attempts > 3:
+            raise ValueError("TP permits at most 3 total attempts (initial generation plus two retries)")
         if self.prompt_mode not in ("completion", "chat"):
             raise ValueError("resolved prompt mode must be completion or chat")
         if self.dtype not in ("float32", "bfloat16"):
@@ -210,21 +212,37 @@ def metadata_builder(input_path, source, identity, config, prepared):
                                     "output_extraction": "new_tokens_only", "direct_token_id_bias": True}}
 
 
-def load_checkpoint(path, expected_meta, source_values, ids):
+def validate_resume_metadata(previous, requested):
+    if previous.get("config", {}).get("on_failure") != requested["config"]["on_failure"]:
+        raise ValueError("checkpoint fingerprint differs from input/model/config; only increasing max_attempts is allowed")
+    up.validate_resume_metadata(previous, requested)
+
+
+def _read_checkpoint(path, expected_meta, source_values, ids):
     config = GenerationConfig(**expected_meta["config"])
     complete, attempts, rejected = {}, {}, []
+    last_failures = {}
     with path.open("rb") as handle:
         lines = handle.readlines()
     if not lines or not lines[0].endswith(b"\n"):
         raise ValueError("checkpoint has no durable metadata header")
-    if json.loads(lines[0]) != expected_meta:
-        raise ValueError("checkpoint fingerprint differs from input/model/config; use a new output path")
+    active_meta = json.loads(lines[0])
+    validate_resume_metadata(active_meta, expected_meta)
     repair_size = None
     if not lines[-1].endswith(b"\n"):
         repair_size = sum(map(len, lines[:-1]))
         lines.pop()
     for line in lines[1:]:
         entry = json.loads(line)
+        if entry.get("kind") == "retry_limit":
+            updated = entry.get("metadata")
+            if (not isinstance(updated, dict) or entry.get("previous_fingerprint") != active_meta["fingerprint"]
+                    or updated == active_meta):
+                raise ValueError("invalid checkpoint retry limit update")
+            validate_resume_metadata(active_meta, updated)
+            validate_resume_metadata(updated, expected_meta)
+            active_meta = updated
+            continue
         index, attempt = entry.get("row_index"), entry.get("attempt")
         if type(index) is not int or not 0 <= index < len(source_values):
             raise ValueError("invalid checkpoint row")
@@ -237,7 +255,7 @@ def load_checkpoint(path, expected_meta, source_values, ids):
             if attempt != 0 or entry.get("seed") is not None or index in attempts:
                 raise ValueError("invalid input-budget fallback checkpoint")
         else:
-            if type(attempt) is not int or not 1 <= attempt <= config.max_attempts or attempt != attempts.get(index, 0) + 1:
+            if type(attempt) is not int or not 1 <= attempt <= active_meta["config"]["max_attempts"] or attempt != attempts.get(index, 0) + 1:
                 raise ValueError("nonsequential or invalid checkpoint attempt")
             if entry.get("seed") != up.generation_seed(config.seed, index, attempt):
                 raise ValueError("checkpoint seed mismatch")
@@ -247,23 +265,69 @@ def load_checkpoint(path, expected_meta, source_values, ids):
         if entry.get("kind") == "failure":
             if entry.get("status") != "rejected" or not entry.get("issues"):
                 raise ValueError("invalid rejected checkpoint attempt")
+            last_failures[index] = entry
             continue
         if entry.get("kind") != "result" or entry.get("status") not in ("ok", "fallback") or not isinstance(entry.get("paraphrase"), str) or not entry["paraphrase"].strip():
             raise ValueError("invalid completed checkpoint row")
         if entry["status"] == "fallback":
-            if config.on_failure != "keep-original" or entry["paraphrase"] != source_values[index] or not entry.get("issues"):
+            unchanged = (set(entry.get("issues", [])) == {"unchanged_source_answer"}
+                         and isinstance(entry.get("candidate"), str)
+                         and " ".join(entry["candidate"].split()) == " ".join(source_values[index].split()))
+            if ((config.on_failure != "keep-original" and not unchanged)
+                    or entry["paraphrase"] != source_values[index] or not entry.get("issues")
+                    or not budget_fallback and attempt != active_meta["config"]["max_attempts"]):
                 raise ValueError("unauthorized/invalid fallback")
         else:
             candidate = GeneratedResponse(entry["paraphrase"], entry.get("finish_reason"), entry.get("output_tokens"))
             if entry.get("issues") or candidate_issues(candidate, source_values[index], config):
                 raise ValueError("invalid accepted checkpoint generation")
         complete[index] = entry
+    # Older TP versions stopped on unchanged answers. Reclassify only an
+    # exhausted unchanged-only failure; raising the retry limit must retry it.
+    for index, failure in last_failures.items():
+        candidate = failure.get("candidate")
+        if (index not in complete and failure["attempt"] == config.max_attempts
+                and set(failure["issues"]) == {"unchanged_source_answer"}
+                and isinstance(candidate, str)
+                and " ".join(candidate.split()) == " ".join(source_values[index].split())):
+            complete[index] = {**failure, "kind": "result", "status": "fallback", "paraphrase": source_values[index]}
     if repair_size is not None:
         with path.open("r+b") as handle:
             handle.truncate(repair_size)
             handle.flush()
             os.fsync(handle.fileno())
-    return complete, attempts, rejected
+    return complete, attempts, rejected, active_meta
+
+
+def load_checkpoint(path, expected_meta, source_values, ids):
+    return _read_checkpoint(path, expected_meta, source_values, ids)[:3]
+
+
+class TPProgress:
+    """Count durable final responses once, including rows restored on resume."""
+
+    def __init__(self):
+        self.counted = set()
+        self.unchanged = 0
+        self.unchanged_fallbacks = 0
+
+    def __call__(self, complete, source_values, *, record=None, started):
+        rows = complete.items() if record is None else [(record["row_index"], record)]
+        for index, result in rows:
+            if index in self.counted or result["kind"] != "result":
+                continue
+            self.counted.add(index)
+            if result["paraphrase"] == source_values[index]:
+                self.unchanged += 1
+                if result["status"] == "fallback" and "unchanged_source_answer" in result["issues"]:
+                    self.unchanged_fallbacks += 1
+        total, done = len(source_values), len(complete)
+        filled = 24 * done // total
+        bar = "#" * filled + "-" * (24 - filled)
+        attempt = f", row={record['row_index']}, attempt={record['attempt']}" if record is not None else ""
+        print(f"[TP progress] [{bar}] completed={done}/{total} ({100 * done / total:.1f}%), "
+              f"unchanged={self.unchanged}, unchanged_fallbacks={self.unchanged_fallbacks}{attempt}, "
+              f"elapsed={time.monotonic() - started:.1f}s", flush=True)
 
 
 def write_final_outputs(source, responses, records, rejected, output_path, audit_path, meta, started, *, resume=False):
@@ -287,6 +351,9 @@ def write_final_outputs(source, responses, records, rejected, output_path, audit
         if not all(protected.values()) or reread["teacher_response"].to_pylist() != responses:
             raise AssertionError("written parquet changed protected columns or accepted responses")
         original = source["teacher_response"].to_pylist()
+        unchanged_rows = [i for i, (before, after) in enumerate(zip(original, responses, strict=True)) if before == after]
+        unchanged_fallbacks = [i for i in unchanged_rows if records[i]["status"] == "fallback"
+                               and "unchanged_source_answer" in records[i]["issues"]]
         attempted = {(r["row_index"], r["attempt"]): r for r in [*rejected, *records.values()] if r["attempt"] > 0}
         all_generations = [item for record in attempted.values() for item in record.get("windows", [])]
         counts = [r["output_tokens"] for r in records.values() if r["status"] == "ok"]
@@ -301,7 +368,13 @@ def write_final_outputs(source, responses, records, rejected, output_path, audit
                   "rejected_generation_attempts": len(rejected),
                   "rejected_attempt_reasons": dict(Counter(issue for r in rejected for issue in r["issues"])),
                   "changed_teacher_responses": sum(a != b for a, b in zip(original, responses, strict=True)),
-                  "identical_accepted_responses": 0, "schema_and_metadata_equal": True,
+                  "unchanged_teacher_responses": len(unchanged_rows), "unchanged_response_rows": unchanged_rows,
+                  "unchanged_response_ids": [source["id"][i].as_py() for i in unchanged_rows],
+                  "unchanged_fallback_count": len(unchanged_fallbacks),
+                  "unchanged_source_policy": "retry_then_keep_original",
+                  "max_attempts_per_row": meta["config"]["max_attempts"],
+                  "identical_accepted_responses": sum(records[i]["status"] == "ok" for i in unchanged_rows),
+                  "schema_and_metadata_equal": True,
                   "row_order_and_ids_equal": True, "protected_columns_equal": protected,
                   "output_tokens": {"min": min(counts), "max": max(counts), "mean": sum(counts) / len(counts)} if counts else None,
                   "response_input_checks": len(all_generations), "generated_response_attempts": len(all_generations),
@@ -329,7 +402,8 @@ def write_final_outputs(source, responses, records, rejected, output_path, audit
             up.publish_new_file(audit_temp, audit_path)
             audit_temp = None
         up.publish_new_file(parquet_temp, output_path)
-        print(f"[done] {output_path}: {source.num_rows} rows; audit: {audit_path}", flush=True)
+        print(f"[done] {output_path}: {source.num_rows} rows, unchanged={len(unchanged_rows)}, "
+              f"unchanged_fallbacks={len(unchanged_fallbacks)}; audit: {audit_path}", flush=True)
         return report
     finally:
         parquet_temp.unlink(missing_ok=True)
@@ -341,7 +415,9 @@ def run_paraphrasing(input_path, output_path, config, tokenizer, generator_facto
     return up.run_paraphrasing(input_path, output_path, config, tokenizer, generator_factory, identity,
                               prepare_fn=prepare_response, candidate_issues_fn=candidate_issues,
                               validate_audit_fn=validate_audit, metadata_builder=metadata_builder,
-                              final_writer=write_final_outputs, checkpoint_loader=load_checkpoint, **kwargs)
+                              final_writer=write_final_outputs, checkpoint_loader=_read_checkpoint,
+                              keep_original_issues=frozenset({"unchanged_source_answer"}),
+                              progress_callback=TPProgress(), **kwargs)
 
 
 def preflight_source(path, tokenizer, config):
@@ -439,8 +515,10 @@ def parse_args(argv=None):
     parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--top-p", type=float, default=0.75)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--max-attempts", type=int, default=1)
-    parser.add_argument("--on-failure", choices=("error", "keep-original"), default="error")
+    parser.add_argument("--max-attempts", type=int, choices=(1, 2, 3), default=3,
+                        help="Total attempts per row (default 3: initial plus two retries with new seeds). Unchanged-only failures retain the original after the final attempt.")
+    parser.add_argument("--on-failure", choices=("error", "keep-original"), default="error",
+                        help="Policy for other exhausted failures; unchanged-only failures always retain the original")
     parser.add_argument("--checkpoint", type=Path)
     parser.add_argument("--audit", type=Path)
     parser.add_argument("--resume", action="store_true")

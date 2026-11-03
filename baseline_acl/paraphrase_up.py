@@ -836,7 +836,8 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                      sentence_splitter: Callable | None = None, prepare_fn: Callable | None = None,
                      candidate_issues_fn: Callable | None = None, validate_audit_fn: Callable | None = None,
                      metadata_builder: Callable | None = None, final_writer: Callable | None = None,
-                     checkpoint_loader: Callable | None = None, truncate_overlong: bool = False) -> dict:
+                     checkpoint_loader: Callable | None = None, truncate_overlong: bool = False,
+                     keep_original_issues: frozenset[str] = frozenset(), progress_callback: Callable | None = None) -> dict:
     """Durable row orchestration with explicit model-specific contracts.
 
     The defaults retain the Dipper UP/backup TP behavior. A causal student TP
@@ -901,16 +902,25 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                 kind = "retry_limit" if saved_meta["config"]["on_failure"] == config.on_failure else "resume_policy"
                 retry_update = {"kind": kind, "previous_fingerprint": saved_meta["fingerprint"], "metadata": meta}
         elif resume:
-            complete, attempts_done, rejected = checkpoint_loader(checkpoint_path, meta, values, ids)
+            loaded = checkpoint_loader(checkpoint_path, meta, values, ids)
+            complete, attempts_done, rejected = loaded[:3]
+            if len(loaded) == 4 and loaded[3] != meta:
+                retry_update = {"kind": "retry_limit", "previous_fingerprint": loaded[3]["fingerprint"], "metadata": meta}
         else:
             complete, attempts_done, rejected = {}, {}, []
         for index, record in complete.items():
             if any(record.get(key) != prepared[index][key] for key in ("prompt_tokens", "source_tokens")):
                 raise ValueError(f"checkpoint token counts differ at row {index}")
-            if record["status"] == "ok":
-                candidate = GeneratedResponse(record["paraphrase"], record["finish_reason"], record["output_tokens"],
+            generated_fallback = (record["status"] == "fallback" and record["attempt"] > 0
+                                  and bool(keep_original_issues))
+            if record["status"] == "ok" or generated_fallback:
+                candidate_text = record.get("candidate", record["paraphrase"]) if generated_fallback else record["paraphrase"]
+                candidate = GeneratedResponse(candidate_text, record["finish_reason"], record["output_tokens"],
                                               record.get("windows", []), record.get("generation_issues", []))
-                if candidate_issues(candidate, values[index], config) or validate_audit(candidate, prepared[index], tokenizer, config, index, record["attempt"]):
+                issues = candidate_issues(candidate, values[index], config)
+                allowed_fallback = (generated_fallback and bool(issues) and record.get("issues") == issues
+                                    and (config.on_failure == "keep-original" or set(issues) <= keep_original_issues))
+                if (issues and not allowed_fallback) or validate_audit(candidate, prepared[index], tokenizer, config, index, record["attempt"]):
                     raise ValueError(f"invalid accepted window audit at row {index}")
         if audit_path.exists():
             validate_orphan_audit(audit_path, output_path, meta, source.num_rows, len(complete))
@@ -934,6 +944,8 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                     complete[index] = record
                 else:
                     pending.append(index)
+            if progress_callback is not None:
+                progress_callback(complete, values, started=started)
             exhausted = [i for i in pending if attempts_done.get(i, 0) >= config.max_attempts]
             if exhausted and config.on_failure == "drop":
                 last_failures = {record["row_index"]: record for record in rejected}
@@ -991,7 +1003,8 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                                       "windows": candidate.windows, "generation_issues": candidate.issues}
                             if issues:
                                 record["candidate"] = record.pop("paraphrase")
-                                if attempt >= config.max_attempts and config.on_failure == "keep-original":
+                                if attempt >= config.max_attempts and (config.on_failure == "keep-original"
+                                                                        or set(issues) <= keep_original_issues):
                                     record["status"], record["paraphrase"] = "fallback", values[index]
                                 else:
                                     record["kind"], record["status"] = "failure", "rejected"
@@ -1009,7 +1022,9 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                                 print(f"[drop] row_index={index}, attempts={attempt}, issues={issues}", flush=True)
                             if record["kind"] == "result":
                                 complete[index] = record
-                            if streaming and (len(complete) % 20 == 0 or issues or len(complete) == source.num_rows):
+                            if progress_callback is not None:
+                                progress_callback(complete, values, record=record, started=started)
+                            elif streaming and (len(complete) % 20 == 0 or issues or len(complete) == source.num_rows):
                                 print(f"[progress] completed={len(complete)}/{source.num_rows}, workers={generator.worker_count}, "
                                       f"elapsed={time.monotonic() - started:.1f}s", flush=True)
                             if streaming and terminal_failures:
@@ -1017,8 +1032,9 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                                                    "no final training parquet was written; completed rows are preserved in the checkpoint")
                         if seen != set(expected):
                             raise RuntimeError(f"backend returned missing row indices: {sorted(set(expected) - seen)}")
-                        print(f"[batch] completed={len(complete)}/{source.num_rows}, attempted={len(indices)}, retry_rows={len(retries)}, "
-                              f"fallbacks={sum(r['status'] == 'fallback' for r in complete.values())}, elapsed={time.monotonic() - started:.1f}s", flush=True)
+                        if progress_callback is None:
+                            print(f"[batch] completed={len(complete)}/{source.num_rows}, attempted={len(indices)}, retry_rows={len(retries)}, "
+                                  f"fallbacks={sum(r['status'] == 'fallback' for r in complete.values())}, elapsed={time.monotonic() - started:.1f}s", flush=True)
                         indices = retries
                     if terminal_failures:
                         raise RuntimeError(f"paraphrases exhausted {config.max_attempts} attempts: {terminal_failures}; "
