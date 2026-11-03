@@ -134,6 +134,16 @@ CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_tp.py \
   --prompt-mode completion \
   --inverse-strength 3 --num-gpus 2
 
+CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_tp.py \
+  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet \
+  --output data/tp_warmup_dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_student_newtrain_strength2.5.parquet \
+  --rules wn/acl_rules_tp_warmup_Qwen2.5-0.5B_gamma0.5_delta3_fp32.json \
+  --model /shared/public_models/Qwen2.5-0.5B \
+  --num-gpus 2 \
+  --dtype float32 \
+  --prompt-mode completion \
+  --inverse-strength 2.5 \
+  --max-attempts 3 
 
 
 ```
