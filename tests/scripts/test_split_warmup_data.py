@@ -131,6 +131,15 @@ class WrapperTests(unittest.TestCase):
             ("--sft_train_file", "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet"),
         )
 
+    def test_clean_para_wrapper_routes_clean_discriminator_and_para_sft_gad(self):
+        self.check_wrapper(
+            "run_full_gad_cleanD_paraSFT_paraGAD_optimized.sh",
+            "data/dolly15k_qwen2_5_14b_cleanD_paraSFT_gamma0.5_delta3_newtrain.parquet",
+            "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_newtrain.parquet",
+            ("--discriminator_train_file", "data/dolly15k_qwen2_5_14b_clean_train.parquet"),
+            ("--sft_train_file", "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_newtrain.parquet"),
+        )
+
     def check_wrapper(self, wrapper_name, warmup_file, gad_file, discriminator, sft):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
