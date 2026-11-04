@@ -44,13 +44,13 @@ ROOT = HERE.parents[1]
 
 
 # cleanD_kgwsft_kgwgad
-MODEL_PATH = "checkpoints/cleanD_kgwSFT_kgwGAD_v1/gad/global_step_1813/actor/huggingface"
+# MODEL_PATH = "checkpoints/cleanD_kgwSFT_kgwGAD_v1/gad/global_step_1813/actor/huggingface"
 # MODEL_PATH = "checkpoints/cleanD_kgwSFT_kgwGAD_v1/warmup/global_step_1813/actor/huggingface"
 
 
 # kgwD_parasft_kgwsft
 # MODEL_PATH = "checkpoints/kgwD_paraSFT_paraGAD_v1/gad/global_step_1813/actor/huggingface"
-# MODEL_PATH = "checkpoints/kgwD_paraSFT_paraGAD_v1/warmup/global_step_1813/actor/huggingface"
+MODEL_PATH = "checkpoints/kgwD_paraSFT_paraGAD_v1/warmup/global_step_1813/actor/huggingface"
 
 
 
