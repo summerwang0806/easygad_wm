@@ -31,6 +31,15 @@ def fixture():
 
 
 class SquadChecks(unittest.TestCase):
+    def test_result_name_preserves_experiment_stage_and_step(self):
+        model = Path("/shared/wwx/EasyGAD/checkpoints/cleanD_kgwSFT_kgwGAD_v1/gad/global_step_1813/actor/huggingface")
+        self.assertEqual(entry.result_model_name(model),
+                         "cleanD_kgwSFT_kgwGAD_v1_gad_global_step_1813_actor_huggingface")
+        self.assertEqual(entry.result_model_name(Path("/shared/public_models/Qwen2.5-0.5B")), "Qwen2.5-0.5B")
+        self.assertEqual(entry.result_model_name(model, "我的实验 GAD"), "我的实验_GAD")
+        with self.assertRaisesRegex(ValueError, "RESULT_NAME"):
+            entry.result_model_name(model, "x" * 239)
+
     def test_original_v11_normalization(self):
         self.assertEqual(entry.normalize_answer("  The NEW-YORK, an apple!  "), "newyork apple")
         self.assertEqual(entry.exact_match_score("The New York!", "new york"), 1.0)

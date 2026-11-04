@@ -75,6 +75,7 @@ DATASET_URL = "https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json"
 TRAIN_DATASET_FILE = HERE / "data" / "train-v1.1.json"
 TRAIN_DATASET_URL = "https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json"
 RESULTS_DIR = HERE / "results"
+RESULT_NAME = None  # 默认保留 checkpoints/ 后的完整路径；也可填写易读名称，例如 "cleanD_kgwSFT_kgwGAD_v1_gad_1813"。
 EXPECTED_DEV_COUNT = 10570
 EXPECTED_TRAIN_COUNT = 87599
 PROTOCOL = "squad-v1.1-generative-short-answer-v2"
@@ -92,6 +93,25 @@ def resolve_path(value: str | Path) -> Path:
 
 def digest(value) -> str:
     return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+
+
+def result_model_name(model_path: Path, custom_name: str | None = None) -> str:
+    """Keep the experiment, training stage and step visible without truncation."""
+    if custom_name is not None:
+        if not isinstance(custom_name, str) or not custom_name.strip():
+            raise ValueError("RESULT_NAME 必须为非空字符串或 None。")
+        raw = custom_name.strip()
+    else:
+        parts = model_path.parts
+        checkpoints = [index for index, part in enumerate(parts) if part.lower() == "checkpoints"]
+        raw = "_".join(parts[checkpoints[-1] + 1:]) if checkpoints else model_path.name
+    name = re.sub(r"[^\w.-]+", "_", raw).strip(" .")
+    if not name or name in {".", ".."}:
+        raise ValueError("无法得到有效结果名称，请设置 RESULT_NAME。")
+    # Leave room for the dot and 16-character protocol hash in one directory component.
+    if len(name.encode("utf-8")) > 238:
+        raise ValueError("完整结果名称过长，请设置较短的 RESULT_NAME；程序不会自动截断实验名称。")
+    return name
 
 
 def now() -> str:
@@ -312,6 +332,7 @@ def write_results(directory: Path, summary: dict, scores: list[dict], prediction
     report = (
         f"# SQuAD 1.1 {'LIMITED RUN' if summary['limited_run'] else 'full dev'}\n\n"
         f"- Model: `{summary.get('model_path', 'external predictions')}`\n"
+        f"- Result name: `{summary.get('result_name', 'external predictions')}`\n"
         f"- Questions: {summary['evaluated_examples']} / {summary['total_dev_examples']}\n"
         f"- Fixed train demonstrations: {summary.get('num_fewshot', 'external/unknown')}\n"
         f"- Median normalized answer words: prediction={summary['prediction_words_median']}, shortest reference={summary['shortest_reference_words_median']}\n"
@@ -371,6 +392,9 @@ def main(argv: list[str] | None = None) -> int:
         from generation_utils import LocalGenerator, sha256_file
 
         model_path = resolve_path(MODEL_PATH)
+        model_tag = result_model_name(model_path, RESULT_NAME)
+        print(f"[Model] {model_path}", flush=True)
+        print(f"[Result name] {model_tag}", flush=True)
         tokenizer_path = resolve_path(TOKENIZER_PATH) if TOKENIZER_PATH is not None else model_path
         rules_path = resolve_path(WN_RULES_PATH) if WN_RULES_PATH is not None else None
         generator = LocalGenerator(
@@ -401,8 +425,6 @@ def main(argv: list[str] | None = None) -> int:
             if args.check_only:
                 print("[OK] 数据和本地模型检查通过，尚未加载权重/生成。", flush=True)
                 return 0
-            # Keep paths short enough for Windows test/development environments.
-            model_tag = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(model_path))[-48:]
             cache_dir = RESULTS_DIR / f"{model_tag}.{protocol_hash[:16]}"
             started = time.monotonic()
             with cache_lock(cache_dir):
@@ -429,7 +451,7 @@ def main(argv: list[str] | None = None) -> int:
                 predictions = {row["id"]: cached[row["id"]]["raw_prediction"] for row in rows}
                 summary, scores = evaluate_predictions(rows, predictions)
                 summary.update({"protocol": PROTOCOL, "created_at": now(), "mode": "generate_and_score",
-                                "model_path": str(model_path), "tokenizer_path": str(tokenizer_path),
+                                "model_path": str(model_path), "result_name": model_tag, "tokenizer_path": str(tokenizer_path),
                                 "protocol_hash": protocol_hash, "dataset_sha256": data_hash,
                                 "total_dev_examples": len(all_rows), "limited_run": args.limit is not None,
                                 "num_fewshot": args.num_fewshot, "fewshot": fewshot_protocol,

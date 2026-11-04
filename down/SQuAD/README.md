@@ -119,6 +119,13 @@ WN 在学生每步生成时实际修改 logits，沿用项目现有 inverse-wate
 
 保存到 `down/SQuAD/results/<模型标识.协议哈希>/`：
 
+模型标识默认保留 `checkpoints/` 后的完整路径，将路径分隔符替换为下划线，不再截取最后 48 个字符。例如：
+`cleanD_kgwSFT_kgwGAD_v1_gad_global_step_1813_actor_huggingface.<协议哈希>/runs/<时间-标识>/`。
+非 checkpoints 路径默认使用模型目录名。也可以在脚本中设置 `RESULT_NAME = "自己的实验名称"`；过长的名称会提示手动修改，不自动截断。
+控制台输出完整模型路径和结果名称，`summary.json` 保存 `model_path` 和 `result_name`，`report.md` 也显示二者。
+旧版已保存的结果可通过 `runs/.../summary.json` 中的 `model_path` 确认归属，无需重新评测。
+本次更新改变了目录命名和脚本指纹，因此新版运行会使用新缓存目录，不自动复用旧目录的生成缓存。
+
 | 文件 | 内容 |
 |---|---|
 | `protocol.json` | 模型与 tokenizer 指纹、依赖版本/运行时代码指纹、数据 SHA256、提示、生成和 WN 配置 |

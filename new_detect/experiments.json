@@ -1,0 +1,19 @@
+{
+  "reference": "base",
+  "teacher_filter": "data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet",
+  "experiments": [
+    {"name":"base","family":"base","stage":"base","role":"clean","path":"wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl"},
+    {"name":"clean_warmup","family":"cleanwarmup_cleangad","stage":"warmup","role":"clean","path":"wm_test/cleanwarmup_cleangad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"},
+    {"name":"clean_gad","family":"cleanwarmup_cleangad","stage":"gad","role":"clean","path":"wm_test/cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"},
+    {"name":"kgw_warmup","family":"kgwwarmup_kgwgad","stage":"warmup","role":"target","path":"wm_test/kgwwarmup_kgwgad_warmup_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl"},
+    {"name":"kgw_gad","family":"kgwwarmup_kgwgad","stage":"gad","role":"target","path":"wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl"},
+    {"name":"cleanD_kgwSFT_warmup","family":"kgwwarmup(cleanD-kgwSFT)_kgwgad","stage":"warmup","role":"target","path":"wm_test/cleanD_kgwSFT_kgwgad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"},
+    {"name":"cleanD_kgwSFT_gad","family":"kgwwarmup(cleanD-kgwSFT)_kgwgad","stage":"gad","role":"target","path":"wm_test/cleanD_kgwSFT_kgwgad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"},
+    {"name":"dipper_warmup","family":"dipper_para-kgwwarmup_dipper_para-kgwgad","stage":"warmup","role":"target","path":"wm_test/dipper_upkgwwarmup_upkgwgad_warmup_gamma0.5_delta3_new1_qwen2_5_0_5b_dolly15k_test.jsonl"},
+    {"name":"dipper_gad","family":"dipper_para-kgwwarmup_dipper_para-kgwgad","stage":"gad","role":"target","path":"wm_test/dipper_upkgwwarmup_upkgwgad_gad_gamma0.5_delta3_new1_qwen2_5_0_5b_dolly15k_test.jsonl"},
+    {"name":"kgwD_paraSFT_warmup","family":"para-kgwwarmup(kgwD-paraSFT)_para-kgwgad","stage":"warmup","role":"target","path":"wm_test/cleanD_dipperparaSFT_dipperparagad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"},
+    {"name":"kgwD_paraSFT_gad","family":"para-kgwwarmup(kgwD-paraSFT)_para-kgwgad","stage":"gad","role":"target","path":"wm_test/cleanD_dipperparaSFT_dipperparagad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"},
+    {"name":"wn_2_5","family":"WN","stage":"gad","role":"target","strength":2.5,"path":"wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new.jsonl"},
+    {"name":"wn_3","family":"WN","stage":"gad","role":"target","strength":3.0,"path":"wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new_strength3.jsonl"}
+  ]
+}
