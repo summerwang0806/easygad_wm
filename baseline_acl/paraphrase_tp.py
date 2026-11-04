@@ -73,8 +73,8 @@ class GenerationConfig:
             raise ValueError("top p must be in (0, 1]")
         if type(self.seed) is not int or self.seed < 0:
             raise ValueError("seed must be a nonnegative integer")
-        if self.on_failure not in ("error", "keep-original"):
-            raise ValueError("on failure must be error or keep-original")
+        if self.on_failure not in ("error", "keep-original", "keep-last"):
+            raise ValueError("on failure must be error, keep-original or keep-last")
 
 
 def resolve_prompt_mode(tokenizer, requested: str) -> str:
@@ -252,7 +252,7 @@ def validate_resume_metadata(previous, requested):
     before, after = previous.get("config", {}), requested["config"]
     old_policy, new_policy = before.get("generation_policy", "legacy"), after.get("generation_policy", "legacy")
     original = {key: value for key, value in previous.items() if key != "fingerprint"}
-    updated_config = {**before, "max_attempts": after.get("max_attempts")}
+    updated_config = {**before, "max_attempts": after.get("max_attempts"), "on_failure": after.get("on_failure")}
     if new_policy != "legacy":
         updated_config["generation_policy"] = new_policy
     compatible = {**original, "config": updated_config}
@@ -260,9 +260,41 @@ def validate_resume_metadata(previous, requested):
     old_limit, new_limit = before.get("max_attempts"), after.get("max_attempts")
     if (type(old_limit) is not int or type(new_limit) is not int or not 1 <= old_limit <= new_limit <= 3
             or old_policy != new_policy and (old_policy, new_policy) != ("legacy", "efficient-v1")
+            or (before.get("on_failure") != after.get("on_failure")
+                and (before.get("on_failure"), after.get("on_failure")) != ("error", "keep-last"))
             or previous.get("fingerprint") != up.text_sha256(up.canonical_json(original))
             or compatible != requested):
-        raise ValueError("checkpoint fingerprint differs from input/model/config; only more attempts or legacy to efficient-v1 policy upgrades are allowed")
+        raise ValueError("checkpoint fingerprint differs from input/model/config; resume permits more attempts (at most 3), legacy to efficient-v1, or explicit --on-failure error to keep-last only")
+
+
+def resolve_exhausted_outputs(complete, last_failures, policy_meta):
+    """Derive dispositions from durable failures and an explicit policy phase.
+
+    Failed generations and their historical generation_config stay unchanged.
+    A saved policy transition commits these dispositions without another model
+    attempt; resolving each phase on replay also preserves them if later retry
+    limits increase. The requested phase is resolved before it is appended by
+    the orchestrator, which validates every derived candidate audit first.
+    """
+    config = policy_meta["config"]
+    if config["on_failure"] != "keep-last":
+        return
+    for index, failure in last_failures.items():
+        candidate = failure.get("candidate")
+        if (index not in complete and failure["attempt"] == config["max_attempts"]
+                and isinstance(candidate, str) and candidate.strip()):
+            complete[index] = {
+                **failure, "kind": "result", "status": "abnormal", "paraphrase": candidate,
+                "failure_resolution": {"policy": "keep-last", "metadata_fingerprint": policy_meta["fingerprint"]},
+            }
+
+
+def resume_record_config(record):
+    """Validate historical sampling with the separately recorded disposition."""
+    config = GenerationConfig(**record["generation_config"])
+    if record.get("failure_resolution", {}).get("policy") == "keep-last":
+        config = replace(config, on_failure="keep-last")
+    return config
 
 
 def _read_checkpoint(path, expected_meta, source_values, ids):
@@ -281,18 +313,23 @@ def _read_checkpoint(path, expected_meta, source_values, ids):
         lines.pop()
     for line in lines[1:]:
         entry = json.loads(line)
-        if entry.get("kind") in ("retry_limit", "generation_policy"):
+        if entry.get("kind") in ("retry_limit", "generation_policy", "resume_policy"):
             updated = entry.get("metadata")
             if (not isinstance(updated, dict) or entry.get("previous_fingerprint") != active_meta["fingerprint"]
                     or updated == active_meta):
                 raise ValueError("invalid checkpoint retry limit update")
             policy_changed = active_meta["config"].get("generation_policy", "legacy") != updated.get("config", {}).get("generation_policy", "legacy")
-            if policy_changed != (entry["kind"] == "generation_policy"):
+            failure_policy_changed = active_meta["config"].get("on_failure") != updated.get("config", {}).get("on_failure")
+            expected_kind = "generation_policy" if policy_changed else "resume_policy" if failure_policy_changed else "retry_limit"
+            if entry["kind"] != expected_kind:
                 raise ValueError("checkpoint policy change has the wrong record kind")
             validate_resume_metadata(active_meta, updated)
             validate_resume_metadata(updated, expected_meta)
             active_meta = updated
+            resolve_exhausted_outputs(complete, last_failures, active_meta)
             continue
+        if "failure_resolution" in entry:
+            raise ValueError("retention dispositions must be derived from checkpoint failures and policy metadata")
         active_config = GenerationConfig(**active_meta["config"])
         if "generation_config" in entry and entry["generation_config"] != active_meta["config"]:
             raise ValueError("checkpoint row generation config differs from its metadata phase")
@@ -321,9 +358,13 @@ def _read_checkpoint(path, expected_meta, source_values, ids):
                 raise ValueError("invalid rejected checkpoint attempt")
             last_failures[index] = entry
             continue
-        if entry.get("kind") != "result" or entry.get("status") not in ("ok", "fallback") or not isinstance(entry.get("paraphrase"), str) or not entry["paraphrase"].strip():
+        if entry.get("kind") != "result" or entry.get("status") not in ("ok", "fallback", "abnormal") or not isinstance(entry.get("paraphrase"), str) or not entry["paraphrase"].strip():
             raise ValueError("invalid completed checkpoint row")
-        if entry["status"] == "fallback":
+        if entry["status"] == "abnormal":
+            if (active_config.on_failure != "keep-last" or attempt != active_config.max_attempts
+                    or not entry.get("issues") or entry.get("candidate") != entry["paraphrase"]):
+                raise ValueError("unauthorized/invalid retained abnormal output")
+        elif entry["status"] == "fallback":
             unchanged = (set(entry.get("issues", [])) == {"unchanged_source_answer"}
                          and isinstance(entry.get("candidate"), str)
                          and " ".join(entry["candidate"].split()) == " ".join(source_values[index].split()))
@@ -336,6 +377,9 @@ def _read_checkpoint(path, expected_meta, source_values, ids):
             if entry.get("issues") or candidate_issues(candidate, source_values[index], active_config):
                 raise ValueError("invalid accepted checkpoint generation")
         complete[index] = entry
+    # Resolve committed dispositions first, then the requested pending upgrade.
+    resolve_exhausted_outputs(complete, last_failures, active_meta)
+    resolve_exhausted_outputs(complete, last_failures, expected_meta)
     # Older TP versions stopped on unchanged answers. Reclassify only an
     # exhausted unchanged-only failure; raising the retry limit must retry it.
     for index, failure in last_failures.items():
@@ -364,6 +408,7 @@ class TPProgress:
         self.counted = set()
         self.unchanged = 0
         self.unchanged_fallbacks = 0
+        self.abnormal_kept = 0
         self.restored = None
 
     def __call__(self, complete, source_values, *, record=None, started):
@@ -376,6 +421,8 @@ class TPProgress:
                 self.unchanged += 1
                 if result["status"] == "fallback" and "unchanged_source_answer" in result["issues"]:
                     self.unchanged_fallbacks += 1
+            if result["status"] == "abnormal":
+                self.abnormal_kept += 1
         total, done = len(source_values), len(complete)
         if self.restored is None:
             self.restored = done
@@ -386,7 +433,7 @@ class TPProgress:
         rate = (done - self.restored) / elapsed
         eta = f"{(total - done) / rate / 3600:.1f}h" if rate > 0 else "warming-up"
         print(f"[TP progress] [{bar}] completed={done}/{total} ({100 * done / total:.1f}%), "
-              f"unchanged={self.unchanged}, unchanged_fallbacks={self.unchanged_fallbacks}{attempt}, "
+              f"unchanged={self.unchanged}, unchanged_fallbacks={self.unchanged_fallbacks}, abnormal_kept={self.abnormal_kept}{attempt}, "
               f"rate={rate * 3600:.1f}/h, eta={eta}, elapsed={elapsed:.1f}s", flush=True)
 
 
@@ -443,6 +490,19 @@ def write_final_outputs(source, responses, records, rejected, output_path, audit
                   "duration_seconds": round(time.monotonic() - started, 3), "paraphrase_mode": "whole_response",
                   "semantic_preservation": "Requested by prompt; automatic checks do not prove factual equivalence",
                   "parameter_provenance": "Project TP variant: original student O paraphrases with shared WN rules, replacing paper Dipper"}
+        abnormal = sorted(i for i, record in records.items() if record["status"] == "abnormal")
+        if abnormal or meta["config"]["on_failure"] == "keep-last":
+            report.update(abnormal_kept_count=len(abnormal), abnormal_kept_rows=abnormal,
+                          abnormal_kept_ids=[records[i]["id"] for i in abnormal],
+                          abnormal_kept_rate=len(abnormal) / source.num_rows,
+                          abnormal_kept_reasons=dict(Counter(issue for i in abnormal for issue in records[i]["issues"])),
+                          length_limited_kept_count=sum(records[i]["finish_reason"] == "length" for i in abnormal),
+                          resumed_abnormal_kept_rows=[i for i in abnormal if records[i].get("failure_resolution")],
+                          abnormal_kept_records=[{"row_index": i, "id": records[i]["id"],
+                              "attempt": records[i]["attempt"], "issues": records[i]["issues"],
+                              "finish_reason": records[i]["finish_reason"], "output_tokens": records[i]["output_tokens"],
+                              "source_tokens": records[i]["source_tokens"],
+                              "resolution": records[i].get("failure_resolution")} for i in abnormal])
         if meta["config"].get("generation_policy", "legacy") != "legacy":
             phases = {}
             for index, record in sorted(records.items()):
@@ -479,7 +539,11 @@ def write_final_outputs(source, responses, records, rejected, output_path, audit
             audit_temp = None
         up.publish_new_file(parquet_temp, output_path)
         print(f"[done] {output_path}: {source.num_rows} rows, unchanged={len(unchanged_rows)}, "
-              f"unchanged_fallbacks={len(unchanged_fallbacks)}; audit: {audit_path}", flush=True)
+              f"unchanged_fallbacks={len(unchanged_fallbacks)}, abnormal_kept={len(abnormal)}; audit: {audit_path}", flush=True)
+        if "abnormal_kept_count" in report:
+            print(f"[abnormal summary] kept={report['abnormal_kept_count']}/{source.num_rows} "
+                  f"({100 * report['abnormal_kept_rate']:.2f}%), length_limited={report['length_limited_kept_count']}, "
+                  f"reasons={report['abnormal_kept_reasons']}", flush=True)
         return report
     finally:
         parquet_temp.unlink(missing_ok=True)
@@ -495,7 +559,7 @@ def run_paraphrasing(input_path, output_path, config, tokenizer, generator_facto
                               keep_original_issues=frozenset({"unchanged_source_answer"}),
                               progress_callback=TPProgress(),
                               record_metadata={"generation_config": config_document(config)},
-                              resume_config_fn=lambda record: GenerationConfig(**record["generation_config"]), **kwargs)
+                              resume_config_fn=resume_record_config, **kwargs)
 
 
 def preflight_source(path, tokenizer, config):
@@ -639,8 +703,8 @@ def parse_args(argv=None):
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--max-attempts", type=int, choices=(1, 2, 3), default=3,
                         help="Total attempts per row (default 3: initial plus two retries with new seeds). Unchanged-only failures retain the original after the final attempt.")
-    parser.add_argument("--on-failure", choices=("error", "keep-original"), default="error",
-                        help="Policy for other exhausted failures; unchanged-only failures always retain the original")
+    parser.add_argument("--on-failure", choices=("error", "keep-original", "keep-last"), default="error",
+                        help="Default error stops; keep-last retains the final nonempty failed generation (including truncated text), counts it as abnormal, and can resume an error checkpoint. keep-original retains source text instead.")
     parser.add_argument("--checkpoint", type=Path)
     parser.add_argument("--audit", type=Path)
     parser.add_argument("--resume", action="store_true")

@@ -57,9 +57,11 @@ CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_tp.py \
 
 详细续跑命令和同步文件见 [TP_FAST_RESUME.md](TP_FAST_RESUME.md)。
 
+如需三次失败后直接保留第三次非空输出（包含截断或早停文本）并继续，显式加 `--on-failure keep-last`。已有 `error` 断点可带该参数和 `--resume` 恢复，不会重跑成功行或产生第四次尝试。最终控制台显示 `abnormal_kept`，审计保存 `abnormal_kept_count`、行号、ID 和异常原因；这些行标为 `abnormal`，不计作正常完整转述。
+
 默认每条最多生成 3 次（首次生成加两次换 seed 重试）。最后一次仅因与原文相同而失败时，写回精确原文并继续下一条；空白差异也按相同处理。终端进度条实时显示 `unchanged`（最终保存为原文的数量）和 `unchanged_fallbacks`（重试后仍相同而保留原文的数量）。最终 `<TP_DATA>.audit.json` 保存 `unchanged_teacher_responses`、`unchanged_response_rows`（从 0 开始）、`unchanged_response_ids` 和 `unchanged_fallback_count`。
 
-旧的单次尝试任务可在原命令加 `--max-attempts 3 --resume`，保留已完成行，并从失败行的下一次尝试继续。除提高尝试次数外，模型、规则、输入和采样参数必须保持一致；最多允许 3 次总尝试。其它类型的失败在三次耗尽后仍报错。
+旧的单次尝试任务可在原命令加 `--max-attempts 3 --resume`，保留已完成行，并从失败行的下一次尝试继续。除上述显式保留策略或提高尝试次数外，模型、规则、输入和采样参数必须保持一致；最多允许 3 次总尝试。默认 `error` 模式下其它类型的失败在三次耗尽后仍报错。
 
 重新从原始学生 O 开始，Warmup 和 GAD 均使用 TP 数据：
 

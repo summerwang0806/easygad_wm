@@ -550,6 +550,46 @@ class DataContractTests(unittest.TestCase):
         self.assertEqual(report["status_counts"], {"fallback": 2})
         self.assertEqual(pq.read_table(self.output)["teacher_response"].to_pylist(), self.table["teacher_response"].to_pylist())
 
+    def test_keep_last_publishes_third_partial_text_and_counts_rows_not_attempts(self):
+        self.config = replace(self.config, on_failure="keep-last")
+        calls = []
+        def choose(row, index, attempt):
+            if attempt == 2:
+                return up.GeneratedResponse("Echoed text </source_answer>", "stop", 6)
+            return up.GeneratedResponse(f"Partial answer for row {index}, attempt {attempt}.", "length", 100)
+        report = self.run_job(factory=self.scripted_factory(choose, calls))
+        self.assertEqual([attempt for _, attempt, _ in calls], [1, 2, 3, 1, 2, 3])
+        self.assertEqual(pq.read_table(self.output)["teacher_response"].to_pylist(),
+                         [f"Partial answer for row {i}, attempt 3." for i in (0, 1)])
+        self.assertEqual(report["status_counts"], {"abnormal": 2})
+        self.assertEqual(report["abnormal_kept_count"], 2)
+        self.assertEqual(report["length_limited_kept_count"], 2)
+        self.assertEqual(report["abnormal_kept_rows"], [0, 1])
+        self.assertEqual(report["abnormal_kept_ids"], ["a", "b"])
+        self.assertEqual(report["abnormal_kept_reasons"], {"length_limit": 2})
+        self.assertEqual(report["rejected_generation_attempts"], 6)
+        entries = [json.loads(line) for line in self.output.with_suffix(".parquet.progress.jsonl").read_text(encoding="utf-8").splitlines()]
+        kept = [entry for entry in entries if entry.get("status") == "abnormal"]
+        self.assertTrue(all(entry["paraphrase"] == entry["candidate"] for entry in kept))
+
+    def test_keep_last_completed_abnormal_rows_resume_without_regeneration(self):
+        self.config = replace(self.config, on_failure="keep-last")
+        candidate = up.GeneratedResponse("The retained partial answer.", "length", 100)
+        with patch.object(up, "publish_new_file", side_effect=RuntimeError("interrupt publication")), self.assertRaises(RuntimeError):
+            self.run_job(candidate=candidate)
+        checkpoint = self.output.with_suffix(".parquet.progress.jsonl")
+        previous = checkpoint.read_bytes()
+        report = self.run_job(resume=True, factory=lambda: self.fail("abnormal rows must not regenerate"))
+        self.assertEqual(checkpoint.read_bytes(), previous)
+        self.assertEqual(report["abnormal_kept_count"], 2)
+        self.assertEqual(pq.read_table(self.output)["teacher_response"].to_pylist(), [candidate.text] * 2)
+
+    def test_keep_last_does_not_publish_empty_final_text(self):
+        self.config = replace(self.config, on_failure="keep-last")
+        with self.assertRaisesRegex(RuntimeError, "exhausted"):
+            self.run_job(candidate=up.GeneratedResponse("", "length", 100))
+        self.assertFalse(self.output.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

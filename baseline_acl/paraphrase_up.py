@@ -907,7 +907,8 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
             complete, attempts_done, rejected = loaded[:3]
             if len(loaded) == 4 and loaded[3] != meta:
                 changed_policy = loaded[3]["config"].get("generation_policy", "legacy") != meta["config"].get("generation_policy", "legacy")
-                retry_update = {"kind": "generation_policy" if changed_policy else "retry_limit",
+                changed_failure_policy = loaded[3]["config"].get("on_failure") != meta["config"].get("on_failure")
+                retry_update = {"kind": "generation_policy" if changed_policy else "resume_policy" if changed_failure_policy else "retry_limit",
                                 "previous_fingerprint": loaded[3]["fingerprint"], "metadata": meta}
         else:
             complete, attempts_done, rejected = {}, {}, []
@@ -916,15 +917,17 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                 raise ValueError(f"checkpoint token counts differ at row {index}")
             generated_fallback = (record["status"] == "fallback" and record["attempt"] > 0
                                   and bool(keep_original_issues))
-            if record["status"] == "ok" or generated_fallback:
+            retained_abnormal = record["status"] == "abnormal"
+            if record["status"] == "ok" or generated_fallback or retained_abnormal:
                 validation_config = resume_config_fn(record) if resume_config_fn is not None else config
                 validation_prepared = prepare_fn(tokenizer, values[index], validation_config) if resume_config_fn is not None else prepared[index]
-                candidate_text = record.get("candidate", record["paraphrase"]) if generated_fallback else record["paraphrase"]
+                candidate_text = record.get("candidate", record["paraphrase"]) if generated_fallback or retained_abnormal else record["paraphrase"]
                 candidate = GeneratedResponse(candidate_text, record["finish_reason"], record["output_tokens"],
                                               record.get("windows", []), record.get("generation_issues", []))
                 issues = candidate_issues(candidate, values[index], validation_config)
-                allowed_fallback = (generated_fallback and bool(issues) and record.get("issues") == issues
-                                    and (validation_config.on_failure == "keep-original" or set(issues) <= keep_original_issues))
+                allowed_fallback = (bool(issues) and record.get("issues") == issues and (
+                    generated_fallback and (validation_config.on_failure == "keep-original" or set(issues) <= keep_original_issues)
+                    or retained_abnormal and validation_config.on_failure == "keep-last" and record["paraphrase"] == candidate_text))
                 if (issues and not allowed_fallback) or validate_audit(candidate, validation_prepared, tokenizer, validation_config, index, record["attempt"]):
                     raise ValueError(f"invalid accepted window audit at row {index}")
         if audit_path.exists():
@@ -999,7 +1002,8 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                                 raise RuntimeError(f"invalid backend response for row {index}")
                             seen.add(index)
                             issues = candidate_issues(candidate, values[index], config)
-                            issues.extend(validate_audit(candidate, prepared[index], tokenizer, config, index, attempt))
+                            audit_issues = validate_audit(candidate, prepared[index], tokenizer, config, index, attempt)
+                            issues.extend(audit_issues)
                             issues = list(dict.fromkeys(issues))
                             info = prepared[index]
                             record = {"kind": "result", "row_index": index, "id": ids[index], "source_sha256": text_sha256(values[index]),
@@ -1009,7 +1013,10 @@ def run_paraphrasing(input_path: Path, output_path: Path, config: GenerationConf
                                       "windows": candidate.windows, "generation_issues": candidate.issues, **(record_metadata or {})}
                             if issues:
                                 record["candidate"] = record.pop("paraphrase")
-                                if attempt >= config.max_attempts and (config.on_failure == "keep-original"
+                                if (attempt >= config.max_attempts and config.on_failure == "keep-last"
+                                        and isinstance(candidate.text, str) and candidate.text.strip() and not audit_issues):
+                                    record["status"], record["paraphrase"] = "abnormal", candidate.text
+                                elif attempt >= config.max_attempts and (config.on_failure == "keep-original"
                                                                         or set(issues) <= keep_original_issues):
                                     record["status"], record["paraphrase"] = "fallback", values[index]
                                 else:

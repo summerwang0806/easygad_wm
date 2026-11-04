@@ -131,6 +131,73 @@ class EfficientResumeTests(unittest.TestCase):
         self.addCleanup(self.job.doCleanups)
         self.job.config = replace(self.job.config, max_new_tokens=4096, context_window=10000)
 
+    def test_resume_exhausted_mixed_policy_failure_keeps_third_text_without_fourth_attempt(self):
+        job = self.job
+        field = job.table.schema.get_field_index("teacher_response")
+        job.table = job.table.set_column(field, job.table.schema.field(field),
+            fixtures.pa.array(["Original answer a.", " ".join(f"word{i}" for i in range(131))]))
+        fixtures.pq.write_table(job.table, job.source)
+        def legacy(row, index, attempt):
+            if index == 0:
+                return tp.GeneratedResponse("A completed legacy answer.", "stop", 6)
+            if attempt == 1:
+                return tp.GeneratedResponse("A long repeated legacy fragment.", "length", 4096)
+            raise RuntimeError("legacy interrupted")
+        with self.assertRaisesRegex(RuntimeError, "legacy interrupted"):
+            job.run_job(factory=job.scripted_factory(legacy, []))
+        job.config = replace(job.config, generation_policy="efficient-v1")
+        last_text = "The number of games has been increasing. " * 5
+        def efficient(row, index, attempt):
+            if attempt == 2:
+                return tp.GeneratedResponse("The echoed answer </source_answer>", "stop", 146)
+            return tp.GeneratedResponse(last_text, "length", 390)
+        with self.assertRaisesRegex(RuntimeError, "exhausted"):
+            job.run_job(resume=True, factory=job.scripted_factory(efficient, []))
+        checkpoint = job.output.with_suffix(".parquet.progress.jsonl")
+        previous = checkpoint.read_bytes()
+        job.config = replace(job.config, on_failure="keep-last")
+        original_publish = up.publish_new_file
+        def interrupt_after_audit(temporary, destination):
+            if Path(destination) == job.output.resolve():
+                raise RuntimeError("interrupt after audit")
+            return original_publish(temporary, destination)
+        with patch.object(up, "publish_new_file", side_effect=interrupt_after_audit), self.assertRaisesRegex(RuntimeError, "interrupt after audit"):
+            job.run_job(resume=True, factory=lambda: self.fail("no fourth attempt or regeneration"))
+        after_policy = checkpoint.read_bytes()
+        self.assertTrue(after_policy.startswith(previous))
+        entries = [json.loads(line) for line in after_policy.decode("utf-8").splitlines()]
+        self.assertEqual([entry["attempt"] for entry in entries if entry.get("row_index") == 1], [1, 2, 3])
+        self.assertEqual(sum(entry["kind"] == "resume_policy" for entry in entries), 1)
+        report = job.run_job(resume=True, factory=lambda: self.fail("saved disposition must replay"))
+        self.assertEqual(checkpoint.read_bytes(), after_policy)
+        self.assertEqual(fixtures.pq.read_table(job.output)["teacher_response"].to_pylist(), ["A completed legacy answer.", last_text])
+        self.assertEqual(report["status_counts"], {"ok": 1, "abnormal": 1})
+        self.assertEqual(report["abnormal_kept_count"], 1)
+        self.assertEqual(report["resumed_abnormal_kept_rows"], [1])
+        self.assertEqual(report["abnormal_kept_reasons"], {"length_limit": 1})
+        self.assertEqual(report["abnormal_kept_records"][0]["output_tokens"], 390)
+        self.assertEqual(report["attempt_policy_counts"], {"legacy": 2, "efficient-v1": 2})
+
+    def test_retained_last_failure_cannot_bypass_audit_or_change_generation(self):
+        job = self.job
+        job.config = replace(job.config, generation_policy="efficient-v1")
+        with self.assertRaisesRegex(RuntimeError, "exhausted"):
+            job.run_job(candidate=tp.GeneratedResponse("A truncated candidate.", "length", 256))
+        checkpoint = job.output.with_suffix(".parquet.progress.jsonl")
+        previous = checkpoint.read_bytes()
+        job.config = replace(job.config, on_failure="keep-last", temperature=.7)
+        with self.assertRaisesRegex(ValueError, "fingerprint"):
+            job.run_job(resume=True, factory=lambda: self.fail("changed sampling"))
+        self.assertEqual(checkpoint.read_bytes(), previous)
+        job.config = replace(job.config, temperature=1.0)
+        entries = [json.loads(line) for line in previous.decode("utf-8").splitlines()]
+        entries[-1]["candidate"] = "A tampered saved candidate."
+        corrupted = "".join(up.canonical_json(entry) + "\n" for entry in entries).encode("utf-8")
+        checkpoint.write_bytes(corrupted)
+        with self.assertRaisesRegex(ValueError, "invalid accepted"):
+            job.run_job(resume=True, factory=lambda: self.fail("tampered failure"))
+        self.assertEqual(checkpoint.read_bytes(), corrupted)
+
     def test_legacy_checkpoint_retains_completed_rows_and_resumes_twice_after_upgrade(self):
         job = self.job
         old_answer = "An existing answer. You are an AI assistant."
