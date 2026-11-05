@@ -34485,3 +34485,2891 @@ N/A 表示筛选后不足一个完整组。各组 p 取普通中位数，偶数�
   "history_document": "/shared/wwx/EasyGAD/wm_test/detection_metrics_history.md"
 }
 ```
+
+## 评估记录：2026-11-05T16:55:46+08:00
+
+- 样本数：KGW 500，clean 500
+- AUROC：0.447162
+- 实际检测配置：`{"gamma": 0.5, "hash_key": 15485863, "seeding": "simple_1 (hash_key * previous_token_id)", "delta_by_label": {"kgw": 3.0, "clean": 2.0}}`
+- ROUGE-L（同批 500 条原始 Dolly 回答作参考）：0.207037（KGW 文件中的采样回答，逐条 F1 平均，use_stemmer=True）
+- 原始 Dolly 参考文件：`/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl`
+- ROUGE-L（同批 500 条 14B clean 教师回答作参考）：0.257639（KGW 文件中的采样回答，逐条 F1 平均，use_stemmer=True）
+- 14B clean 教师参考文件：`/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet`
+- Best F1：0.673988（z 阈值 -3.8996021017180893，TPR 0.982000，FPR 0.932000）
+- TPR@FPR 及该工作点的 F1：
+
+  | 目标 FPR | 实际 FPR | TPR | F1 | z 阈值 |
+  |---:|---:|---:|---:|---:|
+  | 1% | 0.006000 | 0.002000 | 0.003968 | 27.45469753369479 |
+  | 5% | 0.046000 | 0.034000 | 0.062963 | 2.288585537482975 |
+  | 10% | 0.100000 | 0.058000 | 0.100173 | 1.6924558427507104 |
+
+### Seq-Rep-3（全量回答，词级三元组重复率）
+
+每条回答单独计算 1 - 不同三元组数 / 全部三元组数，再汇总逐回答算术平均和普通中位数；偶数条的中位数取中间两个值的算术平均。只对 answer 使用 split() 空白分词，保留大小写和标点；不包含 prompt，不跨回答拼接，不剔除严重重复回答，不按长度加权。少于 3 个词（含空回答）按 0 计入，数量单独列出；空回答数包含在短回答数内。数值以 0–1 比例报告。
+
+| 文件组 | 样本数 | Seq-Rep-3 逐回答算术平均 ↓ | Seq-Rep-3 逐回答普通中位数 ↓ | 少于3词回答数 | 空回答数 |
+|---|---:|---:|---:|---:|---:|
+| kgw | 500 | 0.114053 | 0.043651 | 0 | 0 |
+| clean | 500 | 0.159015 | 0.021919 | 1 | 0 |
+
+- kgw: `/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl`；SHA256 `6cf1a473eeaf8a29b5217268f17c055fbdb8d101dd50dab5ed4c76561890416d`。
+
+- clean: `/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl`；SHA256 `597b843d28d31c353c7bb9b94a3b6dccb564cb45ac2c5252f6a1592ccd768efe`。
+
+两种逐条文本 p-value 统计（单侧正态近似；不是 AUROC 的显著性检验）：
+
+去重规则：相同的 `(previous_token_id, token_id)` 只计一次；不修改回答文本。
+
+| 数据 | 检测方式 | 有效样本 | p 均值 | p 中位数 | p≤0.01 | p≤0.05 | p≤0.10 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| kgw | 原始 | 500/500 | 0.605568 | 0.674921 | 16 (3.20%) | 31 (6.20%) | 57 (11.40%) |
+| kgw | token 对去重 | 500/500 | 0.595972 | 0.643796 | 1 (0.20%) | 11 (2.20%) | 29 (5.80%) |
+| clean | 原始 | 500/500 | 0.538121 | 0.57157 | 22 (4.40%) | 54 (10.80%) | 73 (14.60%) |
+| clean | token 对去重 | 500/500 | 0.537418 | 0.555154 | 5 (1.00%) | 25 (5.00%) | 46 (9.20%) |
+
+KGW 的小 p 占比是该理论阈值下的检出率，clean 的小 p 占比是实测误报率。p≤0.05 不保证实际 FPR=5%；去重可改善重复带来的失真，但不保证完全校准。空回答不做显著性检验，p=null，并排除在有效样本统计之外。
+
+逐条 p-value：`/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.p_values.jsonl`；`/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.p_values.jsonl`
+
+固定 token 分组 p-value（普通中位数；p 越大表示原单侧检验证据越弱）：
+
+按教师 tokenizer 编码回答并无分隔拼接，精确分组；每组首 token 仅作上下文，其余 token 用本项目原 KGW 绿表评分；不去重，尾部不足一组丢弃；各组 p 排序后取普通中位数（偶数组取中间两个 p 的算术平均）。
+
+| 每组 token 数 | 计分 token 数 | KGW 组数 | KGW median p ↑ | clean 组数 | clean median p | KGW/clean 丢弃尾部 tokens |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1000 | 999 | 87 | 0.913158 | 159 | 0.865929 | 179/765 |
+| 2000 | 1999 | 43 | 0.976737 | 79 | 0.971358 | 1179/1765 |
+| 3000 | 2999 | 29 | 0.978664 | 53 | 0.982134 | 179/765 |
+| 10000 | 9999 | 8 | 0.999904 | 15 | 1 | 7179/9765 |
+| 20000 | 19999 | 4 | 0.999545 | 7 | 1 | 7179/19765 |
+| 30000 | 29999 | 2 | 0.98186 | 5 | 1 | 27179/9765 |
+
+N/A 表示总 token 数不足一个完整组；组数为 1 或 2 时需结合逐组结果解释。极小 p 用科学计数法字符串保存，同时保留 log10(p)，避免浮点下溢为 0。
+
+逐组 p-value 缓存：`/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.grouped_p_values.json`；`/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.grouped_p_values.json`
+
+剔除严重重复回答后的固定 token 分组 p-value（普通中位数）：
+
+先独立筛选 KGW 和 clean：回答内部相邻 token 对重复比例严格大于 50% 时，剔除整条回答；prompt 不参与判断。保留回答按原顺序重新无分隔拼接，各组首 token 仅作上下文；组内不做 token 对去重，尾部不足一组丢弃。这是质量筛选补充指标，原始全样本统计另行保留。
+
+| 数据 | 原回答数 | 剔除严重重复回答 | 保留回答数 | 原 tokens | 剔除 tokens | 保留 tokens |
+|---|---:|---:|---:|---:|---:|---:|
+| kgw | 500 | 43 (8.60%) | 457 | 87179 | 32143 | 55036 |
+| clean | 500 | 88 (17.60%) | 412 | 159765 | 113883 | 45882 |
+
+| 每组 token 数 | 计分 token 数 | KGW 组数 | KGW median p ↑ | clean 组数 | clean median p | KGW/clean 丢弃尾部 tokens |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1000 | 999 | 55 | 0.939464 | 45 | 0.636089 | 36/882 |
+| 2000 | 1999 | 27 | 0.943857 | 22 | 0.796038 | 1036/1882 |
+| 3000 | 2999 | 18 | 0.983718 | 15 | 0.738626 | 1036/882 |
+| 10000 | 9999 | 5 | 0.99995 | 4 | 0.947597 | 5036/5882 |
+| 20000 | 19999 | 2 | 1 | 2 | 0.978374 | 15036/5882 |
+| 30000 | 29999 | 1 | 1 | 1 | 0.999568 | 25036/15882 |
+
+N/A 表示筛选后不足一个完整组。各组 p 取普通中位数，偶数组取中间两个 p 的算术平均；组数较少时请结合逐组缓存解释。
+
+剔除严重重复回答后的逐组 p-value 缓存：`/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.nonrepetitive_grouped_p_values.json`；`/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.nonrepetitive_grouped_p_values.json`
+
+### 固定参考模型 PPL（只评分已保存的回答）
+
+| 文件组 | 总体 PPL ↓ | 逐回答 PPL 中位数 ↓ | 剔除严重重复后总体 PPL ↓ | 保留回答数/原回答数 | 有效样本/总样本 | 状态 | 缓存复用 |
+|---|---:|---:|---:|---:|---:|---|---|
+| kgw | 2.287524 | 3.171506 | 3.213382 | 457/500 | 500/500 | ok | False |
+| clean | 1.535880 | 2.557640 | 2.702170 | 412/500 | 500/500 | ok | True |
+
+总体 PPL = exp(全部有效回答 NLL 总和 / 全部计分回答 token 数)，不是逐条 PPL 的算术平均。
+逐回答 PPL 中位数对全量有效回答的 PPL 排序；偶数条取中间两个 PPL 的算术平均，不对平均 NLL 取中位数后再 exp。空回答或异常 loss 不计入，并单独报告数量。
+剔除严重重复后总体 PPL：复用同源重复筛选缓存，按教师 tokenizer 的回答内部相邻 token 对重复率严格 > 50% 剔除整条回答，prompt 不参与判断；只汇总保留回答原有的参考模型 NLL 和参考 tokenizer token 数。保留回答的文本不变，不删除文内 token，不丢弃尾部。KGW 与 clean 各自筛选，保留回答数含未成功评分回答。N/A 表示未提供筛选，null 表示无可计算数值；筛选后结果是子集统计，全量结果另行保留。
+原生成 tokenizer 恢复实际生成 prompt；参考 tokenizer 对 prompt/answer 分开编码后拼接；只计回答，包含首回答 token。Base 参考模型不再套用 chat template；只添加一次参考 BOS，不额外评分 EOS；输入 JSONL 不修改。
+
+- kgw: `/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl`；SHA256 `6cf1a473eeaf8a29b5217268f17c055fbdb8d101dd50dab5ed4c76561890416d`；逐条明细 `/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.ppl.7d766133d416ae5cca23.jsonl`；空回答 0；异常 loss 0；原生成截断 3；参考上下文截断 0；计分回答 tokens 85154；平均回答 tokens 170.31；中位数样本数 500（状态 ok）。
+  剔除严重重复回答 43（8.60%）；保留回答中有效评分 457/457；保留回答计分 tokens 54388；状态 ok；重复筛选缓存 `/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.nonrepetitive_grouped_p_values.json`。
+
+  生成文本配置（种子逐条保存在明细中）：
+
+```json
+{
+  "student_model_paths": [
+    "/shared/wwx/EasyGAD/checkpoints/tp_warmup_rules_g05_d3_s25_tp_tp_keeplast/gad/global_step_1813/actor/huggingface"
+  ],
+  "generation_tokenizer_paths": [
+    "/shared/public_models/Qwen2.5-0.5B"
+  ],
+  "generation_configurations": [
+    {
+      "configuration": {
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "max_new_tokens": 1536,
+        "max_prompt_tokens": 2048,
+        "kgw_enabled_during_generation": false
+      },
+      "samples": 500
+    }
+  ],
+  "generation_seeds": {
+    "recorded_samples": 500,
+    "minimum": 42,
+    "maximum": 541,
+    "individual_values": "see per-sample immutable records"
+  }
+}
+```
+- clean: `/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl`；SHA256 `597b843d28d31c353c7bb9b94a3b6dccb564cb45ac2c5252f6a1592ccd768efe`；逐条明细 `/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.ppl.877fc574f9ee35a5145f.jsonl`；空回答 0；异常 loss 0；原生成截断 3；参考上下文截断 0；计分回答 tokens 156267；平均回答 tokens 312.53；中位数样本数 500（状态 ok）。
+  剔除严重重复回答 88（17.60%）；保留回答中有效评分 412/412；保留回答计分 tokens 45137；状态 ok；重复筛选缓存 `/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.nonrepetitive_grouped_p_values.json`。
+
+  生成文本配置（种子逐条保存在明细中）：
+
+```json
+{
+  "student_model_paths": [
+    "/shared/public_models/Qwen2.5-0.5B"
+  ],
+  "generation_tokenizer_paths": [
+    "/shared/public_models/Qwen2.5-0.5B"
+  ],
+  "generation_configurations": [
+    {
+      "configuration": {
+        "kgw_enabled_during_generation": false,
+        "max_new_tokens": 1536,
+        "max_prompt_tokens": 2048,
+        "temperature": 0.7,
+        "top_p": 0.9
+      },
+      "samples": 500
+    }
+  ],
+  "generation_seeds": {
+    "recorded_samples": 500,
+    "minimum": 42,
+    "maximum": 541,
+    "individual_values": "see per-sample immutable records"
+  }
+}
+```
+
+完整评分配置（含模型/tokenizer 指纹、软件版本；权重使用 size/mtime 标识，不全量哈希）：
+
+```json
+{
+  "model_path": "/shared/public_models/Llama-3-8B",
+  "device": "cuda",
+  "dtype": "bfloat16",
+  "generation_tokenizer": "/shared/public_models/Qwen2.5-0.5B",
+  "max_length": null,
+  "overflow": "error",
+  "effective_max_length": 8192,
+  "protocol": {
+    "prompt": "source-generation-prompt; source chat template, not reference chat template",
+    "boundary": "encode prompt and answer separately with add_special_tokens=False, then concatenate",
+    "bos": "one reference BOS at start when defined; no extra EOS",
+    "loss": "causal next-token NLL on all answer tokens, including the first; no prompt or padding loss",
+    "aggregate": "exp(sum(answer NLL) / sum(scored answer tokens)); not mean per-answer PPL",
+    "source_tokenizer_selection": "explicit override, otherwise row.model_path; fallback assumes the generation tokenizer matches that checkpoint",
+    "legacy_prompt_limit": 2048,
+    "weights_fingerprint": "weight filenames, sizes and mtime_ns; weight contents are not hashed"
+  },
+  "reference_assets": {
+    "path": "/shared/public_models/Llama-3-8B",
+    "assets": [
+      {
+        "name": "config.json",
+        "size": 654,
+        "sha256": "2430cee764b6530ff8673cf9ba8561e1d5a33152d503cd0de909ff5718261441"
+      },
+      {
+        "name": "generation_config.json",
+        "size": 126,
+        "sha256": "55550e95c40c53fb0ee3f960d6d2b25a46405c8f790e5c4bb02caf3e98f2b5d0"
+      },
+      {
+        "name": "model.safetensors.index.json",
+        "size": 23950,
+        "sha256": "146776fce3f6db1103aa6f249e65ee5544c5923ce6f971b092eee79aa6e5d37b"
+      },
+      {
+        "name": "special_tokens_map.json",
+        "size": 73,
+        "sha256": "462d91939dbc37178aa5a3eae7068d1990ccc92e09f288cc71f42cdf139d69cc"
+      },
+      {
+        "name": "tokenizer.json",
+        "size": 9085698,
+        "sha256": "e134af98b985517b4f068e3755ae90d4e9cd2d45d328325dc503f1c6b2d06cc7"
+      },
+      {
+        "name": "tokenizer_config.json",
+        "size": 50566,
+        "sha256": "690727b4fed286383df1c7ca5e805124cb70c6eb4529f807c7b2e60ff741da7e"
+      }
+    ],
+    "weight_stats": [
+      {
+        "name": "model-00001-of-00004.safetensors",
+        "size": 4976698672,
+        "mtime_ns": 1736746522477644778
+      },
+      {
+        "name": "model-00002-of-00004.safetensors",
+        "size": 4999802720,
+        "mtime_ns": 1736746656058650226
+      },
+      {
+        "name": "model-00003-of-00004.safetensors",
+        "size": 4915916176,
+        "mtime_ns": 1736746768408654808
+      },
+      {
+        "name": "model-00004-of-00004.safetensors",
+        "size": 1168138808,
+        "mtime_ns": 1736746796088655937
+      }
+    ],
+    "weight_content_hashed": false
+  },
+  "software": {
+    "python": "3.10.21",
+    "torch": "2.6.0",
+    "transformers": "4.51.3",
+    "tokenizers": "0.21.4"
+  }
+}
+```
+
+完整指标（JSON）：
+
+```json
+{
+  "positive_class": "kgw",
+  "score": "z_score (higher means more likely watermarked)",
+  "num_kgw": 500,
+  "num_clean": 500,
+  "auroc": 0.44716200000000017,
+  "best_f1": {
+    "threshold": -3.8996021017180893,
+    "fpr": 0.932,
+    "tpr": 0.982,
+    "precision": 0.5130616509926855,
+    "f1": 0.6739876458476322,
+    "tp": 491,
+    "fp": 466,
+    "tn": 34,
+    "fn": 9
+  },
+  "tpr_at_fpr": {
+    "1%": {
+      "threshold": 27.45469753369479,
+      "fpr": 0.006,
+      "tpr": 0.002,
+      "precision": 0.25,
+      "f1": 0.003968253968253968,
+      "tp": 1,
+      "fp": 3,
+      "tn": 497,
+      "fn": 499,
+      "target_fpr": 0.01
+    },
+    "5%": {
+      "threshold": 2.288585537482975,
+      "fpr": 0.046,
+      "tpr": 0.034,
+      "precision": 0.425,
+      "f1": 0.06296296296296297,
+      "tp": 17,
+      "fp": 23,
+      "tn": 477,
+      "fn": 483,
+      "target_fpr": 0.05
+    },
+    "10%": {
+      "threshold": 1.6924558427507104,
+      "fpr": 0.1,
+      "tpr": 0.058,
+      "precision": 0.3670886075949367,
+      "f1": 0.1001727115716753,
+      "tp": 29,
+      "fp": 50,
+      "tn": 450,
+      "fn": 471,
+      "target_fpr": 0.1
+    }
+  },
+  "note": "For each target FPR, select the empirical ROC point with the highest TPR whose FPR does not exceed the target; tied scores are kept together.",
+  "detector_config": {
+    "gamma": 0.5,
+    "hash_key": 15485863,
+    "seeding": "simple_1 (hash_key * previous_token_id)",
+    "delta_by_label": {
+      "kgw": 3.0,
+      "clean": 2.0
+    }
+  },
+  "rouge_l_dolly": {
+    "mean": 0.20703712481616962,
+    "num_samples": 500,
+    "evaluated_file": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+    "reference_file": "/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl",
+    "reference_source": "databricks/databricks-dolly-15k:response",
+    "metric": "rougeL",
+    "measure": "fmeasure",
+    "use_stemmer": true,
+    "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+  },
+  "rouge_l_teacher_clean": {
+    "mean": 0.257638647644951,
+    "num_samples": 500,
+    "evaluated_file": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+    "reference_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet",
+    "reference_source": "Qwen2.5-14B clean teacher responses",
+    "metric": "rougeL",
+    "measure": "fmeasure",
+    "use_stemmer": true,
+    "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+  },
+  "seq_rep_3": {
+    "kgw": {
+      "mean": 0.11405325844467881,
+      "median": 0.04365079365079361,
+      "num_samples": 500,
+      "num_short_answers": 0,
+      "num_empty_answers": 0,
+      "evaluated_file": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": "6cf1a473eeaf8a29b5217268f17c055fbdb8d101dd50dab5ed4c76561890416d",
+      "ngram_size": 3,
+      "tokenization": "answer.split(); whitespace-delimited words; case and punctuation preserved",
+      "scope": "answer only; overlapping trigrams within each complete original answer; no filtering or cross-answer trigrams",
+      "short_answer_policy": "answers with fewer than 3 words, including empty answers, contribute 0; counts reported",
+      "aggregation": {
+        "mean": "unweighted arithmetic mean of per-answer Seq-Rep-3",
+        "median": "ordinary median of per-answer Seq-Rep-3; arithmetic mean of the middle two for even counts"
+      }
+    },
+    "clean": {
+      "mean": 0.15901538183339659,
+      "median": 0.021919288974297402,
+      "num_samples": 500,
+      "num_short_answers": 1,
+      "num_empty_answers": 0,
+      "evaluated_file": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
+      "source_sha256": "597b843d28d31c353c7bb9b94a3b6dccb564cb45ac2c5252f6a1592ccd768efe",
+      "ngram_size": 3,
+      "tokenization": "answer.split(); whitespace-delimited words; case and punctuation preserved",
+      "scope": "answer only; overlapping trigrams within each complete original answer; no filtering or cross-answer trigrams",
+      "short_answer_policy": "answers with fewer than 3 words, including empty answers, contribute 0; counts reported",
+      "aggregation": {
+        "mean": "unweighted arithmetic mean of per-answer Seq-Rep-3",
+        "median": "ordinary median of per-answer Seq-Rep-3; arithmetic mean of the middle two for even counts"
+      }
+    }
+  },
+  "p_values": {
+    "kgw": {
+      "raw": {
+        "n_total": 500,
+        "n_valid": 500,
+        "n_invalid": 0,
+        "mean": 0.6055677566165799,
+        "median": 0.6749209522676586,
+        "min": 3.052982485091702e-166,
+        "max": 1.0,
+        "at_alpha": {
+          "1%": {
+            "alpha": 0.01,
+            "count": 16,
+            "fraction": 0.032
+          },
+          "5%": {
+            "alpha": 0.05,
+            "count": 31,
+            "fraction": 0.062
+          },
+          "10%": {
+            "alpha": 0.1,
+            "count": 57,
+            "fraction": 0.114
+          }
+        }
+      },
+      "deduplicated": {
+        "n_total": 500,
+        "n_valid": 500,
+        "n_invalid": 0,
+        "mean": 0.5959719846871776,
+        "median": 0.6437960196865484,
+        "min": 0.005150494978255218,
+        "max": 0.999773802869851,
+        "at_alpha": {
+          "1%": {
+            "alpha": 0.01,
+            "count": 1,
+            "fraction": 0.002
+          },
+          "5%": {
+            "alpha": 0.05,
+            "count": 11,
+            "fraction": 0.022
+          },
+          "10%": {
+            "alpha": 0.1,
+            "count": 29,
+            "fraction": 0.058
+          }
+        }
+      }
+    },
+    "clean": {
+      "raw": {
+        "n_total": 500,
+        "n_valid": 500,
+        "n_invalid": 0,
+        "mean": 0.5381206505070838,
+        "median": 0.5715704145196637,
+        "min": 6.0143e-320,
+        "max": 1.0,
+        "at_alpha": {
+          "1%": {
+            "alpha": 0.01,
+            "count": 22,
+            "fraction": 0.044
+          },
+          "5%": {
+            "alpha": 0.05,
+            "count": 54,
+            "fraction": 0.108
+          },
+          "10%": {
+            "alpha": 0.1,
+            "count": 73,
+            "fraction": 0.146
+          }
+        }
+      },
+      "deduplicated": {
+        "n_total": 500,
+        "n_valid": 500,
+        "n_invalid": 0,
+        "mean": 0.5374177558749705,
+        "median": 0.5551540845432315,
+        "min": 0.0006810523357921015,
+        "max": 0.9993618427741491,
+        "at_alpha": {
+          "1%": {
+            "alpha": 0.01,
+            "count": 5,
+            "fraction": 0.01
+          },
+          "5%": {
+            "alpha": 0.05,
+            "count": 25,
+            "fraction": 0.05
+          },
+          "10%": {
+            "alpha": 0.1,
+            "count": 46,
+            "fraction": 0.092
+          }
+        }
+      }
+    }
+  },
+  "p_value_method": "one-sided normal survival probability; unique context-token pairs for dedup",
+  "per_sample_p_value_files": {
+    "kgw": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.p_values.jsonl",
+    "clean": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.p_values.jsonl"
+  },
+  "grouped_p_values": {
+    "kgw": {
+      "aggregation": "ordinary_median",
+      "num_answers": 500,
+      "total_answer_tokens": 87179,
+      "budgets": {
+        "1000": {
+          "group_token_count": 1000,
+          "scored_tokens_per_group": 999,
+          "num_groups": 87,
+          "total_answer_tokens": 87179,
+          "discarded_tail_tokens": 179,
+          "median_p_value": 0.9131577661041661,
+          "median_log10_p_value": -0.0394541830031607,
+          "status": "ok"
+        },
+        "2000": {
+          "group_token_count": 2000,
+          "scored_tokens_per_group": 1999,
+          "num_groups": 43,
+          "total_answer_tokens": 87179,
+          "discarded_tail_tokens": 1179,
+          "median_p_value": 0.9767374614903181,
+          "median_log10_p_value": -0.01022215516385638,
+          "status": "ok"
+        },
+        "3000": {
+          "group_token_count": 3000,
+          "scored_tokens_per_group": 2999,
+          "num_groups": 29,
+          "total_answer_tokens": 87179,
+          "discarded_tail_tokens": 179,
+          "median_p_value": 0.9786642581416402,
+          "median_log10_p_value": -0.009366272287362148,
+          "status": "ok"
+        },
+        "10000": {
+          "group_token_count": 10000,
+          "scored_tokens_per_group": 9999,
+          "num_groups": 8,
+          "total_answer_tokens": 87179,
+          "discarded_tail_tokens": 7179,
+          "median_p_value": 0.9999039823223232,
+          "median_log10_p_value": -4.170194967442041e-05,
+          "status": "ok"
+        },
+        "20000": {
+          "group_token_count": 20000,
+          "scored_tokens_per_group": 19999,
+          "num_groups": 4,
+          "total_answer_tokens": 87179,
+          "discarded_tail_tokens": 7179,
+          "median_p_value": 0.9995454395127954,
+          "median_log10_p_value": -0.00019745799298571636,
+          "status": "ok"
+        },
+        "30000": {
+          "group_token_count": 30000,
+          "scored_tokens_per_group": 29999,
+          "num_groups": 2,
+          "total_answer_tokens": 87179,
+          "discarded_tail_tokens": 27179,
+          "median_p_value": 0.9818600338482086,
+          "median_log10_p_value": -0.00795041736558817,
+          "status": "ok"
+        }
+      }
+    },
+    "clean": {
+      "aggregation": "ordinary_median",
+      "num_answers": 500,
+      "total_answer_tokens": 159765,
+      "budgets": {
+        "1000": {
+          "group_token_count": 1000,
+          "scored_tokens_per_group": 999,
+          "num_groups": 159,
+          "total_answer_tokens": 159765,
+          "discarded_tail_tokens": 765,
+          "median_p_value": 0.8659288977499955,
+          "median_log10_p_value": -0.06251776685396769,
+          "status": "ok"
+        },
+        "2000": {
+          "group_token_count": 2000,
+          "scored_tokens_per_group": 1999,
+          "num_groups": 79,
+          "total_answer_tokens": 159765,
+          "discarded_tail_tokens": 1765,
+          "median_p_value": 0.971357711016285,
+          "median_log10_p_value": -0.012620807875598238,
+          "status": "ok"
+        },
+        "3000": {
+          "group_token_count": 3000,
+          "scored_tokens_per_group": 2999,
+          "num_groups": 53,
+          "total_answer_tokens": 159765,
+          "discarded_tail_tokens": 765,
+          "median_p_value": 0.9821335190767914,
+          "median_log10_p_value": -0.007829466737979084,
+          "status": "ok"
+        },
+        "10000": {
+          "group_token_count": 10000,
+          "scored_tokens_per_group": 9999,
+          "num_groups": 15,
+          "total_answer_tokens": 159765,
+          "discarded_tail_tokens": 9765,
+          "median_p_value": 0.9999999999999984,
+          "median_log10_p_value": -6.750292265873014e-16,
+          "status": "ok"
+        },
+        "20000": {
+          "group_token_count": 20000,
+          "scored_tokens_per_group": 19999,
+          "num_groups": 7,
+          "total_answer_tokens": 159765,
+          "discarded_tail_tokens": 19765,
+          "median_p_value": 1.0,
+          "median_log10_p_value": 0.0,
+          "status": "ok"
+        },
+        "30000": {
+          "group_token_count": 30000,
+          "scored_tokens_per_group": 29999,
+          "num_groups": 5,
+          "total_answer_tokens": 159765,
+          "discarded_tail_tokens": 9765,
+          "median_p_value": 1.0,
+          "median_log10_p_value": 0.0,
+          "status": "ok"
+        }
+      }
+    }
+  },
+  "grouped_p_value_method": "teacher-tokenizer answer IDs concatenated without separators; exact disjoint blocks; first token of each block is context only; no repetition deduplication; incomplete tail discarded; ordinary median of block p-values (arithmetic mean of the two middle p-values for even group counts)",
+  "per_group_p_value_files": {
+    "kgw": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.grouped_p_values.json",
+    "clean": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.grouped_p_values.json"
+  },
+  "grouped_p_values_without_severe_repetition": {
+    "kgw": {
+      "aggregation": "ordinary_median",
+      "num_answers": 457,
+      "total_answer_tokens": 55036,
+      "budgets": {
+        "1000": {
+          "group_token_count": 1000,
+          "scored_tokens_per_group": 999,
+          "num_groups": 55,
+          "total_answer_tokens": 55036,
+          "discarded_tail_tokens": 36,
+          "median_p_value": 0.939464203891651,
+          "median_log10_p_value": -0.02711976303391753,
+          "status": "ok"
+        },
+        "2000": {
+          "group_token_count": 2000,
+          "scored_tokens_per_group": 1999,
+          "num_groups": 27,
+          "total_answer_tokens": 55036,
+          "discarded_tail_tokens": 1036,
+          "median_p_value": 0.9438574313644745,
+          "median_log10_p_value": -0.025093600455846465,
+          "status": "ok"
+        },
+        "3000": {
+          "group_token_count": 3000,
+          "scored_tokens_per_group": 2999,
+          "num_groups": 18,
+          "total_answer_tokens": 55036,
+          "discarded_tail_tokens": 1036,
+          "median_p_value": 0.983718021506734,
+          "median_log10_p_value": -0.007129372354757534,
+          "status": "ok"
+        },
+        "10000": {
+          "group_token_count": 10000,
+          "scored_tokens_per_group": 9999,
+          "num_groups": 5,
+          "total_answer_tokens": 55036,
+          "discarded_tail_tokens": 5036,
+          "median_p_value": 0.9999499180499726,
+          "median_log10_p_value": -2.1750859207133525e-05,
+          "status": "ok"
+        },
+        "20000": {
+          "group_token_count": 20000,
+          "scored_tokens_per_group": 19999,
+          "num_groups": 2,
+          "total_answer_tokens": 55036,
+          "discarded_tail_tokens": 15036,
+          "median_p_value": 0.9999999926086645,
+          "median_log10_p_value": -3.2100162523510203e-09,
+          "status": "ok"
+        },
+        "30000": {
+          "group_token_count": 30000,
+          "scored_tokens_per_group": 29999,
+          "num_groups": 1,
+          "total_answer_tokens": 55036,
+          "discarded_tail_tokens": 25036,
+          "median_p_value": 0.999999999991295,
+          "median_log10_p_value": -3.780549399891962e-12,
+          "status": "ok"
+        }
+      },
+      "filtering": {
+        "repetition_threshold": 0.5,
+        "comparison": ">",
+        "scope": "answer-internal adjacent token pairs; prompt excluded",
+        "num_answers_before": 500,
+        "num_answers_retained": 457,
+        "num_answers_removed": 43,
+        "fraction_answers_removed": 0.086,
+        "total_answer_tokens_before": 87179,
+        "total_answer_tokens_retained": 55036,
+        "total_answer_tokens_removed": 32143,
+        "removed_answer_ids": [
+          "dolly-10119",
+          "dolly-12241",
+          "dolly-00624",
+          "dolly-13505",
+          "dolly-01089",
+          "dolly-08884",
+          "dolly-12659",
+          "dolly-10208",
+          "dolly-02186",
+          "dolly-14859",
+          "dolly-07027",
+          "dolly-02223",
+          "dolly-06227",
+          "dolly-00143",
+          "dolly-09778",
+          "dolly-13779",
+          "dolly-10697",
+          "dolly-05555",
+          "dolly-13981",
+          "dolly-11987",
+          "dolly-00900",
+          "dolly-01206",
+          "dolly-03239",
+          "dolly-13445",
+          "dolly-09988",
+          "dolly-02139",
+          "dolly-14265",
+          "dolly-07122",
+          "dolly-08999",
+          "dolly-09563",
+          "dolly-06006",
+          "dolly-08355",
+          "dolly-00148",
+          "dolly-09375",
+          "dolly-07407",
+          "dolly-14069",
+          "dolly-06628",
+          "dolly-03998",
+          "dolly-02059",
+          "dolly-00278",
+          "dolly-05355",
+          "dolly-12693",
+          "dolly-05634"
+        ]
+      }
+    },
+    "clean": {
+      "aggregation": "ordinary_median",
+      "num_answers": 412,
+      "total_answer_tokens": 45882,
+      "budgets": {
+        "1000": {
+          "group_token_count": 1000,
+          "scored_tokens_per_group": 999,
+          "num_groups": 45,
+          "total_answer_tokens": 45882,
+          "discarded_tail_tokens": 882,
+          "median_p_value": 0.6360891449864364,
+          "median_log10_p_value": -0.1964820156995508,
+          "status": "ok"
+        },
+        "2000": {
+          "group_token_count": 2000,
+          "scored_tokens_per_group": 1999,
+          "num_groups": 22,
+          "total_answer_tokens": 45882,
+          "discarded_tail_tokens": 1882,
+          "median_p_value": 0.7960378878131416,
+          "median_log10_p_value": -0.09906626131183685,
+          "status": "ok"
+        },
+        "3000": {
+          "group_token_count": 3000,
+          "scored_tokens_per_group": 2999,
+          "num_groups": 15,
+          "total_answer_tokens": 45882,
+          "discarded_tail_tokens": 882,
+          "median_p_value": 0.7386263221105359,
+          "median_log10_p_value": -0.13157521964243946,
+          "status": "ok"
+        },
+        "10000": {
+          "group_token_count": 10000,
+          "scored_tokens_per_group": 9999,
+          "num_groups": 4,
+          "total_answer_tokens": 45882,
+          "discarded_tail_tokens": 5882,
+          "median_p_value": 0.947596846602552,
+          "median_log10_p_value": -0.0233763931850151,
+          "status": "ok"
+        },
+        "20000": {
+          "group_token_count": 20000,
+          "scored_tokens_per_group": 19999,
+          "num_groups": 2,
+          "total_answer_tokens": 45882,
+          "discarded_tail_tokens": 5882,
+          "median_p_value": 0.9783739864832501,
+          "median_log10_p_value": -0.009495103065976066,
+          "status": "ok"
+        },
+        "30000": {
+          "group_token_count": 30000,
+          "scored_tokens_per_group": 29999,
+          "num_groups": 1,
+          "total_answer_tokens": 45882,
+          "discarded_tail_tokens": 15882,
+          "median_p_value": 0.9995678964162934,
+          "median_log10_p_value": -0.00018770075802065225,
+          "status": "ok"
+        }
+      },
+      "filtering": {
+        "repetition_threshold": 0.5,
+        "comparison": ">",
+        "scope": "answer-internal adjacent token pairs; prompt excluded",
+        "num_answers_before": 500,
+        "num_answers_retained": 412,
+        "num_answers_removed": 88,
+        "fraction_answers_removed": 0.176,
+        "total_answer_tokens_before": 159765,
+        "total_answer_tokens_retained": 45882,
+        "total_answer_tokens_removed": 113883,
+        "removed_answer_ids": [
+          "dolly-00135",
+          "dolly-12241",
+          "dolly-07923",
+          "dolly-07103",
+          "dolly-05608",
+          "dolly-07788",
+          "dolly-11310",
+          "dolly-02097",
+          "dolly-03614",
+          "dolly-13505",
+          "dolly-02580",
+          "dolly-08884",
+          "dolly-12659",
+          "dolly-00420",
+          "dolly-11014",
+          "dolly-08008",
+          "dolly-02186",
+          "dolly-00275",
+          "dolly-08512",
+          "dolly-14060",
+          "dolly-01461",
+          "dolly-02223",
+          "dolly-04949",
+          "dolly-08689",
+          "dolly-08574",
+          "dolly-08406",
+          "dolly-04141",
+          "dolly-03209",
+          "dolly-06227",
+          "dolly-11078",
+          "dolly-09778",
+          "dolly-04856",
+          "dolly-13779",
+          "dolly-06595",
+          "dolly-08936",
+          "dolly-09344",
+          "dolly-05605",
+          "dolly-08340",
+          "dolly-04589",
+          "dolly-04686",
+          "dolly-14700",
+          "dolly-03696",
+          "dolly-03914",
+          "dolly-11987",
+          "dolly-01939",
+          "dolly-05628",
+          "dolly-13339",
+          "dolly-08911",
+          "dolly-03239",
+          "dolly-13445",
+          "dolly-02139",
+          "dolly-14265",
+          "dolly-13610",
+          "dolly-07427",
+          "dolly-09563",
+          "dolly-02451",
+          "dolly-13544",
+          "dolly-06824",
+          "dolly-05312",
+          "dolly-10992",
+          "dolly-06932",
+          "dolly-08607",
+          "dolly-05388",
+          "dolly-11386",
+          "dolly-02069",
+          "dolly-09439",
+          "dolly-00148",
+          "dolly-08211",
+          "dolly-12186",
+          "dolly-03319",
+          "dolly-07407",
+          "dolly-10389",
+          "dolly-03916",
+          "dolly-08222",
+          "dolly-14947",
+          "dolly-03624",
+          "dolly-09330",
+          "dolly-11182",
+          "dolly-02059",
+          "dolly-02916",
+          "dolly-09816",
+          "dolly-05355",
+          "dolly-06970",
+          "dolly-05634",
+          "dolly-02500",
+          "dolly-11314",
+          "dolly-13235",
+          "dolly-04223"
+        ]
+      }
+    }
+  },
+  "grouped_p_value_without_severe_repetition_method": "exclude whole answers whose answer-internal adjacent-token-pair repetition ratio (1 - unique pairs / all pairs) is strictly greater than 0.5; prompts excluded from repetition assessment; filter each label independently; retain original answer order, then concatenate teacher-tokenizer answer IDs without separators; exact disjoint blocks, first token context only; no token-pair deduplication within retained blocks; incomplete tail discarded; ordinary median of block p-values (mean of the middle two for even counts)",
+  "per_group_p_value_without_severe_repetition_files": {
+    "kgw": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.nonrepetitive_grouped_p_values.json",
+    "clean": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.nonrepetitive_grouped_p_values.json"
+  },
+  "ppl": {
+    "enabled": true,
+    "schema": "saved-answer-reference-ppl-v1",
+    "configuration": {
+      "model_path": "/shared/public_models/Llama-3-8B",
+      "device": "cuda",
+      "dtype": "bfloat16",
+      "generation_tokenizer": "/shared/public_models/Qwen2.5-0.5B",
+      "max_length": null,
+      "overflow": "error",
+      "effective_max_length": 8192,
+      "protocol": {
+        "prompt": "source-generation-prompt; source chat template, not reference chat template",
+        "boundary": "encode prompt and answer separately with add_special_tokens=False, then concatenate",
+        "bos": "one reference BOS at start when defined; no extra EOS",
+        "loss": "causal next-token NLL on all answer tokens, including the first; no prompt or padding loss",
+        "aggregate": "exp(sum(answer NLL) / sum(scored answer tokens)); not mean per-answer PPL",
+        "source_tokenizer_selection": "explicit override, otherwise row.model_path; fallback assumes the generation tokenizer matches that checkpoint",
+        "legacy_prompt_limit": 2048,
+        "weights_fingerprint": "weight filenames, sizes and mtime_ns; weight contents are not hashed"
+      },
+      "reference_assets": {
+        "path": "/shared/public_models/Llama-3-8B",
+        "assets": [
+          {
+            "name": "config.json",
+            "size": 654,
+            "sha256": "2430cee764b6530ff8673cf9ba8561e1d5a33152d503cd0de909ff5718261441"
+          },
+          {
+            "name": "generation_config.json",
+            "size": 126,
+            "sha256": "55550e95c40c53fb0ee3f960d6d2b25a46405c8f790e5c4bb02caf3e98f2b5d0"
+          },
+          {
+            "name": "model.safetensors.index.json",
+            "size": 23950,
+            "sha256": "146776fce3f6db1103aa6f249e65ee5544c5923ce6f971b092eee79aa6e5d37b"
+          },
+          {
+            "name": "special_tokens_map.json",
+            "size": 73,
+            "sha256": "462d91939dbc37178aa5a3eae7068d1990ccc92e09f288cc71f42cdf139d69cc"
+          },
+          {
+            "name": "tokenizer.json",
+            "size": 9085698,
+            "sha256": "e134af98b985517b4f068e3755ae90d4e9cd2d45d328325dc503f1c6b2d06cc7"
+          },
+          {
+            "name": "tokenizer_config.json",
+            "size": 50566,
+            "sha256": "690727b4fed286383df1c7ca5e805124cb70c6eb4529f807c7b2e60ff741da7e"
+          }
+        ],
+        "weight_stats": [
+          {
+            "name": "model-00001-of-00004.safetensors",
+            "size": 4976698672,
+            "mtime_ns": 1736746522477644778
+          },
+          {
+            "name": "model-00002-of-00004.safetensors",
+            "size": 4999802720,
+            "mtime_ns": 1736746656058650226
+          },
+          {
+            "name": "model-00003-of-00004.safetensors",
+            "size": 4915916176,
+            "mtime_ns": 1736746768408654808
+          },
+          {
+            "name": "model-00004-of-00004.safetensors",
+            "size": 1168138808,
+            "mtime_ns": 1736746796088655937
+          }
+        ],
+        "weight_content_hashed": false
+      },
+      "software": {
+        "python": "3.10.21",
+        "torch": "2.6.0",
+        "transformers": "4.51.3",
+        "tokenizers": "0.21.4"
+      }
+    },
+    "files": {
+      "kgw": {
+        "samples": 500,
+        "valid_samples": 500,
+        "skipped_empty_answers": 0,
+        "complete": true,
+        "nonfinite_samples": 0,
+        "status": "ok",
+        "total_nll": 70462.37662817031,
+        "scored_tokens": 85154,
+        "mean_nll": 0.8274699559406524,
+        "token_weighted_ppl": 2.2875238765306047,
+        "mean_answer_tokens": 170.308,
+        "source_prompt_truncated_samples": 3,
+        "reference_prompt_truncated_samples": 0,
+        "generation_configurations": [
+          {
+            "configuration": {
+              "temperature": 0.7,
+              "top_p": 0.9,
+              "max_new_tokens": 1536,
+              "max_prompt_tokens": 2048,
+              "kgw_enabled_during_generation": false
+            },
+            "samples": 500
+          }
+        ],
+        "generation_seeds": {
+          "recorded_samples": 500,
+          "minimum": 42,
+          "maximum": 541,
+          "individual_values": "see per-sample immutable records"
+        },
+        "student_model_paths": [
+          "/shared/wwx/EasyGAD/checkpoints/tp_warmup_rules_g05_d3_s25_tp_tp_keeplast/gad/global_step_1813/actor/huggingface"
+        ],
+        "generation_tokenizer_paths": [
+          "/shared/public_models/Qwen2.5-0.5B"
+        ],
+        "median_per_answer_ppl": 3.1715056793615943,
+        "median_samples": 500,
+        "median_status": "ok",
+        "without_severe_repetition": {
+          "samples": 457,
+          "valid_samples": 457,
+          "skipped_empty_answers": 0,
+          "complete": true,
+          "nonfinite_samples": 0,
+          "status": "ok",
+          "total_nll": 63488.410400922585,
+          "scored_tokens": 54388,
+          "mean_nll": 1.167323865575542,
+          "token_weighted_ppl": 3.213381680293152,
+          "mean_answer_tokens": 119.0109409190372,
+          "source_prompt_truncated_samples": 1,
+          "reference_prompt_truncated_samples": 0,
+          "generation_configurations": [
+            {
+              "configuration": {
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "max_new_tokens": 1536,
+                "max_prompt_tokens": 2048,
+                "kgw_enabled_during_generation": false
+              },
+              "samples": 457
+            }
+          ],
+          "generation_seeds": {
+            "recorded_samples": 457,
+            "minimum": 42,
+            "maximum": 541,
+            "individual_values": "see per-sample immutable records"
+          },
+          "student_model_paths": [
+            "/shared/wwx/EasyGAD/checkpoints/tp_warmup_rules_g05_d3_s25_tp_tp_keeplast/gad/global_step_1813/actor/huggingface"
+          ],
+          "generation_tokenizer_paths": [
+            "/shared/public_models/Qwen2.5-0.5B"
+          ],
+          "median_per_answer_ppl": 3.30166329514125,
+          "median_samples": 457,
+          "median_status": "ok",
+          "num_answers_before": 500,
+          "num_answers_retained": 457,
+          "num_answers_removed": 43,
+          "fraction_answers_removed": 0.086,
+          "repetition_threshold": 0.5,
+          "comparison": ">",
+          "scope": "answer-internal adjacent token pairs; prompt excluded",
+          "removed_answer_ids": [
+            "dolly-10119",
+            "dolly-12241",
+            "dolly-00624",
+            "dolly-13505",
+            "dolly-01089",
+            "dolly-08884",
+            "dolly-12659",
+            "dolly-10208",
+            "dolly-02186",
+            "dolly-14859",
+            "dolly-07027",
+            "dolly-02223",
+            "dolly-06227",
+            "dolly-00143",
+            "dolly-09778",
+            "dolly-13779",
+            "dolly-10697",
+            "dolly-05555",
+            "dolly-13981",
+            "dolly-11987",
+            "dolly-00900",
+            "dolly-01206",
+            "dolly-03239",
+            "dolly-13445",
+            "dolly-09988",
+            "dolly-02139",
+            "dolly-14265",
+            "dolly-07122",
+            "dolly-08999",
+            "dolly-09563",
+            "dolly-06006",
+            "dolly-08355",
+            "dolly-00148",
+            "dolly-09375",
+            "dolly-07407",
+            "dolly-14069",
+            "dolly-06628",
+            "dolly-03998",
+            "dolly-02059",
+            "dolly-00278",
+            "dolly-05355",
+            "dolly-12693",
+            "dolly-05634"
+          ],
+          "filtering_source_file": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.nonrepetitive_grouped_p_values.json",
+          "filtering_source_sha256": "6cf1a473eeaf8a29b5217268f17c055fbdb8d101dd50dab5ed4c76561890416d",
+          "filtering_tokenizer": {
+            "path": "/shared/public_models/Qwen2.5-14B-Instruct",
+            "files_sha256": {
+              "config.json": "7362de7db90a1e57fe153e55094e6c2fb7d904a3705d34296ff7de84488235f4",
+              "merges.txt": "0de0bc38a29ea38eef099b677fa1ff52edd181e573529af26c4cd2136e233777",
+              "tokenizer.json": "47ec9be242d3ef39b9c97ac0a3f06c1752f061b234e295bc0a2842067a3fe4f9",
+              "tokenizer_config.json": "fa2a40a9d8c8c4bb7f25ab726eb78ec9cbaaef96d1fa26f1d7f5615e886449a8",
+              "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+            }
+          }
+        },
+        "source_path": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "source_sha256": "6cf1a473eeaf8a29b5217268f17c055fbdb8d101dd50dab5ed4c76561890416d",
+        "per_sample_file": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.ppl.7d766133d416ae5cca23.jsonl",
+        "cache_reused": false
+      },
+      "clean": {
+        "samples": 500,
+        "valid_samples": 500,
+        "skipped_empty_answers": 0,
+        "complete": true,
+        "nonfinite_samples": 0,
+        "status": "ok",
+        "total_nll": 67054.72902449768,
+        "scored_tokens": 156267,
+        "mean_nll": 0.42910357928735865,
+        "token_weighted_ppl": 1.5358801115260794,
+        "mean_answer_tokens": 312.534,
+        "source_prompt_truncated_samples": 3,
+        "reference_prompt_truncated_samples": 0,
+        "generation_configurations": [
+          {
+            "configuration": {
+              "kgw_enabled_during_generation": false,
+              "max_new_tokens": 1536,
+              "max_prompt_tokens": 2048,
+              "temperature": 0.7,
+              "top_p": 0.9
+            },
+            "samples": 500
+          }
+        ],
+        "generation_seeds": {
+          "recorded_samples": 500,
+          "minimum": 42,
+          "maximum": 541,
+          "individual_values": "see per-sample immutable records"
+        },
+        "student_model_paths": [
+          "/shared/public_models/Qwen2.5-0.5B"
+        ],
+        "generation_tokenizer_paths": [
+          "/shared/public_models/Qwen2.5-0.5B"
+        ],
+        "median_per_answer_ppl": 2.5576398946471928,
+        "median_samples": 500,
+        "median_status": "ok",
+        "without_severe_repetition": {
+          "samples": 412,
+          "valid_samples": 412,
+          "skipped_empty_answers": 0,
+          "complete": true,
+          "nonfinite_samples": 0,
+          "status": "ok",
+          "total_nll": 44868.67048177123,
+          "scored_tokens": 45137,
+          "mean_nll": 0.9940552203684612,
+          "token_weighted_ppl": 2.702170179562856,
+          "mean_answer_tokens": 109.55582524271844,
+          "source_prompt_truncated_samples": 1,
+          "reference_prompt_truncated_samples": 0,
+          "generation_configurations": [
+            {
+              "configuration": {
+                "kgw_enabled_during_generation": false,
+                "max_new_tokens": 1536,
+                "max_prompt_tokens": 2048,
+                "temperature": 0.7,
+                "top_p": 0.9
+              },
+              "samples": 412
+            }
+          ],
+          "generation_seeds": {
+            "recorded_samples": 412,
+            "minimum": 42,
+            "maximum": 541,
+            "individual_values": "see per-sample immutable records"
+          },
+          "student_model_paths": [
+            "/shared/public_models/Qwen2.5-0.5B"
+          ],
+          "generation_tokenizer_paths": [
+            "/shared/public_models/Qwen2.5-0.5B"
+          ],
+          "median_per_answer_ppl": 2.8522532998790773,
+          "median_samples": 412,
+          "median_status": "ok",
+          "num_answers_before": 500,
+          "num_answers_retained": 412,
+          "num_answers_removed": 88,
+          "fraction_answers_removed": 0.176,
+          "repetition_threshold": 0.5,
+          "comparison": ">",
+          "scope": "answer-internal adjacent token pairs; prompt excluded",
+          "removed_answer_ids": [
+            "dolly-00135",
+            "dolly-12241",
+            "dolly-07923",
+            "dolly-07103",
+            "dolly-05608",
+            "dolly-07788",
+            "dolly-11310",
+            "dolly-02097",
+            "dolly-03614",
+            "dolly-13505",
+            "dolly-02580",
+            "dolly-08884",
+            "dolly-12659",
+            "dolly-00420",
+            "dolly-11014",
+            "dolly-08008",
+            "dolly-02186",
+            "dolly-00275",
+            "dolly-08512",
+            "dolly-14060",
+            "dolly-01461",
+            "dolly-02223",
+            "dolly-04949",
+            "dolly-08689",
+            "dolly-08574",
+            "dolly-08406",
+            "dolly-04141",
+            "dolly-03209",
+            "dolly-06227",
+            "dolly-11078",
+            "dolly-09778",
+            "dolly-04856",
+            "dolly-13779",
+            "dolly-06595",
+            "dolly-08936",
+            "dolly-09344",
+            "dolly-05605",
+            "dolly-08340",
+            "dolly-04589",
+            "dolly-04686",
+            "dolly-14700",
+            "dolly-03696",
+            "dolly-03914",
+            "dolly-11987",
+            "dolly-01939",
+            "dolly-05628",
+            "dolly-13339",
+            "dolly-08911",
+            "dolly-03239",
+            "dolly-13445",
+            "dolly-02139",
+            "dolly-14265",
+            "dolly-13610",
+            "dolly-07427",
+            "dolly-09563",
+            "dolly-02451",
+            "dolly-13544",
+            "dolly-06824",
+            "dolly-05312",
+            "dolly-10992",
+            "dolly-06932",
+            "dolly-08607",
+            "dolly-05388",
+            "dolly-11386",
+            "dolly-02069",
+            "dolly-09439",
+            "dolly-00148",
+            "dolly-08211",
+            "dolly-12186",
+            "dolly-03319",
+            "dolly-07407",
+            "dolly-10389",
+            "dolly-03916",
+            "dolly-08222",
+            "dolly-14947",
+            "dolly-03624",
+            "dolly-09330",
+            "dolly-11182",
+            "dolly-02059",
+            "dolly-02916",
+            "dolly-09816",
+            "dolly-05355",
+            "dolly-06970",
+            "dolly-05634",
+            "dolly-02500",
+            "dolly-11314",
+            "dolly-13235",
+            "dolly-04223"
+          ],
+          "filtering_source_file": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.nonrepetitive_grouped_p_values.json",
+          "filtering_source_sha256": "597b843d28d31c353c7bb9b94a3b6dccb564cb45ac2c5252f6a1592ccd768efe",
+          "filtering_tokenizer": {
+            "path": "/shared/public_models/Qwen2.5-14B-Instruct",
+            "files_sha256": {
+              "config.json": "7362de7db90a1e57fe153e55094e6c2fb7d904a3705d34296ff7de84488235f4",
+              "merges.txt": "0de0bc38a29ea38eef099b677fa1ff52edd181e573529af26c4cd2136e233777",
+              "tokenizer.json": "47ec9be242d3ef39b9c97ac0a3f06c1752f061b234e295bc0a2842067a3fe4f9",
+              "tokenizer_config.json": "fa2a40a9d8c8c4bb7f25ab726eb78ec9cbaaef96d1fa26f1d7f5615e886449a8",
+              "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+            }
+          }
+        },
+        "source_path": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
+        "source_sha256": "597b843d28d31c353c7bb9b94a3b6dccb564cb45ac2c5252f6a1592ccd768efe",
+        "per_sample_file": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.ppl.877fc574f9ee35a5145f.jsonl",
+        "cache_reused": true
+      }
+    }
+  },
+  "evaluated_at": "2026-11-05T16:55:46+08:00",
+  "kgw_file": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+  "clean_file": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
+  "history_document": "/shared/wwx/EasyGAD/wm_test/detection_metrics_history.md"
+}
+```
+
+## 评估记录：2026-11-05T17:07:34+08:00
+
+- 样本数：KGW 500，clean 500
+- AUROC：0.418420
+- 实际检测配置：`{"gamma": 0.5, "hash_key": 15485863, "seeding": "simple_1 (hash_key * previous_token_id)", "delta_by_label": {"kgw": 3.0, "clean": 2.0}}`
+- ROUGE-L（同批 500 条原始 Dolly 回答作参考）：0.166714（KGW 文件中的采样回答，逐条 F1 平均，use_stemmer=True）
+- 原始 Dolly 参考文件：`/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl`
+- ROUGE-L（同批 500 条 14B clean 教师回答作参考）：0.229723（KGW 文件中的采样回答，逐条 F1 平均，use_stemmer=True）
+- 14B clean 教师参考文件：`/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet`
+- Best F1：0.670248（z 阈值 -16.84024198163435，TPR 0.998000，FPR 0.980000）
+- TPR@FPR 及该工作点的 F1：
+
+  | 目标 FPR | 实际 FPR | TPR | F1 | z 阈值 |
+  |---:|---:|---:|---:|---:|
+  | 1% | 0.010000 | 0.006000 | 0.011811 | 9.03249342651297 |
+  | 5% | 0.046000 | 0.048000 | 0.087751 | 2.258840898497371 |
+  | 10% | 0.100000 | 0.072000 | 0.122867 | 1.7179688600346 |
+
+### Seq-Rep-3（全量回答，词级三元组重复率）
+
+每条回答单独计算 1 - 不同三元组数 / 全部三元组数，再汇总逐回答算术平均和普通中位数；偶数条的中位数取中间两个值的算术平均。只对 answer 使用 split() 空白分词，保留大小写和标点；不包含 prompt，不跨回答拼接，不剔除严重重复回答，不按长度加权。少于 3 个词（含空回答）按 0 计入，数量单独列出；空回答数包含在短回答数内。数值以 0–1 比例报告。
+
+| 文件组 | 样本数 | Seq-Rep-3 逐回答算术平均 ↓ | Seq-Rep-3 逐回答普通中位数 ↓ | 少于3词回答数 | 空回答数 |
+|---|---:|---:|---:|---:|---:|
+| kgw | 500 | 0.222037 | 0.068682 | 0 | 0 |
+| clean | 500 | 0.159015 | 0.021919 | 1 | 0 |
+
+- kgw: `/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl`；SHA256 `e684a9f3b2c95b2b4a79ce8f2efe0fdc6e933d89ee3f803dc905ef4178b8dd53`。
+
+- clean: `/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl`；SHA256 `597b843d28d31c353c7bb9b94a3b6dccb564cb45ac2c5252f6a1592ccd768efe`。
+
+两种逐条文本 p-value 统计（单侧正态近似；不是 AUROC 的显著性检验）：
+
+去重规则：相同的 `(previous_token_id, token_id)` 只计一次；不修改回答文本。
+
+| 数据 | 检测方式 | 有效样本 | p 均值 | p 中位数 | p≤0.01 | p≤0.05 | p≤0.10 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| kgw | 原始 | 500/500 | 0.634221 | 0.718832 | 23 (4.60%) | 38 (7.60%) | 56 (11.20%) |
+| kgw | token 对去重 | 500/500 | 0.618818 | 0.676771 | 1 (0.20%) | 4 (0.80%) | 21 (4.20%) |
+| clean | 原始 | 500/500 | 0.538121 | 0.57157 | 22 (4.40%) | 54 (10.80%) | 73 (14.60%) |
+| clean | token 对去重 | 500/500 | 0.537418 | 0.555154 | 5 (1.00%) | 25 (5.00%) | 46 (9.20%) |
+
+KGW 的小 p 占比是该理论阈值下的检出率，clean 的小 p 占比是实测误报率。p≤0.05 不保证实际 FPR=5%；去重可改善重复带来的失真，但不保证完全校准。空回答不做显著性检验，p=null，并排除在有效样本统计之外。
+
+逐条 p-value：`/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.p_values.jsonl`；`/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.p_values.jsonl`
+
+固定 token 分组 p-value（普通中位数；p 越大表示原单侧检验证据越弱）：
+
+按教师 tokenizer 编码回答并无分隔拼接，精确分组；每组首 token 仅作上下文，其余 token 用本项目原 KGW 绿表评分；不去重，尾部不足一组丢弃；各组 p 排序后取普通中位数（偶数组取中间两个 p 的算术平均）。
+
+| 每组 token 数 | 计分 token 数 | KGW 组数 | KGW median p ↑ | clean 组数 | clean median p | KGW/clean 丢弃尾部 tokens |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1000 | 999 | 179 | 0.982988 | 159 | 0.865929 | 777/765 |
+| 2000 | 1999 | 89 | 0.999495 | 79 | 0.971358 | 1777/1765 |
+| 3000 | 2999 | 59 | 0.999957 | 53 | 0.982134 | 2777/765 |
+| 10000 | 9999 | 17 | 1 | 15 | 1 | 9777/9765 |
+| 20000 | 19999 | 8 | 1 | 7 | 1 | 19777/19765 |
+| 30000 | 29999 | 5 | 1 | 5 | 1 | 29777/9765 |
+
+N/A 表示总 token 数不足一个完整组；组数为 1 或 2 时需结合逐组结果解释。极小 p 用科学计数法字符串保存，同时保留 log10(p)，避免浮点下溢为 0。
+
+逐组 p-value 缓存：`/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.grouped_p_values.json`；`/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.grouped_p_values.json`
+
+剔除严重重复回答后的固定 token 分组 p-value（普通中位数）：
+
+先独立筛选 KGW 和 clean：回答内部相邻 token 对重复比例严格大于 50% 时，剔除整条回答；prompt 不参与判断。保留回答按原顺序重新无分隔拼接，各组首 token 仅作上下文；组内不做 token 对去重，尾部不足一组丢弃。这是质量筛选补充指标，原始全样本统计另行保留。
+
+| 数据 | 原回答数 | 剔除严重重复回答 | 保留回答数 | 原 tokens | 剔除 tokens | 保留 tokens |
+|---|---:|---:|---:|---:|---:|---:|
+| kgw | 500 | 108 (21.60%) | 392 | 179777 | 122104 | 57673 |
+| clean | 500 | 88 (17.60%) | 412 | 159765 | 113883 | 45882 |
+
+| 每组 token 数 | 计分 token 数 | KGW 组数 | KGW median p ↑ | clean 组数 | clean median p | KGW/clean 丢弃尾部 tokens |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1000 | 999 | 57 | 0.959081 | 45 | 0.636089 | 673/882 |
+| 2000 | 1999 | 28 | 0.994909 | 22 | 0.796038 | 1673/1882 |
+| 3000 | 2999 | 19 | 0.996744 | 15 | 0.738626 | 673/882 |
+| 10000 | 9999 | 5 | 0.999999 | 4 | 0.947597 | 7673/5882 |
+| 20000 | 19999 | 2 | 1 | 2 | 0.978374 | 17673/5882 |
+| 30000 | 29999 | 1 | 1 | 1 | 0.999568 | 27673/15882 |
+
+N/A 表示筛选后不足一个完整组。各组 p 取普通中位数，偶数组取中间两个 p 的算术平均；组数较少时请结合逐组缓存解释。
+
+剔除严重重复回答后的逐组 p-value 缓存：`/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.nonrepetitive_grouped_p_values.json`；`/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.nonrepetitive_grouped_p_values.json`
+
+### 固定参考模型 PPL（只评分已保存的回答）
+
+| 文件组 | 总体 PPL ↓ | 逐回答 PPL 中位数 ↓ | 剔除严重重复后总体 PPL ↓ | 保留回答数/原回答数 | 有效样本/总样本 | 状态 | 缓存复用 |
+|---|---:|---:|---:|---:|---:|---|---|
+| kgw | 1.732680 | 3.163390 | 3.518218 | 392/500 | 500/500 | ok | False |
+| clean | 1.535880 | 2.557640 | 2.702170 | 412/500 | 500/500 | ok | True |
+
+总体 PPL = exp(全部有效回答 NLL 总和 / 全部计分回答 token 数)，不是逐条 PPL 的算术平均。
+逐回答 PPL 中位数对全量有效回答的 PPL 排序；偶数条取中间两个 PPL 的算术平均，不对平均 NLL 取中位数后再 exp。空回答或异常 loss 不计入，并单独报告数量。
+剔除严重重复后总体 PPL：复用同源重复筛选缓存，按教师 tokenizer 的回答内部相邻 token 对重复率严格 > 50% 剔除整条回答，prompt 不参与判断；只汇总保留回答原有的参考模型 NLL 和参考 tokenizer token 数。保留回答的文本不变，不删除文内 token，不丢弃尾部。KGW 与 clean 各自筛选，保留回答数含未成功评分回答。N/A 表示未提供筛选，null 表示无可计算数值；筛选后结果是子集统计，全量结果另行保留。
+原生成 tokenizer 恢复实际生成 prompt；参考 tokenizer 对 prompt/answer 分开编码后拼接；只计回答，包含首回答 token。Base 参考模型不再套用 chat template；只添加一次参考 BOS，不额外评分 EOS；输入 JSONL 不修改。
+
+- kgw: `/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl`；SHA256 `e684a9f3b2c95b2b4a79ce8f2efe0fdc6e933d89ee3f803dc905ef4178b8dd53`；逐条明细 `/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.ppl.d872bc907ab1d3386419.jsonl`；空回答 0；异常 loss 0；原生成截断 3；参考上下文截断 0；计分回答 tokens 176561；平均回答 tokens 353.12；中位数样本数 500（状态 ok）。
+  剔除严重重复回答 108（21.60%）；保留回答中有效评分 392/392；保留回答计分 tokens 57009；状态 ok；重复筛选缓存 `/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.nonrepetitive_grouped_p_values.json`。
+
+  生成文本配置（种子逐条保存在明细中）：
+
+```json
+{
+  "student_model_paths": [
+    "/shared/wwx/EasyGAD/checkpoints/tp_warmup_rules_g05_d3_s25_tp_tp_keeplast/warmup/global_step_1813/actor/huggingface"
+  ],
+  "generation_tokenizer_paths": [
+    "/shared/public_models/Qwen2.5-0.5B"
+  ],
+  "generation_configurations": [
+    {
+      "configuration": {
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "max_new_tokens": 1536,
+        "max_prompt_tokens": 2048,
+        "kgw_enabled_during_generation": false
+      },
+      "samples": 500
+    }
+  ],
+  "generation_seeds": {
+    "recorded_samples": 500,
+    "minimum": 42,
+    "maximum": 541,
+    "individual_values": "see per-sample immutable records"
+  }
+}
+```
+- clean: `/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl`；SHA256 `597b843d28d31c353c7bb9b94a3b6dccb564cb45ac2c5252f6a1592ccd768efe`；逐条明细 `/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.ppl.877fc574f9ee35a5145f.jsonl`；空回答 0；异常 loss 0；原生成截断 3；参考上下文截断 0；计分回答 tokens 156267；平均回答 tokens 312.53；中位数样本数 500（状态 ok）。
+  剔除严重重复回答 88（17.60%）；保留回答中有效评分 412/412；保留回答计分 tokens 45137；状态 ok；重复筛选缓存 `/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.nonrepetitive_grouped_p_values.json`。
+
+  生成文本配置（种子逐条保存在明细中）：
+
+```json
+{
+  "student_model_paths": [
+    "/shared/public_models/Qwen2.5-0.5B"
+  ],
+  "generation_tokenizer_paths": [
+    "/shared/public_models/Qwen2.5-0.5B"
+  ],
+  "generation_configurations": [
+    {
+      "configuration": {
+        "kgw_enabled_during_generation": false,
+        "max_new_tokens": 1536,
+        "max_prompt_tokens": 2048,
+        "temperature": 0.7,
+        "top_p": 0.9
+      },
+      "samples": 500
+    }
+  ],
+  "generation_seeds": {
+    "recorded_samples": 500,
+    "minimum": 42,
+    "maximum": 541,
+    "individual_values": "see per-sample immutable records"
+  }
+}
+```
+
+完整评分配置（含模型/tokenizer 指纹、软件版本；权重使用 size/mtime 标识，不全量哈希）：
+
+```json
+{
+  "model_path": "/shared/public_models/Llama-3-8B",
+  "device": "cuda",
+  "dtype": "bfloat16",
+  "generation_tokenizer": "/shared/public_models/Qwen2.5-0.5B",
+  "max_length": null,
+  "overflow": "error",
+  "effective_max_length": 8192,
+  "protocol": {
+    "prompt": "source-generation-prompt; source chat template, not reference chat template",
+    "boundary": "encode prompt and answer separately with add_special_tokens=False, then concatenate",
+    "bos": "one reference BOS at start when defined; no extra EOS",
+    "loss": "causal next-token NLL on all answer tokens, including the first; no prompt or padding loss",
+    "aggregate": "exp(sum(answer NLL) / sum(scored answer tokens)); not mean per-answer PPL",
+    "source_tokenizer_selection": "explicit override, otherwise row.model_path; fallback assumes the generation tokenizer matches that checkpoint",
+    "legacy_prompt_limit": 2048,
+    "weights_fingerprint": "weight filenames, sizes and mtime_ns; weight contents are not hashed"
+  },
+  "reference_assets": {
+    "path": "/shared/public_models/Llama-3-8B",
+    "assets": [
+      {
+        "name": "config.json",
+        "size": 654,
+        "sha256": "2430cee764b6530ff8673cf9ba8561e1d5a33152d503cd0de909ff5718261441"
+      },
+      {
+        "name": "generation_config.json",
+        "size": 126,
+        "sha256": "55550e95c40c53fb0ee3f960d6d2b25a46405c8f790e5c4bb02caf3e98f2b5d0"
+      },
+      {
+        "name": "model.safetensors.index.json",
+        "size": 23950,
+        "sha256": "146776fce3f6db1103aa6f249e65ee5544c5923ce6f971b092eee79aa6e5d37b"
+      },
+      {
+        "name": "special_tokens_map.json",
+        "size": 73,
+        "sha256": "462d91939dbc37178aa5a3eae7068d1990ccc92e09f288cc71f42cdf139d69cc"
+      },
+      {
+        "name": "tokenizer.json",
+        "size": 9085698,
+        "sha256": "e134af98b985517b4f068e3755ae90d4e9cd2d45d328325dc503f1c6b2d06cc7"
+      },
+      {
+        "name": "tokenizer_config.json",
+        "size": 50566,
+        "sha256": "690727b4fed286383df1c7ca5e805124cb70c6eb4529f807c7b2e60ff741da7e"
+      }
+    ],
+    "weight_stats": [
+      {
+        "name": "model-00001-of-00004.safetensors",
+        "size": 4976698672,
+        "mtime_ns": 1736746522477644778
+      },
+      {
+        "name": "model-00002-of-00004.safetensors",
+        "size": 4999802720,
+        "mtime_ns": 1736746656058650226
+      },
+      {
+        "name": "model-00003-of-00004.safetensors",
+        "size": 4915916176,
+        "mtime_ns": 1736746768408654808
+      },
+      {
+        "name": "model-00004-of-00004.safetensors",
+        "size": 1168138808,
+        "mtime_ns": 1736746796088655937
+      }
+    ],
+    "weight_content_hashed": false
+  },
+  "software": {
+    "python": "3.10.21",
+    "torch": "2.6.0",
+    "transformers": "4.51.3",
+    "tokenizers": "0.21.4"
+  }
+}
+```
+
+完整指标（JSON）：
+
+```json
+{
+  "positive_class": "kgw",
+  "score": "z_score (higher means more likely watermarked)",
+  "num_kgw": 500,
+  "num_clean": 500,
+  "auroc": 0.41842000000000007,
+  "best_f1": {
+    "threshold": -16.84024198163435,
+    "fpr": 0.98,
+    "tpr": 0.998,
+    "precision": 0.5045500505561172,
+    "f1": 0.6702484889187373,
+    "tp": 499,
+    "fp": 490,
+    "tn": 10,
+    "fn": 1
+  },
+  "tpr_at_fpr": {
+    "1%": {
+      "threshold": 9.03249342651297,
+      "fpr": 0.01,
+      "tpr": 0.006,
+      "precision": 0.375,
+      "f1": 0.011811023622047246,
+      "tp": 3,
+      "fp": 5,
+      "tn": 495,
+      "fn": 497,
+      "target_fpr": 0.01
+    },
+    "5%": {
+      "threshold": 2.258840898497371,
+      "fpr": 0.046,
+      "tpr": 0.048,
+      "precision": 0.5106382978723404,
+      "f1": 0.08775137111517367,
+      "tp": 24,
+      "fp": 23,
+      "tn": 477,
+      "fn": 476,
+      "target_fpr": 0.05
+    },
+    "10%": {
+      "threshold": 1.7179688600346,
+      "fpr": 0.1,
+      "tpr": 0.072,
+      "precision": 0.4186046511627907,
+      "f1": 0.1228668941979522,
+      "tp": 36,
+      "fp": 50,
+      "tn": 450,
+      "fn": 464,
+      "target_fpr": 0.1
+    }
+  },
+  "note": "For each target FPR, select the empirical ROC point with the highest TPR whose FPR does not exceed the target; tied scores are kept together.",
+  "detector_config": {
+    "gamma": 0.5,
+    "hash_key": 15485863,
+    "seeding": "simple_1 (hash_key * previous_token_id)",
+    "delta_by_label": {
+      "kgw": 3.0,
+      "clean": 2.0
+    }
+  },
+  "rouge_l_dolly": {
+    "mean": 0.166713630006272,
+    "num_samples": 500,
+    "evaluated_file": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+    "reference_file": "/shared/wwx/EasyGAD/text_quality/references/dolly_human_500.jsonl",
+    "reference_source": "databricks/databricks-dolly-15k:response",
+    "metric": "rougeL",
+    "measure": "fmeasure",
+    "use_stemmer": true,
+    "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+  },
+  "rouge_l_teacher_clean": {
+    "mean": 0.22972336773271906,
+    "num_samples": 500,
+    "evaluated_file": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+    "reference_file": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet",
+    "reference_source": "Qwen2.5-14B clean teacher responses",
+    "metric": "rougeL",
+    "measure": "fmeasure",
+    "use_stemmer": true,
+    "aggregation": "unweighted mean of per-sample ROUGE-L F1"
+  },
+  "seq_rep_3": {
+    "kgw": {
+      "mean": 0.22203715807739688,
+      "median": 0.06868210405946257,
+      "num_samples": 500,
+      "num_short_answers": 0,
+      "num_empty_answers": 0,
+      "evaluated_file": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": "e684a9f3b2c95b2b4a79ce8f2efe0fdc6e933d89ee3f803dc905ef4178b8dd53",
+      "ngram_size": 3,
+      "tokenization": "answer.split(); whitespace-delimited words; case and punctuation preserved",
+      "scope": "answer only; overlapping trigrams within each complete original answer; no filtering or cross-answer trigrams",
+      "short_answer_policy": "answers with fewer than 3 words, including empty answers, contribute 0; counts reported",
+      "aggregation": {
+        "mean": "unweighted arithmetic mean of per-answer Seq-Rep-3",
+        "median": "ordinary median of per-answer Seq-Rep-3; arithmetic mean of the middle two for even counts"
+      }
+    },
+    "clean": {
+      "mean": 0.15901538183339659,
+      "median": 0.021919288974297402,
+      "num_samples": 500,
+      "num_short_answers": 1,
+      "num_empty_answers": 0,
+      "evaluated_file": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
+      "source_sha256": "597b843d28d31c353c7bb9b94a3b6dccb564cb45ac2c5252f6a1592ccd768efe",
+      "ngram_size": 3,
+      "tokenization": "answer.split(); whitespace-delimited words; case and punctuation preserved",
+      "scope": "answer only; overlapping trigrams within each complete original answer; no filtering or cross-answer trigrams",
+      "short_answer_policy": "answers with fewer than 3 words, including empty answers, contribute 0; counts reported",
+      "aggregation": {
+        "mean": "unweighted arithmetic mean of per-answer Seq-Rep-3",
+        "median": "ordinary median of per-answer Seq-Rep-3; arithmetic mean of the middle two for even counts"
+      }
+    }
+  },
+  "p_values": {
+    "kgw": {
+      "raw": {
+        "n_total": 500,
+        "n_valid": 500,
+        "n_invalid": 0,
+        "mean": 0.6342205598064612,
+        "median": 0.718831880236658,
+        "min": 1.6240078954260047e-34,
+        "max": 1.0,
+        "at_alpha": {
+          "1%": {
+            "alpha": 0.01,
+            "count": 23,
+            "fraction": 0.046
+          },
+          "5%": {
+            "alpha": 0.05,
+            "count": 38,
+            "fraction": 0.076
+          },
+          "10%": {
+            "alpha": 0.1,
+            "count": 56,
+            "fraction": 0.112
+          }
+        }
+      },
+      "deduplicated": {
+        "n_total": 500,
+        "n_valid": 500,
+        "n_invalid": 0,
+        "mean": 0.6188180340549121,
+        "median": 0.6767708659925461,
+        "min": 0.002386698198314959,
+        "max": 0.9999030291854482,
+        "at_alpha": {
+          "1%": {
+            "alpha": 0.01,
+            "count": 1,
+            "fraction": 0.002
+          },
+          "5%": {
+            "alpha": 0.05,
+            "count": 4,
+            "fraction": 0.008
+          },
+          "10%": {
+            "alpha": 0.1,
+            "count": 21,
+            "fraction": 0.042
+          }
+        }
+      }
+    },
+    "clean": {
+      "raw": {
+        "n_total": 500,
+        "n_valid": 500,
+        "n_invalid": 0,
+        "mean": 0.5381206505070838,
+        "median": 0.5715704145196637,
+        "min": 6.0143e-320,
+        "max": 1.0,
+        "at_alpha": {
+          "1%": {
+            "alpha": 0.01,
+            "count": 22,
+            "fraction": 0.044
+          },
+          "5%": {
+            "alpha": 0.05,
+            "count": 54,
+            "fraction": 0.108
+          },
+          "10%": {
+            "alpha": 0.1,
+            "count": 73,
+            "fraction": 0.146
+          }
+        }
+      },
+      "deduplicated": {
+        "n_total": 500,
+        "n_valid": 500,
+        "n_invalid": 0,
+        "mean": 0.5374177558749705,
+        "median": 0.5551540845432315,
+        "min": 0.0006810523357921015,
+        "max": 0.9993618427741491,
+        "at_alpha": {
+          "1%": {
+            "alpha": 0.01,
+            "count": 5,
+            "fraction": 0.01
+          },
+          "5%": {
+            "alpha": 0.05,
+            "count": 25,
+            "fraction": 0.05
+          },
+          "10%": {
+            "alpha": 0.1,
+            "count": 46,
+            "fraction": 0.092
+          }
+        }
+      }
+    }
+  },
+  "p_value_method": "one-sided normal survival probability; unique context-token pairs for dedup",
+  "per_sample_p_value_files": {
+    "kgw": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.p_values.jsonl",
+    "clean": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.p_values.jsonl"
+  },
+  "grouped_p_values": {
+    "kgw": {
+      "aggregation": "ordinary_median",
+      "num_answers": 500,
+      "total_answer_tokens": 179777,
+      "budgets": {
+        "1000": {
+          "group_token_count": 1000,
+          "scored_tokens_per_group": 999,
+          "num_groups": 179,
+          "total_answer_tokens": 179777,
+          "discarded_tail_tokens": 777,
+          "median_p_value": 0.9829879597952089,
+          "median_log10_p_value": -0.007451801625163964,
+          "status": "ok"
+        },
+        "2000": {
+          "group_token_count": 2000,
+          "scored_tokens_per_group": 1999,
+          "num_groups": 89,
+          "total_answer_tokens": 179777,
+          "discarded_tail_tokens": 1777,
+          "median_p_value": 0.9994952075719269,
+          "median_log10_p_value": -0.00021928391710675756,
+          "status": "ok"
+        },
+        "3000": {
+          "group_token_count": 3000,
+          "scored_tokens_per_group": 2999,
+          "num_groups": 59,
+          "total_answer_tokens": 179777,
+          "discarded_tail_tokens": 2777,
+          "median_p_value": 0.9999568148117831,
+          "median_log10_p_value": -1.875549392523019e-05,
+          "status": "ok"
+        },
+        "10000": {
+          "group_token_count": 10000,
+          "scored_tokens_per_group": 9999,
+          "num_groups": 17,
+          "total_answer_tokens": 179777,
+          "discarded_tail_tokens": 9777,
+          "median_p_value": 1.0,
+          "median_log10_p_value": 0.0,
+          "status": "ok"
+        },
+        "20000": {
+          "group_token_count": 20000,
+          "scored_tokens_per_group": 19999,
+          "num_groups": 8,
+          "total_answer_tokens": 179777,
+          "discarded_tail_tokens": 19777,
+          "median_p_value": 1.0,
+          "median_log10_p_value": 0.0,
+          "status": "ok"
+        },
+        "30000": {
+          "group_token_count": 30000,
+          "scored_tokens_per_group": 29999,
+          "num_groups": 5,
+          "total_answer_tokens": 179777,
+          "discarded_tail_tokens": 29777,
+          "median_p_value": 1.0,
+          "median_log10_p_value": 0.0,
+          "status": "ok"
+        }
+      }
+    },
+    "clean": {
+      "aggregation": "ordinary_median",
+      "num_answers": 500,
+      "total_answer_tokens": 159765,
+      "budgets": {
+        "1000": {
+          "group_token_count": 1000,
+          "scored_tokens_per_group": 999,
+          "num_groups": 159,
+          "total_answer_tokens": 159765,
+          "discarded_tail_tokens": 765,
+          "median_p_value": 0.8659288977499955,
+          "median_log10_p_value": -0.06251776685396769,
+          "status": "ok"
+        },
+        "2000": {
+          "group_token_count": 2000,
+          "scored_tokens_per_group": 1999,
+          "num_groups": 79,
+          "total_answer_tokens": 159765,
+          "discarded_tail_tokens": 1765,
+          "median_p_value": 0.971357711016285,
+          "median_log10_p_value": -0.012620807875598238,
+          "status": "ok"
+        },
+        "3000": {
+          "group_token_count": 3000,
+          "scored_tokens_per_group": 2999,
+          "num_groups": 53,
+          "total_answer_tokens": 159765,
+          "discarded_tail_tokens": 765,
+          "median_p_value": 0.9821335190767914,
+          "median_log10_p_value": -0.007829466737979084,
+          "status": "ok"
+        },
+        "10000": {
+          "group_token_count": 10000,
+          "scored_tokens_per_group": 9999,
+          "num_groups": 15,
+          "total_answer_tokens": 159765,
+          "discarded_tail_tokens": 9765,
+          "median_p_value": 0.9999999999999984,
+          "median_log10_p_value": -6.750292265873014e-16,
+          "status": "ok"
+        },
+        "20000": {
+          "group_token_count": 20000,
+          "scored_tokens_per_group": 19999,
+          "num_groups": 7,
+          "total_answer_tokens": 159765,
+          "discarded_tail_tokens": 19765,
+          "median_p_value": 1.0,
+          "median_log10_p_value": 0.0,
+          "status": "ok"
+        },
+        "30000": {
+          "group_token_count": 30000,
+          "scored_tokens_per_group": 29999,
+          "num_groups": 5,
+          "total_answer_tokens": 159765,
+          "discarded_tail_tokens": 9765,
+          "median_p_value": 1.0,
+          "median_log10_p_value": 0.0,
+          "status": "ok"
+        }
+      }
+    }
+  },
+  "grouped_p_value_method": "teacher-tokenizer answer IDs concatenated without separators; exact disjoint blocks; first token of each block is context only; no repetition deduplication; incomplete tail discarded; ordinary median of block p-values (arithmetic mean of the two middle p-values for even group counts)",
+  "per_group_p_value_files": {
+    "kgw": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.grouped_p_values.json",
+    "clean": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.grouped_p_values.json"
+  },
+  "grouped_p_values_without_severe_repetition": {
+    "kgw": {
+      "aggregation": "ordinary_median",
+      "num_answers": 392,
+      "total_answer_tokens": 57673,
+      "budgets": {
+        "1000": {
+          "group_token_count": 1000,
+          "scored_tokens_per_group": 999,
+          "num_groups": 57,
+          "total_answer_tokens": 57673,
+          "discarded_tail_tokens": 673,
+          "median_p_value": 0.9590812880988118,
+          "median_log10_p_value": -0.018144582113337512,
+          "status": "ok"
+        },
+        "2000": {
+          "group_token_count": 2000,
+          "scored_tokens_per_group": 1999,
+          "num_groups": 28,
+          "total_answer_tokens": 57673,
+          "discarded_tail_tokens": 1673,
+          "median_p_value": 0.9949085359357188,
+          "median_log10_p_value": -0.0022168430374237395,
+          "status": "ok"
+        },
+        "3000": {
+          "group_token_count": 3000,
+          "scored_tokens_per_group": 2999,
+          "num_groups": 19,
+          "total_answer_tokens": 57673,
+          "discarded_tail_tokens": 673,
+          "median_p_value": 0.996743879934514,
+          "median_log10_p_value": -0.001416422250799275,
+          "status": "ok"
+        },
+        "10000": {
+          "group_token_count": 10000,
+          "scored_tokens_per_group": 9999,
+          "num_groups": 5,
+          "total_answer_tokens": 57673,
+          "discarded_tail_tokens": 7673,
+          "median_p_value": 0.9999991670882691,
+          "median_log10_p_value": -3.617291192949074e-07,
+          "status": "ok"
+        },
+        "20000": {
+          "group_token_count": 20000,
+          "scored_tokens_per_group": 19999,
+          "num_groups": 2,
+          "total_answer_tokens": 57673,
+          "discarded_tail_tokens": 17673,
+          "median_p_value": 0.9999999999967137,
+          "median_log10_p_value": -1.4272046505012002e-12,
+          "status": "ok"
+        },
+        "30000": {
+          "group_token_count": 30000,
+          "scored_tokens_per_group": 29999,
+          "num_groups": 1,
+          "total_answer_tokens": 57673,
+          "discarded_tail_tokens": 27673,
+          "median_p_value": 1.0,
+          "median_log10_p_value": 0.0,
+          "status": "ok"
+        }
+      },
+      "filtering": {
+        "repetition_threshold": 0.5,
+        "comparison": ">",
+        "scope": "answer-internal adjacent token pairs; prompt excluded",
+        "num_answers_before": 500,
+        "num_answers_retained": 392,
+        "num_answers_removed": 108,
+        "fraction_answers_removed": 0.216,
+        "total_answer_tokens_before": 179777,
+        "total_answer_tokens_retained": 57673,
+        "total_answer_tokens_removed": 122104,
+        "removed_answer_ids": [
+          "dolly-10119",
+          "dolly-03759",
+          "dolly-10904",
+          "dolly-12241",
+          "dolly-07923",
+          "dolly-12249",
+          "dolly-12108",
+          "dolly-09720",
+          "dolly-06540",
+          "dolly-03614",
+          "dolly-07239",
+          "dolly-13565",
+          "dolly-08709",
+          "dolly-13505",
+          "dolly-01063",
+          "dolly-12659",
+          "dolly-10208",
+          "dolly-08789",
+          "dolly-02186",
+          "dolly-00275",
+          "dolly-00054",
+          "dolly-07337",
+          "dolly-01461",
+          "dolly-01470",
+          "dolly-04421",
+          "dolly-10290",
+          "dolly-02122",
+          "dolly-13749",
+          "dolly-08457",
+          "dolly-01092",
+          "dolly-02223",
+          "dolly-04949",
+          "dolly-08689",
+          "dolly-06227",
+          "dolly-00143",
+          "dolly-02844",
+          "dolly-00342",
+          "dolly-02434",
+          "dolly-13779",
+          "dolly-05752",
+          "dolly-06920",
+          "dolly-13981",
+          "dolly-09162",
+          "dolly-10067",
+          "dolly-14084",
+          "dolly-14521",
+          "dolly-09918",
+          "dolly-08340",
+          "dolly-04438",
+          "dolly-03080",
+          "dolly-14329",
+          "dolly-05489",
+          "dolly-14700",
+          "dolly-06771",
+          "dolly-12364",
+          "dolly-03726",
+          "dolly-05628",
+          "dolly-04773",
+          "dolly-14861",
+          "dolly-02725",
+          "dolly-01118",
+          "dolly-07971",
+          "dolly-13445",
+          "dolly-07936",
+          "dolly-09108",
+          "dolly-09988",
+          "dolly-02139",
+          "dolly-14265",
+          "dolly-09609",
+          "dolly-07122",
+          "dolly-13610",
+          "dolly-11445",
+          "dolly-05528",
+          "dolly-08595",
+          "dolly-10519",
+          "dolly-06895",
+          "dolly-02451",
+          "dolly-00803",
+          "dolly-03231",
+          "dolly-06932",
+          "dolly-08607",
+          "dolly-07633",
+          "dolly-11386",
+          "dolly-00148",
+          "dolly-08451",
+          "dolly-12186",
+          "dolly-10037",
+          "dolly-08268",
+          "dolly-01723",
+          "dolly-03709",
+          "dolly-14465",
+          "dolly-07407",
+          "dolly-09062",
+          "dolly-04853",
+          "dolly-09430",
+          "dolly-10389",
+          "dolly-01615",
+          "dolly-12001",
+          "dolly-11241",
+          "dolly-14069",
+          "dolly-06631",
+          "dolly-12273",
+          "dolly-09175",
+          "dolly-05810",
+          "dolly-01353",
+          "dolly-05634",
+          "dolly-03113",
+          "dolly-04223"
+        ]
+      }
+    },
+    "clean": {
+      "aggregation": "ordinary_median",
+      "num_answers": 412,
+      "total_answer_tokens": 45882,
+      "budgets": {
+        "1000": {
+          "group_token_count": 1000,
+          "scored_tokens_per_group": 999,
+          "num_groups": 45,
+          "total_answer_tokens": 45882,
+          "discarded_tail_tokens": 882,
+          "median_p_value": 0.6360891449864364,
+          "median_log10_p_value": -0.1964820156995508,
+          "status": "ok"
+        },
+        "2000": {
+          "group_token_count": 2000,
+          "scored_tokens_per_group": 1999,
+          "num_groups": 22,
+          "total_answer_tokens": 45882,
+          "discarded_tail_tokens": 1882,
+          "median_p_value": 0.7960378878131416,
+          "median_log10_p_value": -0.09906626131183685,
+          "status": "ok"
+        },
+        "3000": {
+          "group_token_count": 3000,
+          "scored_tokens_per_group": 2999,
+          "num_groups": 15,
+          "total_answer_tokens": 45882,
+          "discarded_tail_tokens": 882,
+          "median_p_value": 0.7386263221105359,
+          "median_log10_p_value": -0.13157521964243946,
+          "status": "ok"
+        },
+        "10000": {
+          "group_token_count": 10000,
+          "scored_tokens_per_group": 9999,
+          "num_groups": 4,
+          "total_answer_tokens": 45882,
+          "discarded_tail_tokens": 5882,
+          "median_p_value": 0.947596846602552,
+          "median_log10_p_value": -0.0233763931850151,
+          "status": "ok"
+        },
+        "20000": {
+          "group_token_count": 20000,
+          "scored_tokens_per_group": 19999,
+          "num_groups": 2,
+          "total_answer_tokens": 45882,
+          "discarded_tail_tokens": 5882,
+          "median_p_value": 0.9783739864832501,
+          "median_log10_p_value": -0.009495103065976066,
+          "status": "ok"
+        },
+        "30000": {
+          "group_token_count": 30000,
+          "scored_tokens_per_group": 29999,
+          "num_groups": 1,
+          "total_answer_tokens": 45882,
+          "discarded_tail_tokens": 15882,
+          "median_p_value": 0.9995678964162934,
+          "median_log10_p_value": -0.00018770075802065225,
+          "status": "ok"
+        }
+      },
+      "filtering": {
+        "repetition_threshold": 0.5,
+        "comparison": ">",
+        "scope": "answer-internal adjacent token pairs; prompt excluded",
+        "num_answers_before": 500,
+        "num_answers_retained": 412,
+        "num_answers_removed": 88,
+        "fraction_answers_removed": 0.176,
+        "total_answer_tokens_before": 159765,
+        "total_answer_tokens_retained": 45882,
+        "total_answer_tokens_removed": 113883,
+        "removed_answer_ids": [
+          "dolly-00135",
+          "dolly-12241",
+          "dolly-07923",
+          "dolly-07103",
+          "dolly-05608",
+          "dolly-07788",
+          "dolly-11310",
+          "dolly-02097",
+          "dolly-03614",
+          "dolly-13505",
+          "dolly-02580",
+          "dolly-08884",
+          "dolly-12659",
+          "dolly-00420",
+          "dolly-11014",
+          "dolly-08008",
+          "dolly-02186",
+          "dolly-00275",
+          "dolly-08512",
+          "dolly-14060",
+          "dolly-01461",
+          "dolly-02223",
+          "dolly-04949",
+          "dolly-08689",
+          "dolly-08574",
+          "dolly-08406",
+          "dolly-04141",
+          "dolly-03209",
+          "dolly-06227",
+          "dolly-11078",
+          "dolly-09778",
+          "dolly-04856",
+          "dolly-13779",
+          "dolly-06595",
+          "dolly-08936",
+          "dolly-09344",
+          "dolly-05605",
+          "dolly-08340",
+          "dolly-04589",
+          "dolly-04686",
+          "dolly-14700",
+          "dolly-03696",
+          "dolly-03914",
+          "dolly-11987",
+          "dolly-01939",
+          "dolly-05628",
+          "dolly-13339",
+          "dolly-08911",
+          "dolly-03239",
+          "dolly-13445",
+          "dolly-02139",
+          "dolly-14265",
+          "dolly-13610",
+          "dolly-07427",
+          "dolly-09563",
+          "dolly-02451",
+          "dolly-13544",
+          "dolly-06824",
+          "dolly-05312",
+          "dolly-10992",
+          "dolly-06932",
+          "dolly-08607",
+          "dolly-05388",
+          "dolly-11386",
+          "dolly-02069",
+          "dolly-09439",
+          "dolly-00148",
+          "dolly-08211",
+          "dolly-12186",
+          "dolly-03319",
+          "dolly-07407",
+          "dolly-10389",
+          "dolly-03916",
+          "dolly-08222",
+          "dolly-14947",
+          "dolly-03624",
+          "dolly-09330",
+          "dolly-11182",
+          "dolly-02059",
+          "dolly-02916",
+          "dolly-09816",
+          "dolly-05355",
+          "dolly-06970",
+          "dolly-05634",
+          "dolly-02500",
+          "dolly-11314",
+          "dolly-13235",
+          "dolly-04223"
+        ]
+      }
+    }
+  },
+  "grouped_p_value_without_severe_repetition_method": "exclude whole answers whose answer-internal adjacent-token-pair repetition ratio (1 - unique pairs / all pairs) is strictly greater than 0.5; prompts excluded from repetition assessment; filter each label independently; retain original answer order, then concatenate teacher-tokenizer answer IDs without separators; exact disjoint blocks, first token context only; no token-pair deduplication within retained blocks; incomplete tail discarded; ordinary median of block p-values (mean of the middle two for even counts)",
+  "per_group_p_value_without_severe_repetition_files": {
+    "kgw": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.nonrepetitive_grouped_p_values.json",
+    "clean": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.nonrepetitive_grouped_p_values.json"
+  },
+  "ppl": {
+    "enabled": true,
+    "schema": "saved-answer-reference-ppl-v1",
+    "configuration": {
+      "model_path": "/shared/public_models/Llama-3-8B",
+      "device": "cuda",
+      "dtype": "bfloat16",
+      "generation_tokenizer": "/shared/public_models/Qwen2.5-0.5B",
+      "max_length": null,
+      "overflow": "error",
+      "effective_max_length": 8192,
+      "protocol": {
+        "prompt": "source-generation-prompt; source chat template, not reference chat template",
+        "boundary": "encode prompt and answer separately with add_special_tokens=False, then concatenate",
+        "bos": "one reference BOS at start when defined; no extra EOS",
+        "loss": "causal next-token NLL on all answer tokens, including the first; no prompt or padding loss",
+        "aggregate": "exp(sum(answer NLL) / sum(scored answer tokens)); not mean per-answer PPL",
+        "source_tokenizer_selection": "explicit override, otherwise row.model_path; fallback assumes the generation tokenizer matches that checkpoint",
+        "legacy_prompt_limit": 2048,
+        "weights_fingerprint": "weight filenames, sizes and mtime_ns; weight contents are not hashed"
+      },
+      "reference_assets": {
+        "path": "/shared/public_models/Llama-3-8B",
+        "assets": [
+          {
+            "name": "config.json",
+            "size": 654,
+            "sha256": "2430cee764b6530ff8673cf9ba8561e1d5a33152d503cd0de909ff5718261441"
+          },
+          {
+            "name": "generation_config.json",
+            "size": 126,
+            "sha256": "55550e95c40c53fb0ee3f960d6d2b25a46405c8f790e5c4bb02caf3e98f2b5d0"
+          },
+          {
+            "name": "model.safetensors.index.json",
+            "size": 23950,
+            "sha256": "146776fce3f6db1103aa6f249e65ee5544c5923ce6f971b092eee79aa6e5d37b"
+          },
+          {
+            "name": "special_tokens_map.json",
+            "size": 73,
+            "sha256": "462d91939dbc37178aa5a3eae7068d1990ccc92e09f288cc71f42cdf139d69cc"
+          },
+          {
+            "name": "tokenizer.json",
+            "size": 9085698,
+            "sha256": "e134af98b985517b4f068e3755ae90d4e9cd2d45d328325dc503f1c6b2d06cc7"
+          },
+          {
+            "name": "tokenizer_config.json",
+            "size": 50566,
+            "sha256": "690727b4fed286383df1c7ca5e805124cb70c6eb4529f807c7b2e60ff741da7e"
+          }
+        ],
+        "weight_stats": [
+          {
+            "name": "model-00001-of-00004.safetensors",
+            "size": 4976698672,
+            "mtime_ns": 1736746522477644778
+          },
+          {
+            "name": "model-00002-of-00004.safetensors",
+            "size": 4999802720,
+            "mtime_ns": 1736746656058650226
+          },
+          {
+            "name": "model-00003-of-00004.safetensors",
+            "size": 4915916176,
+            "mtime_ns": 1736746768408654808
+          },
+          {
+            "name": "model-00004-of-00004.safetensors",
+            "size": 1168138808,
+            "mtime_ns": 1736746796088655937
+          }
+        ],
+        "weight_content_hashed": false
+      },
+      "software": {
+        "python": "3.10.21",
+        "torch": "2.6.0",
+        "transformers": "4.51.3",
+        "tokenizers": "0.21.4"
+      }
+    },
+    "files": {
+      "kgw": {
+        "samples": 500,
+        "valid_samples": 500,
+        "skipped_empty_answers": 0,
+        "complete": true,
+        "nonfinite_samples": 0,
+        "status": "ok",
+        "total_nll": 97050.19606294762,
+        "scored_tokens": 176561,
+        "mean_nll": 0.5496694970177312,
+        "token_weighted_ppl": 1.7326802672290742,
+        "mean_answer_tokens": 353.122,
+        "source_prompt_truncated_samples": 3,
+        "reference_prompt_truncated_samples": 0,
+        "generation_configurations": [
+          {
+            "configuration": {
+              "temperature": 0.7,
+              "top_p": 0.9,
+              "max_new_tokens": 1536,
+              "max_prompt_tokens": 2048,
+              "kgw_enabled_during_generation": false
+            },
+            "samples": 500
+          }
+        ],
+        "generation_seeds": {
+          "recorded_samples": 500,
+          "minimum": 42,
+          "maximum": 541,
+          "individual_values": "see per-sample immutable records"
+        },
+        "student_model_paths": [
+          "/shared/wwx/EasyGAD/checkpoints/tp_warmup_rules_g05_d3_s25_tp_tp_keeplast/warmup/global_step_1813/actor/huggingface"
+        ],
+        "generation_tokenizer_paths": [
+          "/shared/public_models/Qwen2.5-0.5B"
+        ],
+        "median_per_answer_ppl": 3.163390164896799,
+        "median_samples": 500,
+        "median_status": "ok",
+        "without_severe_repetition": {
+          "samples": 392,
+          "valid_samples": 392,
+          "skipped_empty_answers": 0,
+          "complete": true,
+          "nonfinite_samples": 0,
+          "status": "ok",
+          "total_nll": 71714.73274111003,
+          "scored_tokens": 57009,
+          "mean_nll": 1.257954581576769,
+          "token_weighted_ppl": 3.5182178949972363,
+          "mean_answer_tokens": 145.43112244897958,
+          "source_prompt_truncated_samples": 0,
+          "reference_prompt_truncated_samples": 0,
+          "generation_configurations": [
+            {
+              "configuration": {
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "max_new_tokens": 1536,
+                "max_prompt_tokens": 2048,
+                "kgw_enabled_during_generation": false
+              },
+              "samples": 392
+            }
+          ],
+          "generation_seeds": {
+            "recorded_samples": 392,
+            "minimum": 42,
+            "maximum": 541,
+            "individual_values": "see per-sample immutable records"
+          },
+          "student_model_paths": [
+            "/shared/wwx/EasyGAD/checkpoints/tp_warmup_rules_g05_d3_s25_tp_tp_keeplast/warmup/global_step_1813/actor/huggingface"
+          ],
+          "generation_tokenizer_paths": [
+            "/shared/public_models/Qwen2.5-0.5B"
+          ],
+          "median_per_answer_ppl": 3.541058342298048,
+          "median_samples": 392,
+          "median_status": "ok",
+          "num_answers_before": 500,
+          "num_answers_retained": 392,
+          "num_answers_removed": 108,
+          "fraction_answers_removed": 0.216,
+          "repetition_threshold": 0.5,
+          "comparison": ">",
+          "scope": "answer-internal adjacent token pairs; prompt excluded",
+          "removed_answer_ids": [
+            "dolly-10119",
+            "dolly-03759",
+            "dolly-10904",
+            "dolly-12241",
+            "dolly-07923",
+            "dolly-12249",
+            "dolly-12108",
+            "dolly-09720",
+            "dolly-06540",
+            "dolly-03614",
+            "dolly-07239",
+            "dolly-13565",
+            "dolly-08709",
+            "dolly-13505",
+            "dolly-01063",
+            "dolly-12659",
+            "dolly-10208",
+            "dolly-08789",
+            "dolly-02186",
+            "dolly-00275",
+            "dolly-00054",
+            "dolly-07337",
+            "dolly-01461",
+            "dolly-01470",
+            "dolly-04421",
+            "dolly-10290",
+            "dolly-02122",
+            "dolly-13749",
+            "dolly-08457",
+            "dolly-01092",
+            "dolly-02223",
+            "dolly-04949",
+            "dolly-08689",
+            "dolly-06227",
+            "dolly-00143",
+            "dolly-02844",
+            "dolly-00342",
+            "dolly-02434",
+            "dolly-13779",
+            "dolly-05752",
+            "dolly-06920",
+            "dolly-13981",
+            "dolly-09162",
+            "dolly-10067",
+            "dolly-14084",
+            "dolly-14521",
+            "dolly-09918",
+            "dolly-08340",
+            "dolly-04438",
+            "dolly-03080",
+            "dolly-14329",
+            "dolly-05489",
+            "dolly-14700",
+            "dolly-06771",
+            "dolly-12364",
+            "dolly-03726",
+            "dolly-05628",
+            "dolly-04773",
+            "dolly-14861",
+            "dolly-02725",
+            "dolly-01118",
+            "dolly-07971",
+            "dolly-13445",
+            "dolly-07936",
+            "dolly-09108",
+            "dolly-09988",
+            "dolly-02139",
+            "dolly-14265",
+            "dolly-09609",
+            "dolly-07122",
+            "dolly-13610",
+            "dolly-11445",
+            "dolly-05528",
+            "dolly-08595",
+            "dolly-10519",
+            "dolly-06895",
+            "dolly-02451",
+            "dolly-00803",
+            "dolly-03231",
+            "dolly-06932",
+            "dolly-08607",
+            "dolly-07633",
+            "dolly-11386",
+            "dolly-00148",
+            "dolly-08451",
+            "dolly-12186",
+            "dolly-10037",
+            "dolly-08268",
+            "dolly-01723",
+            "dolly-03709",
+            "dolly-14465",
+            "dolly-07407",
+            "dolly-09062",
+            "dolly-04853",
+            "dolly-09430",
+            "dolly-10389",
+            "dolly-01615",
+            "dolly-12001",
+            "dolly-11241",
+            "dolly-14069",
+            "dolly-06631",
+            "dolly-12273",
+            "dolly-09175",
+            "dolly-05810",
+            "dolly-01353",
+            "dolly-05634",
+            "dolly-03113",
+            "dolly-04223"
+          ],
+          "filtering_source_file": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.nonrepetitive_grouped_p_values.json",
+          "filtering_source_sha256": "e684a9f3b2c95b2b4a79ce8f2efe0fdc6e933d89ee3f803dc905ef4178b8dd53",
+          "filtering_tokenizer": {
+            "path": "/shared/public_models/Qwen2.5-14B-Instruct",
+            "files_sha256": {
+              "config.json": "7362de7db90a1e57fe153e55094e6c2fb7d904a3705d34296ff7de84488235f4",
+              "merges.txt": "0de0bc38a29ea38eef099b677fa1ff52edd181e573529af26c4cd2136e233777",
+              "tokenizer.json": "47ec9be242d3ef39b9c97ac0a3f06c1752f061b234e295bc0a2842067a3fe4f9",
+              "tokenizer_config.json": "fa2a40a9d8c8c4bb7f25ab726eb78ec9cbaaef96d1fa26f1d7f5615e886449a8",
+              "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+            }
+          }
+        },
+        "source_path": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+        "source_sha256": "e684a9f3b2c95b2b4a79ce8f2efe0fdc6e933d89ee3f803dc905ef4178b8dd53",
+        "per_sample_file": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.ppl.d872bc907ab1d3386419.jsonl",
+        "cache_reused": false
+      },
+      "clean": {
+        "samples": 500,
+        "valid_samples": 500,
+        "skipped_empty_answers": 0,
+        "complete": true,
+        "nonfinite_samples": 0,
+        "status": "ok",
+        "total_nll": 67054.72902449768,
+        "scored_tokens": 156267,
+        "mean_nll": 0.42910357928735865,
+        "token_weighted_ppl": 1.5358801115260794,
+        "mean_answer_tokens": 312.534,
+        "source_prompt_truncated_samples": 3,
+        "reference_prompt_truncated_samples": 0,
+        "generation_configurations": [
+          {
+            "configuration": {
+              "kgw_enabled_during_generation": false,
+              "max_new_tokens": 1536,
+              "max_prompt_tokens": 2048,
+              "temperature": 0.7,
+              "top_p": 0.9
+            },
+            "samples": 500
+          }
+        ],
+        "generation_seeds": {
+          "recorded_samples": 500,
+          "minimum": 42,
+          "maximum": 541,
+          "individual_values": "see per-sample immutable records"
+        },
+        "student_model_paths": [
+          "/shared/public_models/Qwen2.5-0.5B"
+        ],
+        "generation_tokenizer_paths": [
+          "/shared/public_models/Qwen2.5-0.5B"
+        ],
+        "median_per_answer_ppl": 2.5576398946471928,
+        "median_samples": 500,
+        "median_status": "ok",
+        "without_severe_repetition": {
+          "samples": 412,
+          "valid_samples": 412,
+          "skipped_empty_answers": 0,
+          "complete": true,
+          "nonfinite_samples": 0,
+          "status": "ok",
+          "total_nll": 44868.67048177123,
+          "scored_tokens": 45137,
+          "mean_nll": 0.9940552203684612,
+          "token_weighted_ppl": 2.702170179562856,
+          "mean_answer_tokens": 109.55582524271844,
+          "source_prompt_truncated_samples": 1,
+          "reference_prompt_truncated_samples": 0,
+          "generation_configurations": [
+            {
+              "configuration": {
+                "kgw_enabled_during_generation": false,
+                "max_new_tokens": 1536,
+                "max_prompt_tokens": 2048,
+                "temperature": 0.7,
+                "top_p": 0.9
+              },
+              "samples": 412
+            }
+          ],
+          "generation_seeds": {
+            "recorded_samples": 412,
+            "minimum": 42,
+            "maximum": 541,
+            "individual_values": "see per-sample immutable records"
+          },
+          "student_model_paths": [
+            "/shared/public_models/Qwen2.5-0.5B"
+          ],
+          "generation_tokenizer_paths": [
+            "/shared/public_models/Qwen2.5-0.5B"
+          ],
+          "median_per_answer_ppl": 2.8522532998790773,
+          "median_samples": 412,
+          "median_status": "ok",
+          "num_answers_before": 500,
+          "num_answers_retained": 412,
+          "num_answers_removed": 88,
+          "fraction_answers_removed": 0.176,
+          "repetition_threshold": 0.5,
+          "comparison": ">",
+          "scope": "answer-internal adjacent token pairs; prompt excluded",
+          "removed_answer_ids": [
+            "dolly-00135",
+            "dolly-12241",
+            "dolly-07923",
+            "dolly-07103",
+            "dolly-05608",
+            "dolly-07788",
+            "dolly-11310",
+            "dolly-02097",
+            "dolly-03614",
+            "dolly-13505",
+            "dolly-02580",
+            "dolly-08884",
+            "dolly-12659",
+            "dolly-00420",
+            "dolly-11014",
+            "dolly-08008",
+            "dolly-02186",
+            "dolly-00275",
+            "dolly-08512",
+            "dolly-14060",
+            "dolly-01461",
+            "dolly-02223",
+            "dolly-04949",
+            "dolly-08689",
+            "dolly-08574",
+            "dolly-08406",
+            "dolly-04141",
+            "dolly-03209",
+            "dolly-06227",
+            "dolly-11078",
+            "dolly-09778",
+            "dolly-04856",
+            "dolly-13779",
+            "dolly-06595",
+            "dolly-08936",
+            "dolly-09344",
+            "dolly-05605",
+            "dolly-08340",
+            "dolly-04589",
+            "dolly-04686",
+            "dolly-14700",
+            "dolly-03696",
+            "dolly-03914",
+            "dolly-11987",
+            "dolly-01939",
+            "dolly-05628",
+            "dolly-13339",
+            "dolly-08911",
+            "dolly-03239",
+            "dolly-13445",
+            "dolly-02139",
+            "dolly-14265",
+            "dolly-13610",
+            "dolly-07427",
+            "dolly-09563",
+            "dolly-02451",
+            "dolly-13544",
+            "dolly-06824",
+            "dolly-05312",
+            "dolly-10992",
+            "dolly-06932",
+            "dolly-08607",
+            "dolly-05388",
+            "dolly-11386",
+            "dolly-02069",
+            "dolly-09439",
+            "dolly-00148",
+            "dolly-08211",
+            "dolly-12186",
+            "dolly-03319",
+            "dolly-07407",
+            "dolly-10389",
+            "dolly-03916",
+            "dolly-08222",
+            "dolly-14947",
+            "dolly-03624",
+            "dolly-09330",
+            "dolly-11182",
+            "dolly-02059",
+            "dolly-02916",
+            "dolly-09816",
+            "dolly-05355",
+            "dolly-06970",
+            "dolly-05634",
+            "dolly-02500",
+            "dolly-11314",
+            "dolly-13235",
+            "dolly-04223"
+          ],
+          "filtering_source_file": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.nonrepetitive_grouped_p_values.json",
+          "filtering_source_sha256": "597b843d28d31c353c7bb9b94a3b6dccb564cb45ac2c5252f6a1592ccd768efe",
+          "filtering_tokenizer": {
+            "path": "/shared/public_models/Qwen2.5-14B-Instruct",
+            "files_sha256": {
+              "config.json": "7362de7db90a1e57fe153e55094e6c2fb7d904a3705d34296ff7de84488235f4",
+              "merges.txt": "0de0bc38a29ea38eef099b677fa1ff52edd181e573529af26c4cd2136e233777",
+              "tokenizer.json": "47ec9be242d3ef39b9c97ac0a3f06c1752f061b234e295bc0a2842067a3fe4f9",
+              "tokenizer_config.json": "fa2a40a9d8c8c4bb7f25ab726eb78ec9cbaaef96d1fa26f1d7f5615e886449a8",
+              "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+            }
+          }
+        },
+        "source_path": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
+        "source_sha256": "597b843d28d31c353c7bb9b94a3b6dccb564cb45ac2c5252f6a1592ccd768efe",
+        "per_sample_file": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.ppl.877fc574f9ee35a5145f.jsonl",
+        "cache_reused": true
+      }
+    }
+  },
+  "evaluated_at": "2026-11-05T17:07:34+08:00",
+  "kgw_file": "/shared/wwx/EasyGAD/wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+  "clean_file": "/shared/wwx/EasyGAD/wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl",
+  "history_document": "/shared/wwx/EasyGAD/wm_test/detection_metrics_history.md"
+}
+```

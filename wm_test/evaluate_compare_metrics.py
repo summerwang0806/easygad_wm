@@ -43,13 +43,15 @@ DEFAULT_DETECTOR_TOKENIZER = Path("/shared/public_models/Qwen2.5-14B-Instruct")
 
 # 测试判别器的
 # DEFAULT_KGW = "wm_test/cleanD_kgwSFT_kgwgad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
-DEFAULT_KGW = "wm_test/cleanD_kgwSFT_kgwgad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+# DEFAULT_KGW = "wm_test/cleanD_kgwSFT_kgwgad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 
 # 两个wn
 # DEFAULT_KGW = "wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new_strength3.jsonl"
 # DEFAULT_KGW = "wn/wn_Qwen2.5-0.5B_gamma0.5_delta3_gad_new.jsonl"
 
-
+# tp结果
+# DEFAULT_KGW = "wm_test/tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+DEFAULT_KGW = "wm_test/tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 
 # 没有洗水印的
 # DEFAULT_KGW = "wm_test/kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl"
