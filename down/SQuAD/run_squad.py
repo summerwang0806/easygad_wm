@@ -40,7 +40,7 @@ ROOT = HERE.parents[1]
 
 # para
 # MODEL_PATH = "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new1_dipper2stage/warmup/global_step_1813/actor/huggingface"
-# MODEL_PATH = "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new1_dipper2stage/gad/global_step_1813/actor/huggingface"
+MODEL_PATH = "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new1_dipper2stage/gad/global_step_1813/actor/huggingface"
 
 
 # cleanD_kgwsft_kgwgad
@@ -50,7 +50,7 @@ ROOT = HERE.parents[1]
 
 # kgwD_parasft_kgwsft
 # MODEL_PATH = "checkpoints/kgwD_paraSFT_paraGAD_v1/gad/global_step_1813/actor/huggingface"
-MODEL_PATH = "checkpoints/kgwD_paraSFT_paraGAD_v1/warmup/global_step_1813/actor/huggingface"
+# MODEL_PATH = "checkpoints/kgwD_paraSFT_paraGAD_v1/warmup/global_step_1813/actor/huggingface"
 
 
 
