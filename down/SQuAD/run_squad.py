@@ -48,9 +48,18 @@ MODEL_PATH = "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new1_dipper2sta
 # MODEL_PATH = "checkpoints/cleanD_kgwSFT_kgwGAD_v1/warmup/global_step_1813/actor/huggingface"
 
 
-# kgwD_parasft_kgwsft
+# kgwD_parasft_paragad
 # MODEL_PATH = "checkpoints/kgwD_paraSFT_paraGAD_v1/gad/global_step_1813/actor/huggingface"
 # MODEL_PATH = "checkpoints/kgwD_paraSFT_paraGAD_v1/warmup/global_step_1813/actor/huggingface"
+
+# tp
+# MODEL_PATH = "checkpoints/tp_warmup_rules_g05_d3_s25_tp_tp_keeplast/warmup/global_step_1813/actor/huggingface"
+# MODEL_PATH = "checkpoints/tp_warmup_rules_g05_d3_s25_tp_tp_keeplast/gad/global_step_1813/actor/huggingface"
+
+# cleanD_parasft_paragad
+# MODEL_PATH = "checkpoints/cleanD_paraSFT_paraGAD_v1/warmup/global_step_1813/actor/huggingface"
+# MODEL_PATH = "checkpoints/cleanD_paraSFT_paraGAD_v1/gad/global_step_1813/actor/huggingface"
+
 
 
 
