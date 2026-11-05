@@ -1,5 +1,7 @@
 # 已有回答的黑盒 Radioactivity 检测
 
+Reading mode（需要学生checkpoint）的实现、实验映射及服务器命令见 [README_reading.md](README_reading.md)。
+
 只读取 `wm_test`、`wn` 的已有回答，不训练、不生成、不加载模型权重，不修改原结果。
 方法参考 [Watermarking Makes Language Models Radioactive §4](https://arxiv.org/html/2402.14904v2#S4)，
 适配本项目的 `simple_1`、gamma=0.5、hash_key=15485863、CUDA 绿名单。
