@@ -39,10 +39,17 @@ ROOT = HERE.parent
 # INPUT_JSONL = ROOT / "wm_test/cleanD_kgwSFT_kgwgad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 
 # gad 1500的结果
-INPUT_JSONL = ROOT /  "wm_test/kgwwarmup_kgwgad_gad1500_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+# INPUT_JSONL = ROOT /  "wm_test/kgwwarmup_kgwgad_gad1500_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+
+# bias=6 kgwwarmup_kgwgad
+INPUT_JSONL = ROOT / "wm_test/KGWwarmup_kgwGAD_gad_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+# INPUT_JSONL = ROOT / "wm_test/KGWwarmup_kgwGAD_warmup_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+
+
 
 # 固定质量参照，与 evaluate 的水印检测 clean-file 独立。
 REFERENCE_JSONL = ROOT / "wm_test/cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+
 JUDGE_MODEL = Path("/shared/public_models/Qwen3-32B")
 RESULTS_DIR = HERE / "results"
 HISTORY_FILE = HERE / "soft_win_rate_history.md"
