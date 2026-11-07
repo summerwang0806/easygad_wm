@@ -33,10 +33,18 @@ python baseline_acl/paraphrase_up.py \
   --num-gpus 3
 
 # 这个是0.5/2的kgw参数配置
-CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_up.py \
+CUDA_VISIBLE_DEVICES=0,2 python baseline_acl/paraphrase_up.py \
+  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta6_train.parquet \
+  --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta6_up_dipper_train.parquet \
+  --num-gpus 2
+
+
+CUDA_VISIBLE_DEVICES=0,2 python baseline_acl/paraphrase_up.py \
   --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet \
   --output data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_up_dipper_newtrain.parquet \
   --num-gpus 2
+
+
 
 CUDA_VISIBLE_DEVICES=2,3 python baseline_acl/paraphrase_up.py \
   --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet \
