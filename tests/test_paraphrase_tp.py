@@ -280,6 +280,17 @@ class PromptAndGenerationTests(unittest.TestCase):
                 self.assertEqual((payload["prompt_mode"], payload["max_new_tokens"]), ("chat", 123))
         self.assertTrue(all(not process.is_alive() for _, process in pool._processes))
 
+    def test_two_replicas_share_one_gpu_with_distinct_worker_slots(self):
+        with ParallelStudentGenerator("unused", self.config, "unused", ["1"],
+                                      worker_factory=mock_worker_factory, startup_timeout=15,
+                                      workers_per_gpu=2) as pool:
+            self.assertEqual((pool.worker_count, pool.workers_per_gpu), (2, 2))
+            self.assertEqual(pool.worker_gpus, ["1", "1"])
+            results = list(pool.iter_generate([{}, {}, {}], [1, 2, 3], [1, 1, 1]))
+        self.assertEqual({index for index, _, _ in results}, {1, 2, 3})
+        self.assertTrue(all(json.loads(candidate.text)["visible"] == "1" for _, _, candidate in results))
+        self.assertTrue(all(not process.is_alive() for _, process in pool._processes))
+
 
 @unittest.skipIf(pa is None, "pyarrow is required for Parquet checks")
 class DataContractTests(unittest.TestCase):

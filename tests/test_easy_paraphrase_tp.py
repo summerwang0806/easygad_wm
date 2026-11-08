@@ -156,6 +156,20 @@ class EntryTests(unittest.TestCase):
         self.assertEqual(document["max_attempts"], 2)
         self.assertEqual(document["retries_after_first_attempt"], 1)
 
+    def test_workers_per_gpu_expands_physical_gpus_and_validates(self):
+        from baseline_acl.student_parallel import expand_worker_gpus
+        self.assertEqual(expand_worker_gpus(["1", "2"], 2), ["1", "1", "2", "2"])
+        self.assertEqual(expand_worker_gpus(["1"], 1), ["1"])
+        for bad in (0, -1, 1.5, "2"):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                expand_worker_gpus(["1"], bad)
+        with self.assertRaises(ValueError):
+            expand_worker_gpus(["1", "1"], 1)
+        args = easy.parse_args(self.argv("--inspect"))
+        self.assertEqual(args.workers_per_gpu, 1)
+        with patch("sys.stderr", new_callable=io.StringIO), self.assertRaises(SystemExit):
+            easy.parse_args(self.argv("--inspect", "--workers-per-gpu", "0"))
+
 
 class GenerationTests(unittest.TestCase):
     class Tensor:

@@ -663,6 +663,9 @@ def parse_args(argv=None):
     parser.add_argument("--context-window", type=int,
                         help="Context cap no larger than model max_position_embeddings")
     parser.add_argument("--num-gpus", type=int)
+    parser.add_argument("--workers-per-gpu", type=int, default=1,
+                        help="Independent model replicas sharing each GPU; 2-3 usually lifts small-model "
+                             "throughput without changing per-row seeds or generated text")
     parser.add_argument("--dtype", choices=("auto", "float32", "bfloat16"), default="auto")
     parser.add_argument("--batch-size", type=int, default=1,
                         help="Legacy progress-group size, not GPU count or tensor batch size")
@@ -691,6 +694,8 @@ def parse_args(argv=None):
         parser.error("--inverse-strength must be finite and nonnegative")
     if args.num_gpus is not None and args.num_gpus < 1:
         parser.error("--num-gpus must be positive")
+    if args.workers_per_gpu < 1:
+        parser.error("--workers-per-gpu must be positive")
     if args.context_window is not None and args.context_window < 1:
         parser.error("--context-window must be positive")
     if not (args.inspect or args.preflight) and args.output is None:
@@ -758,8 +763,11 @@ def main(argv=None):
     config = replace(config, dtype=up.select_dtype(args.dtype, up.probe_selected_gpus(visible)))
     from baseline_acl.student_parallel import ParallelStudentGenerator
     worker = EasyWorkerFactory(str(args.rules.resolve()), args.inverse_strength, rules_hash)
-    factory = lambda: ParallelStudentGenerator(args.model, config, args.tokenizer, visible, worker_factory=worker)
-    print(f"[TP-easy] policy={POLICY}; GPUs={visible}, dtype={config.dtype}, prompt={config.prompt_mode}, "
+    factory = lambda: ParallelStudentGenerator(args.model, config, args.tokenizer, visible,
+                                               worker_factory=worker,
+                                               workers_per_gpu=args.workers_per_gpu)
+    print(f"[TP-easy] policy={POLICY}; GPUs={visible}, workers={len(visible) * args.workers_per_gpu} "
+          f"({args.workers_per_gpu}/GPU), dtype={config.dtype}, prompt={config.prompt_mode}, "
           f"max_attempts={config.max_attempts} (first try + up to {config.max_attempts - 1} retries)", flush=True)
     print("[TP-easy] accepts truncation, repeated text, prompt echo and unchanged answers; retries only an "
           "empty rewrite; per-row output budget=min(--max-new-tokens, max(256, 2*source_tokens+128))", flush=True)

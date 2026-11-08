@@ -29,6 +29,7 @@ CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/easy_paraphrase_tp.py \
   --rules wn/acl_rules_tp_warmup_Qwen2.5-0.5B_gamma0.5_delta3_fp32.json \
   --model /shared/public_models/Qwen2.5-0.5B \
   --num-gpus 2 \
+  --workers-per-gpu 2 \
   --dtype float32 \
   --prompt-mode completion \
   --inverse-strength 2.5 \
@@ -51,7 +52,7 @@ CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/easy_paraphrase_tp.py \
   --output data/easy_tp_warmup_dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_student_newtrain_strength2.5.parquet \
   --rules wn/acl_rules_tp_warmup_Qwen2.5-0.5B_gamma0.5_delta3_fp32.json \
   --model /shared/public_models/Qwen2.5-0.5B \
-  --num-gpus 2 --dtype float32 --prompt-mode completion \
+  --num-gpus 2 --workers-per-gpu 2 --dtype float32 --prompt-mode completion \
   --inverse-strength 2.5 --max-attempts 3 \
   --resume
 ```
@@ -104,6 +105,22 @@ row=1233, attempt=1, rate=480.0/h, eta=27.6h, elapsed=9250.1s
 - 用审计里的 `unchanged_response_rows` / `truncated_accepted_count` 过滤；
 - 或把 `--max-attempts` 设为 `1`（最快，空输出直接保留原文）；
 - 或用 `--max-new-tokens` 进一步压低单行输出上限（更快但截断更多）。
+
+## 6.1 再快一些（不改变逐行结果）
+
+- `--workers-per-gpu 2`（或 3）：每张卡起多个独立模型副本。0.5B 学生逐条解码通常受启动/调度开销限制，实测常能到 1.5–2 倍。每个副本仍是 batch=1、逐行 seed 不变，生成文本与副本数无关，断点也可随时加减该参数。fp32 每个副本约 3 GB 显存（含 CUDA 上下文），先试 2，再按 `nvidia-smi` 和吞吐决定是否 3。
+- 增加 `--num-gpus`：接近线性。
+- `--dtype bfloat16`：通常再快 1.3–1.8 倍，但改变精度设置，不再与严格 TP 的 fp32 逐位可比。
+- `--max-new-tokens 1024`：压低长回答的单行预算上限，长行更快，但截断更多。
+
+以 2 卡 fp32、`--workers-per-gpu 1` 为例，本目录实测约 1900 行/小时（14511 行约 7.5 小时）；`--workers-per-gpu 2` 预计可到 3000–4000 行/小时。
+
+## 6.2 关于 `--inverse-strength` 与文本质量
+
+若 `--inverse-strength` 较高（例如 5）而学生只有 0.5B，日志里的 `repetition_trimmed` / `truncated` 会明显偏高，保留下来的文本容易停在半句，甚至出现长段重复。这是反向偏置过强导致的模型退化，不是 easy 验收策略本身造成的；严格 TP 在同设置下同样会大量失败，只是它会把这些行判废重试。
+
+适当降低强度（例如 4）通常能明显减少重复和截断、提升文本质量，但也会削弱对水印的去除效果，需要按实验设置权衡。无论如何，建议在前 100 行观察 `repetition_trimmed`、`truncated` 的比例，再决定是否继续。
+
 
 ## 7. 需要同步的文件
 

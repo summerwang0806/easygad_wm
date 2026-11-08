@@ -2,7 +2,9 @@
 
 Only the owning process writes checkpoints. Each child sees one explicitly
 selected GPU and loads a complete model; this is data parallelism, not model
-sharding. Importing this module does not import torch or initialize CUDA.
+sharding. Several worker replicas may share one GPU (``workers_per_gpu``) to
+fill launch-idle time on small models. Importing this module does not import
+torch or initialize CUDA.
 """
 
 from __future__ import annotations
@@ -39,7 +41,23 @@ def _default_worker_factory(model: str, config, tokenizer_path: str, gpu_id: str
     raise ValueError("student TP requires an explicit rule-bound worker factory")
 
 
-def _worker_entry(model: str, config_dict: dict, tokenizer_path: str, gpu_id: str,
+def expand_worker_gpus(gpu_ids: list[str], workers_per_gpu: int = 1) -> list[str]:
+    """Repeat each physical GPU ID so several replicas can share one card.
+
+    Each replica is a separate process with its own model and its own per-row
+    seed, so the generated text is unchanged; only launch-idle time is filled.
+    """
+    if type(workers_per_gpu) is not int or workers_per_gpu < 1:
+        raise ValueError("workers_per_gpu must be a positive integer")
+    if not gpu_ids or any(not isinstance(gpu, str) or not gpu.strip() or "," in gpu
+                          or gpu == "-1" or gpu != gpu.strip() for gpu in gpu_ids):
+        raise ValueError("supply at least one explicit CUDA GPU ID without commas or whitespace")
+    if len(set(gpu_ids)) != len(gpu_ids):
+        raise ValueError("CUDA GPU IDs must be unique")
+    return [gpu for gpu in gpu_ids for _ in range(workers_per_gpu)]
+
+
+def _worker_entry(model: str, config_dict: dict, tokenizer_path: str, gpu_id: str, worker_index: int,
                   jobs, events, worker_factory: Callable | None) -> None:
     os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
     current_job = None
@@ -47,13 +65,13 @@ def _worker_entry(model: str, config_dict: dict, tokenizer_path: str, gpu_id: st
     try:
         config = _core_module().GenerationConfig(**config_dict)
         generator = (worker_factory or _default_worker_factory)(model, config, tokenizer_path, gpu_id)
-        events.put({"kind": "ready", "gpu": gpu_id})
+        events.put({"kind": "ready", "gpu": gpu_id, "worker": worker_index})
         while True:
             job = jobs.get()
             if job is None:
                 break
             current_job = job
-            events.put({"kind": "started", "gpu": gpu_id, "job_id": job["job_id"]})
+            events.put({"kind": "started", "gpu": gpu_id, "worker": worker_index, "job_id": job["job_id"]})
             candidates = generator.generate([job["prepared"]], [job["index"]], [job["attempt"]])
             if len(candidates) != 1:
                 raise RuntimeError("Student worker must return exactly one complete response per job")
@@ -63,14 +81,14 @@ def _worker_entry(model: str, config_dict: dict, tokenizer_path: str, gpu_id: st
             payload = {"text": candidate.text, "finish_reason": candidate.finish_reason,
                        "output_tokens": candidate.output_tokens, "windows": candidate.windows,
                        "issues": candidate.issues}
-            events.put({"kind": "result", "gpu": gpu_id, "job_id": job["job_id"],
+            events.put({"kind": "result", "gpu": gpu_id, "worker": worker_index, "job_id": job["job_id"],
                         "index": job["index"], "attempt": job["attempt"], "candidate": payload})
             current_job = None
     except BaseException as error:
         # Reporting CUDA OOM/startup errors to the parent never affects other
         # users' processes. SIGKILL is handled by the parent's liveness checks.
         try:
-            events.put({"kind": "error", "gpu": gpu_id,
+            events.put({"kind": "error", "gpu": gpu_id, "worker": worker_index,
                         "job_id": current_job["job_id"] if current_job else None,
                         "index": current_job["index"] if current_job else None,
                         "error_type": type(error).__name__, "error": str(error)[:2000]})
@@ -85,7 +103,12 @@ def _worker_entry(model: str, config_dict: dict, tokenizer_path: str, gpu_id: st
 
 
 class ParallelStudentGenerator:
-    """One persistent full-model worker per GPU with a shared dynamic queue.
+    """Persistent full-model workers on a shared dynamic queue.
+
+    ``workers_per_gpu`` starts several independent replicas on the same card.
+    A 0.5B student decodes one row at a time and is usually launch-idle, so two
+    or three replicas often give 1.5-2x throughput without changing per-row
+    seeds or generated text.
 
     ``worker_factory`` is a spawn-picklable top-level callable intended for CPU
     tests. Production TP supplies its rule-bound factory. It receives
@@ -94,16 +117,14 @@ class ParallelStudentGenerator:
     """
 
     def __init__(self, model: str, config, tokenizer_path: str, gpu_ids: list[str], *,
-                 worker_factory: Callable | None = None, startup_timeout: float = 1800):
+                 worker_factory: Callable | None = None, startup_timeout: float = 1800,
+                 workers_per_gpu: int = 1):
         config.validate()
-        if not gpu_ids or any(not isinstance(gpu, str) or not gpu.strip() or "," in gpu
-                              or gpu == "-1" or gpu != gpu.strip() for gpu in gpu_ids):
-            raise ValueError("supply at least one explicit CUDA GPU ID without commas or whitespace")
-        if len(set(gpu_ids)) != len(gpu_ids):
-            raise ValueError("CUDA GPU IDs must be unique")
         if startup_timeout <= 0:
             raise ValueError("worker startup timeout must be positive")
-        self.worker_count = len(gpu_ids)
+        self.worker_gpus = expand_worker_gpus(gpu_ids, workers_per_gpu)
+        self.workers_per_gpu = workers_per_gpu
+        self.worker_count = len(self.worker_gpus)
         self.gpu_ids = list(gpu_ids)
         self._closed = False
         self._active = False
@@ -113,11 +134,12 @@ class ParallelStudentGenerator:
         self._events = self._context.Queue(maxsize=4 * self.worker_count)
         self._processes = []
         try:
-            for gpu in self.gpu_ids:
+            for worker_index, gpu in enumerate(self.worker_gpus):
                 process = self._context.Process(
                     target=_worker_entry,
-                    args=(model, asdict(config), tokenizer_path, gpu, self._jobs, self._events, worker_factory),
-                    name=f"student-gpu-{gpu}",
+                    args=(model, asdict(config), tokenizer_path, gpu, worker_index,
+                          self._jobs, self._events, worker_factory),
+                    name=f"student-gpu-{gpu}-w{worker_index}",
                 )
                 process.start()
                 self._processes.append((gpu, process))
@@ -125,15 +147,17 @@ class ParallelStudentGenerator:
             ready = set()
             while len(ready) < self.worker_count:
                 if time.monotonic() >= deadline:
-                    missing = [gpu for gpu in self.gpu_ids if gpu not in ready]
-                    raise RuntimeError(f"Student workers did not load before startup timeout; GPUs: {missing}")
+                    missing = [index for index in range(self.worker_count) if index not in ready]
+                    raise RuntimeError(f"Student workers did not load before startup timeout; workers: {missing}")
                 event = self._get_event(deadline=deadline)
                 if event is None:
                     continue
                 self._raise_worker_error(event)
-                if event["kind"] != "ready" or event.get("gpu") not in self.gpu_ids or event["gpu"] in ready:
+                worker = event.get("worker")
+                if (event["kind"] != "ready" or type(worker) is not int
+                        or not 0 <= worker < self.worker_count or worker in ready):
                     raise RuntimeError("unexpected event while starting Student workers")
-                ready.add(event["gpu"])
+                ready.add(worker)
                 print(f"[worker-ready] GPU={event['gpu']}, loaded={len(ready)}/{self.worker_count}", flush=True)
         except BaseException:
             self.close()
@@ -142,7 +166,7 @@ class ParallelStudentGenerator:
     def _check_workers(self) -> None:
         for gpu, process in self._processes:
             if not process.is_alive():
-                raise RuntimeError(f"Student worker on GPU {gpu} exited unexpectedly (exit code {process.exitcode}); "
+                raise RuntimeError(f"Student worker {process.name} exited unexpectedly (exit code {process.exitcode}); "
                                    "check available GPU memory and the worker error above; completed rows remain checkpointed")
 
     @staticmethod
@@ -207,7 +231,7 @@ class ParallelStudentGenerator:
                     continue
                 self._raise_worker_error(event)
                 job_id = event.get("job_id")
-                if event.get("gpu") not in self.gpu_ids or job_id not in inflight:
+                if event.get("gpu") not in self.worker_gpus or job_id not in inflight:
                     raise RuntimeError("Student worker returned an unknown or duplicate job")
                 if event["kind"] == "started":
                     continue
