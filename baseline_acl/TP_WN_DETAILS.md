@@ -84,9 +84,9 @@ CUDA_VISIBLE_DEVICES=3 python baseline_acl/steal_watermark.py \
 
 CUDA_VISIBLE_DEVICES=1 python baseline_acl/steal_watermark.py \
   --model-before /shared/public_models/Qwen2.5-0.5B \
-  --model-after checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/warmup/global_step_1813/actor/huggingface \
-  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtrain.parquet \
-  --output wn/acl_rules_tp_warmup_Qwen2.5-0.5B_gamma0.5_delta3_fp32.json \
+  --model-after checkpoints/kgwwarmup_kgwgad_gamma0.5_delta6/gad/global_step_1813/actor/huggingface \
+  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta6_train.parquet \
+  --output wn/acl_rules_tp_gad_Qwen2.5-0.5B_gamma0.5_delta6_fp32.json \
   --device cuda \
   --dtype float32 \
   --batch-size 16
@@ -145,6 +145,17 @@ CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_tp.py \
   --inverse-strength 2.5 \
   --max-attempts 3 
 
+
+CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_tp.py \
+  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta6_train.parquet \
+  --output data/tp_gad_dolly15k_qwen2_5_14b_kgw_gamma0.5_delta6_student_train_strength5.parquet \
+  --rules wn/acl_rules_tp_gad_Qwen2.5-0.5B_gamma0.5_delta6_fp32.json \
+  --model /shared/public_models/Qwen2.5-0.5B \
+  --num-gpus 2 \
+  --dtype float32 \
+  --prompt-mode completion \
+  --inverse-strength 5 \
+  --max-attempts 3
 
 ```
 
@@ -239,6 +250,16 @@ CUDA_VISIBLE_DEVICES=3 VLLM_USE_V1=0 python wm_test/generate_wn_score.py \
   --kgw-delta 3 \
   --max-prompt-tokens 6144
 
+
+CUDA_VISIBLE_DEVICES=3 VLLM_USE_V1=1 python wm_test/generate_wn_score.py \
+  --student-model checkpoints/kgwwarmup_kgwgad_gamma0.5_delta6/gad/global_step_1813/actor/huggingface \
+  --rules wn/acl_rules_gad_Qwen2.5-0.5B_gamma0.5_delta6_fp32.json \
+  --input data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtest.parquet \
+  --output wn/wn_Qwen2.5-0.5B_gamma0.5_delta6_gad_new_strength6.jsonl \
+  --strength 6 \
+  --gamma 0.5 \
+  --kgw-delta 6 \
+  --max-prompt-tokens 6144
 
 
 CUDA_VISIBLE_DEVICES=1 VLLM_USE_V1=0 python wm_test/generate_wn_score.py \

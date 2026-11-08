@@ -46,6 +46,10 @@ INPUT_JSONL = ROOT / "wm_test/KGWwarmup_kgwGAD_gad_bias6_gamma0.5_qwen2_5_0_5b_d
 # INPUT_JSONL = ROOT / "wm_test/KGWwarmup_kgwGAD_warmup_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 
 
+# bias6 parawarmup_paragad
+# INPUT_JSONL = "wm_test/paraKGWwarmup_parakgwGAD_dipper_gad_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+
+
 
 # 固定质量参照，与 evaluate 的水印检测 clean-file 独立。
 REFERENCE_JSONL = ROOT / "wm_test/cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"

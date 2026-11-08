@@ -69,7 +69,10 @@ DEFAULT_DETECTOR_TOKENIZER = Path("/shared/public_models/Qwen2.5-14B-Instruct")
 
 # bias=6 kgwwarmup_kgwgad
 # DEFAULT_KGW = "wm_test/KGWwarmup_kgwGAD_gad_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
-DEFAULT_KGW = "wm_test/KGWwarmup_kgwGAD_warmup_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+# DEFAULT_KGW = "wm_test/KGWwarmup_kgwGAD_warmup_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+
+# bias6 parawarmup_paragad
+DEFAULT_KGW = "wm_test/paraKGWwarmup_parakgwGAD_dipper_gad_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 
 # 测试判别器是否会被para伤害的
 # DEFAULT_KGW = "wm_test/cleanD_dipperparaSFT_dipperparagad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
