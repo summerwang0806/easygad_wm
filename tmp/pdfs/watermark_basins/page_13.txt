@@ -1,0 +1,13 @@
+a bare score. We also measure what weakens the audit, including rewriting the teacher’s traces before
+distillation, continued fine-tuning, and probing away from the distillation domain. These are variants
+of attacks already described in the text-watermarking literature, and we report them because a verifier
+that does not know the limits of its own test is the more likely harm.
+Reproducibility Statement
+The configuration behind every number in the paper is recorded in App. B. Tab. 8 gives the default
+models, watermark and sampling settings, distillation data and LoRA hyperparameters, probe warm-
+up, and detector and baseline settings, down to the key ranges and seeds. Tab. 9 indexes every study,
+the factor it varies, the cohort and sample size, and where its result is reported, so a single arm is
+reproduced by reading the defaults plus the one row that changes them. The detector is specified
+procedurally in Alg. 1, and App. B.2 documents trace generation and the quality filter that takes5,000
+sampled traces to the1,900used for training.
+13

@@ -1,0 +1,50 @@
+Table 16 Compression moves almost entirely orthogonally to the watermark direction.Across100students per win-
+dow, Acc. is mean GSM8K (%) andUsable?denotes Acc.≥0.9×70.7=63.6. We decompose∆post=θpost−θwm
+into its signed projection along the watermark key directionˆ∆wm (Eq. (1)) and the orthogonalL2 remainder.
+The remainder is a property of the compressed weights alone and is identical at the three windows; the usability
+verdict is read off each window’s own Acc. and comes out the same in every row. Both are therefore printed
+once. The along component is at least three orders of magnitude smaller and increases in magnitude within
+the ordered pruning sweep.
+n-gram=1n-gram=2n-gram=3
+Cond. Orthogonal Usable? Acc. AlongwAcc. AlongwAcc. Alongw
+none0✓70.7 0 70.7 0 70.7 0
+int814.09✓72.2−0.0001 71.0−0.0002 70.0−0.0001
+int4152.07✗50.4−0.0113 50.8−0.0112 45.4−0.0117
+nf4125.91✗55.8−0.0291 42.9−0.0281 41.2−0.0266
+prune1027.23✓77.1−0.0063 76.2−0.0061 77.3−0.0058
+prune2077.74✗59.5−0.0390 61.2−0.0368 57.6−0.0348
+prune30144.85✗37.8−0.1022 39.6−0.0945 28.9−0.0887
+student or the traces it was distilled on and re-reads it with the same probe and reference bank, at the
+defaults of App. B unless this section or a caption records otherwise.
+D.1 Compression
+This section gives the protocol behind Tab. 6 and the weight-space displacement of every operation.
+We apply per-output-channel symmetric int8, uniform group-64 int4, nf4, or10to30%unstructured
+magnitude pruning to100keyed students at eachn-gram window, regenerating detector inputs after
+each operation. Quantized weights are dequantized to fp16 for evaluation, and pruning excludeslm_-
+headandembed_tokens. A model counts as usable when its mean GSM8K accuracy is at least0.9×
+the distilled baseline, which int8 and prune10 clear and int4, nf4, prune20 and prune30 do not. The
+nonerow of Tab. 6 is the uncompressed reference rather than a compression condition, so its black-
+box cells were never re-read under the token matching the six operation rows use; that row therefore
+supports no black-box comparison, either with its own WM-Basin cells or down the column.
+Compression costs the watermark only where it costs the model. Int8 and prune10 retain both utility
+and strong WM-Basin detection, and the larger detection losses occur only beyond the usability gate,
+with nf4 and prune20 the two operations where the gradient signal outlasts utility (Fig. 10 atn-gram=3;
+Tabs. 6 and 16 at all three windows). The weight-space displacement is ordered the same way: the
+along component of every compression operation stays below0.11against orthogonal movement of14
+to152, and grows with the pruning fraction. Therefore, compression does not move the model outside
+the watermark basin, and detection remains effective.
+D.2 Continued Fine-Tuning and RL
+This section gives the training recipes behind Tab. 7 and the weight-space displacement of every arm.
+We continue training the keyed Qwen2.5-3B students of eachn-gram window on clean data. We then
+regenerate suspect text and re-measure detection, utility and geometry. Continued SFT uses one of
+two clean corpora. Thereasoncorpus is1,900traces,950code and950science, from open-r1/Mixture-
+of-Thoughts (Hugging Face, 2025). Themultilingualcorpus is1,206traces on math questions in eight
+languages (Chen et al., 2024). Both pass the think-closure and repetition filters of App. B.2.
+SFT keeps the distillation adapter shape. It runs2epochs at global batch16and maximum sequence
+length8192, on a cosine learning rate of2×10−5 with0.05warmup. Continued RL uses GRPO (Shao
+et al., 2024). The in-domain arm optimises gsm8k with a verifiable correctness reward. The two
+cross-domain arms use learning rate5×10−6 on rule-verified K&K logic puzzles (Xie et al., 2025) or
+on RLVR-IFeval instruction following (Lambert et al., 2024). Both cross-domain rewards are all-or-
+nothing: K&K requires every inhabitant to be labeled correctly in the final boxed answer, and IFEval
+requires the requested constraint to hold. We measure task accuracy greedily on400held-out puzzles
+29

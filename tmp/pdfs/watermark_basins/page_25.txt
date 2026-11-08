@@ -1,0 +1,59 @@
+10−3 10−2 10−1 100
+0
+0.2
+0.4
+0.6
+0.8
+1
+WM-Basin (Ours)
+Black-box (Sander et al.)
+chance (TPR=FPR)
+False positive rate
+True positive rate
+n-gram=1
+10−3 10−2 10−1 100
+False positive rate
+n-gram=2
+10−3 10−2 10−1 100
+False positive rate
+n-gram=3
+Figure 8 Detection performance of the two closed-model detectors across all operating points.ROC (logx, linear
+y), one panel pern-gram window, matched on the100distillation keys1001to1100.TPRis over the100
+watermarked students (one per key, scored with its own key);FPRis over the same100keys×the65held-out
+innocent model-temperature cells (the evaluation half of the129-cell clean pool:43off-the-shelf base models
+×3sampling temperatures;6,500null cases). Sweeping the thresholdαtraces each curve; WM-Basin (ours)
+is drawn in vermilion and Black-box (baseline) in blue. The grey dashed line marks chance (TPR=FPR).
+the5%column on every teacher.
+Table 12 Teacher properties, student utility and detection, for the three swapped-in teachers.DS tokis the
+DeepSeek-R1-Distill tokenizer. Accuracy is mean±standard deviation over100keyed Qwen2.5-3B students,
+and∆is against the un-distilled base (GSM8K48.5%, Math-50033.8%). The two detection rows are the
+FPR=5%column of Tab. 3.
+gpt-oss-120B QwQ-32B Llama-3.1-8B
+Teacher
+Family / tokenizer MoE /200k native Qwen2.5 / DS tok Llama / native
+Median trace chars10,552 23,095 2,969
+Student utility
+GSM8K (%)77.2±1.7 80.8±2.7 74.9±1.2
+∆GSM8K+28.7 +32.3 +26.4
+Math-500 (%)47.9±1.5 52.1±1.5 36.5±1.5
+∆Math-500+14.1 +18.3 +2.7
+Detection, TPR at the5%threshold
+WM-Basin 96 99 100
+Black-box 18 88 93
+C.3 Watermark Scheme
+Table 4 replaces the teacher’s TextSeal decoder with three other watermarking schemes. TextSeal, the
+dual-key scheme used everywhere else in the paper (Sander et al., 2026), draws each token’s Gumbel
+noise from one of two keys with probabilityα=0.1; GumbelMax (Aaronson, 2022) is the single-key
+Gumbel scheme; and SynthID (Dathathri et al., 2024) resolves each position through a tournament
+of depth10between keyed g-values. KGW (Kirchenbauer et al., 2023) instead adds a fixed logit bias
+δ=2.0to a keyed half of the vocabulary (γ=0.5) at every position, the one scheme here that modifies
+the teacher’s logits rather than the sampling rule. Each is generated atn-gram=1,2and3and distilled
+into50students, with all detectors reading the same≈1M-token budget, the reference bank rebuilt
+per scheme and window, and everything else at the defaults of Tab. 8.
+Does WM-Basin’s margin hold when the baseline is read in its strongest form? The black-box statistic
+can weight each scored token by the teacher’s entropy at that position, concentrating the test on the
+high-entropy positions where the watermark is able to bias the sample at all, as in (Sander et al.,
+2026); Tab. 13 gives the baseline that weighted read as a second row per scheme, beside the plain
+statistic reported in Tab. 4. The weighting is worth8to30points to the baseline atp≤0.05across all
+twelve scheme and window cells, yet WM-Basin still leads at every level in every cell where that level
+25

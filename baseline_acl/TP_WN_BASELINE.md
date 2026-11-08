@@ -63,6 +63,8 @@ CUDA_VISIBLE_DEVICES=1,2 python baseline_acl/paraphrase_tp.py \
 
 旧的单次尝试任务可在原命令加 `--max-attempts 3 --resume`，保留已完成行，并从失败行的下一次尝试继续。除上述显式保留策略或提高尝试次数外，模型、规则、输入和采样参数必须保持一致；最多允许 3 次总尝试。默认 `error` 模式下其它类型的失败在三次耗尽后仍报错。
 
+如果只需要一个故意放宽验收条件、明显更快的弱基线，用 `baseline_acl/easy_paraphrase_tp.py`：参数与上面相同，但截断、重复、提示回显、未改写都直接接受，只有空输出才重试，最终仍为空则保留原文；必须换新的 `--output`，不要复用严格 TP 的断点。用法和审计字段见 [TP_EASY.md](TP_EASY.md)。
+
 重新从原始学生 O 开始，Warmup 和 GAD 均使用 TP 数据：
 
 ```bash

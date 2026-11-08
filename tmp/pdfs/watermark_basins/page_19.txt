@@ -1,0 +1,116 @@
+Table 8, continued.
+Component Setting
+Test baseline’s own analyticp-value: two-key score fused at the generationα=0.1, variance-
+corrected Gamma tail (App. B.4); plain, not entropy-weighted
+Suspect text (shared by every detector)
+Budget1,900held-out prompts→median1,875scored responses,≈10M sampled tokens of which
+≈1M are scored (App. B.3)
+Prompts test poolX test, disjoint fromXtrain andX build (App. B.3)
+System prompt the distillation prompt above, i.e. matched; replaced only in App. C.4
+SamplingT=1.0, top-p=0.95,≤8,192new tokens, repetition penalty1.0, seed42
+Table 9 Per-experiment settings.What each study varies, the cohort used, and where the result is reported;
+varied factors are read against the defaults of Tab. 8.
+Experiment Varied factor and levels Model cohort / sample size Result
+Student architecture24structures,135M to8.2B parameters50students per architecture
+(1,200total)
+Tab. 1
+Distillation tempera-
+ture
+Teacher samplingT∈ {1.0,0.7,0.5}; ref-
+erence bank fixed atT=1.0
+100students per temperature Tab. 2
+Teacher model4teachers spanning3families,8B to
+120B; bank rebuilt per teacher; the three
+swapped teachers distil for8epochs, not
+3
+100students per teacher Tabs. 3, 12
+Watermark scheme4watermark schemes atn-gram∈
+{1,2,3}
+50students per scheme and win-
+dow
+Tabs. 4, 13
+Audited domain5domains; every detector stage and the
+system prompt rebuilt per domain
+Fixed pool of100students Tab. 5
+Model compression int8, int4andnf4quantization;10to30%
+pruning
+100students per operation Tabs. 6, 16;
+Fig. 10
+Continued SFT and
+RL
+Post-distillation training: SFT domain,
+or GRPO task
+100students (SFT);10to20
+(GRPO)
+Tabs. 7, 17, 18
+Probe model10probe checkpoints; reference bank re-
+built per probe
+Fixed pool of100students Tab. 14
+Probe warm-up Presence, corpus domain, LoRA rank,
+learning rate, epochs; one knob at a time,
+n-gram=3only
+Fixed pool of100scored keys,
+reused across all15arms
+Tab. 15
+Trace paraphrasing Same-family Qwen paraphraser at3
+strengths
+20students per strength Tab. 19
+Watermarked data
+fraction
+Proportionfof watermarked traces, at a
+fixed1,900-trace training budget
+50students per fraction Fig. 4
+Student training
+recipe
+LoRA rankr, epochs50students per configuration Fig. 4
+Distillation utility Clean vs. watermarked teacher traces100watermarked students pern-
+gram window, plus a clean con-
+trol
+Fig. 5
+Operating-point
+ROC
+Detection threshold, atn-gram
+∈ {1,2,3}
+100watermarked students
+against6,500null cases
+Fig. 8
+Suspect-text budget Cumulative prefixes of5to1,878genera-
+tions (0.03to10.3M tokens supplied)
+Fixed pool of100students Fig. 9
+Per-key false-positive
+rate
+Which bank key is read as the deployed
+one, atα=5%andn-gram∈ {1,2,3}
+All1,000bank keys, each
+across129held-out clean model-
+temperature cells
+Tab. 11
+Watermark basin ge-
+ometry
+Weight-space offset along ˆ∆wm and
+ˆ∆task
+One student distilled under a sin-
+gle key
+Fig. 3
+Task-subspace re-
+moval
+Removed componentsq: seven settings,
+fromno PCAthroughmean onlyto
+q=100
+1,200distilled students at alln-
+grams, against129clean model-
+temperature cells
+Fig. 6
+Rankp-value calibra-
+tion
+Significance thresholdα, swept under the
+null
+100deployed keys across65held-
+out clean model-temperature
+cells
+Fig. 7
+B.2 Distillation and Student Training
+The student follows the fine-tuning recipe of Tab. 8. A teacher trace is retained only if it contains a
+closing</think>tag and a\boxed{...}answer, has no substring repeated≥3times under the sliding
+100-character repetition check, and its extracted answer matches the gold answer undermath_verify.
+19

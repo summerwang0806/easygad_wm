@@ -1,0 +1,50 @@
+is defined. Its margin in the main body is therefore not an artefact of reading the baseline in its plain
+form.
+Table 13 Distillation detection across watermarking schemes, with the baseline’s entropy-weighted statistic.The
+full form of Tab. 4: TextSeal, the teacher’s default scheme, joins the three swapped-in ones, and each watermark
+occupies two rows, the black-box baseline (Sander et al., 2024) reading the suspect text with its plain statistic
+on the first and with its entropy-weighted statistic on the second. The weighting belongs to that statistic, so
+one WM-Basin run serves both rows and its cells span the pair. Cells are read as in Tab. 4, and the dash
+marks a level the991-key TextSeal bank atn-gram=1cannot resolve.
+n-gram=1n-gram=2n-gram=3
+Watermark WM-Basin Black-box WM-Basin Black-box WM-Basin Black-box
+TPR@FPR TPR@FPR TPR@FPR TPR@FPR TPR@FPR TPR@FPR
+5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1%
+TextSeal 76 44 28 52 30 6 22 8 2
+TextSeal with entropy 100 100 — 96 88 60 100 100 98 74 54 40 100 98 84 46 24 2
+GumbelMax 72 44 28 52 32 6 22 10 0
+GumbelMax with entropy 100 100 100 96 88 62 100 98 98 80 54 28 100 100 100 46 18 6
+KGW 58 26 8 40 20 4 16 2 2
+KGW with entropy 100 100 100 66 46 28 94 86 56 54 32 8 90 68 34 38 10 0
+SynthID 64 38 8 44 16 0 24 8 4
+SynthID with entropy 100 100 100 94 68 38 100 100 98 66 38 12 100 96 78 42 22 6
+C.4 Audited Domain and System Prompt
+The audited-domain sweep of §3.2 reads Tab. 5; this section gives the per-domain rebuild and the
+exact prompts behind it. Every row only uses the prompt from the audit domain: the probe warm-up
+corpus, the PCA task subspace removal, the decoy bank, and the black-box baseline’s per-key corpus
+filter are all built from that row’s own questions and system prompt, never the teacher’s math-teacher
+prompt, so neither detector inherits an advantage from the distillation domain.
+Each suspect is ranked against its own key plus the999decoys of that row’s bank, and100students
+are scored in every cell. All five rows read that row’s own held-out test pool, the three math-dataset
+rows under the sharedmath_neutralsystem prompt and the other two under their own, so wording is
+constant inside the top block and the dataset alone separates those rows. On OpenR1-Math, the dis-
+tilled dataset itself with held-out questions read under a prompt no suspect trained under, WM-Basin
+reaches95%/83%/45%when context window is 1/2/3, so a new system prompt does not by itself cost
+the verifier its read.
+Training domain (math): what the students actually learned on
+You are a math teacher. You will be given a math problem and you will solve it step by step.
+You will output your final solution like \boxed{ANSWER}. Be sure to include relevant units within the brackets
+and fully evaluate arithmetic expressions.
+math_neutral (OOD, closest to training)
+You are a helpful assistant. Solve the following problem step by step, then give the final answer.
+code (OOD)
+You are an expert programmer. Read the problem and write a complete, correct Python solution. Think step by
+step, then provide the final code.
+chat (OOD, farthest from training)
+You are a helpful, honest, and courteous assistant. Follow the user’s instruction and give a clear, complete response.
+C.5 Suspect-Text Budget
+How much suspect text does a verdict need, and does reading more always help? Section 3.1 fixes
+the default budget the in-domain tables are read at. We read the same fixed pool of100students, at
+cumulative prefixes of their generations, from5to1,878generations (0.03to10.3M tokens supplied),
+holding the probe, bank, task subspace and threshold fixed, and score both detectors on every prefix
+26

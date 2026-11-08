@@ -1,0 +1,51 @@
+Table 6 Distillation detection under compression.Each row applies one operation to the same100distilled
+suspects and regenerates their text, holding the probe and the reference bank fixed. Cells are read as in Tab. 2;
+Acc.is mean GSM8K accuracy per window. Operations below the mid-rule leave an unusable model, with
+accuracy under0.9×the uncompressed70.7. The black-box cells of the uncompressed row predate the token
+matching used for the six operations, so compare the black-box columns only across operations. The weight-
+space displacement of every operation is in Tab. 16 and the setup in App. D.1.
+n-gram=1n-gram=2n-gram=3
+Compression Acc. WM-Basin Black-box Acc. WM-Basin Black-box Acc. WM-Basin Black-box
+TPR@FPR TPR@FPR TPR@FPR TPR@FPR TPR@FPR TPR@FPR
+5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1%
+none70.7 100 100 100 81 50 1770.7 100 100 99 44 19 570.7 100 95 80 8 4 2
+int872.2 100 100 100 75 50 1771.0 100 100 99 50 27 670.0 100 99 85 24 7 1
+prune1077.1 100 100 100 76 49 1776.2 100 100 98 52 27 977.3 99 94 77 21 8 1
+prune2059.5 100 100 100 70 44 2061.2 100 96 82 44 24 1057.6 91 82 49 20 4 0
+int450.4 79 59 31 50 25 1150.8 43 25 12 38 16 245.4 46 25 10 7 1 0
+nf455.8 100 100 99 70 46 2342.9 100 95 76 48 26 441.2 95 79 40 8 3 0
+prune3037.8 93 71 36 52 30 839.6 75 51 12 32 13 128.9 49 26 7 14 1 0
+fraction and the LoRA rank, and much less on how long the student trains. (1) WM-Basin performs at
+chance when at most10%of the traces are watermarked and exceeds90%TPR once75%are. (2) Its
+TPR climbs from16%atr=16to100%atr=512. (3) A single epoch already yields78%TPR. The
+black-box baseline stays at or below2%at every fraction and reaches its highest value in the figure at
+the largest rank; WM-Basin outperforms it in every cell of the rank and epoch sweeps.
+3.3 Post-processing and Basin Dynamics
+In §2.2, we showed that a watermarked student sits in a narrow basin: a small step along the watermark
+direction(Eq.(1))leavesit, whileamuchlargerstepalongthetaskdirectiondoesnot. Wenowexamine
+in which direction standard post-processing moves the student, and whether it removes the watermark.
+Effect of model compression.Can an adversary quantize or prune the watermark out of a deployed
+student? We apply int8, int4, or nf4 quantization, or10to30%unstructured pruning, to the same
+100suspects. Tab. 6 shows that only int8 and10%pruning leave a usable model, and both cost
+WM-Basin at most three points at any window and operating point. The other operations weaken
+detection but also leave the student unusable. The weight-space decomposition explains why (Tab. 16):
+every operation displaces the student at least three orders of magnitude further orthogonally to the
+watermark direction than along it. Compression therefore does not move the student out of the
+watermark basin, and it remains detectable.
+Effect of continued SFT and RL.Does continued training on clean data move the distilled model out
+of its watermark basin? We continue training the suspects via SFT on cross-domain data and via
+GRPO (Shao et al., 2024) on verifiable tasks (details in App. D.2), holding the probe and the reference
+bank fixed. Tab. 7 shows that continued RL leaves the student detectable while continued SFT weakens
+the signal: WM-Basin detects every distilled model in every GRPO arm atp≤0.05and every window,
+whereas both SFT arms substantially reduce its power. This ordering matches how far each update
+moves the model along the watermark direction: SFT on general reasoning traces moves it furthest,
+SFT on multilingual math less, and GRPO barely at all. The open-weight detector, teacher-forced on
+thedistillationtraces, neverthelessstilldetectstheSFT-trainedstudents. ContinuedSFTthusweakens
+the signal observable in the student’s outputs without moving the model out of the watermark basin.
+4 Related Work
+Model extraction and unauthorized distillation.Frontier providers, threat-intelligence groups, policy
+analysts, and security researchers now document distillation-oriented misuse in the wild: adversaries
+harvest reasoning traces at scale from deployed APIs to train competing models (Anthropic, 2026a;
+Google Threat Intelligence Group, 2026; Panfilov et al., 2026). The underlying mechanism is knowledge
+distillation, which transfers capability from a teacher to a student model (Hinton et al., 2015). When
+10

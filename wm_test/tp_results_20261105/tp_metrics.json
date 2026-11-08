@@ -1,0 +1,5583 @@
+{
+  "experiment": "TP strength=2.5; TP Warmup + TP GAD; warmup-derived rules",
+  "results": {
+    "warmup": {
+      "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": {
+        "raw": "a30d57ca15eb120dbb851b3f951e9df11fd6501553888e28e3abbc29d0fb182a",
+        "lf": "e684a9f3b2c95b2b4a79ce8f2efe0fdc6e933d89ee3f803dc905ef4178b8dd53"
+      },
+      "samples": 500,
+      "evaluation_timestamp": "2026-11-05T17:07:34+08:00",
+      "detector": {
+        "gamma": 0.5,
+        "hash_key": 15485863,
+        "seeding": "simple_1 (hash_key * previous_token_id)",
+        "delta_by_label": {
+          "kgw": 3.0,
+          "clean": 2.0
+        }
+      },
+      "detection": {
+        "positive_class": "kgw",
+        "score": "z_score (higher means more likely watermarked)",
+        "num_kgw": 500,
+        "num_clean": 500,
+        "auroc": 0.41842000000000007,
+        "best_f1": {
+          "threshold": -16.84024198163435,
+          "fpr": 0.98,
+          "tpr": 0.998,
+          "precision": 0.5045500505561172,
+          "f1": 0.6702484889187373,
+          "tp": 499,
+          "fp": 490,
+          "tn": 10,
+          "fn": 1
+        },
+        "tpr_at_fpr": {
+          "1%": {
+            "threshold": 9.03249342651297,
+            "fpr": 0.01,
+            "tpr": 0.006,
+            "precision": 0.375,
+            "f1": 0.011811023622047246,
+            "tp": 3,
+            "fp": 5,
+            "tn": 495,
+            "fn": 497,
+            "target_fpr": 0.01
+          },
+          "5%": {
+            "threshold": 2.258840898497371,
+            "fpr": 0.046,
+            "tpr": 0.048,
+            "precision": 0.5106382978723404,
+            "f1": 0.08775137111517367,
+            "tp": 24,
+            "fp": 23,
+            "tn": 477,
+            "fn": 476,
+            "target_fpr": 0.05
+          },
+          "10%": {
+            "threshold": 1.7179688600346,
+            "fpr": 0.1,
+            "tpr": 0.072,
+            "precision": 0.4186046511627907,
+            "f1": 0.1228668941979522,
+            "tp": 36,
+            "fp": 50,
+            "tn": 450,
+            "fn": 464,
+            "target_fpr": 0.1
+          }
+        },
+        "note": "For each target FPR, select the empirical ROC point with the highest TPR whose FPR does not exceed the target; tied scores are kept together."
+      },
+      "rouge_dolly": 0.166713630006272,
+      "rouge_teacher_clean": 0.22972336773271906,
+      "seq_rep3_mean": 0.22203715807739688,
+      "seq_rep3_median": 0.06868210405946257,
+      "severe_repetition_count": 108,
+      "severe_repetition_rate": 0.216,
+      "grouped_p_values": {
+        "1000": {
+          "median": 0.9829879597952089,
+          "groups": 179
+        },
+        "2000": {
+          "median": 0.9994952075719269,
+          "groups": 89
+        },
+        "3000": {
+          "median": 0.9999568148117831,
+          "groups": 59
+        }
+      },
+      "filtered_grouped_p_values": {
+        "1000": {
+          "median": 0.9590812880988118,
+          "groups": 57
+        },
+        "2000": {
+          "median": 0.9949085359357188,
+          "groups": 28
+        },
+        "3000": {
+          "median": 0.996743879934514,
+          "groups": 19
+        }
+      },
+      "ppl_median": 3.163390164896799,
+      "ppl_valid_samples": 500,
+      "ppl_cache": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\tp2.5warmup_tp2.5gad_warmup_gamma0.5_qwen2_5_0_5b_dolly15k_test.ppl.d872bc907ab1d3386419.jsonl",
+      "ppl_reference_configuration": {
+        "device": "cuda",
+        "dtype": "bfloat16",
+        "effective_max_length": 8192,
+        "generation_tokenizer": "/shared/public_models/Qwen2.5-0.5B",
+        "max_length": null,
+        "model_path": "/shared/public_models/Llama-3-8B",
+        "overflow": "error",
+        "protocol": {
+          "aggregate": "exp(sum(answer NLL) / sum(scored answer tokens)); not mean per-answer PPL",
+          "bos": "one reference BOS at start when defined; no extra EOS",
+          "boundary": "encode prompt and answer separately with add_special_tokens=False, then concatenate",
+          "legacy_prompt_limit": 2048,
+          "loss": "causal next-token NLL on all answer tokens, including the first; no prompt or padding loss",
+          "prompt": "source-generation-prompt; source chat template, not reference chat template",
+          "source_tokenizer_selection": "explicit override, otherwise row.model_path; fallback assumes the generation tokenizer matches that checkpoint",
+          "weights_fingerprint": "weight filenames, sizes and mtime_ns; weight contents are not hashed"
+        },
+        "reference_assets": {
+          "assets": [
+            {
+              "name": "config.json",
+              "sha256": "2430cee764b6530ff8673cf9ba8561e1d5a33152d503cd0de909ff5718261441",
+              "size": 654
+            },
+            {
+              "name": "generation_config.json",
+              "sha256": "55550e95c40c53fb0ee3f960d6d2b25a46405c8f790e5c4bb02caf3e98f2b5d0",
+              "size": 126
+            },
+            {
+              "name": "model.safetensors.index.json",
+              "sha256": "146776fce3f6db1103aa6f249e65ee5544c5923ce6f971b092eee79aa6e5d37b",
+              "size": 23950
+            },
+            {
+              "name": "special_tokens_map.json",
+              "sha256": "462d91939dbc37178aa5a3eae7068d1990ccc92e09f288cc71f42cdf139d69cc",
+              "size": 73
+            },
+            {
+              "name": "tokenizer.json",
+              "sha256": "e134af98b985517b4f068e3755ae90d4e9cd2d45d328325dc503f1c6b2d06cc7",
+              "size": 9085698
+            },
+            {
+              "name": "tokenizer_config.json",
+              "sha256": "690727b4fed286383df1c7ca5e805124cb70c6eb4529f807c7b2e60ff741da7e",
+              "size": 50566
+            }
+          ],
+          "path": "/shared/public_models/Llama-3-8B",
+          "weight_content_hashed": false,
+          "weight_stats": [
+            {
+              "mtime_ns": 1736746522477644778,
+              "name": "model-00001-of-00004.safetensors",
+              "size": 4976698672
+            },
+            {
+              "mtime_ns": 1736746656058650226,
+              "name": "model-00002-of-00004.safetensors",
+              "size": 4999802720
+            },
+            {
+              "mtime_ns": 1736746768408654808,
+              "name": "model-00003-of-00004.safetensors",
+              "size": 4915916176
+            },
+            {
+              "mtime_ns": 1736746796088655937,
+              "name": "model-00004-of-00004.safetensors",
+              "size": 1168138808
+            }
+          ]
+        },
+        "software": {
+          "python": "3.10.21",
+          "tokenizers": "0.21.4",
+          "torch": "2.6.0",
+          "transformers": "4.51.3"
+        }
+      },
+      "mean_answer_tokens": 359.554,
+      "median_answer_tokens": 148.0,
+      "median_z_score": -0.5793760844617184,
+      "model_paths": [
+        "/shared/wwx/EasyGAD/checkpoints/tp_warmup_rules_g05_d3_s25_tp_tp_keeplast/warmup/global_step_1813/actor/huggingface"
+      ],
+      "generation": {
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "max_new_tokens": 1536,
+        "max_prompt_tokens": 2048,
+        "seed": 42,
+        "kgw_enabled_during_generation": false
+      },
+      "llm_judge_clean_gad": null,
+      "llm_judge_clean_teacher": null,
+      "llm_judge_kgw_teacher": null,
+      "llm_mt_bench": null,
+      "per_answer_reference_metrics": [
+        {
+          "id": "dolly-13384",
+          "rouge_dolly": 0.23529411764705882,
+          "rouge_teacher_clean": 0.2857142857142857
+        },
+        {
+          "id": "dolly-10119",
+          "rouge_dolly": 0.17142857142857143,
+          "rouge_teacher_clean": 0.20253164556962025
+        },
+        {
+          "id": "dolly-00423",
+          "rouge_dolly": 0.09803921568627451,
+          "rouge_teacher_clean": 0.10351201478743069
+        },
+        {
+          "id": "dolly-10112",
+          "rouge_dolly": 0.1694915254237288,
+          "rouge_teacher_clean": 0.27450980392156865
+        },
+        {
+          "id": "dolly-12021",
+          "rouge_dolly": 0.19305019305019305,
+          "rouge_teacher_clean": 0.23555555555555555
+        },
+        {
+          "id": "dolly-04534",
+          "rouge_dolly": 0.15458937198067632,
+          "rouge_teacher_clean": 0.2680965147453083
+        },
+        {
+          "id": "dolly-12156",
+          "rouge_dolly": 0.20069204152249134,
+          "rouge_teacher_clean": 0.27076923076923076
+        },
+        {
+          "id": "dolly-00135",
+          "rouge_dolly": 0.16296296296296298,
+          "rouge_teacher_clean": 0.2504672897196262
+        },
+        {
+          "id": "dolly-14108",
+          "rouge_dolly": 0.375,
+          "rouge_teacher_clean": 0.35294117647058826
+        },
+        {
+          "id": "dolly-09066",
+          "rouge_dolly": 0.48936170212765956,
+          "rouge_teacher_clean": 0.38271604938271603
+        },
+        {
+          "id": "dolly-11025",
+          "rouge_dolly": 0.24669603524229075,
+          "rouge_teacher_clean": 0.24
+        },
+        {
+          "id": "dolly-03759",
+          "rouge_dolly": 0.043010752688172046,
+          "rouge_teacher_clean": 0.03949967083607637
+        },
+        {
+          "id": "dolly-03181",
+          "rouge_dolly": 0.16374269005847952,
+          "rouge_teacher_clean": 0.1736842105263158
+        },
+        {
+          "id": "dolly-13257",
+          "rouge_dolly": 0.08365019011406843,
+          "rouge_teacher_clean": 0.08053691275167785
+        },
+        {
+          "id": "dolly-03060",
+          "rouge_dolly": 0.1346153846153846,
+          "rouge_teacher_clean": 0.1847649918962723
+        },
+        {
+          "id": "dolly-06491",
+          "rouge_dolly": 0.13649851632047477,
+          "rouge_teacher_clean": 0.253671562082777
+        },
+        {
+          "id": "dolly-10254",
+          "rouge_dolly": 0.058823529411764705,
+          "rouge_teacher_clean": 0.2155688622754491
+        },
+        {
+          "id": "dolly-08133",
+          "rouge_dolly": 0.21052631578947367,
+          "rouge_teacher_clean": 0.47619047619047616
+        },
+        {
+          "id": "dolly-00286",
+          "rouge_dolly": 0.4,
+          "rouge_teacher_clean": 0.22641509433962265
+        },
+        {
+          "id": "dolly-10904",
+          "rouge_dolly": 0.011267605633802818,
+          "rouge_teacher_clean": 0.02752924982794219
+        },
+        {
+          "id": "dolly-12241",
+          "rouge_dolly": 0.022082018927444796,
+          "rouge_teacher_clean": 0.22608695652173913
+        },
+        {
+          "id": "dolly-08351",
+          "rouge_dolly": 0.13836477987421383,
+          "rouge_teacher_clean": 0.19607843137254902
+        },
+        {
+          "id": "dolly-00944",
+          "rouge_dolly": 0.17553191489361702,
+          "rouge_teacher_clean": 0.2506527415143603
+        },
+        {
+          "id": "dolly-07923",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.1073170731707317
+        },
+        {
+          "id": "dolly-05775",
+          "rouge_dolly": 0.3870967741935484,
+          "rouge_teacher_clean": 0.42424242424242425
+        },
+        {
+          "id": "dolly-05908",
+          "rouge_dolly": 0.1554054054054054,
+          "rouge_teacher_clean": 0.11790393013100436
+        },
+        {
+          "id": "dolly-04979",
+          "rouge_dolly": 0.06,
+          "rouge_teacher_clean": 0.20967741935483872
+        },
+        {
+          "id": "dolly-07106",
+          "rouge_dolly": 0.16993464052287582,
+          "rouge_teacher_clean": 0.17891373801916932
+        },
+        {
+          "id": "dolly-00720",
+          "rouge_dolly": 0.044444444444444446,
+          "rouge_teacher_clean": 0.2
+        },
+        {
+          "id": "dolly-04289",
+          "rouge_dolly": 0.7586206896551724,
+          "rouge_teacher_clean": 0.29473684210526313
+        },
+        {
+          "id": "dolly-13700",
+          "rouge_dolly": 0.2869198312236287,
+          "rouge_teacher_clean": 0.3211009174311927
+        },
+        {
+          "id": "dolly-06521",
+          "rouge_dolly": 0.045112781954887216,
+          "rouge_teacher_clean": 0.18357487922705315
+        },
+        {
+          "id": "dolly-12244",
+          "rouge_dolly": 0.125,
+          "rouge_teacher_clean": 0.875
+        },
+        {
+          "id": "dolly-07103",
+          "rouge_dolly": 0.046511627906976744,
+          "rouge_teacher_clean": 0.09375
+        },
+        {
+          "id": "dolly-12249",
+          "rouge_dolly": 0.13425925925925927,
+          "rouge_teacher_clean": 0.1309255079006772
+        },
+        {
+          "id": "dolly-04082",
+          "rouge_dolly": 0.1875,
+          "rouge_teacher_clean": 0.10714285714285714
+        },
+        {
+          "id": "dolly-11402",
+          "rouge_dolly": 0.22418879056047197,
+          "rouge_teacher_clean": 0.22608695652173913
+        },
+        {
+          "id": "dolly-05608",
+          "rouge_dolly": 0.18435754189944134,
+          "rouge_teacher_clean": 0.23493975903614459
+        },
+        {
+          "id": "dolly-00304",
+          "rouge_dolly": 0.18181818181818182,
+          "rouge_teacher_clean": 0.7619047619047619
+        },
+        {
+          "id": "dolly-12108",
+          "rouge_dolly": 0.014247551202137132,
+          "rouge_teacher_clean": 0.13910761154855644
+        },
+        {
+          "id": "dolly-09720",
+          "rouge_dolly": 0.1016949152542373,
+          "rouge_teacher_clean": 0.22171945701357465
+        },
+        {
+          "id": "dolly-05185",
+          "rouge_dolly": 0.15217391304347827,
+          "rouge_teacher_clean": 0.15217391304347827
+        },
+        {
+          "id": "dolly-03466",
+          "rouge_dolly": 0.13924050632911392,
+          "rouge_teacher_clean": 0.18023255813953487
+        },
+        {
+          "id": "dolly-01134",
+          "rouge_dolly": 0.34146341463414637,
+          "rouge_teacher_clean": 0.16666666666666666
+        },
+        {
+          "id": "dolly-00122",
+          "rouge_dolly": 0.1927710843373494,
+          "rouge_teacher_clean": 0.2236024844720497
+        },
+        {
+          "id": "dolly-10627",
+          "rouge_dolly": 0.16923076923076924,
+          "rouge_teacher_clean": 0.3
+        },
+        {
+          "id": "dolly-06748",
+          "rouge_dolly": 0.19718309859154928,
+          "rouge_teacher_clean": 0.1412639405204461
+        },
+        {
+          "id": "dolly-11405",
+          "rouge_dolly": 0.2,
+          "rouge_teacher_clean": 0.2975206611570248
+        },
+        {
+          "id": "dolly-07788",
+          "rouge_dolly": 0.15384615384615385,
+          "rouge_teacher_clean": 0.1702127659574468
+        },
+        {
+          "id": "dolly-11310",
+          "rouge_dolly": 0.11299435028248588,
+          "rouge_teacher_clean": 0.20833333333333334
+        },
+        {
+          "id": "dolly-02660",
+          "rouge_dolly": 0.15151515151515152,
+          "rouge_teacher_clean": 0.3448275862068966
+        },
+        {
+          "id": "dolly-06622",
+          "rouge_dolly": 0.1187214611872146,
+          "rouge_teacher_clean": 0.1951219512195122
+        },
+        {
+          "id": "dolly-14389",
+          "rouge_dolly": 0.15492957746478872,
+          "rouge_teacher_clean": 0.19076923076923077
+        },
+        {
+          "id": "dolly-06540",
+          "rouge_dolly": 0.001451378809869376,
+          "rouge_teacher_clean": 0.10532915360501567
+        },
+        {
+          "id": "dolly-07953",
+          "rouge_dolly": 0.07476635514018691,
+          "rouge_teacher_clean": 0.25842696629213485
+        },
+        {
+          "id": "dolly-13746",
+          "rouge_dolly": 0.17857142857142858,
+          "rouge_teacher_clean": 0.23529411764705882
+        },
+        {
+          "id": "dolly-04978",
+          "rouge_dolly": 0.4375,
+          "rouge_teacher_clean": 0.37209302325581395
+        },
+        {
+          "id": "dolly-08677",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.17316017316017315
+        },
+        {
+          "id": "dolly-01998",
+          "rouge_dolly": 0.11940298507462686,
+          "rouge_teacher_clean": 0.2558139534883721
+        },
+        {
+          "id": "dolly-02097",
+          "rouge_dolly": 0.1891891891891892,
+          "rouge_teacher_clean": 0.2760942760942761
+        },
+        {
+          "id": "dolly-06255",
+          "rouge_dolly": 0.12709030100334448,
+          "rouge_teacher_clean": 0.23529411764705882
+        },
+        {
+          "id": "dolly-11071",
+          "rouge_dolly": 0.6363636363636364,
+          "rouge_teacher_clean": 0.12878787878787878
+        },
+        {
+          "id": "dolly-14854",
+          "rouge_dolly": 0.23529411764705882,
+          "rouge_teacher_clean": 0.2929936305732484
+        },
+        {
+          "id": "dolly-03614",
+          "rouge_dolly": 0.07474226804123711,
+          "rouge_teacher_clean": 0.1310734463276836
+        },
+        {
+          "id": "dolly-02296",
+          "rouge_dolly": 0.18518518518518517,
+          "rouge_teacher_clean": 0.16901408450704225
+        },
+        {
+          "id": "dolly-07239",
+          "rouge_dolly": 0.019637462235649546,
+          "rouge_teacher_clean": 0.045779685264663805
+        },
+        {
+          "id": "dolly-11368",
+          "rouge_dolly": 0.365296803652968,
+          "rouge_teacher_clean": 0.4108527131782946
+        },
+        {
+          "id": "dolly-02732",
+          "rouge_dolly": 0.25,
+          "rouge_teacher_clean": 0.1111111111111111
+        },
+        {
+          "id": "dolly-13565",
+          "rouge_dolly": 0.03992015968063872,
+          "rouge_teacher_clean": 0.1943419434194342
+        },
+        {
+          "id": "dolly-13004",
+          "rouge_dolly": 0.19689119170984457,
+          "rouge_teacher_clean": 0.19451371571072318
+        },
+        {
+          "id": "dolly-03460",
+          "rouge_dolly": 0.15384615384615385,
+          "rouge_teacher_clean": 0.36704119850187267
+        },
+        {
+          "id": "dolly-06765",
+          "rouge_dolly": 0.36,
+          "rouge_teacher_clean": 0.3626373626373626
+        },
+        {
+          "id": "dolly-14666",
+          "rouge_dolly": 0.2975206611570248,
+          "rouge_teacher_clean": 0.3556701030927835
+        },
+        {
+          "id": "dolly-03251",
+          "rouge_dolly": 0.3018867924528302,
+          "rouge_teacher_clean": 0.379746835443038
+        },
+        {
+          "id": "dolly-00624",
+          "rouge_dolly": 0.182648401826484,
+          "rouge_teacher_clean": 0.14318706697459585
+        },
+        {
+          "id": "dolly-08709",
+          "rouge_dolly": 0.015873015873015872,
+          "rouge_teacher_clean": 0.05417118093174431
+        },
+        {
+          "id": "dolly-13505",
+          "rouge_dolly": 0.014705882352941176,
+          "rouge_teacher_clean": 0.08459214501510574
+        },
+        {
+          "id": "dolly-01089",
+          "rouge_dolly": 0.3076923076923077,
+          "rouge_teacher_clean": 0.17647058823529413
+        },
+        {
+          "id": "dolly-01947",
+          "rouge_dolly": 0.16382252559726962,
+          "rouge_teacher_clean": 0.2484472049689441
+        },
+        {
+          "id": "dolly-02580",
+          "rouge_dolly": 0.14754098360655737,
+          "rouge_teacher_clean": 0.24848484848484848
+        },
+        {
+          "id": "dolly-08884",
+          "rouge_dolly": 0.08040201005025126,
+          "rouge_teacher_clean": 0.152317880794702
+        },
+        {
+          "id": "dolly-01063",
+          "rouge_dolly": 0.042666666666666665,
+          "rouge_teacher_clean": 0.03924221921515562
+        },
+        {
+          "id": "dolly-10746",
+          "rouge_dolly": 0.28368794326241137,
+          "rouge_teacher_clean": 0.33587786259541985
+        },
+        {
+          "id": "dolly-12659",
+          "rouge_dolly": 0.006166495375128468,
+          "rouge_teacher_clean": 0.01020408163265306
+        },
+        {
+          "id": "dolly-08283",
+          "rouge_dolly": 0.25806451612903225,
+          "rouge_teacher_clean": 0.29850746268656714
+        },
+        {
+          "id": "dolly-00303",
+          "rouge_dolly": 0.05637982195845697,
+          "rouge_teacher_clean": 0.16377649325626203
+        },
+        {
+          "id": "dolly-01059",
+          "rouge_dolly": 0.09523809523809523,
+          "rouge_teacher_clean": 0.19801980198019803
+        },
+        {
+          "id": "dolly-09590",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.16161616161616163
+        },
+        {
+          "id": "dolly-00997",
+          "rouge_dolly": 0.22988505747126436,
+          "rouge_teacher_clean": 0.35
+        },
+        {
+          "id": "dolly-09633",
+          "rouge_dolly": 0.21686746987951808,
+          "rouge_teacher_clean": 0.34
+        },
+        {
+          "id": "dolly-04118",
+          "rouge_dolly": 0.07518796992481203,
+          "rouge_teacher_clean": 0.2491103202846975
+        },
+        {
+          "id": "dolly-00105",
+          "rouge_dolly": 0.3564356435643564,
+          "rouge_teacher_clean": 0.7073170731707317
+        },
+        {
+          "id": "dolly-00420",
+          "rouge_dolly": 0.3902439024390244,
+          "rouge_teacher_clean": 0.36666666666666664
+        },
+        {
+          "id": "dolly-14313",
+          "rouge_dolly": 0.3870967741935484,
+          "rouge_teacher_clean": 0.32142857142857145
+        },
+        {
+          "id": "dolly-11014",
+          "rouge_dolly": 0.19090909090909092,
+          "rouge_teacher_clean": 0.2422360248447205
+        },
+        {
+          "id": "dolly-02678",
+          "rouge_dolly": 0.3673469387755102,
+          "rouge_teacher_clean": 0.3464566929133858
+        },
+        {
+          "id": "dolly-10208",
+          "rouge_dolly": 0.15025906735751296,
+          "rouge_teacher_clean": 0.16542948038176034
+        },
+        {
+          "id": "dolly-08008",
+          "rouge_dolly": 0.5333333333333333,
+          "rouge_teacher_clean": 0.5333333333333333
+        },
+        {
+          "id": "dolly-08789",
+          "rouge_dolly": 0.001693480101608806,
+          "rouge_teacher_clean": 0.01507537688442211
+        },
+        {
+          "id": "dolly-14385",
+          "rouge_dolly": 0.32653061224489793,
+          "rouge_teacher_clean": 0.29310344827586204
+        },
+        {
+          "id": "dolly-02004",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.21935483870967742
+        },
+        {
+          "id": "dolly-02761",
+          "rouge_dolly": 0.25806451612903225,
+          "rouge_teacher_clean": 0.28116710875331563
+        },
+        {
+          "id": "dolly-02186",
+          "rouge_dolly": 0.004158004158004158,
+          "rouge_teacher_clean": 0.1231841952353283
+        },
+        {
+          "id": "dolly-05297",
+          "rouge_dolly": 0.2857142857142857,
+          "rouge_teacher_clean": 0.17971014492753623
+        },
+        {
+          "id": "dolly-00275",
+          "rouge_dolly": 0.04979919678714859,
+          "rouge_teacher_clean": 0.09894459102902374
+        },
+        {
+          "id": "dolly-14036",
+          "rouge_dolly": 0.20689655172413793,
+          "rouge_teacher_clean": 0.2535211267605634
+        },
+        {
+          "id": "dolly-08391",
+          "rouge_dolly": 0.3492063492063492,
+          "rouge_teacher_clean": 0.38596491228070173
+        },
+        {
+          "id": "dolly-10398",
+          "rouge_dolly": 0.21904761904761905,
+          "rouge_teacher_clean": 0.20869565217391303
+        },
+        {
+          "id": "dolly-00888",
+          "rouge_dolly": 0.1994750656167979,
+          "rouge_teacher_clean": 0.1813186813186813
+        },
+        {
+          "id": "dolly-00054",
+          "rouge_dolly": 0.005738880918220947,
+          "rouge_teacher_clean": 0.04261168384879725
+        },
+        {
+          "id": "dolly-10415",
+          "rouge_dolly": 0.1553398058252427,
+          "rouge_teacher_clean": 0.22525597269624573
+        },
+        {
+          "id": "dolly-08512",
+          "rouge_dolly": 0.08,
+          "rouge_teacher_clean": 0.14492753623188406
+        },
+        {
+          "id": "dolly-04865",
+          "rouge_dolly": 0.19141914191419143,
+          "rouge_teacher_clean": 0.22088353413654618
+        },
+        {
+          "id": "dolly-14060",
+          "rouge_dolly": 0.06299212598425197,
+          "rouge_teacher_clean": 0.13385826771653545
+        },
+        {
+          "id": "dolly-01174",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.05970149253731343
+        },
+        {
+          "id": "dolly-04362",
+          "rouge_dolly": 0.16560509554140126,
+          "rouge_teacher_clean": 0.21142857142857144
+        },
+        {
+          "id": "dolly-11623",
+          "rouge_dolly": 0.08536585365853659,
+          "rouge_teacher_clean": 0.2909090909090909
+        },
+        {
+          "id": "dolly-00996",
+          "rouge_dolly": 0.6909090909090909,
+          "rouge_teacher_clean": 0.7142857142857143
+        },
+        {
+          "id": "dolly-05906",
+          "rouge_dolly": 0.1509433962264151,
+          "rouge_teacher_clean": 0.1791044776119403
+        },
+        {
+          "id": "dolly-07337",
+          "rouge_dolly": 0.017361111111111112,
+          "rouge_teacher_clean": 0.03993344425956739
+        },
+        {
+          "id": "dolly-00844",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.2247191011235955
+        },
+        {
+          "id": "dolly-04143",
+          "rouge_dolly": 0.175,
+          "rouge_teacher_clean": 0.19411764705882353
+        },
+        {
+          "id": "dolly-14859",
+          "rouge_dolly": 0.2222222222222222,
+          "rouge_teacher_clean": 0.2430939226519337
+        },
+        {
+          "id": "dolly-13959",
+          "rouge_dolly": 0.15492957746478872,
+          "rouge_teacher_clean": 0.20118343195266272
+        },
+        {
+          "id": "dolly-09819",
+          "rouge_dolly": 0.15141955835962145,
+          "rouge_teacher_clean": 0.27146814404432135
+        },
+        {
+          "id": "dolly-03608",
+          "rouge_dolly": 0.09271523178807947,
+          "rouge_teacher_clean": 0.2716049382716049
+        },
+        {
+          "id": "dolly-01431",
+          "rouge_dolly": 0.15966386554621848,
+          "rouge_teacher_clean": 0.21818181818181817
+        },
+        {
+          "id": "dolly-09058",
+          "rouge_dolly": 0.12953367875647667,
+          "rouge_teacher_clean": 0.20448179271708683
+        },
+        {
+          "id": "dolly-01461",
+          "rouge_dolly": 0.0109375,
+          "rouge_teacher_clean": 0.013986013986013986
+        },
+        {
+          "id": "dolly-01470",
+          "rouge_dolly": 0.03417412530512612,
+          "rouge_teacher_clean": 0.021823850350740453
+        },
+        {
+          "id": "dolly-04421",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.11965811965811966
+        },
+        {
+          "id": "dolly-01665",
+          "rouge_dolly": 0.09876543209876543,
+          "rouge_teacher_clean": 0.1935483870967742
+        },
+        {
+          "id": "dolly-10290",
+          "rouge_dolly": 0.2261904761904762,
+          "rouge_teacher_clean": 0.28865979381443296
+        },
+        {
+          "id": "dolly-04032",
+          "rouge_dolly": 0.3333333333333333,
+          "rouge_teacher_clean": 0.32323232323232326
+        },
+        {
+          "id": "dolly-02122",
+          "rouge_dolly": 0.05128205128205128,
+          "rouge_teacher_clean": 0.21460176991150443
+        },
+        {
+          "id": "dolly-13749",
+          "rouge_dolly": 0.01405152224824356,
+          "rouge_teacher_clean": 0.0640176600441501
+        },
+        {
+          "id": "dolly-07983",
+          "rouge_dolly": 0.11409395973154363,
+          "rouge_teacher_clean": 0.16458852867830423
+        },
+        {
+          "id": "dolly-09930",
+          "rouge_dolly": 0.15196078431372548,
+          "rouge_teacher_clean": 0.19076923076923077
+        },
+        {
+          "id": "dolly-05394",
+          "rouge_dolly": 0.17624521072796934,
+          "rouge_teacher_clean": 0.2467866323907455
+        },
+        {
+          "id": "dolly-02286",
+          "rouge_dolly": 0.24598930481283424,
+          "rouge_teacher_clean": 0.20253164556962025
+        },
+        {
+          "id": "dolly-09109",
+          "rouge_dolly": 0.14615384615384616,
+          "rouge_teacher_clean": 0.2265625
+        },
+        {
+          "id": "dolly-01770",
+          "rouge_dolly": 0.1642512077294686,
+          "rouge_teacher_clean": 0.22277227722772278
+        },
+        {
+          "id": "dolly-07027",
+          "rouge_dolly": 0.34375,
+          "rouge_teacher_clean": 0.6060606060606061
+        },
+        {
+          "id": "dolly-04127",
+          "rouge_dolly": 0.02877697841726619,
+          "rouge_teacher_clean": 0.37170263788968827
+        },
+        {
+          "id": "dolly-08457",
+          "rouge_dolly": 0.03911111111111111,
+          "rouge_teacher_clean": 0.12641083521444696
+        },
+        {
+          "id": "dolly-01092",
+          "rouge_dolly": 0.05161290322580645,
+          "rouge_teacher_clean": 0.23578363384188628
+        },
+        {
+          "id": "dolly-02223",
+          "rouge_dolly": 0.06272273699215966,
+          "rouge_teacher_clean": 0.12394705174488568
+        },
+        {
+          "id": "dolly-04949",
+          "rouge_dolly": 0.04030226700251889,
+          "rouge_teacher_clean": 0.08167330677290836
+        },
+        {
+          "id": "dolly-01517",
+          "rouge_dolly": 0.05128205128205128,
+          "rouge_teacher_clean": 0.03773584905660377
+        },
+        {
+          "id": "dolly-00956",
+          "rouge_dolly": 0.1414141414141414,
+          "rouge_teacher_clean": 0.375
+        },
+        {
+          "id": "dolly-12764",
+          "rouge_dolly": 0.22641509433962265,
+          "rouge_teacher_clean": 0.24817518248175183
+        },
+        {
+          "id": "dolly-08887",
+          "rouge_dolly": 0.07874015748031496,
+          "rouge_teacher_clean": 0.32388663967611336
+        },
+        {
+          "id": "dolly-01567",
+          "rouge_dolly": 0.4,
+          "rouge_teacher_clean": 0.8
+        },
+        {
+          "id": "dolly-08689",
+          "rouge_dolly": 0.10369410239792612,
+          "rouge_teacher_clean": 0.1080368906455863
+        },
+        {
+          "id": "dolly-09726",
+          "rouge_dolly": 0.13333333333333333,
+          "rouge_teacher_clean": 0.18604651162790697
+        },
+        {
+          "id": "dolly-05637",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.2079207920792079
+        },
+        {
+          "id": "dolly-08454",
+          "rouge_dolly": 0.25757575757575757,
+          "rouge_teacher_clean": 0.2676056338028169
+        },
+        {
+          "id": "dolly-11348",
+          "rouge_dolly": 0.03278688524590164,
+          "rouge_teacher_clean": 0.21739130434782608
+        },
+        {
+          "id": "dolly-08574",
+          "rouge_dolly": 0.09556313993174062,
+          "rouge_teacher_clean": 0.2045929018789144
+        },
+        {
+          "id": "dolly-12588",
+          "rouge_dolly": 0.1830065359477124,
+          "rouge_teacher_clean": 0.26609442060085836
+        },
+        {
+          "id": "dolly-08406",
+          "rouge_dolly": 0.046296296296296294,
+          "rouge_teacher_clean": 0.21492537313432836
+        },
+        {
+          "id": "dolly-05364",
+          "rouge_dolly": 0.06349206349206349,
+          "rouge_teacher_clean": 0.31683168316831684
+        },
+        {
+          "id": "dolly-07317",
+          "rouge_dolly": 0.2712765957446808,
+          "rouge_teacher_clean": 0.4
+        },
+        {
+          "id": "dolly-04141",
+          "rouge_dolly": 0.18045112781954886,
+          "rouge_teacher_clean": 0.23853211009174313
+        },
+        {
+          "id": "dolly-02127",
+          "rouge_dolly": 0.18719211822660098,
+          "rouge_teacher_clean": 0.31088082901554404
+        },
+        {
+          "id": "dolly-02320",
+          "rouge_dolly": 0.34782608695652173,
+          "rouge_teacher_clean": 0.3050847457627119
+        },
+        {
+          "id": "dolly-07314",
+          "rouge_dolly": 0.17880794701986755,
+          "rouge_teacher_clean": 0.1783132530120482
+        },
+        {
+          "id": "dolly-08212",
+          "rouge_dolly": 0.17801047120418848,
+          "rouge_teacher_clean": 0.25089605734767023
+        },
+        {
+          "id": "dolly-03209",
+          "rouge_dolly": 0.4057971014492754,
+          "rouge_teacher_clean": 0.35051546391752575
+        },
+        {
+          "id": "dolly-02887",
+          "rouge_dolly": 0.17938931297709923,
+          "rouge_teacher_clean": 0.19689119170984457
+        },
+        {
+          "id": "dolly-07399",
+          "rouge_dolly": 0.023529411764705882,
+          "rouge_teacher_clean": 0.26229508196721313
+        },
+        {
+          "id": "dolly-06227",
+          "rouge_dolly": 0.008143322475570033,
+          "rouge_teacher_clean": 0.09740670461733081
+        },
+        {
+          "id": "dolly-03157",
+          "rouge_dolly": 0.12643678160919541,
+          "rouge_teacher_clean": 0.19631901840490798
+        },
+        {
+          "id": "dolly-02859",
+          "rouge_dolly": 0.17142857142857143,
+          "rouge_teacher_clean": 0.12709030100334448
+        },
+        {
+          "id": "dolly-07295",
+          "rouge_dolly": 0.09523809523809523,
+          "rouge_teacher_clean": 0.16367265469061876
+        },
+        {
+          "id": "dolly-05033",
+          "rouge_dolly": 0.20606060606060606,
+          "rouge_teacher_clean": 0.2621951219512195
+        },
+        {
+          "id": "dolly-12477",
+          "rouge_dolly": 0.24,
+          "rouge_teacher_clean": 0.20512820512820512
+        },
+        {
+          "id": "dolly-14209",
+          "rouge_dolly": 0.5384615384615384,
+          "rouge_teacher_clean": 0.38961038961038963
+        },
+        {
+          "id": "dolly-00143",
+          "rouge_dolly": 0.04504504504504504,
+          "rouge_teacher_clean": 0.18409090909090908
+        },
+        {
+          "id": "dolly-12894",
+          "rouge_dolly": 0.1337719298245614,
+          "rouge_teacher_clean": 0.18394160583941604
+        },
+        {
+          "id": "dolly-01452",
+          "rouge_dolly": 0.25842696629213485,
+          "rouge_teacher_clean": 0.2638888888888889
+        },
+        {
+          "id": "dolly-02516",
+          "rouge_dolly": 0.4,
+          "rouge_teacher_clean": 0.5625
+        },
+        {
+          "id": "dolly-02844",
+          "rouge_dolly": 0.14285714285714285,
+          "rouge_teacher_clean": 0.2185792349726776
+        },
+        {
+          "id": "dolly-00342",
+          "rouge_dolly": 0.006644518272425249,
+          "rouge_teacher_clean": 0.06256306760847628
+        },
+        {
+          "id": "dolly-00676",
+          "rouge_dolly": 0.15763546798029557,
+          "rouge_teacher_clean": 0.16498993963782696
+        },
+        {
+          "id": "dolly-02434",
+          "rouge_dolly": 0.007380073800738007,
+          "rouge_teacher_clean": 0.03397027600849257
+        },
+        {
+          "id": "dolly-11078",
+          "rouge_dolly": 0.12962962962962962,
+          "rouge_teacher_clean": 0.26294820717131473
+        },
+        {
+          "id": "dolly-08729",
+          "rouge_dolly": 0.23346303501945526,
+          "rouge_teacher_clean": 0.3322884012539185
+        },
+        {
+          "id": "dolly-09778",
+          "rouge_dolly": 0.1341991341991342,
+          "rouge_teacher_clean": 0.20689655172413793
+        },
+        {
+          "id": "dolly-04025",
+          "rouge_dolly": 0.5263157894736842,
+          "rouge_teacher_clean": 0.39285714285714285
+        },
+        {
+          "id": "dolly-04687",
+          "rouge_dolly": 0.24074074074074073,
+          "rouge_teacher_clean": 0.21333333333333335
+        },
+        {
+          "id": "dolly-14483",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.18461538461538463
+        },
+        {
+          "id": "dolly-13126",
+          "rouge_dolly": 0.15753424657534246,
+          "rouge_teacher_clean": 0.21739130434782608
+        },
+        {
+          "id": "dolly-04856",
+          "rouge_dolly": 0.0997229916897507,
+          "rouge_teacher_clean": 0.19756838905775076
+        },
+        {
+          "id": "dolly-00370",
+          "rouge_dolly": 0.15201900237529692,
+          "rouge_teacher_clean": 0.21568627450980393
+        },
+        {
+          "id": "dolly-01888",
+          "rouge_dolly": 0.3728813559322034,
+          "rouge_teacher_clean": 0.2518518518518518
+        },
+        {
+          "id": "dolly-09457",
+          "rouge_dolly": 0.2222222222222222,
+          "rouge_teacher_clean": 0.24719101123595505
+        },
+        {
+          "id": "dolly-09465",
+          "rouge_dolly": 0.128,
+          "rouge_teacher_clean": 0.25268817204301075
+        },
+        {
+          "id": "dolly-13779",
+          "rouge_dolly": 0.07317073170731707,
+          "rouge_teacher_clean": 0.11367673179396093
+        },
+        {
+          "id": "dolly-09935",
+          "rouge_dolly": 0.11538461538461539,
+          "rouge_teacher_clean": 0.13953488372093023
+        },
+        {
+          "id": "dolly-04624",
+          "rouge_dolly": 0.12410501193317422,
+          "rouge_teacher_clean": 0.1978319783197832
+        },
+        {
+          "id": "dolly-12843",
+          "rouge_dolly": 0.20408163265306123,
+          "rouge_teacher_clean": 0.21487603305785125
+        },
+        {
+          "id": "dolly-10839",
+          "rouge_dolly": 0.13592233009708737,
+          "rouge_teacher_clean": 0.256
+        },
+        {
+          "id": "dolly-03638",
+          "rouge_dolly": 0.11764705882352941,
+          "rouge_teacher_clean": 0.24087591240875914
+        },
+        {
+          "id": "dolly-08658",
+          "rouge_dolly": 0.09823182711198428,
+          "rouge_teacher_clean": 0.1925133689839572
+        },
+        {
+          "id": "dolly-10697",
+          "rouge_dolly": 0.10452961672473868,
+          "rouge_teacher_clean": 0.12121212121212122
+        },
+        {
+          "id": "dolly-13422",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.20833333333333334
+        },
+        {
+          "id": "dolly-13327",
+          "rouge_dolly": 0.1945945945945946,
+          "rouge_teacher_clean": 0.2915451895043732
+        },
+        {
+          "id": "dolly-05752",
+          "rouge_dolly": 0.02949438202247191,
+          "rouge_teacher_clean": 0.1197452229299363
+        },
+        {
+          "id": "dolly-05555",
+          "rouge_dolly": 0.13513513513513514,
+          "rouge_teacher_clean": 0.17699115044247787
+        },
+        {
+          "id": "dolly-01162",
+          "rouge_dolly": 0.1874125874125874,
+          "rouge_teacher_clean": 0.20134228187919462
+        },
+        {
+          "id": "dolly-05827",
+          "rouge_dolly": 0.2403846153846154,
+          "rouge_teacher_clean": 0.22522522522522523
+        },
+        {
+          "id": "dolly-06025",
+          "rouge_dolly": 0.14012738853503184,
+          "rouge_teacher_clean": 0.26720647773279355
+        },
+        {
+          "id": "dolly-06920",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.18548387096774194
+        },
+        {
+          "id": "dolly-02421",
+          "rouge_dolly": 0.17490494296577946,
+          "rouge_teacher_clean": 0.3063457330415755
+        },
+        {
+          "id": "dolly-06595",
+          "rouge_dolly": 0.20606060606060606,
+          "rouge_teacher_clean": 0.3016759776536313
+        },
+        {
+          "id": "dolly-06438",
+          "rouge_dolly": 0.16981132075471697,
+          "rouge_teacher_clean": 0.38271604938271603
+        },
+        {
+          "id": "dolly-06507",
+          "rouge_dolly": 0.23391812865497075,
+          "rouge_teacher_clean": 0.25
+        },
+        {
+          "id": "dolly-14464",
+          "rouge_dolly": 0.05555555555555555,
+          "rouge_teacher_clean": 0.4050632911392405
+        },
+        {
+          "id": "dolly-09311",
+          "rouge_dolly": 0.17410714285714285,
+          "rouge_teacher_clean": 0.1419753086419753
+        },
+        {
+          "id": "dolly-08936",
+          "rouge_dolly": 0.16806722689075632,
+          "rouge_teacher_clean": 0.25084745762711863
+        },
+        {
+          "id": "dolly-02811",
+          "rouge_dolly": 0.05319148936170213,
+          "rouge_teacher_clean": 0.18362282878411912
+        },
+        {
+          "id": "dolly-13981",
+          "rouge_dolly": 0.03580146460537022,
+          "rouge_teacher_clean": 0.14209827357237717
+        },
+        {
+          "id": "dolly-09162",
+          "rouge_dolly": 0.023842917251051893,
+          "rouge_teacher_clean": 0.06825106642291286
+        },
+        {
+          "id": "dolly-08625",
+          "rouge_dolly": 0.11764705882352941,
+          "rouge_teacher_clean": 0.2757009345794392
+        },
+        {
+          "id": "dolly-02065",
+          "rouge_dolly": 0.23529411764705882,
+          "rouge_teacher_clean": 0.3448275862068966
+        },
+        {
+          "id": "dolly-06648",
+          "rouge_dolly": 0.1927710843373494,
+          "rouge_teacher_clean": 0.15254237288135594
+        },
+        {
+          "id": "dolly-08541",
+          "rouge_dolly": 0.2597402597402597,
+          "rouge_teacher_clean": 0.36486486486486486
+        },
+        {
+          "id": "dolly-05610",
+          "rouge_dolly": 0.08247422680412371,
+          "rouge_teacher_clean": 0.1651376146788991
+        },
+        {
+          "id": "dolly-10067",
+          "rouge_dolly": 0.008350730688935281,
+          "rouge_teacher_clean": 0.030666666666666665
+        },
+        {
+          "id": "dolly-09344",
+          "rouge_dolly": 0.19101123595505617,
+          "rouge_teacher_clean": 0.2709677419354839
+        },
+        {
+          "id": "dolly-10747",
+          "rouge_dolly": 0.1261595547309833,
+          "rouge_teacher_clean": 0.12333333333333334
+        },
+        {
+          "id": "dolly-05605",
+          "rouge_dolly": 0.12598425196850394,
+          "rouge_teacher_clean": 0.15647921760391198
+        },
+        {
+          "id": "dolly-14358",
+          "rouge_dolly": 0.2978723404255319,
+          "rouge_teacher_clean": 0.2909090909090909
+        },
+        {
+          "id": "dolly-06285",
+          "rouge_dolly": 0.41509433962264153,
+          "rouge_teacher_clean": 0.48598130841121495
+        },
+        {
+          "id": "dolly-14084",
+          "rouge_dolly": 0.01671891327063741,
+          "rouge_teacher_clean": 0.0835707502374169
+        },
+        {
+          "id": "dolly-01386",
+          "rouge_dolly": 0.1893491124260355,
+          "rouge_teacher_clean": 0.4224137931034483
+        },
+        {
+          "id": "dolly-09869",
+          "rouge_dolly": 0.896551724137931,
+          "rouge_teacher_clean": 0.75
+        },
+        {
+          "id": "dolly-08121",
+          "rouge_dolly": 0.02040816326530612,
+          "rouge_teacher_clean": 0.22366288492706646
+        },
+        {
+          "id": "dolly-02128",
+          "rouge_dolly": 0.17543859649122806,
+          "rouge_teacher_clean": 0.17232375979112272
+        },
+        {
+          "id": "dolly-03250",
+          "rouge_dolly": 0.16080402010050251,
+          "rouge_teacher_clean": 0.27611940298507465
+        },
+        {
+          "id": "dolly-01342",
+          "rouge_dolly": 0.18395303326810175,
+          "rouge_teacher_clean": 0.2
+        },
+        {
+          "id": "dolly-14521",
+          "rouge_dolly": 0.03639120545868082,
+          "rouge_teacher_clean": 0.0821917808219178
+        },
+        {
+          "id": "dolly-09918",
+          "rouge_dolly": 0.08053691275167785,
+          "rouge_teacher_clean": 0.19123505976095617
+        },
+        {
+          "id": "dolly-08340",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.015161957270847692
+        },
+        {
+          "id": "dolly-03530",
+          "rouge_dolly": 0.4666666666666667,
+          "rouge_teacher_clean": 0.41025641025641024
+        },
+        {
+          "id": "dolly-14476",
+          "rouge_dolly": 0.23391812865497075,
+          "rouge_teacher_clean": 0.2943722943722944
+        },
+        {
+          "id": "dolly-04438",
+          "rouge_dolly": 0.04020100502512563,
+          "rouge_teacher_clean": 0.0361794500723589
+        },
+        {
+          "id": "dolly-12536",
+          "rouge_dolly": 0.1337386018237082,
+          "rouge_teacher_clean": 0.15763546798029557
+        },
+        {
+          "id": "dolly-04589",
+          "rouge_dolly": 0.035398230088495575,
+          "rouge_teacher_clean": 0.13333333333333333
+        },
+        {
+          "id": "dolly-13001",
+          "rouge_dolly": 0.15300546448087432,
+          "rouge_teacher_clean": 0.21212121212121213
+        },
+        {
+          "id": "dolly-03080",
+          "rouge_dolly": 0.009252120277563608,
+          "rouge_teacher_clean": 0.06619718309859154
+        },
+        {
+          "id": "dolly-14329",
+          "rouge_dolly": 0.024922118380062305,
+          "rouge_teacher_clean": 0.01558846453624318
+        },
+        {
+          "id": "dolly-14838",
+          "rouge_dolly": 0.016194331983805668,
+          "rouge_teacher_clean": 0.19546247818499127
+        },
+        {
+          "id": "dolly-01028",
+          "rouge_dolly": 0.5742574257425742,
+          "rouge_teacher_clean": 0.3953488372093023
+        },
+        {
+          "id": "dolly-14916",
+          "rouge_dolly": 0.2754491017964072,
+          "rouge_teacher_clean": 0.3835616438356164
+        },
+        {
+          "id": "dolly-09228",
+          "rouge_dolly": 0.20915032679738563,
+          "rouge_teacher_clean": 0.18243243243243243
+        },
+        {
+          "id": "dolly-04333",
+          "rouge_dolly": 0.045454545454545456,
+          "rouge_teacher_clean": 0.037162162162162164
+        },
+        {
+          "id": "dolly-06945",
+          "rouge_dolly": 0.2,
+          "rouge_teacher_clean": 0.15625
+        },
+        {
+          "id": "dolly-05443",
+          "rouge_dolly": 0.35555555555555557,
+          "rouge_teacher_clean": 0.5
+        },
+        {
+          "id": "dolly-14032",
+          "rouge_dolly": 0.11594202898550725,
+          "rouge_teacher_clean": 0.2236024844720497
+        },
+        {
+          "id": "dolly-13783",
+          "rouge_dolly": 0.14749262536873156,
+          "rouge_teacher_clean": 0.2
+        },
+        {
+          "id": "dolly-10958",
+          "rouge_dolly": 0.21105527638190955,
+          "rouge_teacher_clean": 0.29464285714285715
+        },
+        {
+          "id": "dolly-05489",
+          "rouge_dolly": 0.02079002079002079,
+          "rouge_teacher_clean": 0.05481198215423837
+        },
+        {
+          "id": "dolly-03773",
+          "rouge_dolly": 0.15053763440860216,
+          "rouge_teacher_clean": 0.24598930481283424
+        },
+        {
+          "id": "dolly-06158",
+          "rouge_dolly": 0.07792207792207792,
+          "rouge_teacher_clean": 0.3744292237442922
+        },
+        {
+          "id": "dolly-06269",
+          "rouge_dolly": 0.17989417989417988,
+          "rouge_teacher_clean": 0.2678843226788432
+        },
+        {
+          "id": "dolly-04686",
+          "rouge_dolly": 0.05982905982905983,
+          "rouge_teacher_clean": 0.16170212765957448
+        },
+        {
+          "id": "dolly-04273",
+          "rouge_dolly": 0.18181818181818182,
+          "rouge_teacher_clean": 0.32926829268292684
+        },
+        {
+          "id": "dolly-14700",
+          "rouge_dolly": 0.019867549668874173,
+          "rouge_teacher_clean": 0.14411027568922305
+        },
+        {
+          "id": "dolly-12371",
+          "rouge_dolly": 0.13192612137203166,
+          "rouge_teacher_clean": 0.18181818181818182
+        },
+        {
+          "id": "dolly-02694",
+          "rouge_dolly": 0.2857142857142857,
+          "rouge_teacher_clean": 0.2698412698412698
+        },
+        {
+          "id": "dolly-08230",
+          "rouge_dolly": 0.35294117647058826,
+          "rouge_teacher_clean": 0.5833333333333334
+        },
+        {
+          "id": "dolly-12027",
+          "rouge_dolly": 0.6296296296296297,
+          "rouge_teacher_clean": 0.4307692307692308
+        },
+        {
+          "id": "dolly-12861",
+          "rouge_dolly": 0.14942528735632185,
+          "rouge_teacher_clean": 0.17647058823529413
+        },
+        {
+          "id": "dolly-04521",
+          "rouge_dolly": 0.23255813953488372,
+          "rouge_teacher_clean": 0.29818181818181816
+        },
+        {
+          "id": "dolly-07117",
+          "rouge_dolly": 0.14754098360655737,
+          "rouge_teacher_clean": 0.22818791946308725
+        },
+        {
+          "id": "dolly-01469",
+          "rouge_dolly": 0.1691542288557214,
+          "rouge_teacher_clean": 0.1598360655737705
+        },
+        {
+          "id": "dolly-01239",
+          "rouge_dolly": 0.15763546798029557,
+          "rouge_teacher_clean": 0.15903614457831325
+        },
+        {
+          "id": "dolly-03696",
+          "rouge_dolly": 0.08362369337979095,
+          "rouge_teacher_clean": 0.25572519083969464
+        },
+        {
+          "id": "dolly-07132",
+          "rouge_dolly": 0.07547169811320754,
+          "rouge_teacher_clean": 0.02040816326530612
+        },
+        {
+          "id": "dolly-07355",
+          "rouge_dolly": 0.14201183431952663,
+          "rouge_teacher_clean": 0.24870466321243523
+        },
+        {
+          "id": "dolly-14739",
+          "rouge_dolly": 0.12,
+          "rouge_teacher_clean": 0.22580645161290322
+        },
+        {
+          "id": "dolly-03914",
+          "rouge_dolly": 0.20512820512820512,
+          "rouge_teacher_clean": 0.1780821917808219
+        },
+        {
+          "id": "dolly-12951",
+          "rouge_dolly": 0.18,
+          "rouge_teacher_clean": 0.19437340153452684
+        },
+        {
+          "id": "dolly-06771",
+          "rouge_dolly": 0.0916030534351145,
+          "rouge_teacher_clean": 0.3611111111111111
+        },
+        {
+          "id": "dolly-10178",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.20689655172413793
+        },
+        {
+          "id": "dolly-10898",
+          "rouge_dolly": 0.21621621621621623,
+          "rouge_teacher_clean": 0.2913907284768212
+        },
+        {
+          "id": "dolly-12364",
+          "rouge_dolly": 0.0620782726045884,
+          "rouge_teacher_clean": 0.05390835579514825
+        },
+        {
+          "id": "dolly-11987",
+          "rouge_dolly": 0.1111111111111111,
+          "rouge_teacher_clean": 0.13592233009708737
+        },
+        {
+          "id": "dolly-03726",
+          "rouge_dolly": 0.01969057665260197,
+          "rouge_teacher_clean": 0.046192259675405745
+        },
+        {
+          "id": "dolly-05761",
+          "rouge_dolly": 0.06857142857142857,
+          "rouge_teacher_clean": 0.2460136674259681
+        },
+        {
+          "id": "dolly-01939",
+          "rouge_dolly": 0.13861386138613863,
+          "rouge_teacher_clean": 0.2033898305084746
+        },
+        {
+          "id": "dolly-05628",
+          "rouge_dolly": 0.01509433962264151,
+          "rouge_teacher_clean": 0.06365503080082136
+        },
+        {
+          "id": "dolly-11466",
+          "rouge_dolly": 0.38095238095238093,
+          "rouge_teacher_clean": 0.5384615384615384
+        },
+        {
+          "id": "dolly-04773",
+          "rouge_dolly": 0.05656565656565657,
+          "rouge_teacher_clean": 0.05384615384615385
+        },
+        {
+          "id": "dolly-12245",
+          "rouge_dolly": 0.2608695652173913,
+          "rouge_teacher_clean": 0.1590909090909091
+        },
+        {
+          "id": "dolly-14861",
+          "rouge_dolly": 0.0318118948824343,
+          "rouge_teacher_clean": 0.04897418927862343
+        },
+        {
+          "id": "dolly-00900",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.19672131147540983
+        },
+        {
+          "id": "dolly-01979",
+          "rouge_dolly": 0.20869565217391303,
+          "rouge_teacher_clean": 0.251063829787234
+        },
+        {
+          "id": "dolly-01206",
+          "rouge_dolly": 0.11904761904761904,
+          "rouge_teacher_clean": 0.21739130434782608
+        },
+        {
+          "id": "dolly-09334",
+          "rouge_dolly": 0.15135135135135136,
+          "rouge_teacher_clean": 0.15946843853820597
+        },
+        {
+          "id": "dolly-10207",
+          "rouge_dolly": 0.2875816993464052,
+          "rouge_teacher_clean": 0.2802547770700637
+        },
+        {
+          "id": "dolly-14970",
+          "rouge_dolly": 0.30158730158730157,
+          "rouge_teacher_clean": 0.3916083916083916
+        },
+        {
+          "id": "dolly-13410",
+          "rouge_dolly": 1.0,
+          "rouge_teacher_clean": 0.631578947368421
+        },
+        {
+          "id": "dolly-07266",
+          "rouge_dolly": 0.11444141689373297,
+          "rouge_teacher_clean": 0.1737649063032368
+        },
+        {
+          "id": "dolly-10408",
+          "rouge_dolly": 0.22641509433962265,
+          "rouge_teacher_clean": 0.23963133640552994
+        },
+        {
+          "id": "dolly-13339",
+          "rouge_dolly": 0.14678899082568808,
+          "rouge_teacher_clean": 0.22119815668202766
+        },
+        {
+          "id": "dolly-13292",
+          "rouge_dolly": 0.1935483870967742,
+          "rouge_teacher_clean": 0.36363636363636365
+        },
+        {
+          "id": "dolly-13068",
+          "rouge_dolly": 0.65,
+          "rouge_teacher_clean": 0.6268656716417911
+        },
+        {
+          "id": "dolly-08911",
+          "rouge_dolly": 0.11764705882352941,
+          "rouge_teacher_clean": 0.11715481171548117
+        },
+        {
+          "id": "dolly-13555",
+          "rouge_dolly": 0.25386996904024767,
+          "rouge_teacher_clean": 0.2706766917293233
+        },
+        {
+          "id": "dolly-02725",
+          "rouge_dolly": 0.0332129963898917,
+          "rouge_teacher_clean": 0.15135759676487578
+        },
+        {
+          "id": "dolly-01054",
+          "rouge_dolly": 0.10196078431372549,
+          "rouge_teacher_clean": 0.24796747967479674
+        },
+        {
+          "id": "dolly-02628",
+          "rouge_dolly": 0.046511627906976744,
+          "rouge_teacher_clean": 0.23529411764705882
+        },
+        {
+          "id": "dolly-05231",
+          "rouge_dolly": 0.10582010582010581,
+          "rouge_teacher_clean": 0.1927710843373494
+        },
+        {
+          "id": "dolly-11030",
+          "rouge_dolly": 0.5,
+          "rouge_teacher_clean": 0.45454545454545453
+        },
+        {
+          "id": "dolly-05398",
+          "rouge_dolly": 0.1774193548387097,
+          "rouge_teacher_clean": 0.13425925925925927
+        },
+        {
+          "id": "dolly-07605",
+          "rouge_dolly": 0.07643312101910828,
+          "rouge_teacher_clean": 0.18543046357615894
+        },
+        {
+          "id": "dolly-05324",
+          "rouge_dolly": 0.12345679012345678,
+          "rouge_teacher_clean": 0.21305841924398625
+        },
+        {
+          "id": "dolly-12579",
+          "rouge_dolly": 0.1605351170568562,
+          "rouge_teacher_clean": 0.16964285714285715
+        },
+        {
+          "id": "dolly-01118",
+          "rouge_dolly": 0.08748317631224764,
+          "rouge_teacher_clean": 0.15920976176641488
+        },
+        {
+          "id": "dolly-07971",
+          "rouge_dolly": 0.019249278152069296,
+          "rouge_teacher_clean": 0.022900763358778626
+        },
+        {
+          "id": "dolly-11413",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.13333333333333333
+        },
+        {
+          "id": "dolly-03239",
+          "rouge_dolly": 0.14285714285714285,
+          "rouge_teacher_clean": 0.23622047244094488
+        },
+        {
+          "id": "dolly-13445",
+          "rouge_dolly": 0.08743169398907104,
+          "rouge_teacher_clean": 0.14047791455467054
+        },
+        {
+          "id": "dolly-12418",
+          "rouge_dolly": 0.08490566037735849,
+          "rouge_teacher_clean": 0.17637271214642264
+        },
+        {
+          "id": "dolly-07936",
+          "rouge_dolly": 0.06043956043956044,
+          "rouge_teacher_clean": 0.1613588110403397
+        },
+        {
+          "id": "dolly-00170",
+          "rouge_dolly": 0.16802168021680217,
+          "rouge_teacher_clean": 0.20211161387631976
+        },
+        {
+          "id": "dolly-09108",
+          "rouge_dolly": 0.9019607843137255,
+          "rouge_teacher_clean": 0.6052631578947368
+        },
+        {
+          "id": "dolly-06019",
+          "rouge_dolly": 0.11570247933884298,
+          "rouge_teacher_clean": 0.11382113821138211
+        },
+        {
+          "id": "dolly-02032",
+          "rouge_dolly": 0.1836734693877551,
+          "rouge_teacher_clean": 0.2
+        },
+        {
+          "id": "dolly-01183",
+          "rouge_dolly": 0.17475728155339806,
+          "rouge_teacher_clean": 0.17699115044247787
+        },
+        {
+          "id": "dolly-08934",
+          "rouge_dolly": 0.16597510373443983,
+          "rouge_teacher_clean": 0.22857142857142856
+        },
+        {
+          "id": "dolly-09988",
+          "rouge_dolly": 0.2034548944337812,
+          "rouge_teacher_clean": 0.2
+        },
+        {
+          "id": "dolly-02139",
+          "rouge_dolly": 0.1597222222222222,
+          "rouge_teacher_clean": 0.17674418604651163
+        },
+        {
+          "id": "dolly-08401",
+          "rouge_dolly": 0.0663265306122449,
+          "rouge_teacher_clean": 0.2304147465437788
+        },
+        {
+          "id": "dolly-14265",
+          "rouge_dolly": 0.003401360544217687,
+          "rouge_teacher_clean": 0.03117692907248636
+        },
+        {
+          "id": "dolly-09609",
+          "rouge_dolly": 0.057803468208092484,
+          "rouge_teacher_clean": 0.16666666666666666
+        },
+        {
+          "id": "dolly-10197",
+          "rouge_dolly": 0.2962962962962963,
+          "rouge_teacher_clean": 0.5405405405405406
+        },
+        {
+          "id": "dolly-14697",
+          "rouge_dolly": 0.24083769633507854,
+          "rouge_teacher_clean": 0.21188630490956073
+        },
+        {
+          "id": "dolly-07122",
+          "rouge_dolly": 0.08645899554990465,
+          "rouge_teacher_clean": 0.1668711656441718
+        },
+        {
+          "id": "dolly-06600",
+          "rouge_dolly": 0.5531914893617021,
+          "rouge_teacher_clean": 0.3157894736842105
+        },
+        {
+          "id": "dolly-13610",
+          "rouge_dolly": 0.050505050505050504,
+          "rouge_teacher_clean": 0.19487179487179487
+        },
+        {
+          "id": "dolly-11445",
+          "rouge_dolly": 0.009174311926605505,
+          "rouge_teacher_clean": 0.19718309859154928
+        },
+        {
+          "id": "dolly-07427",
+          "rouge_dolly": 0.23809523809523808,
+          "rouge_teacher_clean": 0.20044543429844097
+        },
+        {
+          "id": "dolly-08999",
+          "rouge_dolly": 0.38461538461538464,
+          "rouge_teacher_clean": 0.32786885245901637
+        },
+        {
+          "id": "dolly-08202",
+          "rouge_dolly": 0.24778761061946902,
+          "rouge_teacher_clean": 0.3017241379310345
+        },
+        {
+          "id": "dolly-01593",
+          "rouge_dolly": 0.4,
+          "rouge_teacher_clean": 0.42857142857142855
+        },
+        {
+          "id": "dolly-00990",
+          "rouge_dolly": 0.6470588235294118,
+          "rouge_teacher_clean": 0.5454545454545454
+        },
+        {
+          "id": "dolly-14972",
+          "rouge_dolly": 0.17670682730923695,
+          "rouge_teacher_clean": 0.16058394160583941
+        },
+        {
+          "id": "dolly-05528",
+          "rouge_dolly": 0.0050568900126422255,
+          "rouge_teacher_clean": 0.03385731559854897
+        },
+        {
+          "id": "dolly-14539",
+          "rouge_dolly": 0.21052631578947367,
+          "rouge_teacher_clean": 0.24175824175824176
+        },
+        {
+          "id": "dolly-08595",
+          "rouge_dolly": 0.018949181739879414,
+          "rouge_teacher_clean": 0.018867924528301886
+        },
+        {
+          "id": "dolly-10519",
+          "rouge_dolly": 0.0013717421124828531,
+          "rouge_teacher_clean": 0.11738648947951273
+        },
+        {
+          "id": "dolly-09563",
+          "rouge_dolly": 0.23404255319148937,
+          "rouge_teacher_clean": 0.21428571428571427
+        },
+        {
+          "id": "dolly-06895",
+          "rouge_dolly": 0.013212221304706853,
+          "rouge_teacher_clean": 0.06028636021100226
+        },
+        {
+          "id": "dolly-12916",
+          "rouge_dolly": 0.10810810810810811,
+          "rouge_teacher_clean": 0.18518518518518517
+        },
+        {
+          "id": "dolly-02451",
+          "rouge_dolly": 0.011494252873563218,
+          "rouge_teacher_clean": 0.057692307692307696
+        },
+        {
+          "id": "dolly-00636",
+          "rouge_dolly": 0.4175824175824176,
+          "rouge_teacher_clean": 0.3893805309734513
+        },
+        {
+          "id": "dolly-06006",
+          "rouge_dolly": 0.26519337016574585,
+          "rouge_teacher_clean": 0.24096385542168675
+        },
+        {
+          "id": "dolly-08319",
+          "rouge_dolly": 0.17391304347826086,
+          "rouge_teacher_clean": 0.24793388429752067
+        },
+        {
+          "id": "dolly-13544",
+          "rouge_dolly": 0.09207161125319693,
+          "rouge_teacher_clean": 0.1919191919191919
+        },
+        {
+          "id": "dolly-06238",
+          "rouge_dolly": 0.11555555555555555,
+          "rouge_teacher_clean": 0.28019323671497587
+        },
+        {
+          "id": "dolly-04190",
+          "rouge_dolly": 0.2222222222222222,
+          "rouge_teacher_clean": 0.21686746987951808
+        },
+        {
+          "id": "dolly-06824",
+          "rouge_dolly": 0.2692307692307692,
+          "rouge_teacher_clean": 0.1568627450980392
+        },
+        {
+          "id": "dolly-14842",
+          "rouge_dolly": 0.12698412698412698,
+          "rouge_teacher_clean": 0.4380952380952381
+        },
+        {
+          "id": "dolly-13162",
+          "rouge_dolly": 0.026490066225165563,
+          "rouge_teacher_clean": 0.15294117647058825
+        },
+        {
+          "id": "dolly-00803",
+          "rouge_dolly": 0.16806722689075632,
+          "rouge_teacher_clean": 0.22756410256410256
+        },
+        {
+          "id": "dolly-01653",
+          "rouge_dolly": 0.045112781954887216,
+          "rouge_teacher_clean": 0.16481069042316257
+        },
+        {
+          "id": "dolly-05312",
+          "rouge_dolly": 0.1527777777777778,
+          "rouge_teacher_clean": 0.2094240837696335
+        },
+        {
+          "id": "dolly-10992",
+          "rouge_dolly": 0.15915119363395225,
+          "rouge_teacher_clean": 0.22338568935427575
+        },
+        {
+          "id": "dolly-05352",
+          "rouge_dolly": 0.09216589861751152,
+          "rouge_teacher_clean": 0.19736842105263158
+        },
+        {
+          "id": "dolly-03231",
+          "rouge_dolly": 0.010810810810810811,
+          "rouge_teacher_clean": 0.16941176470588235
+        },
+        {
+          "id": "dolly-06932",
+          "rouge_dolly": 0.4583333333333333,
+          "rouge_teacher_clean": 0.48695652173913045
+        },
+        {
+          "id": "dolly-08607",
+          "rouge_dolly": 0.06880733944954129,
+          "rouge_teacher_clean": 0.0984060984060984
+        },
+        {
+          "id": "dolly-09288",
+          "rouge_dolly": 0.18604651162790697,
+          "rouge_teacher_clean": 0.2711864406779661
+        },
+        {
+          "id": "dolly-07944",
+          "rouge_dolly": 0.13513513513513514,
+          "rouge_teacher_clean": 0.1329639889196676
+        },
+        {
+          "id": "dolly-13102",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.2375
+        },
+        {
+          "id": "dolly-05388",
+          "rouge_dolly": 0.33766233766233766,
+          "rouge_teacher_clean": 0.2857142857142857
+        },
+        {
+          "id": "dolly-14235",
+          "rouge_dolly": 0.3359375,
+          "rouge_teacher_clean": 0.3253333333333333
+        },
+        {
+          "id": "dolly-07763",
+          "rouge_dolly": 0.1951219512195122,
+          "rouge_teacher_clean": 0.22727272727272727
+        },
+        {
+          "id": "dolly-10500",
+          "rouge_dolly": 0.03389830508474576,
+          "rouge_teacher_clean": 0.21621621621621623
+        },
+        {
+          "id": "dolly-08355",
+          "rouge_dolly": 0.27586206896551724,
+          "rouge_teacher_clean": 0.2708333333333333
+        },
+        {
+          "id": "dolly-00609",
+          "rouge_dolly": 0.11764705882352941,
+          "rouge_teacher_clean": 0.22784810126582278
+        },
+        {
+          "id": "dolly-06786",
+          "rouge_dolly": 0.4186046511627907,
+          "rouge_teacher_clean": 0.6530612244897959
+        },
+        {
+          "id": "dolly-04857",
+          "rouge_dolly": 0.1206896551724138,
+          "rouge_teacher_clean": 0.19008264462809918
+        },
+        {
+          "id": "dolly-07633",
+          "rouge_dolly": 0.009237875288683603,
+          "rouge_teacher_clean": 0.050724637681159424
+        },
+        {
+          "id": "dolly-00179",
+          "rouge_dolly": 0.0736196319018405,
+          "rouge_teacher_clean": 0.23045267489711935
+        },
+        {
+          "id": "dolly-11386",
+          "rouge_dolly": 0.13861386138613863,
+          "rouge_teacher_clean": 0.2819047619047619
+        },
+        {
+          "id": "dolly-02069",
+          "rouge_dolly": 0.3225806451612903,
+          "rouge_teacher_clean": 0.23678646934460887
+        },
+        {
+          "id": "dolly-09439",
+          "rouge_dolly": 0.1513157894736842,
+          "rouge_teacher_clean": 0.20512820512820512
+        },
+        {
+          "id": "dolly-12065",
+          "rouge_dolly": 0.15859030837004406,
+          "rouge_teacher_clean": 0.13703703703703704
+        },
+        {
+          "id": "dolly-00148",
+          "rouge_dolly": 0.030656934306569343,
+          "rouge_teacher_clean": 0.07128712871287128
+        },
+        {
+          "id": "dolly-08451",
+          "rouge_dolly": 0.006097560975609756,
+          "rouge_teacher_clean": 0.050546448087431695
+        },
+        {
+          "id": "dolly-02687",
+          "rouge_dolly": 0.3157894736842105,
+          "rouge_teacher_clean": 0.14084507042253522
+        },
+        {
+          "id": "dolly-08416",
+          "rouge_dolly": 0.09216589861751152,
+          "rouge_teacher_clean": 0.22509702457956016
+        },
+        {
+          "id": "dolly-08211",
+          "rouge_dolly": 0.18487394957983194,
+          "rouge_teacher_clean": 0.1875
+        },
+        {
+          "id": "dolly-01260",
+          "rouge_dolly": 0.11548556430446194,
+          "rouge_teacher_clean": 0.5333333333333333
+        },
+        {
+          "id": "dolly-12186",
+          "rouge_dolly": 0.009695290858725761,
+          "rouge_teacher_clean": 0.02604523646333105
+        },
+        {
+          "id": "dolly-07635",
+          "rouge_dolly": 0.16470588235294117,
+          "rouge_teacher_clean": 0.21367521367521367
+        },
+        {
+          "id": "dolly-10037",
+          "rouge_dolly": 0.008375209380234505,
+          "rouge_teacher_clean": 0.029801324503311258
+        },
+        {
+          "id": "dolly-06110",
+          "rouge_dolly": 0.14457831325301204,
+          "rouge_teacher_clean": 0.33608815426997246
+        },
+        {
+          "id": "dolly-08268",
+          "rouge_dolly": 0.0031446540880503146,
+          "rouge_teacher_clean": 0.026373626373626374
+        },
+        {
+          "id": "dolly-01723",
+          "rouge_dolly": 0.0979020979020979,
+          "rouge_teacher_clean": 0.26120857699805067
+        },
+        {
+          "id": "dolly-03319",
+          "rouge_dolly": 0.136986301369863,
+          "rouge_teacher_clean": 0.0
+        },
+        {
+          "id": "dolly-08546",
+          "rouge_dolly": 0.1875,
+          "rouge_teacher_clean": 0.37254901960784315
+        },
+        {
+          "id": "dolly-12885",
+          "rouge_dolly": 0.19310344827586207,
+          "rouge_teacher_clean": 0.17209302325581396
+        },
+        {
+          "id": "dolly-03709",
+          "rouge_dolly": 0.013282732447817837,
+          "rouge_teacher_clean": 0.021409455842997322
+        },
+        {
+          "id": "dolly-00852",
+          "rouge_dolly": 0.1951219512195122,
+          "rouge_teacher_clean": 0.15544041450777202
+        },
+        {
+          "id": "dolly-05067",
+          "rouge_dolly": 0.37037037037037035,
+          "rouge_teacher_clean": 0.3013698630136986
+        },
+        {
+          "id": "dolly-11665",
+          "rouge_dolly": 0.1391304347826087,
+          "rouge_teacher_clean": 0.1887905604719764
+        },
+        {
+          "id": "dolly-14465",
+          "rouge_dolly": 0.027972027972027972,
+          "rouge_teacher_clean": 0.034722222222222224
+        },
+        {
+          "id": "dolly-09375",
+          "rouge_dolly": 0.35714285714285715,
+          "rouge_teacher_clean": 0.29508196721311475
+        },
+        {
+          "id": "dolly-01309",
+          "rouge_dolly": 0.15789473684210525,
+          "rouge_teacher_clean": 0.18396226415094338
+        },
+        {
+          "id": "dolly-07407",
+          "rouge_dolly": 0.004656577415599534,
+          "rouge_teacher_clean": 0.03125
+        },
+        {
+          "id": "dolly-09062",
+          "rouge_dolly": 0.1728395061728395,
+          "rouge_teacher_clean": 0.20141843971631207
+        },
+        {
+          "id": "dolly-03278",
+          "rouge_dolly": 0.26262626262626265,
+          "rouge_teacher_clean": 0.18811881188118812
+        },
+        {
+          "id": "dolly-05234",
+          "rouge_dolly": 0.31952662721893493,
+          "rouge_teacher_clean": 0.35398230088495575
+        },
+        {
+          "id": "dolly-04853",
+          "rouge_dolly": 0.15644820295983086,
+          "rouge_teacher_clean": 0.25117739403453687
+        },
+        {
+          "id": "dolly-13936",
+          "rouge_dolly": 0.1301775147928994,
+          "rouge_teacher_clean": 0.2052401746724891
+        },
+        {
+          "id": "dolly-09420",
+          "rouge_dolly": 0.17777777777777778,
+          "rouge_teacher_clean": 0.19455252918287938
+        },
+        {
+          "id": "dolly-12124",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.19138755980861244
+        },
+        {
+          "id": "dolly-02816",
+          "rouge_dolly": 0.26136363636363635,
+          "rouge_teacher_clean": 0.25112107623318386
+        },
+        {
+          "id": "dolly-01411",
+          "rouge_dolly": 0.017543859649122806,
+          "rouge_teacher_clean": 0.2376237623762376
+        },
+        {
+          "id": "dolly-08114",
+          "rouge_dolly": 0.18487394957983194,
+          "rouge_teacher_clean": 0.21008403361344538
+        },
+        {
+          "id": "dolly-09430",
+          "rouge_dolly": 0.17177914110429449,
+          "rouge_teacher_clean": 0.18018018018018017
+        },
+        {
+          "id": "dolly-10389",
+          "rouge_dolly": 0.037786774628879895,
+          "rouge_teacher_clean": 0.06013071895424837
+        },
+        {
+          "id": "dolly-03119",
+          "rouge_dolly": 0.08,
+          "rouge_teacher_clean": 0.29850746268656714
+        },
+        {
+          "id": "dolly-02469",
+          "rouge_dolly": 0.34782608695652173,
+          "rouge_teacher_clean": 0.6428571428571429
+        },
+        {
+          "id": "dolly-07780",
+          "rouge_dolly": 0.19548872180451127,
+          "rouge_teacher_clean": 0.11285266457680251
+        },
+        {
+          "id": "dolly-03916",
+          "rouge_dolly": 0.11074918566775244,
+          "rouge_teacher_clean": 0.22262118491921004
+        },
+        {
+          "id": "dolly-08222",
+          "rouge_dolly": 0.07142857142857142,
+          "rouge_teacher_clean": 0.44144144144144143
+        },
+        {
+          "id": "dolly-01615",
+          "rouge_dolly": 0.10714285714285714,
+          "rouge_teacher_clean": 0.19047619047619047
+        },
+        {
+          "id": "dolly-12812",
+          "rouge_dolly": 0.18803418803418803,
+          "rouge_teacher_clean": 0.19858156028368795
+        },
+        {
+          "id": "dolly-11437",
+          "rouge_dolly": 0.07553956834532374,
+          "rouge_teacher_clean": 0.26714801444043323
+        },
+        {
+          "id": "dolly-12001",
+          "rouge_dolly": 0.23376623376623376,
+          "rouge_teacher_clean": 0.16296296296296298
+        },
+        {
+          "id": "dolly-09442",
+          "rouge_dolly": 0.47058823529411764,
+          "rouge_teacher_clean": 0.16981132075471697
+        },
+        {
+          "id": "dolly-11241",
+          "rouge_dolly": 0.05456255879586077,
+          "rouge_teacher_clean": 0.06323396567299007
+        },
+        {
+          "id": "dolly-14947",
+          "rouge_dolly": 0.1476510067114094,
+          "rouge_teacher_clean": 0.2624113475177305
+        },
+        {
+          "id": "dolly-03624",
+          "rouge_dolly": 0.13953488372093023,
+          "rouge_teacher_clean": 0.4084507042253521
+        },
+        {
+          "id": "dolly-14069",
+          "rouge_dolly": 0.072992700729927,
+          "rouge_teacher_clean": 0.273972602739726
+        },
+        {
+          "id": "dolly-05632",
+          "rouge_dolly": 0.24561403508771928,
+          "rouge_teacher_clean": 0.2159090909090909
+        },
+        {
+          "id": "dolly-13510",
+          "rouge_dolly": 0.10714285714285714,
+          "rouge_teacher_clean": 0.15873015873015872
+        },
+        {
+          "id": "dolly-02684",
+          "rouge_dolly": 0.013245033112582781,
+          "rouge_teacher_clean": 0.23628691983122363
+        },
+        {
+          "id": "dolly-06631",
+          "rouge_dolly": 0.09796672828096119,
+          "rouge_teacher_clean": 0.10425716768027801
+        },
+        {
+          "id": "dolly-10153",
+          "rouge_dolly": 0.265625,
+          "rouge_teacher_clean": 0.21465968586387435
+        },
+        {
+          "id": "dolly-06628",
+          "rouge_dolly": 0.06779661016949153,
+          "rouge_teacher_clean": 0.3625
+        },
+        {
+          "id": "dolly-09735",
+          "rouge_dolly": 0.16176470588235295,
+          "rouge_teacher_clean": 0.20930232558139536
+        },
+        {
+          "id": "dolly-09330",
+          "rouge_dolly": 0.21739130434782608,
+          "rouge_teacher_clean": 0.19292604501607716
+        },
+        {
+          "id": "dolly-03998",
+          "rouge_dolly": 0.08943089430894309,
+          "rouge_teacher_clean": 0.1651376146788991
+        },
+        {
+          "id": "dolly-12034",
+          "rouge_dolly": 0.4,
+          "rouge_teacher_clean": 0.64
+        },
+        {
+          "id": "dolly-09039",
+          "rouge_dolly": 0.16560509554140126,
+          "rouge_teacher_clean": 0.26735218508997427
+        },
+        {
+          "id": "dolly-11182",
+          "rouge_dolly": 0.2236024844720497,
+          "rouge_teacher_clean": 0.1766109785202864
+        },
+        {
+          "id": "dolly-12273",
+          "rouge_dolly": 0.0260989010989011,
+          "rouge_teacher_clean": 0.05938092229943146
+        },
+        {
+          "id": "dolly-03136",
+          "rouge_dolly": 0.09125475285171103,
+          "rouge_teacher_clean": 0.21031746031746032
+        },
+        {
+          "id": "dolly-03067",
+          "rouge_dolly": 0.19607843137254902,
+          "rouge_teacher_clean": 0.4383561643835616
+        },
+        {
+          "id": "dolly-13829",
+          "rouge_dolly": 0.25,
+          "rouge_teacher_clean": 0.34782608695652173
+        },
+        {
+          "id": "dolly-10476",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.19801980198019803
+        },
+        {
+          "id": "dolly-05864",
+          "rouge_dolly": 0.3103448275862069,
+          "rouge_teacher_clean": 0.1437125748502994
+        },
+        {
+          "id": "dolly-11047",
+          "rouge_dolly": 0.03125,
+          "rouge_teacher_clean": 0.30434782608695654
+        },
+        {
+          "id": "dolly-01739",
+          "rouge_dolly": 0.12931034482758622,
+          "rouge_teacher_clean": 0.4539877300613497
+        },
+        {
+          "id": "dolly-00407",
+          "rouge_dolly": 0.14130434782608695,
+          "rouge_teacher_clean": 0.14218009478672985
+        },
+        {
+          "id": "dolly-09175",
+          "rouge_dolly": 0.09563994374120956,
+          "rouge_teacher_clean": 0.08273894436519258
+        },
+        {
+          "id": "dolly-02274",
+          "rouge_dolly": 0.1953125,
+          "rouge_teacher_clean": 0.24896265560165975
+        },
+        {
+          "id": "dolly-02008",
+          "rouge_dolly": 0.20202020202020202,
+          "rouge_teacher_clean": 0.25757575757575757
+        },
+        {
+          "id": "dolly-02059",
+          "rouge_dolly": 0.1908713692946058,
+          "rouge_teacher_clean": 0.17142857142857143
+        },
+        {
+          "id": "dolly-02916",
+          "rouge_dolly": 0.11235955056179775,
+          "rouge_teacher_clean": 0.18181818181818182
+        },
+        {
+          "id": "dolly-09816",
+          "rouge_dolly": 0.14893617021276595,
+          "rouge_teacher_clean": 0.24806201550387597
+        },
+        {
+          "id": "dolly-05810",
+          "rouge_dolly": 0.17660044150110377,
+          "rouge_teacher_clean": 0.21631878557874762
+        },
+        {
+          "id": "dolly-00278",
+          "rouge_dolly": 0.14354066985645933,
+          "rouge_teacher_clean": 0.22392638036809817
+        },
+        {
+          "id": "dolly-05355",
+          "rouge_dolly": 0.24719101123595505,
+          "rouge_teacher_clean": 0.3010752688172043
+        },
+        {
+          "id": "dolly-14900",
+          "rouge_dolly": 0.15714285714285714,
+          "rouge_teacher_clean": 0.3147208121827411
+        },
+        {
+          "id": "dolly-01353",
+          "rouge_dolly": 0.075,
+          "rouge_teacher_clean": 0.24358974358974358
+        },
+        {
+          "id": "dolly-12693",
+          "rouge_dolly": 0.14925373134328357,
+          "rouge_teacher_clean": 0.22268041237113403
+        },
+        {
+          "id": "dolly-06970",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.07692307692307693
+        },
+        {
+          "id": "dolly-00571",
+          "rouge_dolly": 0.09829059829059829,
+          "rouge_teacher_clean": 0.2112482853223594
+        },
+        {
+          "id": "dolly-05634",
+          "rouge_dolly": 0.20465116279069767,
+          "rouge_teacher_clean": 0.20512820512820512
+        },
+        {
+          "id": "dolly-11106",
+          "rouge_dolly": 0.15859030837004406,
+          "rouge_teacher_clean": 0.16753926701570682
+        },
+        {
+          "id": "dolly-06838",
+          "rouge_dolly": 0.1276595744680851,
+          "rouge_teacher_clean": 0.16923076923076924
+        },
+        {
+          "id": "dolly-02500",
+          "rouge_dolly": 0.3888888888888889,
+          "rouge_teacher_clean": 0.5542168674698795
+        },
+        {
+          "id": "dolly-09695",
+          "rouge_dolly": 0.5581395348837209,
+          "rouge_teacher_clean": 0.6666666666666666
+        },
+        {
+          "id": "dolly-05386",
+          "rouge_dolly": 0.015748031496062992,
+          "rouge_teacher_clean": 0.17142857142857143
+        },
+        {
+          "id": "dolly-00182",
+          "rouge_dolly": 0.07692307692307693,
+          "rouge_teacher_clean": 0.17346938775510204
+        },
+        {
+          "id": "dolly-03360",
+          "rouge_dolly": 0.22302158273381295,
+          "rouge_teacher_clean": 0.19558359621451105
+        },
+        {
+          "id": "dolly-02991",
+          "rouge_dolly": 0.24299065420560748,
+          "rouge_teacher_clean": 0.136986301369863
+        },
+        {
+          "id": "dolly-06562",
+          "rouge_dolly": 0.23863636363636365,
+          "rouge_teacher_clean": 0.28717948717948716
+        },
+        {
+          "id": "dolly-03113",
+          "rouge_dolly": 0.01884057971014493,
+          "rouge_teacher_clean": 0.05837387074357193
+        },
+        {
+          "id": "dolly-11314",
+          "rouge_dolly": 0.16417910447761194,
+          "rouge_teacher_clean": 0.22439024390243903
+        },
+        {
+          "id": "dolly-01356",
+          "rouge_dolly": 0.10344827586206896,
+          "rouge_teacher_clean": 0.17410714285714285
+        },
+        {
+          "id": "dolly-01718",
+          "rouge_dolly": 0.40816326530612246,
+          "rouge_teacher_clean": 0.3287671232876712
+        },
+        {
+          "id": "dolly-11440",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.5238095238095238
+        },
+        {
+          "id": "dolly-14702",
+          "rouge_dolly": 0.21212121212121213,
+          "rouge_teacher_clean": 0.3422459893048128
+        },
+        {
+          "id": "dolly-12236",
+          "rouge_dolly": 0.1437125748502994,
+          "rouge_teacher_clean": 0.20887728459530025
+        },
+        {
+          "id": "dolly-09299",
+          "rouge_dolly": 0.17872340425531916,
+          "rouge_teacher_clean": 0.22950819672131148
+        },
+        {
+          "id": "dolly-05393",
+          "rouge_dolly": 0.15503875968992248,
+          "rouge_teacher_clean": 0.07068607068607069
+        },
+        {
+          "id": "dolly-13235",
+          "rouge_dolly": 0.24390243902439024,
+          "rouge_teacher_clean": 0.21153846153846154
+        },
+        {
+          "id": "dolly-13039",
+          "rouge_dolly": 0.11494252873563218,
+          "rouge_teacher_clean": 0.19144602851323828
+        },
+        {
+          "id": "dolly-04223",
+          "rouge_dolly": 0.1484375,
+          "rouge_teacher_clean": 0.23225806451612904
+        },
+        {
+          "id": "dolly-06101",
+          "rouge_dolly": 0.12359550561797752,
+          "rouge_teacher_clean": 0.22304832713754646
+        }
+      ]
+    },
+    "gad": {
+      "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "source_sha256": {
+        "raw": "61a3d7dad480afe6964825b4385640337089154b2dd1888da3cbfd6e7b530bb8",
+        "lf": "6cf1a473eeaf8a29b5217268f17c055fbdb8d101dd50dab5ed4c76561890416d"
+      },
+      "samples": 500,
+      "evaluation_timestamp": "2026-11-05T16:55:46+08:00",
+      "detector": {
+        "gamma": 0.5,
+        "hash_key": 15485863,
+        "seeding": "simple_1 (hash_key * previous_token_id)",
+        "delta_by_label": {
+          "kgw": 3.0,
+          "clean": 2.0
+        }
+      },
+      "detection": {
+        "positive_class": "kgw",
+        "score": "z_score (higher means more likely watermarked)",
+        "num_kgw": 500,
+        "num_clean": 500,
+        "auroc": 0.44716200000000017,
+        "best_f1": {
+          "threshold": -3.8996021017180893,
+          "fpr": 0.932,
+          "tpr": 0.982,
+          "precision": 0.5130616509926855,
+          "f1": 0.6739876458476322,
+          "tp": 491,
+          "fp": 466,
+          "tn": 34,
+          "fn": 9
+        },
+        "tpr_at_fpr": {
+          "1%": {
+            "threshold": 27.45469753369479,
+            "fpr": 0.006,
+            "tpr": 0.002,
+            "precision": 0.25,
+            "f1": 0.003968253968253968,
+            "tp": 1,
+            "fp": 3,
+            "tn": 497,
+            "fn": 499,
+            "target_fpr": 0.01
+          },
+          "5%": {
+            "threshold": 2.288585537482975,
+            "fpr": 0.046,
+            "tpr": 0.034,
+            "precision": 0.425,
+            "f1": 0.06296296296296297,
+            "tp": 17,
+            "fp": 23,
+            "tn": 477,
+            "fn": 483,
+            "target_fpr": 0.05
+          },
+          "10%": {
+            "threshold": 1.6924558427507104,
+            "fpr": 0.1,
+            "tpr": 0.058,
+            "precision": 0.3670886075949367,
+            "f1": 0.1001727115716753,
+            "tp": 29,
+            "fp": 50,
+            "tn": 450,
+            "fn": 471,
+            "target_fpr": 0.1
+          }
+        },
+        "note": "For each target FPR, select the empirical ROC point with the highest TPR whose FPR does not exceed the target; tied scores are kept together."
+      },
+      "rouge_dolly": 0.20703712481616965,
+      "rouge_teacher_clean": 0.257638647644951,
+      "seq_rep3_mean": 0.11405325844467881,
+      "seq_rep3_median": 0.04365079365079361,
+      "severe_repetition_count": 43,
+      "severe_repetition_rate": 0.086,
+      "grouped_p_values": {
+        "1000": {
+          "median": 0.9131577661041661,
+          "groups": 87
+        },
+        "2000": {
+          "median": 0.9767374614903181,
+          "groups": 43
+        },
+        "3000": {
+          "median": 0.9786642581416402,
+          "groups": 29
+        }
+      },
+      "filtered_grouped_p_values": {
+        "1000": {
+          "median": 0.939464203891651,
+          "groups": 55
+        },
+        "2000": {
+          "median": 0.9438574313644745,
+          "groups": 27
+        },
+        "3000": {
+          "median": 0.983718021506734,
+          "groups": 18
+        }
+      },
+      "ppl_median": 3.1715056793615943,
+      "ppl_valid_samples": 500,
+      "ppl_cache": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\tp2.5warmup_tp2.5gad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.ppl.7d766133d416ae5cca23.jsonl",
+      "ppl_reference_configuration": {
+        "device": "cuda",
+        "dtype": "bfloat16",
+        "effective_max_length": 8192,
+        "generation_tokenizer": "/shared/public_models/Qwen2.5-0.5B",
+        "max_length": null,
+        "model_path": "/shared/public_models/Llama-3-8B",
+        "overflow": "error",
+        "protocol": {
+          "aggregate": "exp(sum(answer NLL) / sum(scored answer tokens)); not mean per-answer PPL",
+          "bos": "one reference BOS at start when defined; no extra EOS",
+          "boundary": "encode prompt and answer separately with add_special_tokens=False, then concatenate",
+          "legacy_prompt_limit": 2048,
+          "loss": "causal next-token NLL on all answer tokens, including the first; no prompt or padding loss",
+          "prompt": "source-generation-prompt; source chat template, not reference chat template",
+          "source_tokenizer_selection": "explicit override, otherwise row.model_path; fallback assumes the generation tokenizer matches that checkpoint",
+          "weights_fingerprint": "weight filenames, sizes and mtime_ns; weight contents are not hashed"
+        },
+        "reference_assets": {
+          "assets": [
+            {
+              "name": "config.json",
+              "sha256": "2430cee764b6530ff8673cf9ba8561e1d5a33152d503cd0de909ff5718261441",
+              "size": 654
+            },
+            {
+              "name": "generation_config.json",
+              "sha256": "55550e95c40c53fb0ee3f960d6d2b25a46405c8f790e5c4bb02caf3e98f2b5d0",
+              "size": 126
+            },
+            {
+              "name": "model.safetensors.index.json",
+              "sha256": "146776fce3f6db1103aa6f249e65ee5544c5923ce6f971b092eee79aa6e5d37b",
+              "size": 23950
+            },
+            {
+              "name": "special_tokens_map.json",
+              "sha256": "462d91939dbc37178aa5a3eae7068d1990ccc92e09f288cc71f42cdf139d69cc",
+              "size": 73
+            },
+            {
+              "name": "tokenizer.json",
+              "sha256": "e134af98b985517b4f068e3755ae90d4e9cd2d45d328325dc503f1c6b2d06cc7",
+              "size": 9085698
+            },
+            {
+              "name": "tokenizer_config.json",
+              "sha256": "690727b4fed286383df1c7ca5e805124cb70c6eb4529f807c7b2e60ff741da7e",
+              "size": 50566
+            }
+          ],
+          "path": "/shared/public_models/Llama-3-8B",
+          "weight_content_hashed": false,
+          "weight_stats": [
+            {
+              "mtime_ns": 1736746522477644778,
+              "name": "model-00001-of-00004.safetensors",
+              "size": 4976698672
+            },
+            {
+              "mtime_ns": 1736746656058650226,
+              "name": "model-00002-of-00004.safetensors",
+              "size": 4999802720
+            },
+            {
+              "mtime_ns": 1736746768408654808,
+              "name": "model-00003-of-00004.safetensors",
+              "size": 4915916176
+            },
+            {
+              "mtime_ns": 1736746796088655937,
+              "name": "model-00004-of-00004.safetensors",
+              "size": 1168138808
+            }
+          ]
+        },
+        "software": {
+          "python": "3.10.21",
+          "tokenizers": "0.21.4",
+          "torch": "2.6.0",
+          "transformers": "4.51.3"
+        }
+      },
+      "mean_answer_tokens": 174.358,
+      "median_answer_tokens": 107.0,
+      "median_z_score": -0.4536062312611588,
+      "model_paths": [
+        "/shared/wwx/EasyGAD/checkpoints/tp_warmup_rules_g05_d3_s25_tp_tp_keeplast/gad/global_step_1813/actor/huggingface"
+      ],
+      "generation": {
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "max_new_tokens": 1536,
+        "max_prompt_tokens": 2048,
+        "seed": 42,
+        "kgw_enabled_during_generation": false
+      },
+      "llm_judge_clean_gad": null,
+      "llm_judge_clean_teacher": null,
+      "llm_judge_kgw_teacher": null,
+      "llm_mt_bench": null,
+      "per_answer_reference_metrics": [
+        {
+          "id": "dolly-13384",
+          "rouge_dolly": 0.15,
+          "rouge_teacher_clean": 0.2708333333333333
+        },
+        {
+          "id": "dolly-10119",
+          "rouge_dolly": 0.11336032388663968,
+          "rouge_teacher_clean": 0.15849056603773584
+        },
+        {
+          "id": "dolly-00423",
+          "rouge_dolly": 0.06666666666666667,
+          "rouge_teacher_clean": 0.11449016100178891
+        },
+        {
+          "id": "dolly-10112",
+          "rouge_dolly": 0.15555555555555556,
+          "rouge_teacher_clean": 0.2857142857142857
+        },
+        {
+          "id": "dolly-12021",
+          "rouge_dolly": 0.13399503722084366,
+          "rouge_teacher_clean": 0.26262626262626265
+        },
+        {
+          "id": "dolly-04534",
+          "rouge_dolly": 0.1509433962264151,
+          "rouge_teacher_clean": 0.24
+        },
+        {
+          "id": "dolly-12156",
+          "rouge_dolly": 0.2672413793103448,
+          "rouge_teacher_clean": 0.22388059701492538
+        },
+        {
+          "id": "dolly-00135",
+          "rouge_dolly": 0.13654618473895583,
+          "rouge_teacher_clean": 0.22957198443579765
+        },
+        {
+          "id": "dolly-14108",
+          "rouge_dolly": 0.375,
+          "rouge_teacher_clean": 0.35294117647058826
+        },
+        {
+          "id": "dolly-09066",
+          "rouge_dolly": 0.045454545454545456,
+          "rouge_teacher_clean": 0.16071428571428573
+        },
+        {
+          "id": "dolly-11025",
+          "rouge_dolly": 0.2011173184357542,
+          "rouge_teacher_clean": 0.3137254901960784
+        },
+        {
+          "id": "dolly-03759",
+          "rouge_dolly": 0.2403846153846154,
+          "rouge_teacher_clean": 0.20920502092050208
+        },
+        {
+          "id": "dolly-03181",
+          "rouge_dolly": 0.18471337579617833,
+          "rouge_teacher_clean": 0.1875
+        },
+        {
+          "id": "dolly-13257",
+          "rouge_dolly": 0.1476510067114094,
+          "rouge_teacher_clean": 0.12612612612612611
+        },
+        {
+          "id": "dolly-03060",
+          "rouge_dolly": 0.15510204081632653,
+          "rouge_teacher_clean": 0.15246636771300448
+        },
+        {
+          "id": "dolly-06491",
+          "rouge_dolly": 0.11343283582089553,
+          "rouge_teacher_clean": 0.23560910307898258
+        },
+        {
+          "id": "dolly-10254",
+          "rouge_dolly": 0.10638297872340426,
+          "rouge_teacher_clean": 0.176
+        },
+        {
+          "id": "dolly-08133",
+          "rouge_dolly": 0.37037037037037035,
+          "rouge_teacher_clean": 0.45161290322580644
+        },
+        {
+          "id": "dolly-00286",
+          "rouge_dolly": 0.2413793103448276,
+          "rouge_teacher_clean": 0.3488372093023256
+        },
+        {
+          "id": "dolly-10904",
+          "rouge_dolly": 0.13675213675213677,
+          "rouge_teacher_clean": 0.24
+        },
+        {
+          "id": "dolly-12241",
+          "rouge_dolly": 0.030303030303030304,
+          "rouge_teacher_clean": 0.2290909090909091
+        },
+        {
+          "id": "dolly-08351",
+          "rouge_dolly": 0.13432835820895522,
+          "rouge_teacher_clean": 0.2122905027932961
+        },
+        {
+          "id": "dolly-00944",
+          "rouge_dolly": 0.15013404825737264,
+          "rouge_teacher_clean": 0.18947368421052632
+        },
+        {
+          "id": "dolly-07923",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.2752808988764045
+        },
+        {
+          "id": "dolly-05775",
+          "rouge_dolly": 0.8,
+          "rouge_teacher_clean": 0.7058823529411765
+        },
+        {
+          "id": "dolly-05908",
+          "rouge_dolly": 0.13768115942028986,
+          "rouge_teacher_clean": 0.1004566210045662
+        },
+        {
+          "id": "dolly-04979",
+          "rouge_dolly": 0.13636363636363635,
+          "rouge_teacher_clean": 0.38235294117647056
+        },
+        {
+          "id": "dolly-07106",
+          "rouge_dolly": 0.15849056603773584,
+          "rouge_teacher_clean": 0.1641025641025641
+        },
+        {
+          "id": "dolly-00720",
+          "rouge_dolly": 0.04,
+          "rouge_teacher_clean": 0.23333333333333334
+        },
+        {
+          "id": "dolly-04289",
+          "rouge_dolly": 0.7586206896551724,
+          "rouge_teacher_clean": 0.29473684210526313
+        },
+        {
+          "id": "dolly-13700",
+          "rouge_dolly": 0.25,
+          "rouge_teacher_clean": 0.3121951219512195
+        },
+        {
+          "id": "dolly-06521",
+          "rouge_dolly": 0.05555555555555555,
+          "rouge_teacher_clean": 0.1732283464566929
+        },
+        {
+          "id": "dolly-12244",
+          "rouge_dolly": 0.125,
+          "rouge_teacher_clean": 0.875
+        },
+        {
+          "id": "dolly-07103",
+          "rouge_dolly": 0.047619047619047616,
+          "rouge_teacher_clean": 0.09473684210526316
+        },
+        {
+          "id": "dolly-12249",
+          "rouge_dolly": 0.6575342465753424,
+          "rouge_teacher_clean": 0.42857142857142855
+        },
+        {
+          "id": "dolly-04082",
+          "rouge_dolly": 0.23076923076923078,
+          "rouge_teacher_clean": 0.3333333333333333
+        },
+        {
+          "id": "dolly-11402",
+          "rouge_dolly": 0.17557251908396945,
+          "rouge_teacher_clean": 0.27450980392156865
+        },
+        {
+          "id": "dolly-05608",
+          "rouge_dolly": 0.17391304347826086,
+          "rouge_teacher_clean": 0.25257731958762886
+        },
+        {
+          "id": "dolly-00304",
+          "rouge_dolly": 0.16666666666666666,
+          "rouge_teacher_clean": 0.45454545454545453
+        },
+        {
+          "id": "dolly-12108",
+          "rouge_dolly": 0.045627376425855515,
+          "rouge_teacher_clean": 0.23493975903614459
+        },
+        {
+          "id": "dolly-09720",
+          "rouge_dolly": 0.11538461538461539,
+          "rouge_teacher_clean": 0.20596205962059622
+        },
+        {
+          "id": "dolly-05185",
+          "rouge_dolly": 0.16279069767441862,
+          "rouge_teacher_clean": 0.16279069767441862
+        },
+        {
+          "id": "dolly-03466",
+          "rouge_dolly": 0.18803418803418803,
+          "rouge_teacher_clean": 0.14521452145214522
+        },
+        {
+          "id": "dolly-01134",
+          "rouge_dolly": 0.375,
+          "rouge_teacher_clean": 0.27906976744186046
+        },
+        {
+          "id": "dolly-00122",
+          "rouge_dolly": 0.17142857142857143,
+          "rouge_teacher_clean": 0.29508196721311475
+        },
+        {
+          "id": "dolly-10627",
+          "rouge_dolly": 0.16597510373443983,
+          "rouge_teacher_clean": 0.3105590062111801
+        },
+        {
+          "id": "dolly-06748",
+          "rouge_dolly": 0.1391304347826087,
+          "rouge_teacher_clean": 0.13307240704500978
+        },
+        {
+          "id": "dolly-11405",
+          "rouge_dolly": 0.22448979591836735,
+          "rouge_teacher_clean": 0.4044943820224719
+        },
+        {
+          "id": "dolly-07788",
+          "rouge_dolly": 0.19402985074626866,
+          "rouge_teacher_clean": 0.24561403508771928
+        },
+        {
+          "id": "dolly-11310",
+          "rouge_dolly": 0.10778443113772455,
+          "rouge_teacher_clean": 0.19325153374233128
+        },
+        {
+          "id": "dolly-02660",
+          "rouge_dolly": 0.16,
+          "rouge_teacher_clean": 0.36
+        },
+        {
+          "id": "dolly-06622",
+          "rouge_dolly": 0.13953488372093023,
+          "rouge_teacher_clean": 0.25089605734767023
+        },
+        {
+          "id": "dolly-14389",
+          "rouge_dolly": 0.14193548387096774,
+          "rouge_teacher_clean": 0.15384615384615385
+        },
+        {
+          "id": "dolly-06540",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.24089635854341737
+        },
+        {
+          "id": "dolly-07953",
+          "rouge_dolly": 0.13636363636363635,
+          "rouge_teacher_clean": 0.33962264150943394
+        },
+        {
+          "id": "dolly-13746",
+          "rouge_dolly": 0.20408163265306123,
+          "rouge_teacher_clean": 0.31007751937984496
+        },
+        {
+          "id": "dolly-04978",
+          "rouge_dolly": 0.8125,
+          "rouge_teacher_clean": 0.27906976744186046
+        },
+        {
+          "id": "dolly-08677",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.3229166666666667
+        },
+        {
+          "id": "dolly-01998",
+          "rouge_dolly": 0.2033898305084746,
+          "rouge_teacher_clean": 0.23076923076923078
+        },
+        {
+          "id": "dolly-02097",
+          "rouge_dolly": 0.75,
+          "rouge_teacher_clean": 0.10582010582010581
+        },
+        {
+          "id": "dolly-06255",
+          "rouge_dolly": 0.12931034482758622,
+          "rouge_teacher_clean": 0.24830699774266365
+        },
+        {
+          "id": "dolly-11071",
+          "rouge_dolly": 0.43636363636363634,
+          "rouge_teacher_clean": 0.16
+        },
+        {
+          "id": "dolly-14854",
+          "rouge_dolly": 0.2727272727272727,
+          "rouge_teacher_clean": 0.1951219512195122
+        },
+        {
+          "id": "dolly-03614",
+          "rouge_dolly": 0.23529411764705882,
+          "rouge_teacher_clean": 0.160676532769556
+        },
+        {
+          "id": "dolly-02296",
+          "rouge_dolly": 0.13793103448275862,
+          "rouge_teacher_clean": 0.12669683257918551
+        },
+        {
+          "id": "dolly-07239",
+          "rouge_dolly": 0.2727272727272727,
+          "rouge_teacher_clean": 0.24285714285714285
+        },
+        {
+          "id": "dolly-11368",
+          "rouge_dolly": 0.35036496350364965,
+          "rouge_teacher_clean": 0.3514376996805112
+        },
+        {
+          "id": "dolly-02732",
+          "rouge_dolly": 0.022727272727272728,
+          "rouge_teacher_clean": 0.26865671641791045
+        },
+        {
+          "id": "dolly-13565",
+          "rouge_dolly": 0.174496644295302,
+          "rouge_teacher_clean": 0.09262166405023547
+        },
+        {
+          "id": "dolly-13004",
+          "rouge_dolly": 0.233502538071066,
+          "rouge_teacher_clean": 0.19753086419753085
+        },
+        {
+          "id": "dolly-03460",
+          "rouge_dolly": 0.23943661971830985,
+          "rouge_teacher_clean": 0.48
+        },
+        {
+          "id": "dolly-06765",
+          "rouge_dolly": 0.3372093023255814,
+          "rouge_teacher_clean": 0.4215686274509804
+        },
+        {
+          "id": "dolly-14666",
+          "rouge_dolly": 0.3582089552238806,
+          "rouge_teacher_clean": 0.3631123919308357
+        },
+        {
+          "id": "dolly-03251",
+          "rouge_dolly": 0.4473684210526316,
+          "rouge_teacher_clean": 0.328125
+        },
+        {
+          "id": "dolly-00624",
+          "rouge_dolly": 0.02254428341384863,
+          "rouge_teacher_clean": 0.02197802197802198
+        },
+        {
+          "id": "dolly-08709",
+          "rouge_dolly": 0.24175824175824176,
+          "rouge_teacher_clean": 0.3181818181818182
+        },
+        {
+          "id": "dolly-13505",
+          "rouge_dolly": 0.014705882352941176,
+          "rouge_teacher_clean": 0.08459214501510574
+        },
+        {
+          "id": "dolly-01089",
+          "rouge_dolly": 0.029239766081871343,
+          "rouge_teacher_clean": 0.01951951951951952
+        },
+        {
+          "id": "dolly-01947",
+          "rouge_dolly": 0.11920529801324503,
+          "rouge_teacher_clean": 0.2823529411764706
+        },
+        {
+          "id": "dolly-02580",
+          "rouge_dolly": 0.1523809523809524,
+          "rouge_teacher_clean": 0.24920127795527156
+        },
+        {
+          "id": "dolly-08884",
+          "rouge_dolly": 0.03296703296703297,
+          "rouge_teacher_clean": 0.0401673640167364
+        },
+        {
+          "id": "dolly-01063",
+          "rouge_dolly": 0.26666666666666666,
+          "rouge_teacher_clean": 0.34177215189873417
+        },
+        {
+          "id": "dolly-10746",
+          "rouge_dolly": 0.28125,
+          "rouge_teacher_clean": 0.26506024096385544
+        },
+        {
+          "id": "dolly-12659",
+          "rouge_dolly": 0.0032520325203252032,
+          "rouge_teacher_clean": 0.008084074373484237
+        },
+        {
+          "id": "dolly-08283",
+          "rouge_dolly": 0.08333333333333333,
+          "rouge_teacher_clean": 0.304635761589404
+        },
+        {
+          "id": "dolly-00303",
+          "rouge_dolly": 0.07470288624787776,
+          "rouge_teacher_clean": 0.18048268625393493
+        },
+        {
+          "id": "dolly-01059",
+          "rouge_dolly": 0.6,
+          "rouge_teacher_clean": 0.1875
+        },
+        {
+          "id": "dolly-09590",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.21818181818181817
+        },
+        {
+          "id": "dolly-00997",
+          "rouge_dolly": 0.28169014084507044,
+          "rouge_teacher_clean": 0.3888888888888889
+        },
+        {
+          "id": "dolly-09633",
+          "rouge_dolly": 0.6428571428571429,
+          "rouge_teacher_clean": 0.6666666666666666
+        },
+        {
+          "id": "dolly-04118",
+          "rouge_dolly": 0.14084507042253522,
+          "rouge_teacher_clean": 0.1917808219178082
+        },
+        {
+          "id": "dolly-00105",
+          "rouge_dolly": 0.3130434782608696,
+          "rouge_teacher_clean": 0.4943820224719101
+        },
+        {
+          "id": "dolly-00420",
+          "rouge_dolly": 0.2033898305084746,
+          "rouge_teacher_clean": 0.3333333333333333
+        },
+        {
+          "id": "dolly-14313",
+          "rouge_dolly": 0.42424242424242425,
+          "rouge_teacher_clean": 0.3103448275862069
+        },
+        {
+          "id": "dolly-11014",
+          "rouge_dolly": 0.15849056603773584,
+          "rouge_teacher_clean": 0.23433242506811988
+        },
+        {
+          "id": "dolly-02678",
+          "rouge_dolly": 0.43902439024390244,
+          "rouge_teacher_clean": 0.5045045045045045
+        },
+        {
+          "id": "dolly-10208",
+          "rouge_dolly": 0.16091954022988506,
+          "rouge_teacher_clean": 0.17458563535911603
+        },
+        {
+          "id": "dolly-08008",
+          "rouge_dolly": 0.12698412698412698,
+          "rouge_teacher_clean": 0.12698412698412698
+        },
+        {
+          "id": "dolly-08789",
+          "rouge_dolly": 0.03773584905660377,
+          "rouge_teacher_clean": 0.2727272727272727
+        },
+        {
+          "id": "dolly-14385",
+          "rouge_dolly": 0.24,
+          "rouge_teacher_clean": 0.17391304347826086
+        },
+        {
+          "id": "dolly-02004",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.23853211009174313
+        },
+        {
+          "id": "dolly-02761",
+          "rouge_dolly": 0.24034334763948498,
+          "rouge_teacher_clean": 0.22391857506361323
+        },
+        {
+          "id": "dolly-02186",
+          "rouge_dolly": 0.056910569105691054,
+          "rouge_teacher_clean": 0.2824427480916031
+        },
+        {
+          "id": "dolly-05297",
+          "rouge_dolly": 0.15873015873015872,
+          "rouge_teacher_clean": 0.23157894736842105
+        },
+        {
+          "id": "dolly-00275",
+          "rouge_dolly": 0.1381957773512476,
+          "rouge_teacher_clean": 0.15404040404040403
+        },
+        {
+          "id": "dolly-14036",
+          "rouge_dolly": 0.12949640287769784,
+          "rouge_teacher_clean": 0.21875
+        },
+        {
+          "id": "dolly-08391",
+          "rouge_dolly": 0.41935483870967744,
+          "rouge_teacher_clean": 0.5357142857142857
+        },
+        {
+          "id": "dolly-10398",
+          "rouge_dolly": 0.1676300578034682,
+          "rouge_teacher_clean": 0.2577962577962578
+        },
+        {
+          "id": "dolly-00888",
+          "rouge_dolly": 0.15339233038348082,
+          "rouge_teacher_clean": 0.14868804664723032
+        },
+        {
+          "id": "dolly-00054",
+          "rouge_dolly": 0.12244897959183673,
+          "rouge_teacher_clean": 0.2
+        },
+        {
+          "id": "dolly-10415",
+          "rouge_dolly": 0.15568862275449102,
+          "rouge_teacher_clean": 0.23622047244094488
+        },
+        {
+          "id": "dolly-08512",
+          "rouge_dolly": 0.35294117647058826,
+          "rouge_teacher_clean": 0.26229508196721313
+        },
+        {
+          "id": "dolly-04865",
+          "rouge_dolly": 0.2222222222222222,
+          "rouge_teacher_clean": 0.21897810218978103
+        },
+        {
+          "id": "dolly-14060",
+          "rouge_dolly": 0.08648648648648649,
+          "rouge_teacher_clean": 0.19230769230769232
+        },
+        {
+          "id": "dolly-01174",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.08163265306122448
+        },
+        {
+          "id": "dolly-04362",
+          "rouge_dolly": 0.2,
+          "rouge_teacher_clean": 0.16613418530351437
+        },
+        {
+          "id": "dolly-11623",
+          "rouge_dolly": 0.20588235294117646,
+          "rouge_teacher_clean": 0.20967741935483872
+        },
+        {
+          "id": "dolly-00996",
+          "rouge_dolly": 0.22448979591836735,
+          "rouge_teacher_clean": 0.2222222222222222
+        },
+        {
+          "id": "dolly-05906",
+          "rouge_dolly": 0.23129251700680273,
+          "rouge_teacher_clean": 0.3382352941176471
+        },
+        {
+          "id": "dolly-07337",
+          "rouge_dolly": 0.14285714285714285,
+          "rouge_teacher_clean": 0.24509803921568626
+        },
+        {
+          "id": "dolly-00844",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.23404255319148937
+        },
+        {
+          "id": "dolly-04143",
+          "rouge_dolly": 0.20118343195266272,
+          "rouge_teacher_clean": 0.2328042328042328
+        },
+        {
+          "id": "dolly-14859",
+          "rouge_dolly": 0.16149068322981366,
+          "rouge_teacher_clean": 0.1497005988023952
+        },
+        {
+          "id": "dolly-13959",
+          "rouge_dolly": 0.21739130434782608,
+          "rouge_teacher_clean": 0.19393939393939394
+        },
+        {
+          "id": "dolly-09819",
+          "rouge_dolly": 0.17054263565891473,
+          "rouge_teacher_clean": 0.30162412993039445
+        },
+        {
+          "id": "dolly-03608",
+          "rouge_dolly": 0.13793103448275862,
+          "rouge_teacher_clean": 0.24812030075187969
+        },
+        {
+          "id": "dolly-01431",
+          "rouge_dolly": 0.17937219730941703,
+          "rouge_teacher_clean": 0.23846153846153847
+        },
+        {
+          "id": "dolly-09058",
+          "rouge_dolly": 0.17857142857142858,
+          "rouge_teacher_clean": 0.2028985507246377
+        },
+        {
+          "id": "dolly-01461",
+          "rouge_dolly": 0.3225806451612903,
+          "rouge_teacher_clean": 0.631578947368421
+        },
+        {
+          "id": "dolly-01470",
+          "rouge_dolly": 0.10526315789473684,
+          "rouge_teacher_clean": 0.21390374331550802
+        },
+        {
+          "id": "dolly-04421",
+          "rouge_dolly": 0.2962962962962963,
+          "rouge_teacher_clean": 0.25316455696202533
+        },
+        {
+          "id": "dolly-01665",
+          "rouge_dolly": 0.625,
+          "rouge_teacher_clean": 0.35714285714285715
+        },
+        {
+          "id": "dolly-10290",
+          "rouge_dolly": 0.3125,
+          "rouge_teacher_clean": 0.3013698630136986
+        },
+        {
+          "id": "dolly-04032",
+          "rouge_dolly": 0.5079365079365079,
+          "rouge_teacher_clean": 0.3888888888888889
+        },
+        {
+          "id": "dolly-02122",
+          "rouge_dolly": 0.0896551724137931,
+          "rouge_teacher_clean": 0.2596491228070175
+        },
+        {
+          "id": "dolly-13749",
+          "rouge_dolly": 0.12698412698412698,
+          "rouge_teacher_clean": 0.3652173913043478
+        },
+        {
+          "id": "dolly-07983",
+          "rouge_dolly": 0.16,
+          "rouge_teacher_clean": 0.1746031746031746
+        },
+        {
+          "id": "dolly-09930",
+          "rouge_dolly": 0.14414414414414414,
+          "rouge_teacher_clean": 0.14224137931034483
+        },
+        {
+          "id": "dolly-05394",
+          "rouge_dolly": 0.17266187050359713,
+          "rouge_teacher_clean": 0.2660098522167488
+        },
+        {
+          "id": "dolly-02286",
+          "rouge_dolly": 0.21875,
+          "rouge_teacher_clean": 0.235
+        },
+        {
+          "id": "dolly-09109",
+          "rouge_dolly": 0.1958041958041958,
+          "rouge_teacher_clean": 0.2765957446808511
+        },
+        {
+          "id": "dolly-01770",
+          "rouge_dolly": 0.16666666666666666,
+          "rouge_teacher_clean": 0.15915119363395225
+        },
+        {
+          "id": "dolly-07027",
+          "rouge_dolly": 0.5789473684210527,
+          "rouge_teacher_clean": 0.3561643835616438
+        },
+        {
+          "id": "dolly-04127",
+          "rouge_dolly": 0.0821917808219178,
+          "rouge_teacher_clean": 0.2912966252220249
+        },
+        {
+          "id": "dolly-08457",
+          "rouge_dolly": 0.16981132075471697,
+          "rouge_teacher_clean": 0.11612903225806452
+        },
+        {
+          "id": "dolly-01092",
+          "rouge_dolly": 0.18181818181818182,
+          "rouge_teacher_clean": 0.2037037037037037
+        },
+        {
+          "id": "dolly-02223",
+          "rouge_dolly": 0.14685314685314685,
+          "rouge_teacher_clean": 0.12110091743119267
+        },
+        {
+          "id": "dolly-04949",
+          "rouge_dolly": 0.18269230769230768,
+          "rouge_teacher_clean": 0.18181818181818182
+        },
+        {
+          "id": "dolly-01517",
+          "rouge_dolly": 0.031007751937984496,
+          "rouge_teacher_clean": 0.030303030303030304
+        },
+        {
+          "id": "dolly-00956",
+          "rouge_dolly": 0.125,
+          "rouge_teacher_clean": 0.20382165605095542
+        },
+        {
+          "id": "dolly-12764",
+          "rouge_dolly": 0.5,
+          "rouge_teacher_clean": 0.30985915492957744
+        },
+        {
+          "id": "dolly-08887",
+          "rouge_dolly": 0.07079646017699115,
+          "rouge_teacher_clean": 0.30042918454935624
+        },
+        {
+          "id": "dolly-01567",
+          "rouge_dolly": 0.24,
+          "rouge_teacher_clean": 0.6857142857142857
+        },
+        {
+          "id": "dolly-08689",
+          "rouge_dolly": 0.14862681744749595,
+          "rouge_teacher_clean": 0.17845117845117844
+        },
+        {
+          "id": "dolly-09726",
+          "rouge_dolly": 0.11320754716981132,
+          "rouge_teacher_clean": 0.24299065420560748
+        },
+        {
+          "id": "dolly-05637",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.16666666666666666
+        },
+        {
+          "id": "dolly-08454",
+          "rouge_dolly": 0.3617021276595745,
+          "rouge_teacher_clean": 0.3942307692307692
+        },
+        {
+          "id": "dolly-11348",
+          "rouge_dolly": 0.09302325581395349,
+          "rouge_teacher_clean": 0.22085889570552147
+        },
+        {
+          "id": "dolly-08574",
+          "rouge_dolly": 0.13278008298755187,
+          "rouge_teacher_clean": 0.20608899297423888
+        },
+        {
+          "id": "dolly-12588",
+          "rouge_dolly": 0.16666666666666666,
+          "rouge_teacher_clean": 0.3225806451612903
+        },
+        {
+          "id": "dolly-08406",
+          "rouge_dolly": 0.04013377926421405,
+          "rouge_teacher_clean": 0.20574162679425836
+        },
+        {
+          "id": "dolly-05364",
+          "rouge_dolly": 0.13043478260869565,
+          "rouge_teacher_clean": 0.40476190476190477
+        },
+        {
+          "id": "dolly-07317",
+          "rouge_dolly": 0.23822714681440443,
+          "rouge_teacher_clean": 0.41523809523809524
+        },
+        {
+          "id": "dolly-04141",
+          "rouge_dolly": 0.15555555555555556,
+          "rouge_teacher_clean": 0.2702702702702703
+        },
+        {
+          "id": "dolly-02127",
+          "rouge_dolly": 0.19047619047619047,
+          "rouge_teacher_clean": 0.27932960893854747
+        },
+        {
+          "id": "dolly-02320",
+          "rouge_dolly": 0.4411764705882353,
+          "rouge_teacher_clean": 0.41975308641975306
+        },
+        {
+          "id": "dolly-07314",
+          "rouge_dolly": 0.17445482866043613,
+          "rouge_teacher_clean": 0.18433179723502305
+        },
+        {
+          "id": "dolly-08212",
+          "rouge_dolly": 0.325,
+          "rouge_teacher_clean": 0.19047619047619047
+        },
+        {
+          "id": "dolly-03209",
+          "rouge_dolly": 0.41935483870967744,
+          "rouge_teacher_clean": 0.3111111111111111
+        },
+        {
+          "id": "dolly-02887",
+          "rouge_dolly": 0.11385199240986717,
+          "rouge_teacher_clean": 0.18900343642611683
+        },
+        {
+          "id": "dolly-07399",
+          "rouge_dolly": 0.043478260869565216,
+          "rouge_teacher_clean": 0.4578313253012048
+        },
+        {
+          "id": "dolly-06227",
+          "rouge_dolly": 0.02962962962962963,
+          "rouge_teacher_clean": 0.23113964686998395
+        },
+        {
+          "id": "dolly-03157",
+          "rouge_dolly": 0.1111111111111111,
+          "rouge_teacher_clean": 0.20606060606060606
+        },
+        {
+          "id": "dolly-02859",
+          "rouge_dolly": 0.21428571428571427,
+          "rouge_teacher_clean": 0.17712177121771217
+        },
+        {
+          "id": "dolly-07295",
+          "rouge_dolly": 0.07339449541284404,
+          "rouge_teacher_clean": 0.14049586776859505
+        },
+        {
+          "id": "dolly-05033",
+          "rouge_dolly": 0.15789473684210525,
+          "rouge_teacher_clean": 0.24929178470254956
+        },
+        {
+          "id": "dolly-12477",
+          "rouge_dolly": 0.17391304347826086,
+          "rouge_teacher_clean": 0.1927710843373494
+        },
+        {
+          "id": "dolly-14209",
+          "rouge_dolly": 0.56,
+          "rouge_teacher_clean": 0.4
+        },
+        {
+          "id": "dolly-00143",
+          "rouge_dolly": 0.275,
+          "rouge_teacher_clean": 0.12015503875968993
+        },
+        {
+          "id": "dolly-12894",
+          "rouge_dolly": 0.11611030478955008,
+          "rouge_teacher_clean": 0.21645021645021645
+        },
+        {
+          "id": "dolly-01452",
+          "rouge_dolly": 0.35714285714285715,
+          "rouge_teacher_clean": 0.1981981981981982
+        },
+        {
+          "id": "dolly-02516",
+          "rouge_dolly": 0.3829787234042553,
+          "rouge_teacher_clean": 0.36363636363636365
+        },
+        {
+          "id": "dolly-02844",
+          "rouge_dolly": 0.48,
+          "rouge_teacher_clean": 0.3225806451612903
+        },
+        {
+          "id": "dolly-00342",
+          "rouge_dolly": 0.18461538461538463,
+          "rouge_teacher_clean": 0.43137254901960786
+        },
+        {
+          "id": "dolly-00676",
+          "rouge_dolly": 0.22085889570552147,
+          "rouge_teacher_clean": 0.1575492341356674
+        },
+        {
+          "id": "dolly-02434",
+          "rouge_dolly": 0.1,
+          "rouge_teacher_clean": 0.2318840579710145
+        },
+        {
+          "id": "dolly-11078",
+          "rouge_dolly": 0.16666666666666666,
+          "rouge_teacher_clean": 0.2254335260115607
+        },
+        {
+          "id": "dolly-08729",
+          "rouge_dolly": 0.35555555555555557,
+          "rouge_teacher_clean": 0.28426395939086296
+        },
+        {
+          "id": "dolly-09778",
+          "rouge_dolly": 0.14925373134328357,
+          "rouge_teacher_clean": 0.2072072072072072
+        },
+        {
+          "id": "dolly-04025",
+          "rouge_dolly": 0.56,
+          "rouge_teacher_clean": 0.4
+        },
+        {
+          "id": "dolly-04687",
+          "rouge_dolly": 0.2374429223744292,
+          "rouge_teacher_clean": 0.23102310231023102
+        },
+        {
+          "id": "dolly-14483",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.15517241379310345
+        },
+        {
+          "id": "dolly-13126",
+          "rouge_dolly": 0.17307692307692307,
+          "rouge_teacher_clean": 0.2604166666666667
+        },
+        {
+          "id": "dolly-04856",
+          "rouge_dolly": 0.1497326203208556,
+          "rouge_teacher_clean": 0.15289256198347106
+        },
+        {
+          "id": "dolly-00370",
+          "rouge_dolly": 0.14,
+          "rouge_teacher_clean": 0.29508196721311475
+        },
+        {
+          "id": "dolly-01888",
+          "rouge_dolly": 0.3010752688172043,
+          "rouge_teacher_clean": 0.31952662721893493
+        },
+        {
+          "id": "dolly-09457",
+          "rouge_dolly": 0.21705426356589147,
+          "rouge_teacher_clean": 0.2376237623762376
+        },
+        {
+          "id": "dolly-09465",
+          "rouge_dolly": 0.13970588235294118,
+          "rouge_teacher_clean": 0.3096446700507614
+        },
+        {
+          "id": "dolly-13779",
+          "rouge_dolly": 0.04287515762925599,
+          "rouge_teacher_clean": 0.093185789167152
+        },
+        {
+          "id": "dolly-09935",
+          "rouge_dolly": 0.49122807017543857,
+          "rouge_teacher_clean": 0.5608465608465608
+        },
+        {
+          "id": "dolly-04624",
+          "rouge_dolly": 0.16260162601626016,
+          "rouge_teacher_clean": 0.15221238938053097
+        },
+        {
+          "id": "dolly-12843",
+          "rouge_dolly": 0.1891891891891892,
+          "rouge_teacher_clean": 0.20618556701030927
+        },
+        {
+          "id": "dolly-10839",
+          "rouge_dolly": 0.30303030303030304,
+          "rouge_teacher_clean": 0.5454545454545454
+        },
+        {
+          "id": "dolly-03638",
+          "rouge_dolly": 0.14473684210526316,
+          "rouge_teacher_clean": 0.24324324324324326
+        },
+        {
+          "id": "dolly-08658",
+          "rouge_dolly": 0.0954356846473029,
+          "rouge_teacher_clean": 0.16138328530259366
+        },
+        {
+          "id": "dolly-10697",
+          "rouge_dolly": 0.035111411208642807,
+          "rouge_teacher_clean": 0.08013937282229965
+        },
+        {
+          "id": "dolly-13422",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.21052631578947367
+        },
+        {
+          "id": "dolly-13327",
+          "rouge_dolly": 0.1407035175879397,
+          "rouge_teacher_clean": 0.25770308123249297
+        },
+        {
+          "id": "dolly-05752",
+          "rouge_dolly": 0.2647058823529412,
+          "rouge_teacher_clean": 0.2695035460992908
+        },
+        {
+          "id": "dolly-05555",
+          "rouge_dolly": 0.12162162162162163,
+          "rouge_teacher_clean": 0.15339233038348082
+        },
+        {
+          "id": "dolly-01162",
+          "rouge_dolly": 0.20670391061452514,
+          "rouge_teacher_clean": 0.21440536013400335
+        },
+        {
+          "id": "dolly-05827",
+          "rouge_dolly": 0.31746031746031744,
+          "rouge_teacher_clean": 0.22556390977443608
+        },
+        {
+          "id": "dolly-06025",
+          "rouge_dolly": 0.20967741935483872,
+          "rouge_teacher_clean": 0.21495327102803738
+        },
+        {
+          "id": "dolly-06920",
+          "rouge_dolly": 0.041666666666666664,
+          "rouge_teacher_clean": 0.08719346049046321
+        },
+        {
+          "id": "dolly-02421",
+          "rouge_dolly": 0.39669421487603307,
+          "rouge_teacher_clean": 0.25396825396825395
+        },
+        {
+          "id": "dolly-06595",
+          "rouge_dolly": 0.5,
+          "rouge_teacher_clean": 0.35555555555555557
+        },
+        {
+          "id": "dolly-06438",
+          "rouge_dolly": 0.15384615384615385,
+          "rouge_teacher_clean": 0.3582089552238806
+        },
+        {
+          "id": "dolly-06507",
+          "rouge_dolly": 0.23255813953488372,
+          "rouge_teacher_clean": 0.3563218390804598
+        },
+        {
+          "id": "dolly-14464",
+          "rouge_dolly": 0.06451612903225806,
+          "rouge_teacher_clean": 0.3783783783783784
+        },
+        {
+          "id": "dolly-09311",
+          "rouge_dolly": 0.1188118811881188,
+          "rouge_teacher_clean": 0.10596026490066225
+        },
+        {
+          "id": "dolly-08936",
+          "rouge_dolly": 0.15384615384615385,
+          "rouge_teacher_clean": 0.22123893805309736
+        },
+        {
+          "id": "dolly-02811",
+          "rouge_dolly": 0.2413793103448276,
+          "rouge_teacher_clean": 0.1978021978021978
+        },
+        {
+          "id": "dolly-13981",
+          "rouge_dolly": 0.025,
+          "rouge_teacher_clean": 0.11645226811103589
+        },
+        {
+          "id": "dolly-09162",
+          "rouge_dolly": 0.22556390977443608,
+          "rouge_teacher_clean": 0.1781609195402299
+        },
+        {
+          "id": "dolly-08625",
+          "rouge_dolly": 0.07142857142857142,
+          "rouge_teacher_clean": 0.20594965675057209
+        },
+        {
+          "id": "dolly-02065",
+          "rouge_dolly": 0.16,
+          "rouge_teacher_clean": 0.21428571428571427
+        },
+        {
+          "id": "dolly-06648",
+          "rouge_dolly": 0.1794871794871795,
+          "rouge_teacher_clean": 0.17699115044247787
+        },
+        {
+          "id": "dolly-08541",
+          "rouge_dolly": 0.3448275862068966,
+          "rouge_teacher_clean": 0.29457364341085274
+        },
+        {
+          "id": "dolly-05610",
+          "rouge_dolly": 0.12307692307692308,
+          "rouge_teacher_clean": 0.38961038961038963
+        },
+        {
+          "id": "dolly-10067",
+          "rouge_dolly": 0.09230769230769231,
+          "rouge_teacher_clean": 0.21761658031088082
+        },
+        {
+          "id": "dolly-09344",
+          "rouge_dolly": 0.1782178217821782,
+          "rouge_teacher_clean": 0.2754491017964072
+        },
+        {
+          "id": "dolly-10747",
+          "rouge_dolly": 0.16030534351145037,
+          "rouge_teacher_clean": 0.179456906729634
+        },
+        {
+          "id": "dolly-05605",
+          "rouge_dolly": 0.11940298507462686,
+          "rouge_teacher_clean": 0.16279069767441862
+        },
+        {
+          "id": "dolly-14358",
+          "rouge_dolly": 0.375,
+          "rouge_teacher_clean": 0.25
+        },
+        {
+          "id": "dolly-06285",
+          "rouge_dolly": 0.29333333333333333,
+          "rouge_teacher_clean": 0.4473684210526316
+        },
+        {
+          "id": "dolly-14084",
+          "rouge_dolly": 0.14035087719298245,
+          "rouge_teacher_clean": 0.2857142857142857
+        },
+        {
+          "id": "dolly-01386",
+          "rouge_dolly": 0.3076923076923077,
+          "rouge_teacher_clean": 0.4
+        },
+        {
+          "id": "dolly-09869",
+          "rouge_dolly": 0.9655172413793104,
+          "rouge_teacher_clean": 0.75
+        },
+        {
+          "id": "dolly-08121",
+          "rouge_dolly": 0.014084507042253521,
+          "rouge_teacher_clean": 0.2064516129032258
+        },
+        {
+          "id": "dolly-02128",
+          "rouge_dolly": 0.1958041958041958,
+          "rouge_teacher_clean": 0.2524271844660194
+        },
+        {
+          "id": "dolly-03250",
+          "rouge_dolly": 0.1728395061728395,
+          "rouge_teacher_clean": 0.22510822510822512
+        },
+        {
+          "id": "dolly-01342",
+          "rouge_dolly": 0.18426103646833014,
+          "rouge_teacher_clean": 0.21587301587301588
+        },
+        {
+          "id": "dolly-14521",
+          "rouge_dolly": 0.16831683168316833,
+          "rouge_teacher_clean": 0.23076923076923078
+        },
+        {
+          "id": "dolly-09918",
+          "rouge_dolly": 0.1782178217821782,
+          "rouge_teacher_clean": 0.13114754098360656
+        },
+        {
+          "id": "dolly-08340",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.14201183431952663
+        },
+        {
+          "id": "dolly-03530",
+          "rouge_dolly": 0.5555555555555556,
+          "rouge_teacher_clean": 0.4444444444444444
+        },
+        {
+          "id": "dolly-14476",
+          "rouge_dolly": 0.23668639053254437,
+          "rouge_teacher_clean": 0.34934497816593885
+        },
+        {
+          "id": "dolly-04438",
+          "rouge_dolly": 0.42857142857142855,
+          "rouge_teacher_clean": 0.5205479452054794
+        },
+        {
+          "id": "dolly-12536",
+          "rouge_dolly": 0.14655172413793102,
+          "rouge_teacher_clean": 0.21811460258780038
+        },
+        {
+          "id": "dolly-04589",
+          "rouge_dolly": 0.08163265306122448,
+          "rouge_teacher_clean": 0.17857142857142858
+        },
+        {
+          "id": "dolly-13001",
+          "rouge_dolly": 0.29411764705882354,
+          "rouge_teacher_clean": 0.43373493975903615
+        },
+        {
+          "id": "dolly-03080",
+          "rouge_dolly": 0.16666666666666666,
+          "rouge_teacher_clean": 0.18867924528301888
+        },
+        {
+          "id": "dolly-14329",
+          "rouge_dolly": 0.345679012345679,
+          "rouge_teacher_clean": 0.35
+        },
+        {
+          "id": "dolly-14838",
+          "rouge_dolly": 0.028169014084507043,
+          "rouge_teacher_clean": 0.19230769230769232
+        },
+        {
+          "id": "dolly-01028",
+          "rouge_dolly": 0.4460431654676259,
+          "rouge_teacher_clean": 0.45161290322580644
+        },
+        {
+          "id": "dolly-14916",
+          "rouge_dolly": 0.32857142857142857,
+          "rouge_teacher_clean": 0.5104166666666666
+        },
+        {
+          "id": "dolly-09228",
+          "rouge_dolly": 0.2602739726027397,
+          "rouge_teacher_clean": 0.17301038062283736
+        },
+        {
+          "id": "dolly-04333",
+          "rouge_dolly": 0.042328042328042326,
+          "rouge_teacher_clean": 0.03966942148760331
+        },
+        {
+          "id": "dolly-06945",
+          "rouge_dolly": 0.25,
+          "rouge_teacher_clean": 0.12903225806451613
+        },
+        {
+          "id": "dolly-05443",
+          "rouge_dolly": 0.5,
+          "rouge_teacher_clean": 0.4186046511627907
+        },
+        {
+          "id": "dolly-14032",
+          "rouge_dolly": 0.11382113821138211,
+          "rouge_teacher_clean": 0.18892508143322476
+        },
+        {
+          "id": "dolly-13783",
+          "rouge_dolly": 0.13970588235294118,
+          "rouge_teacher_clean": 0.19413092550790068
+        },
+        {
+          "id": "dolly-10958",
+          "rouge_dolly": 0.2125,
+          "rouge_teacher_clean": 0.3027027027027027
+        },
+        {
+          "id": "dolly-05489",
+          "rouge_dolly": 0.1830065359477124,
+          "rouge_teacher_clean": 0.23655913978494625
+        },
+        {
+          "id": "dolly-03773",
+          "rouge_dolly": 0.23376623376623376,
+          "rouge_teacher_clean": 0.26900584795321636
+        },
+        {
+          "id": "dolly-06158",
+          "rouge_dolly": 0.17142857142857143,
+          "rouge_teacher_clean": 0.3851851851851852
+        },
+        {
+          "id": "dolly-06269",
+          "rouge_dolly": 0.1864406779661017,
+          "rouge_teacher_clean": 0.19029126213592232
+        },
+        {
+          "id": "dolly-04686",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.12804878048780488
+        },
+        {
+          "id": "dolly-04273",
+          "rouge_dolly": 0.2222222222222222,
+          "rouge_teacher_clean": 0.33587786259541985
+        },
+        {
+          "id": "dolly-14700",
+          "rouge_dolly": 0.183206106870229,
+          "rouge_teacher_clean": 0.16184971098265896
+        },
+        {
+          "id": "dolly-12371",
+          "rouge_dolly": 0.1377049180327869,
+          "rouge_teacher_clean": 0.16976127320954906
+        },
+        {
+          "id": "dolly-02694",
+          "rouge_dolly": 0.3516483516483517,
+          "rouge_teacher_clean": 0.3458646616541353
+        },
+        {
+          "id": "dolly-08230",
+          "rouge_dolly": 0.38095238095238093,
+          "rouge_teacher_clean": 0.21428571428571427
+        },
+        {
+          "id": "dolly-12027",
+          "rouge_dolly": 0.7083333333333334,
+          "rouge_teacher_clean": 0.4406779661016949
+        },
+        {
+          "id": "dolly-12861",
+          "rouge_dolly": 0.20869565217391303,
+          "rouge_teacher_clean": 0.17813765182186234
+        },
+        {
+          "id": "dolly-04521",
+          "rouge_dolly": 0.20915032679738563,
+          "rouge_teacher_clean": 0.3203125
+        },
+        {
+          "id": "dolly-07117",
+          "rouge_dolly": 0.12658227848101267,
+          "rouge_teacher_clean": 0.25748502994011974
+        },
+        {
+          "id": "dolly-01469",
+          "rouge_dolly": 0.18181818181818182,
+          "rouge_teacher_clean": 0.10884353741496598
+        },
+        {
+          "id": "dolly-01239",
+          "rouge_dolly": 0.18633540372670807,
+          "rouge_teacher_clean": 0.13404825737265416
+        },
+        {
+          "id": "dolly-03696",
+          "rouge_dolly": 0.08163265306122448,
+          "rouge_teacher_clean": 0.263653483992467
+        },
+        {
+          "id": "dolly-07132",
+          "rouge_dolly": 0.09433962264150944,
+          "rouge_teacher_clean": 0.02040816326530612
+        },
+        {
+          "id": "dolly-07355",
+          "rouge_dolly": 0.14814814814814814,
+          "rouge_teacher_clean": 0.20125786163522014
+        },
+        {
+          "id": "dolly-14739",
+          "rouge_dolly": 0.21705426356589147,
+          "rouge_teacher_clean": 0.19377162629757785
+        },
+        {
+          "id": "dolly-03914",
+          "rouge_dolly": 0.24242424242424243,
+          "rouge_teacher_clean": 0.3096774193548387
+        },
+        {
+          "id": "dolly-12951",
+          "rouge_dolly": 0.1404494382022472,
+          "rouge_teacher_clean": 0.24862888482632542
+        },
+        {
+          "id": "dolly-06771",
+          "rouge_dolly": 0.14545454545454545,
+          "rouge_teacher_clean": 0.3142857142857143
+        },
+        {
+          "id": "dolly-10178",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.12903225806451613
+        },
+        {
+          "id": "dolly-10898",
+          "rouge_dolly": 0.2692307692307692,
+          "rouge_teacher_clean": 0.23443223443223443
+        },
+        {
+          "id": "dolly-12364",
+          "rouge_dolly": 0.518918918918919,
+          "rouge_teacher_clean": 0.42780748663101603
+        },
+        {
+          "id": "dolly-11987",
+          "rouge_dolly": 0.10810810810810811,
+          "rouge_teacher_clean": 0.19618528610354224
+        },
+        {
+          "id": "dolly-03726",
+          "rouge_dolly": 0.12017167381974249,
+          "rouge_teacher_clean": 0.13559322033898305
+        },
+        {
+          "id": "dolly-05761",
+          "rouge_dolly": 0.07954545454545454,
+          "rouge_teacher_clean": 0.23636363636363636
+        },
+        {
+          "id": "dolly-01939",
+          "rouge_dolly": 0.26666666666666666,
+          "rouge_teacher_clean": 0.2597402597402597
+        },
+        {
+          "id": "dolly-05628",
+          "rouge_dolly": 0.20512820512820512,
+          "rouge_teacher_clean": 0.1556420233463035
+        },
+        {
+          "id": "dolly-11466",
+          "rouge_dolly": 0.5714285714285714,
+          "rouge_teacher_clean": 0.5789473684210527
+        },
+        {
+          "id": "dolly-04773",
+          "rouge_dolly": 0.07272727272727272,
+          "rouge_teacher_clean": 0.25
+        },
+        {
+          "id": "dolly-12245",
+          "rouge_dolly": 0.41025641025641024,
+          "rouge_teacher_clean": 0.28846153846153844
+        },
+        {
+          "id": "dolly-14861",
+          "rouge_dolly": 0.21524663677130046,
+          "rouge_teacher_clean": 0.24305555555555555
+        },
+        {
+          "id": "dolly-00900",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.016887816646562123
+        },
+        {
+          "id": "dolly-01979",
+          "rouge_dolly": 0.2808988764044944,
+          "rouge_teacher_clean": 0.215311004784689
+        },
+        {
+          "id": "dolly-01206",
+          "rouge_dolly": 0.011461318051575931,
+          "rouge_teacher_clean": 0.026540284360189573
+        },
+        {
+          "id": "dolly-09334",
+          "rouge_dolly": 0.208955223880597,
+          "rouge_teacher_clean": 0.168
+        },
+        {
+          "id": "dolly-10207",
+          "rouge_dolly": 0.3793103448275862,
+          "rouge_teacher_clean": 0.31666666666666665
+        },
+        {
+          "id": "dolly-14970",
+          "rouge_dolly": 0.21052631578947367,
+          "rouge_teacher_clean": 0.2958579881656805
+        },
+        {
+          "id": "dolly-13410",
+          "rouge_dolly": 0.23529411764705882,
+          "rouge_teacher_clean": 0.3333333333333333
+        },
+        {
+          "id": "dolly-07266",
+          "rouge_dolly": 0.16037735849056603,
+          "rouge_teacher_clean": 0.125
+        },
+        {
+          "id": "dolly-10408",
+          "rouge_dolly": 0.2541436464088398,
+          "rouge_teacher_clean": 0.25806451612903225
+        },
+        {
+          "id": "dolly-13339",
+          "rouge_dolly": 0.4,
+          "rouge_teacher_clean": 0.11594202898550725
+        },
+        {
+          "id": "dolly-13292",
+          "rouge_dolly": 0.8,
+          "rouge_teacher_clean": 0.6666666666666666
+        },
+        {
+          "id": "dolly-13068",
+          "rouge_dolly": 0.5853658536585366,
+          "rouge_teacher_clean": 0.5
+        },
+        {
+          "id": "dolly-08911",
+          "rouge_dolly": 0.09876543209876543,
+          "rouge_teacher_clean": 0.17297297297297298
+        },
+        {
+          "id": "dolly-13555",
+          "rouge_dolly": 0.19444444444444445,
+          "rouge_teacher_clean": 0.2328767123287671
+        },
+        {
+          "id": "dolly-02725",
+          "rouge_dolly": 0.15,
+          "rouge_teacher_clean": 0.18018018018018017
+        },
+        {
+          "id": "dolly-01054",
+          "rouge_dolly": 0.18556701030927836,
+          "rouge_teacher_clean": 0.19760479041916168
+        },
+        {
+          "id": "dolly-02628",
+          "rouge_dolly": 0.06060606060606061,
+          "rouge_teacher_clean": 0.2222222222222222
+        },
+        {
+          "id": "dolly-05231",
+          "rouge_dolly": 0.13688212927756654,
+          "rouge_teacher_clean": 0.18579234972677597
+        },
+        {
+          "id": "dolly-11030",
+          "rouge_dolly": 0.5555555555555556,
+          "rouge_teacher_clean": 0.47619047619047616
+        },
+        {
+          "id": "dolly-05398",
+          "rouge_dolly": 0.17670682730923695,
+          "rouge_teacher_clean": 0.15704387990762125
+        },
+        {
+          "id": "dolly-07605",
+          "rouge_dolly": 0.15492957746478872,
+          "rouge_teacher_clean": 0.22996515679442509
+        },
+        {
+          "id": "dolly-05324",
+          "rouge_dolly": 0.2222222222222222,
+          "rouge_teacher_clean": 0.19393939393939394
+        },
+        {
+          "id": "dolly-12579",
+          "rouge_dolly": 0.14634146341463414,
+          "rouge_teacher_clean": 0.1834862385321101
+        },
+        {
+          "id": "dolly-01118",
+          "rouge_dolly": 0.1580246913580247,
+          "rouge_teacher_clean": 0.209375
+        },
+        {
+          "id": "dolly-07971",
+          "rouge_dolly": 0.36666666666666664,
+          "rouge_teacher_clean": 0.463768115942029
+        },
+        {
+          "id": "dolly-11413",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.13333333333333333
+        },
+        {
+          "id": "dolly-03239",
+          "rouge_dolly": 0.16058394160583941,
+          "rouge_teacher_clean": 0.2463768115942029
+        },
+        {
+          "id": "dolly-13445",
+          "rouge_dolly": 0.10826771653543307,
+          "rouge_teacher_clean": 0.22170900692840648
+        },
+        {
+          "id": "dolly-12418",
+          "rouge_dolly": 0.16346153846153846,
+          "rouge_teacher_clean": 0.23376623376623376
+        },
+        {
+          "id": "dolly-07936",
+          "rouge_dolly": 0.11764705882352941,
+          "rouge_teacher_clean": 0.18181818181818182
+        },
+        {
+          "id": "dolly-00170",
+          "rouge_dolly": 0.1518987341772152,
+          "rouge_teacher_clean": 0.10922787193973635
+        },
+        {
+          "id": "dolly-09108",
+          "rouge_dolly": 0.8135593220338984,
+          "rouge_teacher_clean": 0.5714285714285714
+        },
+        {
+          "id": "dolly-06019",
+          "rouge_dolly": 0.5454545454545454,
+          "rouge_teacher_clean": 0.5
+        },
+        {
+          "id": "dolly-02032",
+          "rouge_dolly": 0.36363636363636365,
+          "rouge_teacher_clean": 0.34285714285714286
+        },
+        {
+          "id": "dolly-01183",
+          "rouge_dolly": 0.20253164556962025,
+          "rouge_teacher_clean": 0.24719101123595505
+        },
+        {
+          "id": "dolly-08934",
+          "rouge_dolly": 0.2028985507246377,
+          "rouge_teacher_clean": 0.25622775800711745
+        },
+        {
+          "id": "dolly-09988",
+          "rouge_dolly": 0.20173913043478262,
+          "rouge_teacher_clean": 0.21963824289405684
+        },
+        {
+          "id": "dolly-02139",
+          "rouge_dolly": 0.22134387351778656,
+          "rouge_teacher_clean": 0.18688524590163935
+        },
+        {
+          "id": "dolly-08401",
+          "rouge_dolly": 0.13664596273291926,
+          "rouge_teacher_clean": 0.22857142857142856
+        },
+        {
+          "id": "dolly-14265",
+          "rouge_dolly": 0.10526315789473684,
+          "rouge_teacher_clean": 0.2081447963800905
+        },
+        {
+          "id": "dolly-09609",
+          "rouge_dolly": 0.23529411764705882,
+          "rouge_teacher_clean": 0.09954751131221719
+        },
+        {
+          "id": "dolly-10197",
+          "rouge_dolly": 0.19607843137254902,
+          "rouge_teacher_clean": 0.29508196721311475
+        },
+        {
+          "id": "dolly-14697",
+          "rouge_dolly": 0.20833333333333334,
+          "rouge_teacher_clean": 0.17058823529411765
+        },
+        {
+          "id": "dolly-07122",
+          "rouge_dolly": 0.09448818897637795,
+          "rouge_teacher_clean": 0.17483044461190655
+        },
+        {
+          "id": "dolly-06600",
+          "rouge_dolly": 0.6792452830188679,
+          "rouge_teacher_clean": 0.3170731707317073
+        },
+        {
+          "id": "dolly-13610",
+          "rouge_dolly": 0.15267175572519084,
+          "rouge_teacher_clean": 0.26875
+        },
+        {
+          "id": "dolly-11445",
+          "rouge_dolly": 0.013888888888888888,
+          "rouge_teacher_clean": 0.19886363636363635
+        },
+        {
+          "id": "dolly-07427",
+          "rouge_dolly": 0.22916666666666666,
+          "rouge_teacher_clean": 0.27538726333907054
+        },
+        {
+          "id": "dolly-08999",
+          "rouge_dolly": 0.6857142857142857,
+          "rouge_teacher_clean": 0.5454545454545454
+        },
+        {
+          "id": "dolly-08202",
+          "rouge_dolly": 0.27807486631016043,
+          "rouge_teacher_clean": 0.35233160621761656
+        },
+        {
+          "id": "dolly-01593",
+          "rouge_dolly": 0.4,
+          "rouge_teacher_clean": 0.42857142857142855
+        },
+        {
+          "id": "dolly-00990",
+          "rouge_dolly": 0.4489795918367347,
+          "rouge_teacher_clean": 0.6779661016949152
+        },
+        {
+          "id": "dolly-14972",
+          "rouge_dolly": 0.1411764705882353,
+          "rouge_teacher_clean": 0.2151394422310757
+        },
+        {
+          "id": "dolly-05528",
+          "rouge_dolly": 0.1518987341772152,
+          "rouge_teacher_clean": 0.591304347826087
+        },
+        {
+          "id": "dolly-14539",
+          "rouge_dolly": 0.08163265306122448,
+          "rouge_teacher_clean": 0.49586776859504134
+        },
+        {
+          "id": "dolly-08595",
+          "rouge_dolly": 0.16091954022988506,
+          "rouge_teacher_clean": 0.17391304347826086
+        },
+        {
+          "id": "dolly-10519",
+          "rouge_dolly": 0.03389830508474576,
+          "rouge_teacher_clean": 0.21888412017167383
+        },
+        {
+          "id": "dolly-09563",
+          "rouge_dolly": 0.13793103448275862,
+          "rouge_teacher_clean": 0.18045112781954886
+        },
+        {
+          "id": "dolly-06895",
+          "rouge_dolly": 0.21176470588235294,
+          "rouge_teacher_clean": 0.21890547263681592
+        },
+        {
+          "id": "dolly-12916",
+          "rouge_dolly": 0.13450292397660818,
+          "rouge_teacher_clean": 0.18811881188118812
+        },
+        {
+          "id": "dolly-02451",
+          "rouge_dolly": 0.07547169811320754,
+          "rouge_teacher_clean": 0.10144927536231885
+        },
+        {
+          "id": "dolly-00636",
+          "rouge_dolly": 0.42105263157894735,
+          "rouge_teacher_clean": 0.26666666666666666
+        },
+        {
+          "id": "dolly-06006",
+          "rouge_dolly": 0.02600780234070221,
+          "rouge_teacher_clean": 0.030203545633617858
+        },
+        {
+          "id": "dolly-08319",
+          "rouge_dolly": 0.35,
+          "rouge_teacher_clean": 0.34782608695652173
+        },
+        {
+          "id": "dolly-13544",
+          "rouge_dolly": 0.12716763005780346,
+          "rouge_teacher_clean": 0.20212765957446807
+        },
+        {
+          "id": "dolly-06238",
+          "rouge_dolly": 0.08641975308641975,
+          "rouge_teacher_clean": 0.245014245014245
+        },
+        {
+          "id": "dolly-04190",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.3010752688172043
+        },
+        {
+          "id": "dolly-06824",
+          "rouge_dolly": 0.2953020134228188,
+          "rouge_teacher_clean": 0.17256637168141592
+        },
+        {
+          "id": "dolly-14842",
+          "rouge_dolly": 0.2962962962962963,
+          "rouge_teacher_clean": 0.4927536231884058
+        },
+        {
+          "id": "dolly-13162",
+          "rouge_dolly": 0.23529411764705882,
+          "rouge_teacher_clean": 0.6666666666666666
+        },
+        {
+          "id": "dolly-00803",
+          "rouge_dolly": 0.1794871794871795,
+          "rouge_teacher_clean": 0.19895287958115182
+        },
+        {
+          "id": "dolly-01653",
+          "rouge_dolly": 0.03592814371257485,
+          "rouge_teacher_clean": 0.2070393374741201
+        },
+        {
+          "id": "dolly-05312",
+          "rouge_dolly": 0.15172413793103448,
+          "rouge_teacher_clean": 0.2924281984334204
+        },
+        {
+          "id": "dolly-10992",
+          "rouge_dolly": 0.2271062271062271,
+          "rouge_teacher_clean": 0.22174840085287847
+        },
+        {
+          "id": "dolly-05352",
+          "rouge_dolly": 0.0660377358490566,
+          "rouge_teacher_clean": 0.16851441241685144
+        },
+        {
+          "id": "dolly-03231",
+          "rouge_dolly": 0.14583333333333334,
+          "rouge_teacher_clean": 0.18452380952380953
+        },
+        {
+          "id": "dolly-06932",
+          "rouge_dolly": 0.4752475247524752,
+          "rouge_teacher_clean": 0.4166666666666667
+        },
+        {
+          "id": "dolly-08607",
+          "rouge_dolly": 0.14788732394366197,
+          "rouge_teacher_clean": 0.14797136038186157
+        },
+        {
+          "id": "dolly-09288",
+          "rouge_dolly": 0.18181818181818182,
+          "rouge_teacher_clean": 0.36666666666666664
+        },
+        {
+          "id": "dolly-07944",
+          "rouge_dolly": 0.10638297872340426,
+          "rouge_teacher_clean": 0.18453865336658354
+        },
+        {
+          "id": "dolly-13102",
+          "rouge_dolly": 0.08333333333333333,
+          "rouge_teacher_clean": 0.288135593220339
+        },
+        {
+          "id": "dolly-05388",
+          "rouge_dolly": 0.26,
+          "rouge_teacher_clean": 0.2982456140350877
+        },
+        {
+          "id": "dolly-14235",
+          "rouge_dolly": 0.24691358024691357,
+          "rouge_teacher_clean": 0.2541436464088398
+        },
+        {
+          "id": "dolly-07763",
+          "rouge_dolly": 0.07017543859649122,
+          "rouge_teacher_clean": 0.17391304347826086
+        },
+        {
+          "id": "dolly-10500",
+          "rouge_dolly": 0.04,
+          "rouge_teacher_clean": 0.27450980392156865
+        },
+        {
+          "id": "dolly-08355",
+          "rouge_dolly": 0.17142857142857143,
+          "rouge_teacher_clean": 0.0547945205479452
+        },
+        {
+          "id": "dolly-00609",
+          "rouge_dolly": 0.3055555555555556,
+          "rouge_teacher_clean": 0.34375
+        },
+        {
+          "id": "dolly-06786",
+          "rouge_dolly": 0.8181818181818182,
+          "rouge_teacher_clean": 0.3047619047619048
+        },
+        {
+          "id": "dolly-04857",
+          "rouge_dolly": 0.14754098360655737,
+          "rouge_teacher_clean": 0.2661290322580645
+        },
+        {
+          "id": "dolly-07633",
+          "rouge_dolly": 0.1518987341772152,
+          "rouge_teacher_clean": 0.3
+        },
+        {
+          "id": "dolly-00179",
+          "rouge_dolly": 0.13043478260869565,
+          "rouge_teacher_clean": 0.2558139534883721
+        },
+        {
+          "id": "dolly-11386",
+          "rouge_dolly": 0.18579234972677597,
+          "rouge_teacher_clean": 0.1580246913580247
+        },
+        {
+          "id": "dolly-02069",
+          "rouge_dolly": 0.39779005524861877,
+          "rouge_teacher_clean": 0.2379862700228833
+        },
+        {
+          "id": "dolly-09439",
+          "rouge_dolly": 0.11552346570397112,
+          "rouge_teacher_clean": 0.1985185185185185
+        },
+        {
+          "id": "dolly-12065",
+          "rouge_dolly": 0.19400352733686066,
+          "rouge_teacher_clean": 0.15313935681470137
+        },
+        {
+          "id": "dolly-00148",
+          "rouge_dolly": 0.16170212765957448,
+          "rouge_teacher_clean": 0.23157894736842105
+        },
+        {
+          "id": "dolly-08451",
+          "rouge_dolly": 0.33962264150943394,
+          "rouge_teacher_clean": 0.15609756097560976
+        },
+        {
+          "id": "dolly-02687",
+          "rouge_dolly": 0.12307692307692308,
+          "rouge_teacher_clean": 0.2765957446808511
+        },
+        {
+          "id": "dolly-08416",
+          "rouge_dolly": 0.1094224924012158,
+          "rouge_teacher_clean": 0.23053892215568864
+        },
+        {
+          "id": "dolly-08211",
+          "rouge_dolly": 0.06779661016949153,
+          "rouge_teacher_clean": 0.12
+        },
+        {
+          "id": "dolly-01260",
+          "rouge_dolly": 0.05847953216374269,
+          "rouge_teacher_clean": 0.30303030303030304
+        },
+        {
+          "id": "dolly-12186",
+          "rouge_dolly": 0.10204081632653061,
+          "rouge_teacher_clean": 0.21238938053097345
+        },
+        {
+          "id": "dolly-07635",
+          "rouge_dolly": 0.16541353383458646,
+          "rouge_teacher_clean": 0.18274111675126903
+        },
+        {
+          "id": "dolly-10037",
+          "rouge_dolly": 0.13953488372093023,
+          "rouge_teacher_clean": 0.42105263157894735
+        },
+        {
+          "id": "dolly-06110",
+          "rouge_dolly": 0.183206106870229,
+          "rouge_teacher_clean": 0.25
+        },
+        {
+          "id": "dolly-08268",
+          "rouge_dolly": 0.03225806451612903,
+          "rouge_teacher_clean": 0.1935483870967742
+        },
+        {
+          "id": "dolly-01723",
+          "rouge_dolly": 0.14207650273224043,
+          "rouge_teacher_clean": 0.16585365853658537
+        },
+        {
+          "id": "dolly-03319",
+          "rouge_dolly": 0.22727272727272727,
+          "rouge_teacher_clean": 0.0
+        },
+        {
+          "id": "dolly-08546",
+          "rouge_dolly": 0.2857142857142857,
+          "rouge_teacher_clean": 0.3
+        },
+        {
+          "id": "dolly-12885",
+          "rouge_dolly": 0.13675213675213677,
+          "rouge_teacher_clean": 0.14925373134328357
+        },
+        {
+          "id": "dolly-03709",
+          "rouge_dolly": 0.21238938053097345,
+          "rouge_teacher_clean": 0.25555555555555554
+        },
+        {
+          "id": "dolly-00852",
+          "rouge_dolly": 0.12962962962962962,
+          "rouge_teacher_clean": 0.1917808219178082
+        },
+        {
+          "id": "dolly-05067",
+          "rouge_dolly": 0.5,
+          "rouge_teacher_clean": 0.4067796610169492
+        },
+        {
+          "id": "dolly-11665",
+          "rouge_dolly": 0.205607476635514,
+          "rouge_teacher_clean": 0.17522658610271905
+        },
+        {
+          "id": "dolly-14465",
+          "rouge_dolly": 0.6896551724137931,
+          "rouge_teacher_clean": 0.4
+        },
+        {
+          "id": "dolly-09375",
+          "rouge_dolly": 0.09655172413793103,
+          "rouge_teacher_clean": 0.21348314606741572
+        },
+        {
+          "id": "dolly-01309",
+          "rouge_dolly": 0.1559633027522936,
+          "rouge_teacher_clean": 0.20535714285714285
+        },
+        {
+          "id": "dolly-07407",
+          "rouge_dolly": 0.04326923076923077,
+          "rouge_teacher_clean": 0.08372093023255814
+        },
+        {
+          "id": "dolly-09062",
+          "rouge_dolly": 0.1909814323607427,
+          "rouge_teacher_clean": 0.26292466765140327
+        },
+        {
+          "id": "dolly-03278",
+          "rouge_dolly": 0.14754098360655737,
+          "rouge_teacher_clean": 0.18666666666666668
+        },
+        {
+          "id": "dolly-05234",
+          "rouge_dolly": 0.4,
+          "rouge_teacher_clean": 0.38461538461538464
+        },
+        {
+          "id": "dolly-04853",
+          "rouge_dolly": 0.19658119658119658,
+          "rouge_teacher_clean": 0.21105527638190955
+        },
+        {
+          "id": "dolly-13936",
+          "rouge_dolly": 0.12813370473537605,
+          "rouge_teacher_clean": 0.2797494780793319
+        },
+        {
+          "id": "dolly-09420",
+          "rouge_dolly": 0.16783216783216784,
+          "rouge_teacher_clean": 0.17272727272727273
+        },
+        {
+          "id": "dolly-12124",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.24064171122994651
+        },
+        {
+          "id": "dolly-02816",
+          "rouge_dolly": 0.25555555555555554,
+          "rouge_teacher_clean": 0.2311111111111111
+        },
+        {
+          "id": "dolly-01411",
+          "rouge_dolly": 0.02631578947368421,
+          "rouge_teacher_clean": 0.3048780487804878
+        },
+        {
+          "id": "dolly-08114",
+          "rouge_dolly": 0.22380952380952382,
+          "rouge_teacher_clean": 0.18571428571428572
+        },
+        {
+          "id": "dolly-09430",
+          "rouge_dolly": 0.2764227642276423,
+          "rouge_teacher_clean": 0.36923076923076925
+        },
+        {
+          "id": "dolly-10389",
+          "rouge_dolly": 0.1368653421633554,
+          "rouge_teacher_clean": 0.20359281437125748
+        },
+        {
+          "id": "dolly-03119",
+          "rouge_dolly": 0.08,
+          "rouge_teacher_clean": 0.29850746268656714
+        },
+        {
+          "id": "dolly-02469",
+          "rouge_dolly": 0.34782608695652173,
+          "rouge_teacher_clean": 0.6428571428571429
+        },
+        {
+          "id": "dolly-07780",
+          "rouge_dolly": 0.21212121212121213,
+          "rouge_teacher_clean": 0.09433962264150944
+        },
+        {
+          "id": "dolly-03916",
+          "rouge_dolly": 0.11363636363636363,
+          "rouge_teacher_clean": 0.1556420233463035
+        },
+        {
+          "id": "dolly-08222",
+          "rouge_dolly": 0.15384615384615385,
+          "rouge_teacher_clean": 0.08823529411764706
+        },
+        {
+          "id": "dolly-01615",
+          "rouge_dolly": 0.07692307692307693,
+          "rouge_teacher_clean": 0.4931506849315068
+        },
+        {
+          "id": "dolly-12812",
+          "rouge_dolly": 0.15384615384615385,
+          "rouge_teacher_clean": 0.22077922077922077
+        },
+        {
+          "id": "dolly-11437",
+          "rouge_dolly": 0.06611570247933884,
+          "rouge_teacher_clean": 0.3464566929133858
+        },
+        {
+          "id": "dolly-12001",
+          "rouge_dolly": 0.14285714285714285,
+          "rouge_teacher_clean": 0.1794871794871795
+        },
+        {
+          "id": "dolly-09442",
+          "rouge_dolly": 0.10256410256410256,
+          "rouge_teacher_clean": 0.25149700598802394
+        },
+        {
+          "id": "dolly-11241",
+          "rouge_dolly": 0.5217391304347826,
+          "rouge_teacher_clean": 0.44025157232704404
+        },
+        {
+          "id": "dolly-14947",
+          "rouge_dolly": 0.18181818181818182,
+          "rouge_teacher_clean": 0.2641509433962264
+        },
+        {
+          "id": "dolly-03624",
+          "rouge_dolly": 0.37037037037037035,
+          "rouge_teacher_clean": 0.43373493975903615
+        },
+        {
+          "id": "dolly-14069",
+          "rouge_dolly": 0.12444444444444444,
+          "rouge_teacher_clean": 0.42038216560509556
+        },
+        {
+          "id": "dolly-05632",
+          "rouge_dolly": 0.25510204081632654,
+          "rouge_teacher_clean": 0.3582089552238806
+        },
+        {
+          "id": "dolly-13510",
+          "rouge_dolly": 0.19047619047619047,
+          "rouge_teacher_clean": 0.24489795918367346
+        },
+        {
+          "id": "dolly-02684",
+          "rouge_dolly": 0.01818181818181818,
+          "rouge_teacher_clean": 0.3163265306122449
+        },
+        {
+          "id": "dolly-06631",
+          "rouge_dolly": 0.24054982817869416,
+          "rouge_teacher_clean": 0.28888888888888886
+        },
+        {
+          "id": "dolly-10153",
+          "rouge_dolly": 0.3611111111111111,
+          "rouge_teacher_clean": 0.12269938650306748
+        },
+        {
+          "id": "dolly-06628",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.06281957633308985
+        },
+        {
+          "id": "dolly-09735",
+          "rouge_dolly": 0.1188118811881188,
+          "rouge_teacher_clean": 0.125
+        },
+        {
+          "id": "dolly-09330",
+          "rouge_dolly": 0.2857142857142857,
+          "rouge_teacher_clean": 0.16379310344827586
+        },
+        {
+          "id": "dolly-03998",
+          "rouge_dolly": 0.060109289617486336,
+          "rouge_teacher_clean": 0.16541353383458646
+        },
+        {
+          "id": "dolly-12034",
+          "rouge_dolly": 0.2,
+          "rouge_teacher_clean": 0.48
+        },
+        {
+          "id": "dolly-09039",
+          "rouge_dolly": 0.12264150943396226,
+          "rouge_teacher_clean": 0.26576576576576577
+        },
+        {
+          "id": "dolly-11182",
+          "rouge_dolly": 0.2684563758389262,
+          "rouge_teacher_clean": 0.171990171990172
+        },
+        {
+          "id": "dolly-12273",
+          "rouge_dolly": 0.2625,
+          "rouge_teacher_clean": 0.21602787456445993
+        },
+        {
+          "id": "dolly-03136",
+          "rouge_dolly": 0.08365019011406843,
+          "rouge_teacher_clean": 0.19444444444444445
+        },
+        {
+          "id": "dolly-03067",
+          "rouge_dolly": 0.35294117647058826,
+          "rouge_teacher_clean": 0.8493150684931506
+        },
+        {
+          "id": "dolly-13829",
+          "rouge_dolly": 0.25,
+          "rouge_teacher_clean": 0.34782608695652173
+        },
+        {
+          "id": "dolly-10476",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.20270270270270271
+        },
+        {
+          "id": "dolly-05864",
+          "rouge_dolly": 0.4155844155844156,
+          "rouge_teacher_clean": 0.20430107526881722
+        },
+        {
+          "id": "dolly-11047",
+          "rouge_dolly": 0.022222222222222223,
+          "rouge_teacher_clean": 0.23728813559322035
+        },
+        {
+          "id": "dolly-01739",
+          "rouge_dolly": 0.1276595744680851,
+          "rouge_teacher_clean": 0.4260355029585799
+        },
+        {
+          "id": "dolly-00407",
+          "rouge_dolly": 0.15037593984962405,
+          "rouge_teacher_clean": 0.14555256064690028
+        },
+        {
+          "id": "dolly-09175",
+          "rouge_dolly": 0.1984732824427481,
+          "rouge_teacher_clean": 0.21487603305785125
+        },
+        {
+          "id": "dolly-02274",
+          "rouge_dolly": 0.1595744680851064,
+          "rouge_teacher_clean": 0.2774566473988439
+        },
+        {
+          "id": "dolly-02008",
+          "rouge_dolly": 0.3939393939393939,
+          "rouge_teacher_clean": 0.36363636363636365
+        },
+        {
+          "id": "dolly-02059",
+          "rouge_dolly": 0.15640599001663893,
+          "rouge_teacher_clean": 0.20293724966622162
+        },
+        {
+          "id": "dolly-02916",
+          "rouge_dolly": 0.16551724137931034,
+          "rouge_teacher_clean": 0.14583333333333334
+        },
+        {
+          "id": "dolly-09816",
+          "rouge_dolly": 0.138996138996139,
+          "rouge_teacher_clean": 0.24680851063829787
+        },
+        {
+          "id": "dolly-05810",
+          "rouge_dolly": 0.19672131147540983,
+          "rouge_teacher_clean": 0.22163588390501318
+        },
+        {
+          "id": "dolly-00278",
+          "rouge_dolly": 0.05873715124816446,
+          "rouge_teacher_clean": 0.10273224043715846
+        },
+        {
+          "id": "dolly-05355",
+          "rouge_dolly": 0.2857142857142857,
+          "rouge_teacher_clean": 0.41975308641975306
+        },
+        {
+          "id": "dolly-14900",
+          "rouge_dolly": 0.10831721470019343,
+          "rouge_teacher_clean": 0.3116883116883117
+        },
+        {
+          "id": "dolly-01353",
+          "rouge_dolly": 0.11764705882352941,
+          "rouge_teacher_clean": 0.25196850393700787
+        },
+        {
+          "id": "dolly-12693",
+          "rouge_dolly": 0.015313935681470138,
+          "rouge_teacher_clean": 0.04990151017728168
+        },
+        {
+          "id": "dolly-06970",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.05714285714285714
+        },
+        {
+          "id": "dolly-00571",
+          "rouge_dolly": 0.12103746397694524,
+          "rouge_teacher_clean": 0.17434210526315788
+        },
+        {
+          "id": "dolly-05634",
+          "rouge_dolly": 0.05721716514954486,
+          "rouge_teacher_clean": 0.0847457627118644
+        },
+        {
+          "id": "dolly-11106",
+          "rouge_dolly": 0.16793893129770993,
+          "rouge_teacher_clean": 0.15827338129496402
+        },
+        {
+          "id": "dolly-06838",
+          "rouge_dolly": 0.3409090909090909,
+          "rouge_teacher_clean": 0.3709677419354839
+        },
+        {
+          "id": "dolly-02500",
+          "rouge_dolly": 0.35051546391752575,
+          "rouge_teacher_clean": 0.37037037037037035
+        },
+        {
+          "id": "dolly-09695",
+          "rouge_dolly": 0.7272727272727273,
+          "rouge_teacher_clean": 0.8421052631578947
+        },
+        {
+          "id": "dolly-05386",
+          "rouge_dolly": 0.010526315789473684,
+          "rouge_teacher_clean": 0.14285714285714285
+        },
+        {
+          "id": "dolly-00182",
+          "rouge_dolly": 0.26666666666666666,
+          "rouge_teacher_clean": 0.2155688622754491
+        },
+        {
+          "id": "dolly-03360",
+          "rouge_dolly": 0.254071661237785,
+          "rouge_teacher_clean": 0.23699421965317918
+        },
+        {
+          "id": "dolly-02991",
+          "rouge_dolly": 0.18181818181818182,
+          "rouge_teacher_clean": 0.16339869281045752
+        },
+        {
+          "id": "dolly-06562",
+          "rouge_dolly": 0.14,
+          "rouge_teacher_clean": 0.23529411764705882
+        },
+        {
+          "id": "dolly-03113",
+          "rouge_dolly": 0.1728395061728395,
+          "rouge_teacher_clean": 0.2571428571428571
+        },
+        {
+          "id": "dolly-11314",
+          "rouge_dolly": 0.3140495867768595,
+          "rouge_teacher_clean": 0.3645833333333333
+        },
+        {
+          "id": "dolly-01356",
+          "rouge_dolly": 0.1388888888888889,
+          "rouge_teacher_clean": 0.0891089108910891
+        },
+        {
+          "id": "dolly-01718",
+          "rouge_dolly": 0.3225806451612903,
+          "rouge_teacher_clean": 0.4276729559748428
+        },
+        {
+          "id": "dolly-11440",
+          "rouge_dolly": 0.0,
+          "rouge_teacher_clean": 0.5714285714285714
+        },
+        {
+          "id": "dolly-14702",
+          "rouge_dolly": 0.25806451612903225,
+          "rouge_teacher_clean": 0.3463687150837989
+        },
+        {
+          "id": "dolly-12236",
+          "rouge_dolly": 0.26666666666666666,
+          "rouge_teacher_clean": 0.13725490196078433
+        },
+        {
+          "id": "dolly-09299",
+          "rouge_dolly": 0.19393939393939394,
+          "rouge_teacher_clean": 0.17407407407407408
+        },
+        {
+          "id": "dolly-05393",
+          "rouge_dolly": 0.1596244131455399,
+          "rouge_teacher_clean": 0.1486725663716814
+        },
+        {
+          "id": "dolly-13235",
+          "rouge_dolly": 0.34782608695652173,
+          "rouge_teacher_clean": 0.18604651162790697
+        },
+        {
+          "id": "dolly-13039",
+          "rouge_dolly": 0.13513513513513514,
+          "rouge_teacher_clean": 0.14623655913978495
+        },
+        {
+          "id": "dolly-04223",
+          "rouge_dolly": 0.1506849315068493,
+          "rouge_teacher_clean": 0.16338028169014085
+        },
+        {
+          "id": "dolly-06101",
+          "rouge_dolly": 0.2222222222222222,
+          "rouge_teacher_clean": 0.24778761061946902
+        }
+      ]
+    }
+  },
+  "baselines": {
+    "no_attack_gad": {
+      "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\kgwwarmup_kgwgad_gad_gamma0.5_delta3_new_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "detection": {
+        "positive_class": "kgw",
+        "score": "z_score (higher means more likely watermarked)",
+        "num_kgw": 500,
+        "num_clean": 500,
+        "auroc": 0.6476880000000005,
+        "best_f1": {
+          "threshold": -1.5460413650478515,
+          "fpr": 0.816,
+          "tpr": 0.946,
+          "precision": 0.5368898978433598,
+          "f1": 0.6850108616944243,
+          "tp": 473,
+          "fp": 408,
+          "tn": 92,
+          "fn": 27
+        },
+        "tpr_at_fpr": {
+          "1%": {
+            "threshold": null,
+            "fpr": 0.0,
+            "tpr": 0.0,
+            "precision": 0.0,
+            "f1": 0.0,
+            "tp": 0,
+            "fp": 0,
+            "tn": 500,
+            "fn": 500,
+            "target_fpr": 0.01
+          },
+          "5%": {
+            "threshold": 2.225394561056747,
+            "fpr": 0.05,
+            "tpr": 0.114,
+            "precision": 0.6951219512195121,
+            "f1": 0.19587628865979384,
+            "tp": 57,
+            "fp": 25,
+            "tn": 475,
+            "fn": 443,
+            "target_fpr": 0.05
+          },
+          "10%": {
+            "threshold": 1.6859773678906163,
+            "fpr": 0.1,
+            "tpr": 0.228,
+            "precision": 0.6951219512195121,
+            "f1": 0.34337349397590367,
+            "tp": 114,
+            "fp": 50,
+            "tn": 450,
+            "fn": 386,
+            "target_fpr": 0.1
+          }
+        },
+        "note": "For each target FPR, select the empirical ROC point with the highest TPR whose FPR does not exceed the target; tied scores are kept together."
+      },
+      "rouge_dolly": 0.19849387557587408,
+      "rouge_teacher_clean": 0.3091744425525882,
+      "severe_repetition_count": 11,
+      "seq_rep3_mean": 0.05078145348777676,
+      "ppl_median": 3.6437303973930035
+    },
+    "clean_gad": {
+      "source": "C:\\Users\\wenxin\\Desktop\\distall-watermark\\my_easygad\\wm_test\\cleanwarmup_cleangad_gad_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl",
+      "detection": {
+        "positive_class": "kgw",
+        "score": "z_score (higher means more likely watermarked)",
+        "num_kgw": 500,
+        "num_clean": 500,
+        "auroc": 0.45282199999999984,
+        "best_f1": {
+          "threshold": -5.195844985353305,
+          "fpr": 0.944,
+          "tpr": 0.992,
+          "precision": 0.512396694214876,
+          "f1": 0.6757493188010898,
+          "tp": 496,
+          "fp": 472,
+          "tn": 28,
+          "fn": 4
+        },
+        "tpr_at_fpr": {
+          "1%": {
+            "threshold": 9.593834825900782,
+            "fpr": 0.01,
+            "tpr": 0.002,
+            "precision": 0.16666666666666666,
+            "f1": 0.003952569169960474,
+            "tp": 1,
+            "fp": 5,
+            "tn": 495,
+            "fn": 499,
+            "target_fpr": 0.01
+          },
+          "5%": {
+            "threshold": 2.2662573397778742,
+            "fpr": 0.046,
+            "tpr": 0.024,
+            "precision": 0.34285714285714286,
+            "f1": 0.044859813084112146,
+            "tp": 12,
+            "fp": 23,
+            "tn": 477,
+            "fn": 488,
+            "target_fpr": 0.05
+          },
+          "10%": {
+            "threshold": 1.697749375254331,
+            "fpr": 0.1,
+            "tpr": 0.07,
+            "precision": 0.4117647058823529,
+            "f1": 0.11965811965811966,
+            "tp": 35,
+            "fp": 50,
+            "tn": 450,
+            "fn": 465,
+            "target_fpr": 0.1
+          }
+        },
+        "note": "For each target FPR, select the empirical ROC point with the highest TPR whose FPR does not exceed the target; tied scores are kept together."
+      },
+      "rouge_dolly": 0.2295929496951247,
+      "rouge_teacher_clean": 0.33062936890217354,
+      "severe_repetition_count": 11,
+      "seq_rep3_mean": 0.0424920159990153,
+      "ppl_median": 3.16032674637607
+    }
+  },
+  "reference_hashes": {
+    "negative_base": {
+      "raw": "ac257f61da6ea85afaa9c200985cd818e5fe3a677d78e0ae77a15c1d1c47fcea",
+      "lf": "597b843d28d31c353c7bb9b94a3b6dccb564cb45ac2c5252f6a1592ccd768efe"
+    },
+    "dolly": {
+      "raw": "fe5662b340bce00101b704cc18a5af6cd9a3929d3e831520aaa83f0991f31f75",
+      "lf": "b9f3fff9eb41d0af7f550c082c80bbe01d44cbe493cbd7c5357fcb8d07a0363a"
+    },
+    "clean_teacher": {
+      "raw": "72baa80098525f22402cbaf3a97659bf41534008724f98981b16a04cccc222ef",
+      "lf": "9a61c1ef92fae8522396770725188555cbbb24a77502249c7547f84461484dbe"
+    }
+  },
+  "missing": "No matching TP Qwen-32B pairwise judge or MT-Bench evaluation was found locally.",
+  "verification": "CPU-only independent ROC/Seq-Rep-3/ROUGE recomputation; cache hash, grouped p median and per-answer PPL verification. No model inference."
+}

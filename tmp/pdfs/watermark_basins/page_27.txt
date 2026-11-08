@@ -1,0 +1,59 @@
+at1%FPR (Fig. 9). WM-Basin accumulates evidence monotonically at every window, so more text
+never costs the verifier anything and no stopping rule is needed: it reaches100%TPR by0.6M tokens
+atn-gram1and2, and atn-gram=3it is within8points of its ceiling by that budget and spends the
+twenty times more text that follows gaining the rest. The baseline is not monotone in the budget at all:
+it peaks within the first≈0.5M tokens and decays afterwards, because its scored-token denominator
+keeps growing while deduplication caps the signal it can collect.
+0.03 0.1 0.3 1 3 10
+0
+0.25
+0.50
+0.75
+1.00
+Suspect text read (million tokens)
+TPR@1%
+n-gram=1
+0.03 0.1 0.3 1 3 10
+Suspect text read (million tokens)
+n-gram=2
+0.03 0.1 0.3 1 3 10
+Suspect text read (million tokens)
+n-gram=3
+Black-box
+WM-Basin
+Figure 9 Impact of suspect text budget on detection performance.We plot True Positive Rate at1%FPR
+(TPR@1%; share of distilled models detected at rank-p≤0.01, one model per key) against the amount of
+suspect text evaluated (logxscale, million tokens). Both WM-Basin (ours) andBlack-box(Sander et al., 2024)
+are evaluated on identical generations at the same1%FPR operating point.
+C.6 Probe Model and Warm-Up
+The probe model turns text into a gradient signal. In this section, we study the impact of the probe
+model on the performance of WM-Basin.
+Choice of probe model.Does the verifier need a probe model from the suspect’s own family? Table 14
+varies only the probeθprobe that §3.1 holds at a clean Qwen2.5-3B base, across ten checkpoints from
+0.5B to8B spanning four Qwen2.5 scales or post-training states, three Llama-3 checkpoints, and two
+families whose tokenizers sit farthest from the student’s152k vocabulary. Every probe receives the
+same warm-up, and because each defines a different gradient coordinate space its reference bank is
+rebuilt with the default recipe; the suspect cohort, clean PCA pool and threen-gram windows stay
+fixed. Family costs the detector nothing: every probe recovers all suspects atn-gram=1, and atn-
+gram=3and0.1%FPR the three Llama-3 probes land inside or just under the band the Qwen probes
+span, despite sharing no tokenizer with the student. The loss instead tracks how far the probe’s
+vocabulary sits from the student’s, the smallest vocabulary losing most while still staying an order
+of magnitude above the baseline in the same cell, and falling further behind the Qwen probes as the
+threshold tightens atn-gram=2and3. The verifier can therefore audit with whatever checkpoint it
+holds, preferring a nearby vocabulary.
+Impact of warm-up.The probe warm-up of §3.1 is one short LoRA pass on clean teacher traces, run
+before any key gradient is taken; Tab. 15 sweeps it one knob at a time from the default, in a single
+scoring pass per arm. We reportn-gram=3because it is the only window that separates the arms: at
+n-gram=1every probe in Tab. 14 already reads100at all three levels.
+Removing the warm-up costs most of the detector’s power at0.1%FPR: an untrained, randomly
+initialised adapter keeps about a third of the default’s TPR there, and the bare base model almost
+none. Gradients are taken with respect to the adapter parametersθprobe (§2.3), so a random adapter
+still defines a usable coordinate space and retains real signal at5%FPR, whereas the bare model has
+no adapter to differentiate against. The warm-up therefore sharpens a signal the probe already carries
+rather than creating one.
+Warming on prompts from different domains and datasets, i.e., chat, MMLU, GSM8K or MATH
+instead of the audited OpenR1-Math distribution costs11to21points at0.1%FPR and at most
+one key at5%. Code is the single exception (37%), and it is the warm-up corpus farthest from the
+reasoning traces the reference bank is built from. This is a separate question from where the verifier
+draws itsdetectionprompts, which do have to come from the audited domain or a similar one (§3.2).
+27

@@ -1,0 +1,37 @@
+Table 10 The clean PCA pool.The43off-the-shelf checkpoints whose gradients fit the shared task subspace of
+App. B.5, grouped by pretraining lineage. Each model generates on1,000build-pool prompts at each of three
+decoding temperatures (0.7,1.0,1.3).
+Family Checkpoints Ckpts.
+Qwen Qwen2.5-0.5B, -0.5B-Instruct, -1.5B, -1.5B-Instruct, -3B, -3B-Instruct, -7B-Instruct, -Math-7B;
+Qwen3-0.6B, -1.7B, -4B, -4B-Instruct, -8B, -8B-Base, -32B; QwQ-32B; Qwen1.5-MoE-A2.7B
+17
+Llama Llama-2-7B, Llama-3.1-8B-Instruct, Llama-3.2-1B-Instruct, Llama-Guard-3-1B, Llama-Guard-3-
+8B
+5
+DeepSeek DeepSeek-R1-Distill-Qwen-1.5B, -7B, -14B †; DeepSeek-MoE-16B-Base4
+SmolLM2 SmolLM2-135M, -135M-Instruct, -1.7B3
+Gemma Gemma-2-2B, Gemma-3-1B-PT 2
+Phi Phi-3.5-mini-Instruct, Phi-4 2
+OLMo OLMo-2-1B, OLMoE-1B-7B 2
+Mistral Mistral-7B-Instruct 1
+Yi Yi-1.5-9B-Chat 1
+Falcon Falcon3-7B-Instruct 1
+Granite Granite-3.1-8B-Instruct 1
+StarCoder StarCoder2-7B 1
+Nemotron Nemotron-Mini-4B 1
+Moonlight Moonlight-16B-A3B 1
+gpt-oss gpt-oss-120B 1
+15families 43
+The ROC curves and the per-key calibration curves use the balanced subset, i.e.,43checkpoints at
+three temperatures split into disjoint fit and evaluation halves.
+How many components to remove.We chooseqon clean models alone, and we read the false-positive
+rate of each single deployed key. Figure 6 sweepsqfromno PCAtoq=100and reads three keys of
+the1,000-key bank against TPR: the typical key, the key at the95th percentile of the per-key rate
+in terms of FPR, and the worst key which has the highest FPR. Without the projection those three
+disagree completely, the typical key firing on no clean cell at all while the95th-percentile key fires on
+38to44%of them. Removingq=100directions closes that spread onto the nominal line and lifts TPR
+atα=5%from70.2to91.7atn-gram=1. A smallqdoes neither, because the leading directions carry
+watermark signal as well as shared task structure: the projection pays for itself only fromq≈10, after
+which power climbs monotonically. We deployq=100, and App. B.6 reports the per-key calibration
+that remains at that setting.
+22

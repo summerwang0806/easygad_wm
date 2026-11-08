@@ -1,0 +1,52 @@
+marking scheme, the sampling temperature and watermarked fraction of the distillation traces, the
+fine-tuning recipe, and the task domain. Among1,200student models distilled from DeepSeek-R1-
+Distill-Qwen-14B (Guo et al., 2025) on OpenR1-Math reasoning traces (Hugging Face, 2025), at a
+0.1%false-positive rate, WM-Basin detects79%of distilled models atn-gram=1and45%atn-gram=3,
+against29%and1.3%for the state-of-the-art black-box detector (Sander et al., 2024). Quantization,
+pruning, and reinforcement-learning post-training all leave detection intact, as none of them moves the
+student out of the watermark basin. Like any black-box method, WM-Basin reads only the suspect
+model’s text, so detection depends on that text carrying the teacher’s token distribution. Continued
+training on clean data can reshape that distribution and therefore degrade black-box detection, al-
+though the basin itself survives in the weights and remains easy to identify under white-box access.
+Our contributions are as follows:
+•Discovery of watermark basins.We find that watermarked distillation places every distilled student
+in a persistent basin, spanned by the ordinary task direction and a faint, key-specific watermark
+direction. Leaving this basin without knowledge of the key is difficult: post-training operations
+(quantization, pruning, supervised fine-tuning, RL) displace weights primarily along the task axis
+and leave the key-specific component intact, which we exploit for detection.
+•A parameter-space black-box detector (WM-Basin).WM-Basin looks for distillation evidence in pa-
+rameter space. It maps text outputs to gradients of a fixed clean probe model, removes the shared
+task subspace, and scores the residual alignment against decoy keys. The watermark becomes far
+more detectable than in token space, with exact finite-sample false-positive control and no access to
+the suspect’s parameters.
+•Robust detection at scale.Across24student architectures (135M to8.2B parameters),4teachers,
+and4watermarking schemes, WM-Basin achieves79%TPR at0.1%FPR versus29%for the state-of-
+the-art token-level detector, and remains effective under quantization, pruning, and RL post-training.
+2 Watermark-Basin Detection
+2.1 Threat Model and Statistical Setup
+Distillation setting and adversary model.A proprietary teacher modelM teacher serves completions
+watermarked under a secret keyk⋆ ←KeyGen, drawn from the watermark scheme’s key-generation
+procedure. Following deployed systems (Aaronson, 2022; Dathathri et al., 2024; Sander et al., 2026;
+Anthropic, 2026b), we consider distortion-free schemes: the teacher’s marginal next-token distribution
+is preserved, but for each promptxthe outputy∼ Mteacher(x;k ⋆)is coupled to the pseudorandomness
+induced byk ⋆. The adversary adaptively choosesNpromptsX train ={x i}Ni=1, receives watermarked
+traces{y i}, buildsD={(x i, yi)}, and trains a studentMsus by supervised fine-tuning onD. With-
+out knowledge ofk ⋆, watermarked completions are indistinguishable from clean text, so the default
+adversary is unaware of the watermark and uses the traces as-is. After fine-tuning, the adversary may
+further post-trainM sus on clean data, e.g., via continued SFT or GRPO (Guo et al., 2025).
+Verifier regime.An audit is opened by the verifier, either the model owner or an authorized third party,
+and begins by naming one capability the owner sells and the suspect appears to compete on. We call it
+theaudited domainD(e.g., math) and letP D be its induced prompt distribution; the verifier chooses
+both and draws every prompt it uses fromPD. It holds two disjoint pools: abuildpoolX build used to
+construct the detector, and atestpoolX test used to read the suspect. Neither overlaps the adversary’s
+prompts, which the verifier never sees, and keeping build and test prompts apart avoids score inflation
+from prompt reuse. The verifier’s access toMsus isblack-box: it observes only texts sampled on the
+test prompts. The access is alsounsupervisedin the sense of Sander et al. (2024): the verifier does not
+hold the tracesMsus was trained on, only fresh teacher traces on the build prompts (unwatermarked,
+watermarked underk ⋆, and watermarked underMindependent decoy keysk j ←KeyGen), together
+with a pool of public clean checkpoints. It knows the system prompts used to queryMsus and the
+teacher, because it chooses them, and the number of test prompts sent to the suspect is the query
+budget.
+Statistical objective.LetS(k)be any scalar alignment score computed from the suspect’s completions
+on test prompts and from teacher traces on build prompts under keyk; §2.3 instantiates it. Its absolute
+3

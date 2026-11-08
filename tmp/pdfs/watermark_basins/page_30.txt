@@ -1,0 +1,87 @@
+base int8
+prune10prune20
+int4 nf4
+prune30
+0
+20
+40
+60
+80
+100
+TPR@1%(%)
+Distillation detection
+WM-Basin Black-box
+baseint8
+prune10prune20
+int4 nf4
+prune30
+0
+20
+40
+60
+80
+usable
+70.7
+70
+77.3
+57.6
+45.4
+41.2
+28.9
+gsm8k (%)
+GSM8K accuracy
+int8
+prune10prune20
+int4 nf4
+prune30
+10−4
+10−3
+10−2
+10−1
+100
+101
+102
+displacement (L2)
+Weight-space move
+along ˆw
+orth ˆw
+Figure 10 Robustness to post-processing.TextSeal,n-gram=3,100keyed students under int8, int4 and nf4
+quantization and10/20/30%pruning;baseis uncompressed.(a)TPR at1%FPR for WM-Basin and Black-box;
+(b)gsm8k accuracy, dotted line is the0.9×usable gate;(c)weight-space move along the watermark direction
+vs orthogonal residual. Details in Tab. 16.
+Table 17 GRPO preserves utility with far smaller weight movement than SFT.Every row is paired against its own
+cohort’s pre-attack students, whose accuracy is printed asbase: the cohorts differ in size (n) and do not share a
+baseline, so∆is the mean per-key change and not the difference of the two pooled columns beside it. GSM8K
+and Math-500 are percentages and∆is in points. Move (total) is∥∆post∥2, Alongwis its signed projection on
+the key directionˆ∆wm, and Along/total is the absolute percentage share. GRPO projections are under0.0005
+in magnitude and print as0.000. The SFT rows share the full100-key pool as their base; the GRPO rows
+are smaller cohorts carrying their own, which run from0.6points above it to2.8below, which is why Tab. 7
+reports accuracy as a paired change rather than an absolute.
+GSM8K Math-500 Move
+Cond.n-gramnbase post∆base post∆total alongwalong/total
+reason1 100 67.2 72.0 +4.77 41.9 40.8−1.11 4.80−0.252 5.3%
+reason2 100 69.0 70.0 +0.96 43.0 39.4−3.60 4.70−0.182 3.9%
+reason3 100 69.0 71.3 +2.37 43.2 40.6−2.62 4.66−0.146 3.1%
+multilingual1 100 67.2 74.2 +6.98 41.9 46.9 +4.99 2.72−0.013 0.5%
+multilingual2 100 69.0 73.6 +4.59 43.0 46.7 +3.68 2.71−0.009 0.3%
+multilingual3 100 69.0 75.0 +6.03 43.2 47.5 +4.29 2.70−0.007 0.3%
+rl (gsm8k, GRPO)1 20 67.8 70.1 +2.35 41.3 42.2 +0.90 0.051 0.000 0.0%
+rl (gsm8k, GRPO)2 20 69.3 71.5 +2.17 42.5 43.2 +0.74 0.049 0.000 0.0%
+rl (gsm8k, GRPO)3 20 68.0 68.5 +0.52 43.4 44.0 +0.67 0.050 0.000 0.0%
+rl (K&K, GRPO)1 10 66.4 66.9 +0.48 40.9 42.4 +1.44 0.228 0.000 0.0%
+rl (K&K, GRPO)2 10 67.8 68.7 +0.93 42.9 43.4 +0.54 0.226 0.000 0.0%
+rl (K&K, GRPO)3 10 66.2 66.0−0.20 43.7 44.8 +1.04 0.241 0.000 0.0%
+rl (IFEval, GRPO)1 10 66.4 65.0−1.42 40.9 40.3−0.58 0.242 0.000 0.0%
+rl (IFEval, GRPO)2 10 67.8 68.7 +0.96 42.9 42.1−0.76 0.251 0.000 0.0%
+rl (IFEval, GRPO)3 10 66.3 66.1−0.26 43.3 41.6−1.71 0.246 0.000 0.0%
+and1,000held-out prompts. Detector inputs keep the standardT=1.0, top-p=0.95sampling.
+Foreveryconditionwedecompose∆ post=θpost−θwm against ˆ∆wm, thekey-specificwatermarkdirection
+of Eq. (1). The Open-weight column (Sander et al., 2024) is teacher-forced on the adversary’s own
+distillation traces. That is the ideal case, and not a read our verifier can run. It shows that those
+traces stay memorised after continued training, not that the watermark survives in the weights.
+Which of these updates removes the watermark? One of the two SFT arms does, and no RL arm does
+(Tab. 7). Thereasonarm puts WM-Basin at its wrong-key floor at all three windows. Themultilingual
+arm only degrades it, and part of the cohort is still recovered at5%FPR. WM-Basin stays flat against
+each GRPO cohort’s pre-attack detection at5%FPR, at every window. The Open-weight column
+stays at86or above in41of its45cells, and its four exceptions are all in thereasonarm. The same
+30

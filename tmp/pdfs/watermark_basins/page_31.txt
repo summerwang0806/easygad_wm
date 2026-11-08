@@ -1,0 +1,50 @@
+Table 18 Cross-domain GRPO improves the task it optimises.Pre, post and∆are task accuracy in percent on
+greedy held-out evaluation (400K&K puzzles,1,000IFEval prompts). Each task and window pools10keys,
+except IFEval atn-gram=3(11). Counted over the three windows together,10keys improved on K&K and10
+on IFEval. The same students’ weight-space displacement and their off-target GSM8K and Math-500 changes
+are in Tab. 17.
+n-gram=1n-gram=2n-gram=3
+Task Pre Post∆Pre Post∆Pre Post∆
+K&K10.0 14.4 +4.4 9.0 13.4 +4.4 10.1 15.2 +5.1
+IFEval18.4 21.3 +2.9 18.3 21.6 +3.3 18.2 22.1 +3.9
+Table 19 Effect of paraphrasing teacher traces before distillation, at all threen-gram windows.Every watermarked
+trace is rewritten at one of three strengths with a same-family (Qwen) paraphraser;noneis the unmodified
+control, repeated in each block because each window is a separate training set. WM-Basin (ours) andBlack-
+box(Sander et al., 2024) score text, whileOpen-weight(Sander et al., 2024) teacher-forces the original teacher
+traces (orig.) or the rewritten traces the student actually trained on (ideal), the latter an upper bound that
+assumes the verifier already holds the adversary’s rewritten training set. Each cell reports TPR (%) at FPR
+(5%,1%,0.1%) over20students, except atn-gram=1, which is scored over the15of20keys whose reference
+direction at that window is clean and whose strictest column is0.101%FPR, the finest rate that bank resolves.
+Strength WM-Basin Black-box Open-weight
+TPR@FPR TPR@FPR orig. ideal
+5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1%
+n-gram=1(15of20keys; strictest column is0.101%FPR)
+none 100 100 100 60 20 0 100 93 93 100 93 93
+mild 100 100 100 47 13 0 93 87 60 100 100 100
+moderate 33 0 0 7 0 0 53 13 0 87 73 20
+aggressive 13 0 0 7 0 0 7 7 0 33 13 7
+n-gram=2
+none 100 100 100 60 25 5 100 100 100 100 100 100
+mild 100 85 65 20 10 5 100 100 95 100 100 100
+moderate 15 15 5 15 5 5 55 20 0 100 95 85
+aggressive 15 10 5 5 5 0 5 5 0 55 40 10
+n-gram=3
+none 100 100 85 35 10 0 100 100 100 100 100 100
+mild 90 70 25 10 5 0 100 100 95 100 100 100
+moderate 5 0 0 5 0 0 55 25 15 100 95 80
+aggressive 0 0 0 0 0 0 10 0 0 55 25 10
+detector scored on held-out prompts falls by41to87points. Every update is nearly orthogonal to
+ˆ∆wm, SFT and GRPO alike. Its projection on the watermark direction is at most5.3%of its length
+under SFT and0.0%under every GRPO arm (Tab. 17). The watermark component of the weights is
+left in place, and under GRPO so is the text read. Continued SFT changes what the student writes
+instead. WM-Basin and the black-box baseline score that text alone, so both fall on thereasonarm
+at5%FPR.
+D.3 Paraphrasing
+We paraphrase only the reasoning body between<think>and</think>, preserving the tags and
+the final answer, then reapply the standard quality filter before distillation. A same-family (Qwen)
+paraphraser rewrites the traces under mild, moderate and aggressive instructions atT=0.5,0.8and
+1.0respectively, with top-p=0.95and at most8,192generated tokens. Each setting trains20keyed
+students. Rewriting costs the adversary no capability: mean GSM8K accuracy exceeds77%at every
+strength and window against68to69%for the unmodified control, and every strength stays above its
+matched clean student in the paired per-key comparison.
+31

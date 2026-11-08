@@ -1,0 +1,58 @@
+Table 7 Distillation detection under continued training.Each row continues training the same distilled suspects on
+clean data, holding the probe, the reference bank, and the generation settings fixed. Cells are read as in Tab. 2,
+one block pern-gram window.∆Acc.is the paired per-key change in GSM8K accuracy, andAlongwis the
+signed projection of the weight change on the watermark directionˆ∆wm (Eq. (1)).Open-weight(Sander et al.,
+2024) is teacher-forced on the adversary’s own distillation traces, an idealized read that our black-box verifier
+cannot run (App. D.2). Cohort sizes and the full weight-space decomposition of every row are in Tab. 17.
+Cond.∆Acc. AlongwWM-Basin Black-box Open-weight
+TPR@FPR TPR@FPR TPR@FPR
+5% 1%.1% 5% 1%.1% 5% 1%.1%
+n-gram=1
+SFT (reason)+4.8−0.252 3 1 0 39 15 3 92 82 52
+SFT (multi.)+7.0−0.013 33 16 3 63 34 13 99 97 89
+GRPO (GSM8K)+2.4 0.000 100 100 100 58 42 25 100 100 92
+GRPO (K&K)+0.5 0.000 100 100 100 57 14 0 100 100 86
+GRPO (IFEval)−1.4 0.000 100 100 100 71 57 14 100 100 86
+n-gram=2
+SFT (reason)+1.0−0.182 4 2 0 22 9 1 99 97 76
+SFT (multi.)+4.6−0.009 27 13 3 36 18 5 100 100 99
+GRPO (GSM8K)+2.2 0.000 100 100 87 40 40 7 100 100 100
+GRPO (K&K)+0.9 0.000 100 100 100 40 30 20 100 100 100
+GRPO (IFEval)+1.0 0.000 100 100 100 30 30 10 100 100 100
+n-gram=3
+SFT (reason)+2.4−0.146 6 1 0 7 3 1 98 95 73
+SFT (multi.)+6.0−0.007 21 4 0 15 5 0 100 100 97
+GRPO (GSM8K)+0.5 0.000 100 93 53 0 0 0 100 100 100
+GRPO (K&K)−0.2 0.000 100 100 50 0 0 0 100 100 100
+GRPO (IFEval)−0.3 0.000 100 100 50 10 0 0 100 100 100
+exposed through an API, it becomesmodel extraction: black-box query access alone, without the
+target’s parameters or training data, suffices to replicate the teacher’s functionality (Tramèr et al.,
+2016). The threat is sharpest for reasoning models, whose step-by-step traces provide dense supervision.
+Capability also transfers through synthetic instructions, model-generated reasoning, rubric or reward
+feedback, and agent trajectories (Wang et al., 2023; Guo et al., 2025; Gunjal et al., 2025; Zeng et al.,
+2024). We study supervised fine-tuning on collected reasoning traces, motivated by evidence that small,
+high-quality reasoning sets sharply improve students (Muennighoff et al., 2025).
+Defenses against extraction.Existing defenses restrict what the API returns, monitor extraction-like
+querying (Anthropic, 2026a; Google Threat Intelligence Group, 2026), or make outputs less useful for
+training via antidistillation sampling or trace rewriting (Savani et al., 2026; Ma et al., 2026). Such
+methods trade away utility for benign users or assume that the attacker stays observable during
+collection. That assumption is fragile in practice: adversaries spread collection across many accounts
+and third-party API resellers, so no single query stream looks like extraction (Anthropic, 2026a).
+Detection is complementary: it acts after the fact and leaves the deployed model untouched. A
+parallel black-box line, dataset inference (Maini et al., 2021), resolves ownership by testing whether a
+suspect shares private knowledge of the victim’s data, without inserting a watermark; it observes that
+inserted watermarks are off-distribution and therefore not always preserved under stealing. Classical
+model watermarking instead hides a signal directly in the weights or via backdoors (Uchida et al.,
+2017; Adi et al., 2018), read from the parameters or by querying a trigger set; both assume the owner
+watermarked the suspect model under test, whereas our suspect is a model the owner never trained.
+Watermarking and radioactivity.Text watermarking embeds a secret statistical signal into generated
+text (Kirchenbauer et al., 2023; Kuditipudi et al., 2023; Sander et al., 2026). The idea of tracing
+data through a trained model originates in computer vision: Sablayrolles et al. (2020) show that
+imperceptible “radioactive” watermarks in a dataset leave a statistical residue in models trained on it,
+detectable with a calibratedp-value even when only1%of the data is marked. Our rank test follows
+the same framework. Sander et al. (2024) carry radioactivity over to language models, showing that
+watermarked distillation leaves a key-specific residue in the student, and others study how well such
+watermarks survive distillation (Sander et al., 2026; Zhao et al., 2022; Pan et al., 2025). The black-box
+verifier of Sander et al. (2024), which counts watermark-favored tokens in a suspect’s sampled text,
+defines the setting we work in and is, to the best of our knowledge, the only existing method for the
+11

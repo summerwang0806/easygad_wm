@@ -1,0 +1,11 @@
+Eachn-gram window is a block of Tab. 19. Mild rewriting leaves the watermark readable from text:
+WM-Basin holds100,100and90%TPR at5%FPR atn-gram=1,2and3, against47,20and10%for
+the black-box baseline. Moderate and aggressive rewriting bring both text detectors down together, to
+at most33%TPR at5%FPR for WM-Basin and15%for the baseline. What is left then depends on
+which traces the open-weight read (Sander et al., 2024) is teacher-forced on. On the original teacher
+traces, the set a verifier actually holds, it falls with the text detectors (53,55and55%at5%FPR
+under moderate rewriting). On the rewritten traces the student trained on, it recovers the moderate
+arm almost in full (87,100and100%at5%FPR, and95%at1%FPR at the two longer windows).
+The aggressive arm is gone under either read, at best33to55%at5%FPR. Moderate rewriting
+therefore leaves the watermark in the weights and only hides it from the traces the verifier can obtain.
+32

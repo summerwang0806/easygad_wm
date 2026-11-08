@@ -1,0 +1,59 @@
+selects reference traces; the probe, the random projection, the build prompts, and the fittedUare
+identical for allM+1candidates. The claimed key is therefore equally likely to occupy any of the
+M+1ranks, assuming no ties. Thresholding its rankp-value then controls the FPR in finite samples:
+the FPR is at mostαfor any threshold, and equalsαwhenαlies on the attainable rank grid. The≥
+in Eq. (4) counts ties against rejection, so ties cost power rather than validity. None of this needs a
+parametric model ofS(Pesarin and Salmaso, 2010): Eq. (4) places no restriction on the score, so the
+guarantee survives arbitrary non-linear transformations of the suspect model. App. B.6 measures the
+realized rate against the nominal one for every deployed key.
+The smallest attainablep-value is1/(M+1), so the decoy count sets the finest significance an audit
+can certify: reporting atα=0.001requiresM≥999decoys. Decoy scoring is offline and reuses the
+build-once artefacts, so improving the resolution can be cheap in practice.
+B Experimental Setup
+This section presents the experiment setup in §3.
+B.1 Configuration Summary
+Table 8 gives in full the default models and numeric settings that §3.1 states in summary, and Tab. 9
+indexes the studies built on them, what each varies and where it is reported.
+Table 8 Default experimental configuration.Models, watermark, distillation, probe, and detector settings used
+throughout §3 unless stated otherwise; see App. B.2 for full details. The TextSeal parameterα=0.1is held
+fixed in every experiment.
+Component Setting
+Models
+Teacher (default) DeepSeek-R1-Distill-Qwen-14B
+Teacher (swaps) gpt-oss-120B, QwQ-32B, Llama-3.1-8B
+Student (default) Qwen2.5-3B
+Student (cross-arch.)24structures,135M to8.2B (Llama(-Guard), Qwen2.5/3, QwQ, DeepSeek-Distill, Gemma,
+SmolLM2)
+Probe model Qwen2.5-3B (base, warmed)
+Clean PCA pool43off-the-shelf checkpoints (15families,135M to120B;129cells total; Tab. 10)
+Watermark & teacher sampling
+Scheme TextSeal,α=0.1
+Sampling vLLM;T=1.0, top-p=0.95;≤8,192tokens
+Distillation temperatures{1.0,0.7,0.5}(reference fixed atT=1.0)
+Distillation (student)
+Dataset OpenR1-Math-220k
+System prompt one fixed math-teacher prompt for every trace; by default every verifier stage (warm-up,
+bank, clean pool, audit) renders this same prompt, so the default audit is prompt-matched.
+Only the domain sweep replaces it (App. C.4)
+Traces5,000sampled→quality-filtered→1,900used for training
+Trace filter closing</think>,\boxed{}, no≥3×repetition,math_verifymatch
+Fine-tuning LoRAr=512, lr2e−5,3epochs, effective batch16, max sequence length8192
+LoRA targets{q, k, v, o,gate,up,down} proj
+Eval benchmarks GSM8K, Math-500
+Probe warm-up
+Data450clean teacher traces, on build-pool promptsX build from the domain being audited
+(App. C.4)
+Adapter LoRAr=128,4epochs, lr2e−4, batch1
+Detector (WM-Basin)
+Reference bank100deployed keys, one student distilled per key; each ranked against a1,000-key bank (k ⋆
++ 999decoys)
+Per-key gradient average of512traces (≥512tokens) on build-pool promptsX build
+Projection fixed random projection to8,192-dim (TRAK)
+Task subspace top-q=100PCA (all-but-the-top), fit on clean pool
+p-value floor0.001
+Operating point thresholdp≤0.01(TPR@1%FPR)
+Baseline(Sander et al., 2024)
+Black-boxn-gram corpusφfrom keyed teacher traces on5,000held-out prompts
+Windowsn-gram∈ {1,2,3}
+Deduplication each distinct (context, token) pair scored once across traces
+18

@@ -1,0 +1,113 @@
+80
+ 60
+ 40
+ 20
+ 0
+20
+40
+60
+80
+task dir. dtask (L2)
+ 80
+60
+40
+20
+0
+20
+40
+60
+80
+watermark dir. w (L2)
+0
+10
+20
+30
+40
+50
+60
+70
+log10
+p
+80
+ 60
+ 40
+ 20
+ 0 20 40 60 80
+watermark dir. w (L2)
+80
+60
+40
+20
+0
+20
+40
+60
+80
+task dir. dtask (L2)
+wm
+0.00
+7.32
+14.64
+21.97
+29.29
+36.61
+43.93
+51.25
+58.58
+65.90
+log10 p
+150
+ 100
+ 50
+ 0 50 100 150
+Perturbation magnitude (L2)
+0
+10
+20
+30
+40
+50
+60
+70
+log10 p
+watermark dir. w
+task dir. dtask
+Figure 3 The anisotropic geometry of the watermark basin, measured as the white-box detection significance
+(−log 10 p) around a radioactive studentθwm (red star;θ student in the text) fine-tuned on watermarked teacher
+traces.Left to right:3D landscape, 2D contour map, and 1D slices throughθ wm. The signal falls to the
+detector’s floor within a few steps along the watermark directionˆ∆wm (red curve), while remaining detectable
+over a much broader range along the task directionˆ∆task (green curve).
+magnitude is not comparable across suspects, prompt pools, or probe models, so an audit reads only
+where the claimed keyk⋆ ranks among decoy keys. Our null hypothesisH0 is that the suspect’s outputs
+on the audited domainDcontain no information about the production keyk⋆. If the texts do depend
+onk ⋆, the dependence can only arise through the distillation pathk⋆ → {yi} → Msus. Rejecting
+H0 therefore establisheswatermark radioactivity: the suspect was trained on the teacher’s keyed text,
+which separates it from any model not distilled underk⋆. A failure to reject is scoped to domainD;
+we measure detection power beyond the distillation domain in §3.2.
+2.2 Watermark Basins in Parameter Space
+We first use a white-box setting toinvestigatewhat distinguishes a student trained on watermarked
+traces from one trained on clean traces, and thus what makes a model radioactive. Fig. 1 presented the
+watermark basin; here we test that geometry directly with access to the student weights. We fix the
+true keyk ⋆ and fine-tune the same base model either on teacher traces watermarked withk⋆, giving
+θstudent, or on unwatermarked traces, giving a clean controlθctrl. The teacher, prompts, initialization,
+and training recipe are otherwise identical, so both students learn the same task while only one sees
+the watermark. Let∆ total :=θ student −θ base be the total update from watermarked training and
+∆task :=θ ctrl −θ base the clean task update. We isolate the watermark-specific part of the update by
+removing from∆ total its component along∆task:
+∆wm := ∆total − ⟨∆total,∆ task⟩∥∆task∥22 ∆task.(1)
+The subtracted term is the part of the watermarked update that the clean student also makes, i.e.,
+learning the task. What remains,∆wm, is the part that only the watermark can explain. We normalize
+∆wm and∆ task to obtain the watermark axisˆ∆wm and the task axisˆ∆task.
+To map the basin, we start atθstudent and perturb the weights along each axis,θstudent +t wm ˆ∆wm +
+ttask ˆ∆task, over a grid of step sizes(twm, ttask). At each point, we apply the open-weight detector of
+Sander et al. (2024) to the perturbed student and record−log10 p, where a smallerp-value is stronger
+evidence of distillation. Fig. 3 shows that the surface is strongly anisotropic: a small step along the
+watermark axis makes the watermark signal collapse, whereas much larger displacements along the
+task axis leave it detectable. The basin is broad alongˆ∆task but has a sharp boundary alongˆ∆wm.
+This asymmetry gives the two axes different roles. The width alongˆ∆task suggests why ordinary post-
+training can alter task behavior without erasing the basin, a hypothesis we test under compression and
+continued training in §3.3. The narrowness alongˆ∆wm makes the basin key-specific, which motivates
+comparing against decoy keys rather than thresholding a generic watermark score. This analysis relies
+on access to the student’s parameters, which a black-box verifier does not have. Next, we show how
+to detect the same key-specific signal using only text sampled from the suspect.
+4

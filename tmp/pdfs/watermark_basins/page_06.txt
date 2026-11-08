@@ -1,0 +1,55 @@
+Algorithm 1WM-Basin: black-box detection of watermark distillation via basin alignment.
+Require:Query access to the suspect modelMsus (black-box API) and the watermarked teacher; claimed key
+k⋆ andMdecoy keysk 1, . . . , kM ←KeyGen; disjoint build and test prompt poolsX build,X test from the
+audited domainD; a pool of clean off-the-shelf models; significance levelα.
+Ensure:p-valuep rank; report the suspect as distilled into the basin ofk⋆ whenp rank ≤α.
+Build once(offline; independent of the suspect)
+1:θ probe ←clean small model warmed by a short LoRA pass on unwatermarked teacher traces fromXbuild
+2:foreach keyk∈ {k ⋆, k1, . . . , kM }do
+3:Sample teacher responses under keykonX build
+4:∆ k ←average probe gradient of these responses▷Eq. (2)
+5:end for
+6:U←top-qprincipal directions of the clean pool’s probe gradients onX build
+7:foreach keyk∈ {k ⋆, k1, . . . , kM }do
+8: e∆k ←(I−U U ⊤)∆k ▷Residual reference gradient
+9:end for
+Detect(online; once per suspect)
+10:Sample answers fromM sus onX test ▷Unused by every step above
+11:∆ sus ←average probe gradient of the suspect’s answers▷Eq. (2)
+12: e∆sus ←(I−U U ⊤)∆sus ▷Residual suspect gradient
+13:foreach keyk∈ {k ⋆, k1, . . . , kM }do
+14:S(k)←cos
+
+e∆sus, e∆k
+
+▷Eq. (3)
+15:end for
+16:p rank ←
+1+PMj=1 I(S(kj )≥S(k⋆))
+M+1 ▷Eq. (4)
+17:returnp rank; report “distilled into the basin ofk⋆” ifp rank ≤α
+the same algorithm applies unchanged to any keyed watermark. The computational cost is dominated
+by the one-time generation of teacher traces underM+ 1keys (App. B.4).
+3 Experiments and Results
+Most main-body tables report all threen-gram windows of the watermark (n=1,2,3) at three operating
+points. Unless stated otherwise, the text quotesn-gram=3, the hardest window for both detectors.
+3.1 Experimental Setup
+Distillation.We evaluate distillation detection across24suspect model architectures,4teacher mod-
+els, and4watermarking schemes. In the default setting, the teacher is DeepSeek-R1-Distill-Qwen-
+14B (Guo et al., 2025) watermarked with TextSeal (Sander et al., 2026), a dual-key scheme that
+samples each token under one of two secret keys, mixed at a fixed rateα=0.1. Following standard
+reasoning-distillation protocols, an adversary fine-tunes a Qwen2.5-3B base model (Yang et al., 2024)
+for math on1,900quality-filtered OpenR1-Math-220k traces (Hugging Face, 2025) from that teacher.
+All traces are generated under one fixed math-teacher system prompt, on which the suspect model is
+also conditioned during fine-tuning. We evaluate capability on held-out GSM8K (Cobbe et al., 2021)
+and Math-500 (Hendrycks et al., 2021); App. B.2 gives the full distillation setup.
+Sampling suspect model outputs.The verifier chooses one domain to audit and draws every prompt
+it uses for detection from that domain; it never sees the adversary’s prompts or traces (§2.1). By
+default the audited domain is OpenR1-Math-220k (Hugging Face, 2025), held out from the adversary’s
+distillation prompts, and every audit stage uses the same system prompt as the distillation traces,
+which we call amatched-promptaudit; §3.2 varies both the domain and the system prompt. We read
+each suspect on1,900prompts from the test poolX test, disjoint from the distillation promptsXtrain,
+and score the first512tokens of every response, around1M tokens per suspect.
+Detector.WM-Basin turns text into a gradient with a probe model, by default a clean Qwen2.5-3B
+base warmed on around450clean teacher traces from the audited domain (App. C.6 studies both the
+6

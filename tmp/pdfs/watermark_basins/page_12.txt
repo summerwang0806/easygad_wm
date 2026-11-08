@@ -1,0 +1,51 @@
+task; it is our baseline throughout. Its limits were not previously characterized, and establishing them
+is part of our contribution. The statistic accumulates evidence only where exact watermarked contexts
+recur, which we show is fragile to wider windows, lower decoding temperatures, and larger text budgets
+(§3.2, App. C.5), the same failure mode that paraphrase attacks exploit against surface-level watermark
+detection (Sadasivan et al., 2023). WM-Basin keeps the access level and the generations, and replaces
+the token statistic with a weight-space one.
+Weight-space geometry and basins.WM-Basin relies on the fact that students distilled under one key
+settle into a shared, key-specific region of weight space. This connects to the geometry of neural loss
+landscapes: independently trained optima are joined by simple, near-constant-loss curves (Garipov
+et al., 2018), and once permutation symmetries are accounted for, the landscape resembles a sin-
+gle widebasin, so separately trained models can be aligned by permutation and merged in weight
+space (Ainsworth et al., 2022). Large language models exhibit the same basin-like structure (Chen
+et al., 2026; Li et al., 2018; Peng et al., 2024). WM-Basin treats the watermark key as carving out one
+such basin and asks whether a suspect has fallen into it.
+Gradient attribution and representation post-processing.To read this geometric signal from text alone,
+WM-Basin backpropagates a suspect’s completions through a fixed probe model. This draws on first-
+order data attribution: influence functions trace a prediction back to the training points responsible
+for it using only gradient access (Koh and Liang, 2017), an idea scaled by gradient tracing (Pruthi
+et al., 2020) and random-projected attribution (Park et al., 2023), and adapted to instruction tuning
+with low-rank projected gradients (Xia et al., 2024). Intuitively, a training example’s gradient captures
+how it would nudge the model, so aligned gradients indicate similar examples. Raw gradient cosines,
+however, are dominated by a few shared directions (generic language and formatting): a handful
+of top components inflate the similarity between otherwise unrelated items (Ethayarajh, 2019; Gao
+et al., 2019; Radovanovic et al., 2010; Dinu et al., 2014). We remove these with an “All-but-the-Top”
+projection (Mu et al., 2017), stripping the few dominant yet uninformative directions so that the faint
+key-specific signal stands out from the generic task geometry.
+5 Conclusion and Future Work
+In this work, we introduce thewatermark basin: distilling on watermarked traces encodes the teacher’s
+secret key as a faint direction in parameter space, displacing the student’s weights along that key
+direction and into a region that later training does not easily escape. Building on this geometry, we
+design WM-Basin, which reformulates black-box detection of unauthorized distillation from a fragile,
+surface-level token count into a geometric alignment test in parameter space. Across a wide range of
+evaluations, spanning six student families, four teachers, and four watermarking schemes, WM-Basin
+outperforms the existing baseline by a large margin, and it survives quantization, pruning, and RL
+post-training.
+Scope and outlook.A watermark can be present in a distilled model but unreadable in its text:
+continued SFT on clean data suppresses the text-level signal while an open-weight probe still recovers
+the residual, and a supplementary study (App. D.3) finds the same for rewriting the teacher’s traces
+before distillation. WM-Basin is also an in-domain test: a hit tells the verifier on which domain the
+suspect’s text carries the watermark, not only that it carries one, and a low score elsewhere means
+nothing was found there, not that the model is clean (§3.2). Both are limits on what a black-box
+verifier can observe, not on what distillation transfers. Narrowing the gap between the black-box read
+and the open-weight probe is thus a promising direction for future work.
+Ethics Statement
+This work studies whether a model provider can establish, from API access alone, that a suspect
+model was distilled from its watermarked teacher. It involves no human subjects and no personal or
+user data: the distillation corpus (OpenR1-Math-220k), the utility benchmarks (GSM8K and Math-
+500), and every teacher, student, probe, and clean-pool checkpoint are publicly released artefacts used
+under their own licenses, and every experiment runs on models we host ourselves. Because the method
+produces evidence of provenance, we report how it behaves on models that are not guilty rather than
+12

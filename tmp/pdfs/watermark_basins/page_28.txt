@@ -1,0 +1,51 @@
+Table 14 Effect of the probe model on detection.The same100distilled suspects are held fixed while the verifier
+changes the probe model and rebuilds the reference bank. Probes vary in scale, post-training, family, and
+tokenizer; theBlack-boxbaseline (Sander et al., 2024) uses no probe and istoken-matched, reading exactly
+the same suspect text as WM-Basin. Each cell reports True Positive Rate (TPR, %) at FPR (5%,1%,0.1%),
+over the suspects whose generations both detectors can score,87/95/90of the100keys atn-gram1/2/3. At
+n-gram=3and0.1%FPR the five Qwen2.5 probes span69to89and the three Llama-3 probes67to72;
+vocabulary size is given beside each cross-family row.
+n-gram=1n-gram=2n-gram=3
+Probe modelθ probe TPR@FPR TPR@FPR TPR@FPR
+5% 1%.1% 5% 1%.1% 5% 1%.1%
+Black-box baseline (noθprobe) 72 34 11 44 28 9 26 13 3
+Qwen2.5-3B-Base (default) 100 100 100 100 100 98 100 99 89
+Qwen2.5-1.5B-Base 100 100 100 100 100 99 97 90 72
+Qwen2.5-0.5B-Base 100 100 100 100 99 97 99 96 81
+Qwen2.5-3B-Instruct 100 100 100 100 100 98 100 99 84
+Qwen2.5-7B-Instruct 100 100 100 100 100 96 96 87 69
+Llama-3.1-8B-Instruct (128k vocab) 100 100 100 100 100 92 100 92 67
+Llama-Guard-3-8B (128k vocab) 100 100 100 100 100 94 97 91 69
+Llama-3.2-1B-Instruct (128k vocab) 100 100 100 100 100 93 99 88 72
+Gemma-2-2B-Base (256k vocab) 100 100 100 100 99 91 91 74 57
+SmolLM2-1.7B-Base (49k vocab) 100 100 100 100 97 71 90 68 34
+Table 15 The probe warm-up is necessary, but almost none of its details are.All rows are WM-Basin atn-gram=3
+on the same90watermark keys, the same suspects, and the same suspect-text budget; only the probe warm-up
+changes, one knob at a time from the default. Cells are TPR (%) at5%,1%, and0.1%FPR, scored on the
+task-neutralresidualgradients of §2.3. Defaults in Tab. 8.
+Probe warm-up WM-Basin Probe warm-up WM-Basin
+5% 1%.1% 5% 1%.1%
+(a) Warm-up presence (c) Adapter rank
+Trained warm-up (default) 100 99 89 Rank32 100 100 89
+Untrained random adapter 82 59 33 Rank128(default) 100 99 89
+No adapter (bare base model) 30 21 6 Rank512 100 100 86
+(b) Warm-up corpus (d) Learning rate
+OpenR1-Math (default) 100 99 895e−5 100 98 90
+MATH 100 97 762e−4(default) 100 99 89
+GSM8K 99 96 685e−4 100 100 93
+MMLU 99 97 691e−3(diverged) 7 2 0
+Chat 99 94 78(e) Warm-up epochs
+Code 88 73 371epoch 100 99 92
+4epochs (default) 100 99 89
+8epochs 100 97 81
+Adapter rank and learning rate each move TPR at0.1%FPR by at most4points, and epoch count
+by11; none of the three moves the5%column at all. Only divergence is fatal: at learning rate1e−3
+the warm-up run diverges and detection collapses at every level, a training failure the verifier can see
+without running the detector at all. The cheapest arms we ran are among the best at every level, so
+the setting to deploy is whatever converges: rank32matches the default at0.1%FPR and beats it at
+1%, and one epoch beats it at0.1%. We did not run the two together, so rank32at one epoch is an
+inference from two single-knob arms rather than a measured configuration.
+D Additional Robustness Results
+Thissectiongivestheprotocolsandweight-spaceanalysesbehind§3.3, followedbyarobustnessanalysis
+against a paraphrasing attack that rewrites the teacher’s traces before distillation. Each modifies the
+28

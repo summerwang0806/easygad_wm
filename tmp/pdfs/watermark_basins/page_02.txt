@@ -1,0 +1,68 @@
+From Text to Gradients Remove Task Direction Rank Test
+Teacher
+Suspect
+Mdecoys
+claimed keyk ∗
+teacher traces
+?
+suspect traces
+Probe model
+∇backprop
+raw gradients∆
+suspect k∗
+shared task
+direction
+every key overlaps
+project out
+residuals e∆
+θ
+suspect k∗
+onlyk ∗ stays close
+alignment score
+S(k) = cosθ
+k∗
+k∗ k1 k2 kM
+k∗ on top: Distilled
+Otherwise: No evidence
+Figure 2 WM-Basin: black-box distillation detection via watermark basin alignment.The three panels are the three
+stages of §2.3.(i)The verifier collects suspect outputs on test prompts and, on separate build prompts, teacher
+outputs under the claimed watermark key andMdecoy keys. Backpropagating each collection through one
+fixed probe model gives the suspect gradient∆sus and one reference gradient∆k per key.(ii)Raw gradients
+share large common task components that inflate the cosine similarities, so every key appears to overlap with
+the suspect. Projecting out the shared task directions leaves the residualse∆sus and e∆k, among which only
+the claimed key stays close to the suspect;θis the angle between them.(iii)Each candidate key receives the
+alignment scoreS(k) = cos( e∆sus, e∆k), and the claimed key’s rank among the decoys gives thep-valueprank.
+The claimed key ranking at the top is evidence of distillation; a decoy key at the top is not.
+1 Introduction
+Proprietary language models are increasingly targeted by API-based distillation: an adversary queries
+a closed teacher model and fine-tunes a competing student model on its outputs. This attack extends
+black-box model extraction, first demonstrated against ML-as-a-service systems (Tramèr et al., 2016),
+and has become a major threat to reasoning LLMs (Anthropic, 2026a; Google Threat Intelligence
+Group, 2026; Remler and Hayum, 2026). Providers have responded by withholding reasoning traces,
+but concealment does not prevent distillation. Hidden traces can be extracted at scale from encrypted
+response blocks (Panfilov et al., 2026), while answers and short summaries can be expanded into
+synthetic traces that recover much of the benefit of training on the originals (Zhang et al., 2026). Other
+defenses make extraction harder rather than detectable (Anthropic, 2026a; Google Threat Intelligence
+Group, 2026; Savani et al., 2026; Ma et al., 2026). We review related work in full in §4.
+In this work, we focus on output watermarking, which is encouraged by emerging regulatory require-
+ments (European Commission, 2026). Anthropic, for example, embeds watermarks in texts generated
+by Claude models released beginning in August 2026 (Anthropic, 2026b). Such watermarks can survive
+distillation: Sander et al. (2024) show that students trained on watermarked teacher outputs retain a
+“radioactive” signal. Their black-box detector, to our knowledge the only existing one for this setting
+and our baseline throughout, tests suspect outputs for an excess of watermark-favored tokens, but only
+where watermark-conditioned contexts recur. We find that this dependence is fragile: detection de-
+grades sharply with larger context windows and loses most of its power under low-temperature teacher
+sampling.We therefore seek a watermark signal that does not require exact token-level recurrence.
+Our main finding is thewatermark basin: supervised fine-tuning on clean (watermark-free) teacher
+traces moves a student along a broadtask direction, whereas watermarked traces add a faint, key-
+specificwatermark direction(Fig. 1), leading the student into a key-specific region of parameter space.
+Post-training updates cannot easily push the student out of this basin. Building on this geometry,
+we introduceWatermark Basin Alignment (WM-Basin), a black-box detector that represents the suspect
+model’s outputs and the watermarked teacher’s outputs as gradients of one fixed, clean probe model.
+After removing the task subspace estimated from clean models, the distilled student should align with
+the watermark keymore closelythan with decoy keys that were never used to watermark the teacher.
+WM-Basin turns this relative rank into acalibratedp-value usinga non-parametric ranking test (Dwass,
+1957): a small value is evidence that the suspect was distilled from the claimed teacher and key on the
+audited domain (Fig. 2).
+We evaluate WM-Basin along many axes: the student architecture, the teacher model, the water-
+2

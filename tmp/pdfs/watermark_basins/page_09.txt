@@ -1,0 +1,59 @@
+1 10 50 100
+0
+0.25
+0.5
+0.75
+1 WM-Basin
+Black-box
+chance
+Watermarked fraction (%)
+TPR @1%FPR
+16 64 256 1024
+Training LoRA rankr
+1 2 3
+Training epochs
+Figure 4 What governs detection: each knob swept on its own axis(n-gram=3). Each panel variesoneknob,
+with its value on thex-axis and the TPR at a fixed1%FPR on they-axis, for WM-Basin and the black-box
+baseline; the grey dashed line marks chance (TPR=FPR=1%). Each configuration trains50students, each
+with a different watermark key.Left:watermarked fraction of the training traces.Middle:LoRA rankr.Right:
+training epochs. The all-clean control (no watermarked traces) is not plotted; none of its50students is flagged
+at any of the three thresholds.
+Effect of the watermark scheme.Is detection tied to the watermark the teacher happens to deploy? We
+replace TextSeal in the teacher’s decoder with GumbelMax (Aaronson, 2022), KGW (γ=0.5) (Kirchen-
+bauer et al., 2023), and SynthID (Dathathri et al., 2024), rebuilding the reference bank for each and
+distilling50students per scheme and window. Tab. 4 shows that all three transfer: WM-Basin flags
+every student atp≤0.01andn-gram=1under each scheme, and it outperforms the baseline in every
+cell, by a margin that widens with the window atp≤0.05. WM-Basin needs only traces the teacher
+generated under a key, not the watermark’s own detection test. The baseline, in contrast, scores the
+suspect’s tokens with that test, which must be derived scheme by scheme (App. B.4). To audit a
+new keyed watermark, the verifier therefore only generates teacher traces under its keys, rebuilds the
+reference bank, and runs the same detector.
+Table 5 Distillation detection across the audited domain.The same100suspects, all distilled on OpenR1-
+Math (Hugging Face, 2025), are audited on three math datasets from the distillation domain (top block)
+and two domains outside it (bottom block), with both detectors built entirely from the audited domain’s own
+prompts and system prompt. Cells are read as in Tab. 1. Detailed setup in App. C.4.
+n-gram=1n-gram=2n-gram=3
+Audited domain WM-Basin Black-box WM-Basin Black-box WM-Basin Black-box
+TPR@FPR TPR@FPR TPR@FPR TPR@FPR TPR@FPR TPR@FPR
+5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1%
+OpenR1-Math 100 100 96 76 49 19 98 92 69 51 24 9 95 83 45 26 12 2
+MATH 91 74 56 74 49 20 71 48 15 60 28 7 65 38 9 24 7 2
+GSM8K 29 14 3 35 13 2 18 7 1 16 9 1 22 10 1 7 3 0
+Code 12 5 0 50 19 4 5 1 0 31 11 2 8 4 0 7 2 0
+Chat 11 1 0 22 4 1 2 0 0 15 4 0 4 1 0 13 4 1
+Effect of the audited domain and system prompt.How close must the audited domain be to the
+adversary’s distillation data? We hold the100suspects fixed and change the domain the verifier
+audits, from the math domain they were distilled on (OpenR1-Math, MATH, GSM8K) to two domains
+outside it (code and chat). For each domain we rebuild the probe warm-up, the task subspace, and
+both detectors from that domain’s own prompts, none of them the teacher’s training system prompt;
+App. C.4 lists the exact prompts. Tab. 5 shows that WM-Basin’s detection power follows where the
+suspects were distilled: it ranks every math domain above both non-math ones in every cell, whereas
+the baseline ranks code above GSM8K atn-gram=1and2. A hit therefore tells the verifier on which
+domain the suspect’s text carries the watermark, not only that it carries one; a low score elsewhere
+means nothing was found there, not that the model is clean.
+Effect of the watermarked fraction and the training recipe.What in the adversary’s data and training
+recipe lets the watermark reach the student? Atn-gram=3we sweep one knob at a time around
+the default recipe: the watermarked fraction of a fixed1,900-trace training set from1to100%(the
+remainder filled with clean traces from the same teacher), the distillation LoRA rankrfrom16to1,024,
+and1,2, or3training epochs. Fig. 4 shows that detection power depends mostly on the watermarked
+9

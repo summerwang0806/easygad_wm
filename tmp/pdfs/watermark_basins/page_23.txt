@@ -1,0 +1,117 @@
+0 1 2 3 4 5 6
+40
+50
+60
+70
+80
+90
+100
+no PCA
+q=5
+mean only
+10
+20
+50,100
+nominalα
+n-gram=1
+0 1 2 3 4 5 6
+no PCA
+q=5
+mean only
+10
+20
+50,100
+n-gram=2
+0 1 2 3 4 5 6
+no PCA
+10
+q=5
+mean only
+20 50
+100
+typical key
+(median)
+n-gram=3
+0 10 20 30 40 50
+40
+50
+60
+70
+80
+90
+100
+no PCA
+q=5
+mean only
+10
+20,50,100
+0 10 20 30 40 50
+no PCA
+q=5
+mean only
+10
+20
+50,100
+0 10 20 30 40 50
+no PCA10
+q=5
+mean only
+20
+50
+100
+tail key
+(95th pct.)
+0 20 40 60 80
+40
+50
+60
+70
+80
+90
+100
+no PCA
+q=5
+mean only
+10
+20,50,100
+0 20 40 60 80
+no PCA
+q=5
+mean only
+10
+20
+50,100
+per-key FPR atα=5%(%)
+0 20 40 60 80
+no PCA
+10
+q=5
+mean only
+20
+50
+100
+worst key
+(maximum)
+TPR atα=5%(%)
+Figure 6 Choosingq: detection power against three order statistics of the key bank.The projection sweeps from
+no PCAthroughmean only(subtract the pool mean, remove no subspace) toq=100removed components;
+the path visits the seven settings in that order and marker shade runs light to dark withq.Columnsare the
+n-gram window.Rowsare which key of the1,000-key bank the false-positive rate is read off: the typical key,
+the95th-percentile tail key and the worst key.y:TPR atα=5%over the1,200distilled students.x:the
+percentage of the129clean model-temperature cells on which that key fires at the same threshold.
+B.6 Calibration of the Rankp-Value
+By the exchangeability argument of App. A, thresholding atp≤αshould falsely accuse anαfraction
+of models that were not distilled from the protected teacher, which is what §3.1 relies on when it
+reads operating points off the nominalp-value. We test it on100deployed keys and65clean model-
+temperature cells held out from the64used to fit the task subspace (App. B.5), ranking each key
+among the full1,000-key bank. Figure 7 plots the empirical rate againstαfor each deployed key, for
+WM-Basin (Fig. 7a) and for the black-box baseline (Fig. 7b).
+The per-key false-positive distribution.Table 11 reports the empirical false-positive rate atα=5%over
+the1,000keys of the bank, each read across the129clean model-temperature cells, after the task-
+subspace projection and under the same4-fold cross-fitting by base model as App. B.5. The typical
+key is calibrated and the tail is not, which is the distinction the mean over the bank hides: the median
+key sits at4.3%against a nominal5%in all three windows and the90th percentile at9.9%, while the
+worst key reaches23.4to26.2%. That tail is bounded by the size of the pool: thefloorcolumn is the
+level a perfectly exchangeable bank of this size reaches on its own (App. B.5), and against it the worst
+observed key is high by theworst/floorfactor, where the unprojected scores are high by≈6.
+23

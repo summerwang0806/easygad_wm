@@ -1,0 +1,58 @@
+Table 11 Per-key false-positive rate atα=5%, after removing the task subspace.Each of the1,000bank keys is
+read over the129clean model-temperature cells, with4-fold projectors cross-fitted by base model so no cell
+is scored by a subspace fit on its own model. All values are percentages except the last column.Flooris
+the95th percentile of the maximum under exact uniformity atK=1,000over129cells: the level a perfectly
+exchangeable bank of this size would still reach, and the reference the worst key should be judged against.
+n-gram median p90p95worst floor worst/floor
+1 4.3 9.9 12.1 23.4 13.5 1.74
+2 4.3 9.9 12.8 25.5 13.5 1.89
+3 4.3 9.9 12.1 26.2 13.5 1.95
+0.0 0.2 0.4 0.6 0.8 1.0
+p-value threshold  
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0empirical FPR
+worst key
+ideal
+(a)WM-Basin (ours)
+0.0 0.2 0.4 0.6 0.8 1.0
+p-value threshold  
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0empirical FPR
+worst key
+ideal (b)Black-box baseline
+Figure 7 Nominalp-value thresholds match empirical false-positive rates.Each faint curve is one of the100
+deployed keys, reporting its empirical FPR over the65held-out clean model-temperature cells atn-gram=3
+as the thresholdαvaries; the solid curve is the worst key and the dashed line is the calibrated targetFPR=α.
+C Additional Detection Results
+This section follows the sweep order of §3.2, adding the operating points and factors the main tables
+leave out, together with two studies the main text states only in passing: the suspect-text budget
+behind the fragility claim of §1, and the choice of probe model, together with the warm-up it is given,
+named in the detector setup of §3.1. The configuration of App. B is the reference point throughout,
+and each row of Tab. 9 names what it varies.
+C.1 Operating Points
+Figure 8 sweeps the detection threshold continuously over the sameT=1.0distillation arm that Tab. 2
+reads at three fixed thresholds, on an empirical false-positive axis rather than that table’s nominal
+p-values. Both detectors are scored on one shared set of students and innocent cells here, all100keys
+rather than the per-window cohorts the tables report, so the comparison to make is between the two
+curves rather than between a curve and a cell of Tab. 2: WM-Basin sits at or above the black-box
+baseline throughout the plotted range at every window, and strictly above it everywhere below the
+false-positive rate at which both saturate. The baseline’s curve is the read that preceded the token
+matching both tables now use; that matching lifts eight of the nine black-box cells of Tab. 2 at5%
+FPR, by up to18points, so the separation plotted here is wider than the matched one.
+C.2 Cross-Teacher Detection
+Section 3.2 reports cross-teacher detection in Tab. 3, whose three thresholds are empirical false-positive
+rates. The sampled-token baseline can only accumulate evidence at positions whose context window
+recurs, and student diversity orders it: gpt-oss students repeat only65.3%of their2-word contexts
+and the baseline reaches18%there, against92.1%and93%on the most repetitive Llama students.
+Neither tokenizer sharing, trace length nor utility separates the teachers the same way (Tab. 12), and
+gpt-oss gives the second-largest GSM8K gain alongside the weakest sampled-token result. WM-Basin
+aggregates the watermark’s gradient direction over all positions instead, and stays at96to100%in
+24

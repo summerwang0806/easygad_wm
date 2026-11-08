@@ -1,0 +1,59 @@
+Table 1 Distillation detection across24student architectures.A single TextSeal-watermarked teacher (DeepSeek-
+R1-Distill-Qwen-14B) is distilled into24students. Each cell is the percentage of up to50distilled models per
+architecture flagged at ap-value of5%,1%, or0.1%;Overallpools all models in that column (1,200 for each),
+andAcc.is post-distillation GSM8K accuracy.
+n-gram=1n-gram=2n-gram=3
+Student structure Acc. WM-Basin Black-box Acc. WM-Basin Black-box Acc. WM-Basin Black-box
+TPR@FPR TPR@FPR TPR@FPR TPR@FPR TPR@FPR TPR@FPR
+5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1%
+Qwen3-4B-Instruct88.7 100 100 100 63 26 989.5 100 100 100 38 18 891.6 100 100 88 8 2 0
+Qwen3-4B-Instruct-250791.4 100 100 100 56 33 1491.6 100 100 100 36 22 890.8 98 96 90 14 4 0
+Qwen3-8B-Instruct89.6 100 100 100 49 19 290.8 100 100 100 20 12 089.9 100 100 92 6 0 0
+Qwen2.5-7B-Instruct87.8 100 100 100 70 47 1287.9 100 100 98 42 24 888.8 100 92 80 18 2 0
+Qwen2.5-Math-7B-Instruct83.1 100 100 100 42 23 285.6 100 100 96 34 10 288.0 100 100 76 12 4 0
+DeepSeek-R1-Distill-Qwen-7B86.7 100 100 100 44 7 087.4 100 100 98 24 4 287.0 100 96 68 0 0 0
+Qwen3-8B-Base88.6 95 91 74 51 28 589.1 80 70 46 40 20 887.0 62 48 24 10 6 0
+Llama-3.1-8B-Instruct84.1 100 100 100 91 77 4284.5 100 100 88 80 52 1884.4 98 80 66 24 4 4
+Qwen3-1.7B-Instruct77.6 100 100 100 42 19 580.1 100 100 96 28 16 281.7 98 88 70 4 0 0
+Qwen2.5-3B-Instruct77.7 100 100 100 72 56 1977.1 100 98 94 50 26 879.7 100 90 58 18 6 0
+DeepSeek-R1-Distill-Qwen-1.5B75.7 100 100 100 33 2 277.3 100 100 94 12 2 074.8 100 94 76 4 0 0
+Llama-Guard-3-8B61.7 100 100 100 100 84 5162.6 100 96 76 82 64 2263.0 92 70 52 24 6 2
+Qwen3-0.6B-Instruct61.3 100 100 100 72 42 1662.3 100 98 88 30 16 259.6 96 74 50 10 0 0
+Qwen2.5-1.5B-Base55.9 100 100 100 74 35 752.2 98 90 66 38 20 658.5 82 62 38 12 6 0
+Qwen2.5-1.5B-Instruct58.2 100 100 98 74 44 1658.5 92 80 54 42 10 054.6 68 52 34 8 2 0
+Llama-3.2-1B-Instruct36.0 100 100 98 70 42 1635.8 98 92 72 52 30 1638.7 96 76 44 14 6 0
+Qwen2.5-0.5B-Base31.9 100 100 91 88 65 4430.4 92 78 56 66 44 1236.8 88 62 20 16 6 0
+Qwen2.5-0.5B-Instruct30.7 100 100 95 79 54 1931.6 94 84 58 54 28 430.4 92 64 26 18 4 2
+SmolLM2-1.7B-Base18.5 95 86 56 26 5 218.0 82 58 34 6 0 018.0 64 34 12 4 0 0
+Gemma-2-2B-Base10.8 47 19 7 100 98 8810.4 12 6 2 86 72 445.9 14 4 0 30 14 0
+Llama-Guard-3-1B3.8 100 84 56 86 54 214.4 88 64 38 46 24 105.8 80 42 16 16 6 2
+Gemma-3-1B-Base1.8 56 26 2 84 44 141.7 38 14 4 46 20 01.8 32 14 4 16 4 0
+SmolLM2-135M-Instruct1.5 56 28 7 7 5 01.6 50 18 10 6 4 01.8 34 16 2 4 0 0
+SmolLM2-135M-Base1.1 56 26 2 12 5 01.4 48 18 6 6 2 01.3 32 12 4 0 0 0
+Overall 92 86 79 71 52 29 86 78 66 52 29 12 80 65 45 20 7 1
+choice of probe and the warm-up). On512build-pool prompts we query the teacher under the claimed
+watermark key and999decoys, then map those responses and the suspect’s generations through the
+probe, giving a1,000-key reference gradient bank and the suspect gradient scored against it. Before
+scoring, we project both away from a PCA task subspace fit on43off-the-shelf checkpoints, which
+leaves the key-specific alignment that the rank test reads (§2.3). All three stages draw separately from
+the build poolXbuild, disjoint fromXtest. Ranking the claimed key givesp-values down to0.001; unless
+stated otherwise we report the true positive rate (TPR) atp≤0.01, i.e., at a1%false positive rate
+(FPR). App. B.6 validates the false positive rate empirically.
+Baseline.We compare with the black-box sampled-token detector of Sander et al. (2024), to our
+knowledge the only existing detector for this setting. It reads the same suspect text as WM-Basin, so
+every comparison is paired. We run it under its own protocol with both filters that give it power: a
+position is scored only when its context window occurs in a held-out corpus of5,000teacher traces
+regenerated under the key being scored, and each distinct (context, token) pair is scored once. Its
+p-value is computed analytically from the score’s null distribution rather than by ranking decoys, and
+we threshold both detectors at the samep-value. App. B.4 gives the test used for each watermark
+scheme and the remaining settings.
+3.2 Detection Performance
+Effect of the student architecture.Does detection depend on which student architecture the adversary
+selects? Wevarythestudentacross24architecturesspanning6families(135Mto8.2Bparameters)and
+distill50models per architecture, for1,200distilled models pern-gram window, holding the teacher,
+distillation recipe, probe model, and reference gradient bank fixed. Pooled over all architectures (the
+Overallrow of Tab. 1), WM-Basin outperforms the baseline at every window and operating point,
+and at the5%and1%thresholds its margin widens with the window. Atn-gram=3andp≤0.001, the
+baseline recovers almost nothing (1.3%) while WM-Basin detects45%of distilled models. Detectability
+is governed by task acquisition rather than architecture: WM-Basin mostly misses students that failed
+7

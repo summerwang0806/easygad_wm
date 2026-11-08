@@ -1,0 +1,61 @@
+The probeθ probe is warmed up on clean teacher traces with LoRA.
+Distillation performance.Watermarking the teacher does not cost the student the utility distillation
+buys. Figure 5 compares clean and TextSeal distillation under this recipe on GSM8K (Cobbe et al.,
+2021) and Math-500 (Hendrycks et al., 2021): distillation lifts both benchmarks well above the un-
+distilled base, and the watermarked students match the clean-distilled control at trace-filter pass rates
+within8points of it.
+No WM n=1 n=2 n=3
+0
+20
+40
+48.0
+40.4
+45.5 44.9
+Teacher trace filtering ratio (%) No WM n=1 n=2 n=3
+40
+50
+60
+70
+80
+68.2 67.2 69.0 69.0
+base48.5
+gsm8k accuracy (%)
+No WM n=1 n=2 n=3
+30
+40
+50
+42.2 41.9 43.0 43.2
+base33.8
+math-500 accuracy (%)
+Figure 5 Watermarking preserves the utility gained through distillation.DeepSeek-R1-Distill-Qwen-14B (Guo
+et al., 2025) is distilled into Qwen2.5-3B (Yang et al., 2024) using clean traces or TextSeal traces at three
+n-gram windows. The left panel reports the fraction of5,000traces passing the quality filter; the other panels
+report GSM8K and Math-500 accuracy. Watermarked bars average100keyed students with±1standard-
+deviation error bars, while No WM is one student trained on clean traces; dashed lines mark the un-distilled
+base.
+B.3 Prompt Pools and Suspect Sampling
+Section 2.1 splits the audited domain into disjoint training, build and test pools. In the following, we
+explain how we split the prompts in our evaluation.
+•ThetrainingpoolX train is the adversary’s: OpenR1-Math-220k prompts sampled under the fixed
+math-teacher system prompt, yielding5,000traces, of which40to48%pass the filter of App. B.2
+(Fig. 5) and1,900become the distillation set.
+•ThebuildpoolX build is the verifier’s offline side and supplies the three artefacts WM-Basin is
+made of: the≈450clean teacher traces that warm the probe, the512keyed traces averaged
+into each of the1,000reference directions, and the free generations of the43clean checkpoints
+that fit the task subspace. The baseline’sn-gram corpusφis a fourth offline artefact, drawn by
+construction from held-out teacher traces the suspect is never read on.
+•ThetestpoolX test is1,900held-out prompts and is the only pool a verdict is ever read on. No
+prompt the adversary trained on is used to build either detector, and no prompt used to build
+either detector is used to score a suspect.
+B.4 Detector and Baseline Implementation
+This section gives the implementation behind the detector and baseline of §3.1.
+Reference key gradient bank and projection.For each candidate key, we generate teacher traces on
+the build poolX build (App. B.3), discard responses below the minimum token length in Tab. 8, and
+average the surviving reference gradients into∆k. A single fixed random projection, shared by all keys
+and applied unchanged to the suspect gradient∆sus so that every cosine the rank test compares is
+taken in one coordinate space, approximately preserves their inner products (Johnson et al., 1984; Xia
+et al., 2024). We compute this with TRAK (Park et al., 2023). The deployed key and i.i.d. decoys
+form the bank used by the rank test in Eq. (4), and its size sets the reportedp-value floor.
+Compute cost.Nearly all of the cost is one-time and suspect-independent. Warming the probe is
+one short LoRA pass (App. C.6). Building the bank dominates: each projected direction averages
+20

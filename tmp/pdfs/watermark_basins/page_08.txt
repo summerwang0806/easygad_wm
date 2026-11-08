@@ -1,0 +1,53 @@
+Table 2 Distillation detection across distillation temperatures.Qwen2.5-3B is distilled from DeepSeek-R1-Distill-
+Qwen-14B on traces sampled at each temperature, while the detector’s reference bank stays fixed atT=1.0.
+Each cell is the percentage of up to100distilled models (one per watermark key) flagged at ap-value threshold
+of5%,1%, or0.1%, i.e., the TPR at that false-positive rate.
+n-gram=1n-gram=2n-gram=3
+Temp. WM-Basin Black-box WM-Basin Black-box WM-Basin Black-box
+TPR@FPR TPR@FPR TPR@FPR TPR@FPR TPR@FPR TPR@FPR
+5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1%
+1.0 100 100 100 72 43 26 100 100 98 50 25 9 100 99 88 23 9 1
+0.7 100 100 100 37 16 2 100 97 88 25 12 0 99 93 62 12 2 0
+0.5 100 100 99 24 7 2 94 78 40 8 2 1 71 51 22 4 2 0
+Table 3 Distillation detection across teacher models.The same Qwen2.5-3B student is distilled atT=1.0from
+each of four teachers spanning three families and8B to120B parameters, and the detector’s reference bank
+is rebuilt for each teacher. Cells are read as in Tab. 2, atn-gram=3, over up to100distilled models per
+teacher;Acc.is mean student GSM8K accuracy. The thresholds are nominalp-values on the DeepSeek row,
+as elsewhere, and empirical false-positive rates on the three swapped-teacher rows. Teacher properties are in
+Tab. 12.
+Teacher Acc. WM-Basin Black-box
+TPR@FPR TPR@FPR
+5% 1%.1% 5% 1%.1%
+DeepSeek-R1-Distill-Qwen-14B68.9 100 99 88 23 9 1
+gpt-oss-120B77.2 96 76 30 18 10 2
+QwQ-32B80.8 99 97 91 88 74 42
+Llama-3.1-8B74.9 100 100 100 93 87 64
+Table 4 Distillation detection across watermarking schemes.The teacher’s default TextSeal decoder is replaced
+by each of three other schemes, with the detector’s reference bank rebuilt to match. Cells are read as in Tab. 2,
+over50distilled models per scheme and window.
+n-gram=1n-gram=2n-gram=3
+Watermark WM-Basin Black-box WM-Basin Black-box WM-Basin Black-box
+TPR@FPR TPR@FPR TPR@FPR TPR@FPR TPR@FPR TPR@FPR
+5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1% 5% 1%.1%
+GumbelMax 100 100 100 72 44 28 100 98 98 52 32 6 100 100 100 22 10 0
+KGW 100 100 100 58 26 8 94 86 56 40 20 4 90 68 34 16 2 2
+SynthID 100 100 100 64 38 8 100 100 98 44 16 0 100 96 78 24 8 4
+to learn the task, so evading detection means giving up the capability that motivated distillation.
+Effect of the distillation temperature.What happens when the adversary samples its distillation traces
+at a temperature the verifier does not know? We generate the teacher’s traces atT=1.0,0.7, and0.5
+and distill100students from each setting. A lowerTconcentrates the teacher’s output distribution on
+its most likely tokens. For WM-Basin, the reference gradient bank remains fixed atT=1.0, creating
+a mismatch at the two lower temperatures. Tab. 2 shows that lowering the distillation temperature
+costs the black-box baseline most of its power at every window, whereas WM-Basin atp≤0.01still flags
+every suspect atn-gram=1and about half of them atn-gram=3, even atT=0.5. Temperature thus
+governswhat the tokens reveal, not what the gradient reveals: lowering it is a cheap evasion against
+the baseline but not against WM-Basin.
+Effect of the teacher model.Are some teachers harder to protect than others? We distill the same
+Qwen2.5-3B student from each of four teachers spanning three families and8B to120B parameters:
+DeepSeek-R1-Distill-Qwen-14B, gpt-oss-120B (Agarwal et al., 2025), QwQ-32B (Team, 2025), and
+Llama-3.1-8B (Grattafiori et al., 2024), rebuilding the reference bank for each. Tab. 3 shows that, at
+p≤0.05, WM-Basin detects96to100%of distilled models for every teacher. The baseline loses most
+of its power on two teachers and approaches WM-Basin on the other two. Its power is thus inherited
+from the teacher and varies sharply with it, whereas WM-Basin is robust across teachers; App. C.2
+relates this to how often each student repeats its contexts.
+8

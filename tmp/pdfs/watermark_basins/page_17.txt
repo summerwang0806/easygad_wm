@@ -1,0 +1,38 @@
+Appendix
+Appendix Outline
+A The Key-Randomization Rank T est 17
+B Experimental Setup 18
+B.1 Configuration Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 18
+B.2 Distillation and Student Training . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19
+B.3 Prompt Pools and Suspect Sampling . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+B.4 Detector and Baseline Implementation . . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+B.5 Removing Shared Task Directions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 21
+B.6 Calibration of the Rankp-Value . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 23
+C Additional Detection Results 24
+C.1 Operating Points . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+C.2 Cross-Teacher Detection . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+C.3 Watermark Scheme . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 25
+C.4 Audited Domain and System Prompt . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 26
+C.5 Suspect-Text Budget . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 26
+C.6 Probe Model and Warm-Up . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 27
+D Additional Robustness Results 28
+D.1 Compression . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 29
+D.2 Continued Fine-Tuning and RL . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 29
+D.3 Paraphrasing . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 31
+A The Key-Randomization Rank Test
+Token-level detectors read significance from a parametric null for their score: a Gaussian or binomial
+tail for a green-list count (Kirchenbauer et al., 2023; Sander et al., 2024), or a Gamma tail for a Gumbel
+score (Fernandez et al., 2023), which is the form our black-box baseline uses (App. B.4). WM-Basin
+assumes no such model forSand reads significance from the rank of the claimed key amongMdecoy
+keys drawn from the same generator (Dwass, 1957; Phipson and Smyth, 2016).
+LetH 0 be the null hypothesis of §2.1: the suspect’s outputs on the audited domain carry no information
+about the claimed keyk⋆, as holds when the suspect was never trained within that key’s basin. To test
+it, we fix the suspect model, the prompts, and the detection pipeline, then drawMindependent decoy
+keysk 1, . . . , kM ←KeyGen. We evaluateSatk ⋆ and at each decoy, where a higher score means stronger
+basin alignment, and form the empiricalp-value of Eq. (4), which measures how uniquely the suspect
+aligns withk ⋆ relative to random basins. The leading1countsk ⋆ among theM+1candidates, which
+preventsp rank=0and keeps Type-I error control valid under finite Monte Carlo sampling (Phipson and
+Smyth, 2016).
+Thep-value is valid because nothing in the pipeline can favor the claimed key underH0. The claimed
+key and theMdecoys are drawn the same way, and the scoring rule uses a key only as an index that
+17
