@@ -75,7 +75,7 @@ DEFAULT_DETECTOR_TOKENIZER = Path("/shared/public_models/Qwen2.5-14B-Instruct")
 # DEFAULT_KGW = "wm_test/paraKGWwarmup_parakgwGAD_dipper_gad_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 DEFAULT_KGW = "wm_test/paraKGWwarmup_parakgwGAD_dipper_warmup_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 
-# bias5 tp strength4
+# bias6 tp strength4
 # DEFAULT_KGW = "wm_test/tp_gad_rules_gad_bias6_strength4_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 # DEFAULT_KGW = "wm_test/tp_gad_rules_warmup_bias6_strength4_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 

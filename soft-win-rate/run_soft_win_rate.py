@@ -41,13 +41,25 @@ ROOT = HERE.parent
 # gad 1500的结果
 # INPUT_JSONL = ROOT /  "wm_test/kgwwarmup_kgwgad_gad1500_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 
+
+
+
 # bias=6 kgwwarmup_kgwgad
 INPUT_JSONL = ROOT / "wm_test/KGWwarmup_kgwGAD_gad_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 # INPUT_JSONL = ROOT / "wm_test/KGWwarmup_kgwGAD_warmup_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 
-
 # bias6 parawarmup_paragad
-# INPUT_JSONL = "wm_test/paraKGWwarmup_parakgwGAD_dipper_gad_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+# INPUT_JSONL = ROOT / "wm_test/paraKGWwarmup_parakgwGAD_dipper_gad_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+# INPUT_JSONL = ROOT / "wm_test/paraKGWwarmup_parakgwGAD_dipper_warmup_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+
+# bias6 tp strength4
+# INPUT_JSONL = ROOT / "wm_test/tp_gad_rules_gad_bias6_strength4_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+# INPUT_JSONL = ROOT / "wm_test/tp_gad_rules_warmup_bias6_strength4_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+
+
+
+
+
 
 
 
