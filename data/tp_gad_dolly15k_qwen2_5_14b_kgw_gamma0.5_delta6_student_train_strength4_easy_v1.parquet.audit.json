@@ -1,0 +1,608 @@
+{
+  "format_version": 1,
+  "complete": true,
+  "method": "easy_targeted_student_paraphrasing",
+  "acceptance_policy": "easy-v1",
+  "easy_policy": {
+    "policy": "easy-v1",
+    "accepted_without_retry": [
+      "truncated_at_budget",
+      "repetition_loop (trimmed, kept)",
+      "prompt_or_template_echo (stripped, kept)",
+      "unchanged_source_answer",
+      "refusal or editorial preface (noted only)"
+    ],
+    "retry_triggers": [
+      "empty_output"
+    ],
+    "max_attempts": 2,
+    "retries_after_first_attempt": 1,
+    "output_budget": "min(4096, max(256, 2 * source_tokens + 128))",
+    "exhausted_disposition": "keep original answer",
+    "duplicate_generation_policy": "one generation per attempt, at most max_attempts attempts"
+  },
+  "metadata": {
+    "kind": "meta",
+    "format_version": 1,
+    "input": {
+      "path": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta6_train.parquet",
+      "sha256": "19e58455c434af0424d461e917ea50e207342887ff0e8aeb3d925ddcf36144d1",
+      "rows": 14511,
+      "schema_sha256": "da196221caed012e3c6be1029799c45344eb77467d870144116fc8591ab2dee1"
+    },
+    "model": {
+      "model": {
+        "path": "/shared/public_models/Qwen2.5-0.5B",
+        "files": [
+          {
+            "name": "config.json",
+            "size": 709,
+            "mtime_ns": 1742305996477138732,
+            "sha256": "ce7908dfd631cd1f713a65cbea3591d32acaab58d438127d70c5dfc5ce1fc1f0"
+          },
+          {
+            "name": "configuration.json",
+            "size": 2,
+            "mtime_ns": 1742305996465138731,
+            "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+          },
+          {
+            "name": "generation_config.json",
+            "size": 144,
+            "mtime_ns": 1742305996454138731,
+            "sha256": "644edd2e8c1de128e73112c2cccda3bfa7b84e39722b24264bb500f196e2ec1a"
+          },
+          {
+            "name": "merges.txt",
+            "size": 1823226,
+            "mtime_ns": 1742305996429138730,
+            "sha256": "0de0bc38a29ea38eef099b677fa1ff52edd181e573529af26c4cd2136e233777"
+          },
+          {
+            "name": "model.safetensors",
+            "size": 988097824,
+            "mtime_ns": 1742305996009138712
+          },
+          {
+            "name": "tokenizer.json",
+            "size": 7334926,
+            "mtime_ns": 1742305956737137032,
+            "sha256": "47ec9be242d3ef39b9c97ac0a3f06c1752f061b234e295bc0a2842067a3fe4f9"
+          },
+          {
+            "name": "tokenizer_config.json",
+            "size": 7434,
+            "mtime_ns": 1742305956333137014,
+            "sha256": "58db9caa18292ee4e94d2d46bfbbee3cde6dd92da7da3b0d78a44638130e3399"
+          },
+          {
+            "name": "vocab.json",
+            "size": 2776833,
+            "mtime_ns": 1742305956307137013,
+            "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+          }
+        ],
+        "weights_fully_hashed": false,
+        "identity_mode": "config_content_and_weight_manifest",
+        "manifest_sha256": "b2afa9922d702fad474384a5f52a5a58f66140dfb83ed70668bc1106cc7942b3"
+      },
+      "tokenizer": {
+        "path": "/shared/public_models/Qwen2.5-0.5B",
+        "files": [
+          {
+            "name": "config.json",
+            "size": 709,
+            "mtime_ns": 1742305996477138732,
+            "sha256": "ce7908dfd631cd1f713a65cbea3591d32acaab58d438127d70c5dfc5ce1fc1f0"
+          },
+          {
+            "name": "configuration.json",
+            "size": 2,
+            "mtime_ns": 1742305996465138731,
+            "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+          },
+          {
+            "name": "generation_config.json",
+            "size": 144,
+            "mtime_ns": 1742305996454138731,
+            "sha256": "644edd2e8c1de128e73112c2cccda3bfa7b84e39722b24264bb500f196e2ec1a"
+          },
+          {
+            "name": "merges.txt",
+            "size": 1823226,
+            "mtime_ns": 1742305996429138730,
+            "sha256": "0de0bc38a29ea38eef099b677fa1ff52edd181e573529af26c4cd2136e233777"
+          },
+          {
+            "name": "model.safetensors",
+            "size": 988097824,
+            "mtime_ns": 1742305996009138712
+          },
+          {
+            "name": "tokenizer.json",
+            "size": 7334926,
+            "mtime_ns": 1742305956737137032,
+            "sha256": "47ec9be242d3ef39b9c97ac0a3f06c1752f061b234e295bc0a2842067a3fe4f9"
+          },
+          {
+            "name": "tokenizer_config.json",
+            "size": 7434,
+            "mtime_ns": 1742305956333137014,
+            "sha256": "58db9caa18292ee4e94d2d46bfbbee3cde6dd92da7da3b0d78a44638130e3399"
+          },
+          {
+            "name": "vocab.json",
+            "size": 2776833,
+            "mtime_ns": 1742305956307137013,
+            "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+          }
+        ]
+      },
+      "versions": {
+        "torch": "2.6.0",
+        "transformers": "4.51.3",
+        "pyarrow": "19.0.1"
+      },
+      "attack": {
+        "method": "easy_targeted_student_paraphrasing",
+        "rules_sha256": "9a1132a13bca1de807dd5824d74b5062b2ba1d3e7520d1299f4d527652d1cab2",
+        "rules_tokenizer": {
+          "vocab_size": 151665,
+          "fingerprint": "799bc137970648f2ed4e80697ce2eb3614cae59726d59ef6cd41456ba9403117",
+          "name_or_path": "/shared/public_models/Qwen2.5-0.5B",
+          "compatibility": {
+            "version": 1,
+            "fingerprint": "dfad1c4d6a7271b47ae787ca90f0b291bcd0d7301293f57d494d198c2bbe8cab"
+          },
+          "component_fingerprints": {
+            "vocab": "54a4e00eec5a8c5f40d137afdde38da75f4c46ffa802b509cb5fb2157b5a5b0d",
+            "vocab_size": "df100920c0c7ddd2d35eb02b17a802400ab8a8fd5711f4411fab663309503316",
+            "special_tokens_map": "5edd86865a905fc640336d892acad9d7cdf008aa7d3125929a699652881fe8ec",
+            "all_special_ids": "1861af33333bd0c566cef477b444cb157b4d4f54ea20db5d8819e7db08583b81",
+            "added_tokens_decoder": "1032bea0c34fd4b9a9e11c2e9b41b4903797adecd0961176d2816dfcaaef2f4e",
+            "init_kwargs": "32fbece56e938bbb5165f6f2b662f1e410f39f1e5b971379cb31bf4b5c198a12",
+            "chat_template": "06d9597b76804e7ec3014f7fa84bf176654ac3695d6c604fe70deb062d724ede",
+            "attributes": "1b874b3132d01bc5b810b538ac7250eef80d56fb2ae14ffd0109ad944d3e3a1c",
+            "backend": "6dcde2bdb1c1ad1d5b19e616601655bcfd56222044f1749e09863249e788d7bd",
+            "tokenizer_class": "a9e61d3c3fe1669cdeef98a116899d8770ee68a6b19c6c320ec6c2d66bb9e9f4"
+          },
+          "init_kwargs_fingerprints": {
+            "unk_token": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+            "bos_token": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+            "add_bos_token": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "add_prefix_space": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "errors": "197d1a176b127ea0b453175db9de47e38f6168ab692a8621f4d4fed58fb7e5ff"
+          }
+        },
+        "rules_provenance": {
+          "input": {
+            "path": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta6_train.parquet",
+            "sha256": "19e58455c434af0424d461e917ea50e207342887ff0e8aeb3d925ddcf36144d1",
+            "rows": 14511,
+            "column": "teacher_response",
+            "split": "train",
+            "columns": [
+              "id",
+              "content",
+              "teacher_response",
+              "category",
+              "grounded",
+              "flaw",
+              "agreement"
+            ],
+            "schema_sha256": "da196221caed012e3c6be1029799c45344eb77467d870144116fc8591ab2dee1"
+          },
+          "model_before": {
+            "path": "/shared/public_models/Qwen2.5-0.5B",
+            "files": [
+              {
+                "name": "config.json",
+                "size": 709,
+                "mtime_ns": 1742305996477138732,
+                "sha256": "ce7908dfd631cd1f713a65cbea3591d32acaab58d438127d70c5dfc5ce1fc1f0"
+              },
+              {
+                "name": "configuration.json",
+                "size": 2,
+                "mtime_ns": 1742305996465138731,
+                "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+              },
+              {
+                "name": "generation_config.json",
+                "size": 144,
+                "mtime_ns": 1742305996454138731,
+                "sha256": "644edd2e8c1de128e73112c2cccda3bfa7b84e39722b24264bb500f196e2ec1a"
+              },
+              {
+                "name": "merges.txt",
+                "size": 1823226,
+                "mtime_ns": 1742305996429138730,
+                "sha256": "0de0bc38a29ea38eef099b677fa1ff52edd181e573529af26c4cd2136e233777"
+              },
+              {
+                "name": "model.safetensors",
+                "size": 988097824,
+                "mtime_ns": 1742305996009138712
+              },
+              {
+                "name": "tokenizer.json",
+                "size": 7334926,
+                "mtime_ns": 1742305956737137032,
+                "sha256": "47ec9be242d3ef39b9c97ac0a3f06c1752f061b234e295bc0a2842067a3fe4f9"
+              },
+              {
+                "name": "tokenizer_config.json",
+                "size": 7434,
+                "mtime_ns": 1742305956333137014,
+                "sha256": "58db9caa18292ee4e94d2d46bfbbee3cde6dd92da7da3b0d78a44638130e3399"
+              },
+              {
+                "name": "vocab.json",
+                "size": 2776833,
+                "mtime_ns": 1742305956307137013,
+                "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+              }
+            ],
+            "weights_fully_hashed": false,
+            "identity_mode": "config_content_and_weight_manifest",
+            "manifest_sha256": "b2afa9922d702fad474384a5f52a5a58f66140dfb83ed70668bc1106cc7942b3"
+          },
+          "model_after": {
+            "path": "/shared/wwx/EasyGAD/checkpoints/kgwwarmup_kgwgad_gamma0.5_delta6/gad/global_step_1813/actor/huggingface",
+            "files": [
+              {
+                "name": "added_tokens.json",
+                "size": 605,
+                "mtime_ns": 1793958946481155662,
+                "sha256": "58b54bbe36fc752f79a24a271ef66a0a0830054b4dfad94bde757d851968060b"
+              },
+              {
+                "name": "config.json",
+                "size": 705,
+                "mtime_ns": 1793958966827912317,
+                "sha256": "1f166a54590a82c13fcbddd5beea2041f245c720a42bcf38271efaaa9f193da5"
+              },
+              {
+                "name": "generation_config.json",
+                "size": 121,
+                "mtime_ns": 1793958966828912304,
+                "sha256": "b4c0e94e82156f8d922f7a720cae3551ee5f8dafad6723cf413b1e74a07cf8d5"
+              },
+              {
+                "name": "merges.txt",
+                "size": 1671853,
+                "mtime_ns": 1793958946497155471,
+                "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5"
+              },
+              {
+                "name": "model.safetensors",
+                "size": 1260367448,
+                "mtime_ns": 1793958967487904423
+              },
+              {
+                "name": "special_tokens_map.json",
+                "size": 616,
+                "mtime_ns": 1793958946503155399,
+                "sha256": "6676f091c8bc4d1b50146427cfde92073402866b87b6e39223227931b70083e9"
+              },
+              {
+                "name": "tokenizer.json",
+                "size": 11421896,
+                "mtime_ns": 1793958946493155518,
+                "sha256": "9c5ae00e602b8860cbd784ba82a8aa14e8feecec692e7076590d014d7b7fdafa"
+              },
+              {
+                "name": "tokenizer_config.json",
+                "size": 7259,
+                "mtime_ns": 1793958946484155626,
+                "sha256": "a5dae0102f342a3b6bc2a4d03f430ed83666dcab8879c9ee44c08a3d9095132d"
+              },
+              {
+                "name": "vocab.json",
+                "size": 2776833,
+                "mtime_ns": 1793958946501155423,
+                "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+              }
+            ],
+            "weights_fully_hashed": false,
+            "identity_mode": "config_content_and_weight_manifest",
+            "manifest_sha256": "0f4163c0ea84783fde901187537a98a5b924f92cc02c9af627ad0c881833fbc6"
+          },
+          "tokenizer_before": {
+            "vocab_size": 151665,
+            "fingerprint": "799bc137970648f2ed4e80697ce2eb3614cae59726d59ef6cd41456ba9403117",
+            "name_or_path": "/shared/public_models/Qwen2.5-0.5B",
+            "compatibility": {
+              "version": 1,
+              "fingerprint": "dfad1c4d6a7271b47ae787ca90f0b291bcd0d7301293f57d494d198c2bbe8cab"
+            },
+            "component_fingerprints": {
+              "vocab": "54a4e00eec5a8c5f40d137afdde38da75f4c46ffa802b509cb5fb2157b5a5b0d",
+              "vocab_size": "df100920c0c7ddd2d35eb02b17a802400ab8a8fd5711f4411fab663309503316",
+              "special_tokens_map": "5edd86865a905fc640336d892acad9d7cdf008aa7d3125929a699652881fe8ec",
+              "all_special_ids": "1861af33333bd0c566cef477b444cb157b4d4f54ea20db5d8819e7db08583b81",
+              "added_tokens_decoder": "1032bea0c34fd4b9a9e11c2e9b41b4903797adecd0961176d2816dfcaaef2f4e",
+              "init_kwargs": "32fbece56e938bbb5165f6f2b662f1e410f39f1e5b971379cb31bf4b5c198a12",
+              "chat_template": "06d9597b76804e7ec3014f7fa84bf176654ac3695d6c604fe70deb062d724ede",
+              "attributes": "1b874b3132d01bc5b810b538ac7250eef80d56fb2ae14ffd0109ad944d3e3a1c",
+              "backend": "6dcde2bdb1c1ad1d5b19e616601655bcfd56222044f1749e09863249e788d7bd",
+              "tokenizer_class": "a9e61d3c3fe1669cdeef98a116899d8770ee68a6b19c6c320ec6c2d66bb9e9f4"
+            },
+            "init_kwargs_fingerprints": {
+              "unk_token": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+              "bos_token": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+              "add_bos_token": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+              "add_prefix_space": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+              "errors": "197d1a176b127ea0b453175db9de47e38f6168ab692a8621f4d4fed58fb7e5ff"
+            }
+          },
+          "tokenizer_after": {
+            "vocab_size": 151665,
+            "fingerprint": "0b58c1d78e4e674e84bca7a16354a4ca3443f519049758b2a762f7b4a94ca275",
+            "name_or_path": "checkpoints/kgwwarmup_kgwgad_gamma0.5_delta6/gad/global_step_1813/actor/huggingface",
+            "compatibility": {
+              "version": 1,
+              "fingerprint": "dfad1c4d6a7271b47ae787ca90f0b291bcd0d7301293f57d494d198c2bbe8cab"
+            },
+            "component_fingerprints": {
+              "vocab": "54a4e00eec5a8c5f40d137afdde38da75f4c46ffa802b509cb5fb2157b5a5b0d",
+              "vocab_size": "df100920c0c7ddd2d35eb02b17a802400ab8a8fd5711f4411fab663309503316",
+              "special_tokens_map": "5edd86865a905fc640336d892acad9d7cdf008aa7d3125929a699652881fe8ec",
+              "all_special_ids": "1861af33333bd0c566cef477b444cb157b4d4f54ea20db5d8819e7db08583b81",
+              "added_tokens_decoder": "1032bea0c34fd4b9a9e11c2e9b41b4903797adecd0961176d2816dfcaaef2f4e",
+              "init_kwargs": "32fbece56e938bbb5165f6f2b662f1e410f39f1e5b971379cb31bf4b5c198a12",
+              "chat_template": "06d9597b76804e7ec3014f7fa84bf176654ac3695d6c604fe70deb062d724ede",
+              "attributes": "1b874b3132d01bc5b810b538ac7250eef80d56fb2ae14ffd0109ad944d3e3a1c",
+              "backend": "6dcde2bdb1c1ad1d5b19e616601655bcfd56222044f1749e09863249e788d7bd",
+              "tokenizer_class": "a9e61d3c3fe1669cdeef98a116899d8770ee68a6b19c6c320ec6c2d66bb9e9f4"
+            },
+            "init_kwargs_fingerprints": {
+              "unk_token": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+              "bos_token": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+              "add_bos_token": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+              "add_prefix_space": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+              "errors": "197d1a176b127ea0b453175db9de47e38f6168ab692a8621f4d4fed58fb7e5ff"
+            }
+          },
+          "versions": {
+            "transformers": "4.51.3",
+            "torch": "2.6.0",
+            "pyarrow": "19.0.1"
+          },
+          "device": "cuda:0",
+          "physical_gpu_selection": "1",
+          "model_loading_order": [
+            "W",
+            "O"
+          ],
+          "context_statistics": {
+            "answer_rows": 14511,
+            "answer_tokens": 3360724,
+            "frequency_scope": "responses_excluding_final_token_per_prefix_length",
+            "orders": {
+              "1": {
+                "occurrences": 3346213,
+                "distinct_prefixes": 52665,
+                "selected_prefixes": 2260,
+                "max_relative_frequency": 0.037793768657285114
+              },
+              "2": {
+                "occurrences": 3331702,
+                "distinct_prefixes": 819533,
+                "selected_prefixes": 1325,
+                "max_relative_frequency": 0.006777917112634924
+              }
+            },
+            "context_mode": "answer_only",
+            "context_limit_mode": "exclude_positions_after_limit",
+            "empty_contexts_excluded": 14511,
+            "late_context_positions_excluded": 1269261,
+            "selected_prefixes_without_context": [
+              "198,12882",
+              "342,321",
+              "672,15272",
+              "5359,425",
+              "15272,5359",
+              "19219,2303",
+              "19988,19219"
+            ],
+            "missing_prefix_examples_truncated": false,
+            "selected_prefixes_without_context_count": 7,
+            "retained_contexts": 1059894,
+            "eligible_contexts": 2086019,
+            "sampled_prefixes": 240,
+            "global_eligible_contexts": 2091463,
+            "global_retained_contexts": 2091463
+          },
+          "official_source": "https://github.com/THU-BPM/Watermark-Radioactivity-Attack",
+          "stealing_protocol": {
+            "global_scope": "all_effective_positions",
+            "global_vocabulary": "full_tokenizer_vocabulary_including_zero_scores",
+            "conditional_sampling": "shuffle_then_truncate",
+            "prefix_frequency": "excludes_final_token"
+          },
+          "adaptations": [
+            "answer_only_train_parquet",
+            "nonempty_contexts_only",
+            "sequential_models_same_device"
+          ],
+          "elapsed_seconds": 18595.08081126213
+        },
+        "inverse_strength": 4.0,
+        "cross_tokenizer": false,
+        "projection": null,
+        "tokenizer_identity_checked": true,
+        "paraphraser_model_role": "original_student_O",
+        "project_adaptation": "student_model_replaces_paper_dipper",
+        "official_tp_code_available": false,
+        "acceptance_policy": "easy-v1",
+        "strict_checks": "length/repetition/prompt-echo/unchanged are audit notes, not retries"
+      },
+      "tokenizer_fingerprint": {
+        "vocab_size": 151665,
+        "fingerprint": "799bc137970648f2ed4e80697ce2eb3614cae59726d59ef6cd41456ba9403117",
+        "name_or_path": "/shared/public_models/Qwen2.5-0.5B",
+        "compatibility": {
+          "version": 1,
+          "fingerprint": "dfad1c4d6a7271b47ae787ca90f0b291bcd0d7301293f57d494d198c2bbe8cab"
+        },
+        "component_fingerprints": {
+          "vocab": "54a4e00eec5a8c5f40d137afdde38da75f4c46ffa802b509cb5fb2157b5a5b0d",
+          "vocab_size": "df100920c0c7ddd2d35eb02b17a802400ab8a8fd5711f4411fab663309503316",
+          "special_tokens_map": "5edd86865a905fc640336d892acad9d7cdf008aa7d3125929a699652881fe8ec",
+          "all_special_ids": "1861af33333bd0c566cef477b444cb157b4d4f54ea20db5d8819e7db08583b81",
+          "added_tokens_decoder": "1032bea0c34fd4b9a9e11c2e9b41b4903797adecd0961176d2816dfcaaef2f4e",
+          "init_kwargs": "32fbece56e938bbb5165f6f2b662f1e410f39f1e5b971379cb31bf4b5c198a12",
+          "chat_template": "06d9597b76804e7ec3014f7fa84bf176654ac3695d6c604fe70deb062d724ede",
+          "attributes": "1b874b3132d01bc5b810b538ac7250eef80d56fb2ae14ffd0109ad944d3e3a1c",
+          "backend": "6dcde2bdb1c1ad1d5b19e616601655bcfd56222044f1749e09863249e788d7bd",
+          "tokenizer_class": "a9e61d3c3fe1669cdeef98a116899d8770ee68a6b19c6c320ec6c2d66bb9e9f4"
+        },
+        "init_kwargs_fingerprints": {
+          "unk_token": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "bos_token": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "add_bos_token": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+          "add_prefix_space": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+          "errors": "197d1a176b127ea0b453175db9de47e38f6168ab692a8621f4d4fed58fb7e5ff"
+        }
+      }
+    },
+    "config": {
+      "batch_size": 1,
+      "max_input_tokens": 4096,
+      "max_new_tokens": 4096,
+      "context_window": 32768,
+      "prompt_mode": "completion",
+      "top_p": 0.75,
+      "temperature": 1.0,
+      "dtype": "float32",
+      "seed": 42,
+      "on_failure": "keep-original",
+      "max_attempts": 2,
+      "generation_policy": "efficient-v1"
+    },
+    "easy_policy": {
+      "policy": "easy-v1",
+      "accepted_without_retry": [
+        "truncated_at_budget",
+        "repetition_loop (trimmed, kept)",
+        "prompt_or_template_echo (stripped, kept)",
+        "unchanged_source_answer",
+        "refusal or editorial preface (noted only)"
+      ],
+      "retry_triggers": [
+        "empty_output"
+      ],
+      "max_attempts": 2,
+      "retries_after_first_attempt": 1,
+      "output_budget": "min(4096, max(256, 2 * source_tokens + 128))",
+      "exhausted_disposition": "keep original answer",
+      "duplicate_generation_policy": "one generation per attempt, at most max_attempts attempts"
+    },
+    "input_template_sha256": "542d71e2e572130d71f5423a036e86e4de40554c254e5083fcd9cd7c56167bb6",
+    "prompts_sha256": "7011002d849174b12033d3973b204abe26034b057ec41259e85433ea0d9b0a73",
+    "generation_contract": {
+      "architecture": "causal_LM",
+      "paraphrase_mode": "whole_response",
+      "inputs_per_response": 1,
+      "prompt_mode": "completion",
+      "max_new_tokens_excludes_prompt": true,
+      "do_sample": true,
+      "sentence_splitter": null,
+      "prompt_truncation": false,
+      "output_extraction": "new_tokens_only",
+      "direct_token_id_bias": true,
+      "acceptance_policy": "easy-v1",
+      "retry_trigger": "empty_output",
+      "max_attempts_includes_first_attempt": true
+    },
+    "fingerprint": "36c1bcd4c64aff1486f7855f77b24cc9f8febe51cf0ef5a7caa56770c1c5befe"
+  },
+  "input_sha256": "19e58455c434af0424d461e917ea50e207342887ff0e8aeb3d925ddcf36144d1",
+  "output": "/shared/wwx/EasyGAD/data/tp_gad_dolly15k_qwen2_5_14b_kgw_gamma0.5_delta6_student_train_strength4_easy_v1.parquet",
+  "output_sha256": "b0df9badbaddd32d67690635cad3e14b9090f624c485b04ae1cd17ea1a773f3c",
+  "rows": 14511,
+  "processed_rows": 14511,
+  "status_counts": {
+    "ok": 14511
+  },
+  "finish_reasons": {
+    "stop": 3690,
+    "early_stop": 7625,
+    "length": 3196
+  },
+  "accepted_attempts": {
+    "1": 14511
+  },
+  "rejected_generation_attempts": 0,
+  "rejected_attempt_reasons": {},
+  "fallback_rows": [],
+  "fallback_reasons": {},
+  "note_counts": {
+    "repetition_loop": 7625,
+    "truncated_at_budget": 3196,
+    "unchanged_source_answer": 10,
+    "refusal": 1,
+    "editorial_preface": 2
+  },
+  "cleanup_counts": {
+    "cut_echoed_source_block": 32,
+    "cut_echoed_template": 6
+  },
+  "truncated_accepted_count": 3196,
+  "repetition_trimmed_count": 7625,
+  "prompt_echo_cleaned_count": 32,
+  "unchanged_accepted_count": 10,
+  "changed_teacher_responses": 14501,
+  "unchanged_teacher_responses": 10,
+  "unchanged_response_rows": [
+    327,
+    685,
+    2105,
+    3181,
+    4258,
+    4306,
+    5554,
+    7853,
+    9097,
+    9234
+  ],
+  "unchanged_response_ids": [
+    "dolly-12844",
+    "dolly-14669",
+    "dolly-11178",
+    "dolly-07450",
+    "dolly-14469",
+    "dolly-09749",
+    "dolly-10376",
+    "dolly-14897",
+    "dolly-11322",
+    "dolly-11422"
+  ],
+  "schema_and_metadata_equal": true,
+  "row_order_and_ids_equal": true,
+  "protected_columns_equal": {
+    "id": true,
+    "content": true,
+    "category": true,
+    "grounded": true,
+    "flaw": true,
+    "agreement": true
+  },
+  "output_tokens": {
+    "min": 2,
+    "max": 3202,
+    "mean": 247.98566604644753
+  },
+  "effective_max_new_tokens": {
+    "min": 256,
+    "max": 3202,
+    "mean": 602.4604782578733
+  },
+  "response_input_checks": 14511,
+  "generated_response_attempts": 14511,
+  "duration_seconds": 17825.621,
+  "paraphrase_mode": "whole_response",
+  "semantic_preservation": "Requested by prompt; automatic checks do not prove factual equivalence",
+  "parameter_provenance": "Project TP variant: original student O paraphrases with the shared WN rules; easy baseline acceptance policy"
+}

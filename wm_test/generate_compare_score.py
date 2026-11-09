@@ -65,8 +65,8 @@ DEFAULT_STUDENT = ROOT / (
 
     # "checkpoints/kgwwarmup_kgwgad_gamma0.5_delta6/gad/global_step_1813/actor/huggingface"
     # "checkpoints/kgwwarmup_kgwgad_gamma0.5_delta6/warmup/global_step_1813/actor/huggingface"
-    "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta6_dipper2stage/gad/global_step_1813/actor/huggingface"
-
+    "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta6_dipper2stage/warmup/global_step_1813/actor/huggingface"
+    # "checkpoints/tp_gad_rules_g5_d6_s4_te_old_st_Qwen2.5-0.5B/warmup/global_step_1813/actor/huggingface"
 
     # "checkpoints/te_old_st_Qwen2.5-0.5B_2warmup/warmup/global_step_3626/actor/huggingface"
     # "checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3/gad/global_step_1813/actor/huggingface"
@@ -89,7 +89,7 @@ DEFAULT_STUDENT = ROOT / (
 
 DEFAULT_BASE = Path("/shared/public_models/Qwen2.5-0.5B")
 DEFAULT_DETECTOR_TOKENIZER = Path("/shared/public_models/Qwen2.5-14B-Instruct")
-DEFAULT_STUDENT_OUTPUT = ROOT / "wm_test/paraKGWwarmup_parakgwGAD_dipper_gad_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
+DEFAULT_STUDENT_OUTPUT = ROOT / "wm_test/paraKGWwarmup_parakgwGAD_dipper_warmup_bias6_gamma0.5_qwen2_5_0_5b_dolly15k_test.jsonl"
 DEFAULT_BASE_OUTPUT = ROOT / "wm_test/base_qwen2_5_0_5b_dolly15k_test_gamma0.5.jsonl"
 
 
