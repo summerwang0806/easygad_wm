@@ -5,6 +5,7 @@ import argparse
 import json
 import math
 import statistics
+import sys
 from pathlib import Path
 
 
@@ -80,6 +81,7 @@ def score_batch(model, sequences, pad_id, device):
 
 def score_pairs(args, pairs):
     import torch
+    from tqdm import tqdm
     from transformers import AutoConfig, AutoModelForTokenClassification, AutoTokenizer, GenerationConfig
 
     device = torch.device(args.device)
@@ -102,18 +104,26 @@ def score_pairs(args, pairs):
     if pad_eos is None or tokenizer.pad_token_id is None or None in rollout_eos or not rollout_eos:
         raise ValueError("Actor tokenizer and generation config must provide the EasyGAD padding and EOS IDs")
 
+    print(f"Loading critic weights from {critic} on {device}", file=sys.stderr, flush=True)
     config = AutoConfig.from_pretrained(critic, local_files_only=True)
-    if config.num_labels != 1 or not any("ForTokenClassification" in arch for arch in config.architectures or []):
-        raise ValueError("Use the exported single-logit critic/huggingface directory")
-    model, loading = AutoModelForTokenClassification.from_pretrained(
-        critic, config=config, torch_dtype=dtype, local_files_only=True, output_loading_info=True,
-    )
+    # FSDP's critic worker chooses the token-classification class explicitly
+    # and sets num_labels to 1, even when the saved config has legacy metadata.
+    config.num_labels = 1
+    try:
+        model, loading = AutoModelForTokenClassification.from_pretrained(
+            critic, config=config, torch_dtype=dtype, local_files_only=True, output_loading_info=True,
+        )
+    except RuntimeError as error:
+        raise ValueError(f"Could not load {critic} as a single-logit critic: {error}") from error
     if loading["missing_keys"] or loading["mismatched_keys"]:
-        raise ValueError(f"Critic weights are incomplete or mismatched: {loading}")
+        raise ValueError(
+            f"Trained critic weights are incomplete or mismatched in {critic}. "
+            f"Missing keys: {loading['missing_keys']}; mismatched keys: {loading['mismatched_keys']}"
+        )
     model = model.to(device).eval()
 
     scored = []
-    with torch.inference_mode():
+    with torch.inference_mode(), tqdm(total=len(pairs), desc="Scoring teacher pairs", unit="pair") as progress:
         for start in range(0, len(pairs), args.batch_size):
             batch = pairs[start:start + args.batch_size]
             sequences = []
@@ -145,6 +155,7 @@ def score_pairs(args, pairs):
                     "kgw_scored_response_tokens": counts[index][0],
                     "clean_scored_response_tokens": counts[index][1],
                 })
+            progress.update(len(batch))
     return scored
 
 
