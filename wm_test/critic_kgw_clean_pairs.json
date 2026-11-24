@@ -1,0 +1,4028 @@
+{
+  "kgw_data": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_kgw_gamma0.5_delta3_newtest.parquet",
+  "clean_data": "/shared/wwx/EasyGAD/data/dolly15k_qwen2_5_14b_clean_test.parquet",
+  "n_pairs": 500,
+  "identical_answer_pairs": 30,
+  "critic": "/shared/wwx/EasyGAD/checkpoints/te_old_st_Qwen2.5-0.5B_gamma0.5_delta3_new/warmup/global_step_1813/critic/huggingface",
+  "actor_model": "/shared/public_models/Qwen2.5-0.5B",
+  "device": "cuda",
+  "batch_size_pairs": 4,
+  "max_prompt_length": 2048,
+  "max_response_length": 1536,
+  "summary": {
+    "n_pairs": 500,
+    "kgw_mean_score": 8.7714833984375,
+    "clean_mean_score": 12.1760048828125,
+    "mean_kgw_minus_clean": -3.404521484375,
+    "mean_difference_95pct_t_interval": [
+      -4.2778700723779695,
+      -2.5311728963720306
+    ],
+    "paired_t_p_value_kgw_greater": 0.999999999999951,
+    "kgw_wins": 165,
+    "ties": 38,
+    "clean_wins": 297
+  },
+  "pairs": [
+    {
+      "id": "dolly-13384",
+      "kgw_score": 11.5625,
+      "clean_score": 14.125,
+      "difference": -2.5625,
+      "kgw_scored_response_tokens": 185,
+      "clean_scored_response_tokens": 156
+    },
+    {
+      "id": "dolly-10119",
+      "kgw_score": 23.25,
+      "clean_score": 30.75,
+      "difference": -7.5,
+      "kgw_scored_response_tokens": 116,
+      "clean_scored_response_tokens": 101
+    },
+    {
+      "id": "dolly-00423",
+      "kgw_score": 12.125,
+      "clean_score": 13.625,
+      "difference": -1.5,
+      "kgw_scored_response_tokens": 1201,
+      "clean_scored_response_tokens": 574
+    },
+    {
+      "id": "dolly-10112",
+      "kgw_score": 27.5,
+      "clean_score": 33.75,
+      "difference": -6.25,
+      "kgw_scored_response_tokens": 65,
+      "clean_scored_response_tokens": 85
+    },
+    {
+      "id": "dolly-12021",
+      "kgw_score": 34.75,
+      "clean_score": 35.75,
+      "difference": -1.0,
+      "kgw_scored_response_tokens": 424,
+      "clean_scored_response_tokens": 314
+    },
+    {
+      "id": "dolly-04534",
+      "kgw_score": 10.3125,
+      "clean_score": 13.9375,
+      "difference": -3.625,
+      "kgw_scored_response_tokens": 173,
+      "clean_scored_response_tokens": 263
+    },
+    {
+      "id": "dolly-12156",
+      "kgw_score": 22.75,
+      "clean_score": 15.9375,
+      "difference": 6.8125,
+      "kgw_scored_response_tokens": 459,
+      "clean_scored_response_tokens": 181
+    },
+    {
+      "id": "dolly-00135",
+      "kgw_score": 28.875,
+      "clean_score": 47.0,
+      "difference": -18.125,
+      "kgw_scored_response_tokens": 371,
+      "clean_scored_response_tokens": 430
+    },
+    {
+      "id": "dolly-14108",
+      "kgw_score": 6.0625,
+      "clean_score": 6.0625,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 41,
+      "clean_scored_response_tokens": 41
+    },
+    {
+      "id": "dolly-09066",
+      "kgw_score": 15.4375,
+      "clean_score": 13.3125,
+      "difference": 2.125,
+      "kgw_scored_response_tokens": 142,
+      "clean_scored_response_tokens": 155
+    },
+    {
+      "id": "dolly-11025",
+      "kgw_score": 8.625,
+      "clean_score": -5.65625,
+      "difference": 14.28125,
+      "kgw_scored_response_tokens": 52,
+      "clean_scored_response_tokens": 61
+    },
+    {
+      "id": "dolly-03759",
+      "kgw_score": -19.375,
+      "clean_score": -21.75,
+      "difference": 2.375,
+      "kgw_scored_response_tokens": 164,
+      "clean_scored_response_tokens": 135
+    },
+    {
+      "id": "dolly-03181",
+      "kgw_score": -0.3359375,
+      "clean_score": 14.1875,
+      "difference": -14.5234375,
+      "kgw_scored_response_tokens": 315,
+      "clean_scored_response_tokens": 299
+    },
+    {
+      "id": "dolly-13257",
+      "kgw_score": 7.0625,
+      "clean_score": 10.0,
+      "difference": -2.9375,
+      "kgw_scored_response_tokens": 265,
+      "clean_scored_response_tokens": 281
+    },
+    {
+      "id": "dolly-03060",
+      "kgw_score": 19.375,
+      "clean_score": 10.4375,
+      "difference": 8.9375,
+      "kgw_scored_response_tokens": 419,
+      "clean_scored_response_tokens": 360
+    },
+    {
+      "id": "dolly-06491",
+      "kgw_score": 24.125,
+      "clean_score": 31.125,
+      "difference": -7.0,
+      "kgw_scored_response_tokens": 718,
+      "clean_scored_response_tokens": 607
+    },
+    {
+      "id": "dolly-10254",
+      "kgw_score": 13.6875,
+      "clean_score": 25.375,
+      "difference": -11.6875,
+      "kgw_scored_response_tokens": 58,
+      "clean_scored_response_tokens": 55
+    },
+    {
+      "id": "dolly-08133",
+      "kgw_score": 1.5,
+      "clean_score": -15.1875,
+      "difference": 16.6875,
+      "kgw_scored_response_tokens": 39,
+      "clean_scored_response_tokens": 25
+    },
+    {
+      "id": "dolly-00286",
+      "kgw_score": 3.328125,
+      "clean_score": -3.046875,
+      "difference": 6.375,
+      "kgw_scored_response_tokens": 41,
+      "clean_scored_response_tokens": 50
+    },
+    {
+      "id": "dolly-10904",
+      "kgw_score": -24.25,
+      "clean_score": 2.40625,
+      "difference": -26.65625,
+      "kgw_scored_response_tokens": 207,
+      "clean_scored_response_tokens": 62
+    },
+    {
+      "id": "dolly-12241",
+      "kgw_score": 10.5,
+      "clean_score": 21.0,
+      "difference": -10.5,
+      "kgw_scored_response_tokens": 446,
+      "clean_scored_response_tokens": 449
+    },
+    {
+      "id": "dolly-08351",
+      "kgw_score": 16.125,
+      "clean_score": 9.75,
+      "difference": 6.375,
+      "kgw_scored_response_tokens": 253,
+      "clean_scored_response_tokens": 104
+    },
+    {
+      "id": "dolly-00944",
+      "kgw_score": 12.75,
+      "clean_score": 23.5,
+      "difference": -10.75,
+      "kgw_scored_response_tokens": 147,
+      "clean_scored_response_tokens": 123
+    },
+    {
+      "id": "dolly-07923",
+      "kgw_score": -1.46875,
+      "clean_score": 2.234375,
+      "difference": -3.703125,
+      "kgw_scored_response_tokens": 329,
+      "clean_scored_response_tokens": 296
+    },
+    {
+      "id": "dolly-05775",
+      "kgw_score": -6.21875,
+      "clean_score": -6.21875,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 27,
+      "clean_scored_response_tokens": 27
+    },
+    {
+      "id": "dolly-05908",
+      "kgw_score": -3.265625,
+      "clean_score": 8.875,
+      "difference": -12.140625,
+      "kgw_scored_response_tokens": 467,
+      "clean_scored_response_tokens": 446
+    },
+    {
+      "id": "dolly-04979",
+      "kgw_score": 9.625,
+      "clean_score": 10.75,
+      "difference": -1.125,
+      "kgw_scored_response_tokens": 27,
+      "clean_scored_response_tokens": 35
+    },
+    {
+      "id": "dolly-07106",
+      "kgw_score": -10.8125,
+      "clean_score": -13.3125,
+      "difference": 2.5,
+      "kgw_scored_response_tokens": 513,
+      "clean_scored_response_tokens": 585
+    },
+    {
+      "id": "dolly-00720",
+      "kgw_score": -28.625,
+      "clean_score": -37.5,
+      "difference": 8.875,
+      "kgw_scored_response_tokens": 70,
+      "clean_scored_response_tokens": 50
+    },
+    {
+      "id": "dolly-04289",
+      "kgw_score": 29.0,
+      "clean_score": 30.75,
+      "difference": -1.75,
+      "kgw_scored_response_tokens": 148,
+      "clean_scored_response_tokens": 99
+    },
+    {
+      "id": "dolly-13700",
+      "kgw_score": 17.75,
+      "clean_score": 14.875,
+      "difference": 2.875,
+      "kgw_scored_response_tokens": 141,
+      "clean_scored_response_tokens": 133
+    },
+    {
+      "id": "dolly-06521",
+      "kgw_score": -22.375,
+      "clean_score": -10.0,
+      "difference": -12.375,
+      "kgw_scored_response_tokens": 169,
+      "clean_scored_response_tokens": 131
+    },
+    {
+      "id": "dolly-12244",
+      "kgw_score": 7.28125,
+      "clean_score": 7.28125,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 14,
+      "clean_scored_response_tokens": 14
+    },
+    {
+      "id": "dolly-07103",
+      "kgw_score": -0.703125,
+      "clean_score": -15.4375,
+      "difference": 14.734375,
+      "kgw_scored_response_tokens": 207,
+      "clean_scored_response_tokens": 235
+    },
+    {
+      "id": "dolly-12249",
+      "kgw_score": 31.0,
+      "clean_score": 34.75,
+      "difference": -3.75,
+      "kgw_scored_response_tokens": 218,
+      "clean_scored_response_tokens": 90
+    },
+    {
+      "id": "dolly-04082",
+      "kgw_score": 8.4375,
+      "clean_score": 12.4375,
+      "difference": -4.0,
+      "kgw_scored_response_tokens": 66,
+      "clean_scored_response_tokens": 117
+    },
+    {
+      "id": "dolly-11402",
+      "kgw_score": -5.03125,
+      "clean_score": -5.0,
+      "difference": -0.03125,
+      "kgw_scored_response_tokens": 131,
+      "clean_scored_response_tokens": 89
+    },
+    {
+      "id": "dolly-05608",
+      "kgw_score": 18.25,
+      "clean_score": 23.375,
+      "difference": -5.125,
+      "kgw_scored_response_tokens": 295,
+      "clean_scored_response_tokens": 284
+    },
+    {
+      "id": "dolly-00304",
+      "kgw_score": 10.0625,
+      "clean_score": 9.1875,
+      "difference": 0.875,
+      "kgw_scored_response_tokens": 22,
+      "clean_scored_response_tokens": 19
+    },
+    {
+      "id": "dolly-12108",
+      "kgw_score": 14.625,
+      "clean_score": 19.125,
+      "difference": -4.5,
+      "kgw_scored_response_tokens": 367,
+      "clean_scored_response_tokens": 580
+    },
+    {
+      "id": "dolly-09720",
+      "kgw_score": 19.0,
+      "clean_score": 42.25,
+      "difference": -23.25,
+      "kgw_scored_response_tokens": 321,
+      "clean_scored_response_tokens": 353
+    },
+    {
+      "id": "dolly-05185",
+      "kgw_score": -2.25,
+      "clean_score": -2.25,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 19,
+      "clean_scored_response_tokens": 19
+    },
+    {
+      "id": "dolly-03466",
+      "kgw_score": 20.5,
+      "clean_score": 29.5,
+      "difference": -9.0,
+      "kgw_scored_response_tokens": 130,
+      "clean_scored_response_tokens": 277
+    },
+    {
+      "id": "dolly-01134",
+      "kgw_score": 17.875,
+      "clean_score": 29.5,
+      "difference": -11.625,
+      "kgw_scored_response_tokens": 61,
+      "clean_scored_response_tokens": 38
+    },
+    {
+      "id": "dolly-00122",
+      "kgw_score": 15.875,
+      "clean_score": 13.4375,
+      "difference": 2.4375,
+      "kgw_scored_response_tokens": 133,
+      "clean_scored_response_tokens": 127
+    },
+    {
+      "id": "dolly-10627",
+      "kgw_score": 12.375,
+      "clean_score": 16.5,
+      "difference": -4.125,
+      "kgw_scored_response_tokens": 165,
+      "clean_scored_response_tokens": 115
+    },
+    {
+      "id": "dolly-06748",
+      "kgw_score": -11.6875,
+      "clean_score": 10.0,
+      "difference": -21.6875,
+      "kgw_scored_response_tokens": 469,
+      "clean_scored_response_tokens": 542
+    },
+    {
+      "id": "dolly-11405",
+      "kgw_score": 0.58203125,
+      "clean_score": 2.046875,
+      "difference": -1.46484375,
+      "kgw_scored_response_tokens": 80,
+      "clean_scored_response_tokens": 185
+    },
+    {
+      "id": "dolly-07788",
+      "kgw_score": 3.046875,
+      "clean_score": 12.4375,
+      "difference": -9.390625,
+      "kgw_scored_response_tokens": 156,
+      "clean_scored_response_tokens": 158
+    },
+    {
+      "id": "dolly-11310",
+      "kgw_score": 15.3125,
+      "clean_score": 33.75,
+      "difference": -18.4375,
+      "kgw_scored_response_tokens": 527,
+      "clean_scored_response_tokens": 495
+    },
+    {
+      "id": "dolly-02660",
+      "kgw_score": -34.5,
+      "clean_score": -10.5,
+      "difference": -24.0,
+      "kgw_scored_response_tokens": 79,
+      "clean_scored_response_tokens": 70
+    },
+    {
+      "id": "dolly-06622",
+      "kgw_score": 13.1875,
+      "clean_score": 0.57421875,
+      "difference": 12.61328125,
+      "kgw_scored_response_tokens": 369,
+      "clean_scored_response_tokens": 265
+    },
+    {
+      "id": "dolly-14389",
+      "kgw_score": 5.6875,
+      "clean_score": 4.78125,
+      "difference": 0.90625,
+      "kgw_scored_response_tokens": 331,
+      "clean_scored_response_tokens": 300
+    },
+    {
+      "id": "dolly-06540",
+      "kgw_score": -23.875,
+      "clean_score": -19.875,
+      "difference": -4.0,
+      "kgw_scored_response_tokens": 463,
+      "clean_scored_response_tokens": 279
+    },
+    {
+      "id": "dolly-07953",
+      "kgw_score": 5.5,
+      "clean_score": -20.0,
+      "difference": 25.5,
+      "kgw_scored_response_tokens": 189,
+      "clean_scored_response_tokens": 93
+    },
+    {
+      "id": "dolly-13746",
+      "kgw_score": 15.25,
+      "clean_score": 19.0,
+      "difference": -3.75,
+      "kgw_scored_response_tokens": 75,
+      "clean_scored_response_tokens": 130
+    },
+    {
+      "id": "dolly-04978",
+      "kgw_score": 12.0,
+      "clean_score": 1.4296875,
+      "difference": 10.5703125,
+      "kgw_scored_response_tokens": 21,
+      "clean_scored_response_tokens": 91
+    },
+    {
+      "id": "dolly-08677",
+      "kgw_score": 11.375,
+      "clean_score": 17.75,
+      "difference": -6.375,
+      "kgw_scored_response_tokens": 119,
+      "clean_scored_response_tokens": 130
+    },
+    {
+      "id": "dolly-01998",
+      "kgw_score": 4.03125,
+      "clean_score": 9.75,
+      "difference": -5.71875,
+      "kgw_scored_response_tokens": 119,
+      "clean_scored_response_tokens": 65
+    },
+    {
+      "id": "dolly-02097",
+      "kgw_score": 13.125,
+      "clean_score": 24.5,
+      "difference": -11.375,
+      "kgw_scored_response_tokens": 74,
+      "clean_scored_response_tokens": 221
+    },
+    {
+      "id": "dolly-06255",
+      "kgw_score": 29.5,
+      "clean_score": 33.75,
+      "difference": -4.25,
+      "kgw_scored_response_tokens": 407,
+      "clean_scored_response_tokens": 349
+    },
+    {
+      "id": "dolly-11071",
+      "kgw_score": 24.125,
+      "clean_score": 35.5,
+      "difference": -11.375,
+      "kgw_scored_response_tokens": 363,
+      "clean_scored_response_tokens": 365
+    },
+    {
+      "id": "dolly-14854",
+      "kgw_score": 12.0625,
+      "clean_score": 14.1875,
+      "difference": -2.125,
+      "kgw_scored_response_tokens": 200,
+      "clean_scored_response_tokens": 93
+    },
+    {
+      "id": "dolly-03614",
+      "kgw_score": 23.375,
+      "clean_score": 23.25,
+      "difference": 0.125,
+      "kgw_scored_response_tokens": 798,
+      "clean_scored_response_tokens": 483
+    },
+    {
+      "id": "dolly-02296",
+      "kgw_score": 15.9375,
+      "clean_score": 22.0,
+      "difference": -6.0625,
+      "kgw_scored_response_tokens": 334,
+      "clean_scored_response_tokens": 387
+    },
+    {
+      "id": "dolly-07239",
+      "kgw_score": 8.125,
+      "clean_score": 4.375,
+      "difference": 3.75,
+      "kgw_scored_response_tokens": 165,
+      "clean_scored_response_tokens": 192
+    },
+    {
+      "id": "dolly-11368",
+      "kgw_score": -6.28125,
+      "clean_score": -11.25,
+      "difference": 4.96875,
+      "kgw_scored_response_tokens": 249,
+      "clean_scored_response_tokens": 210
+    },
+    {
+      "id": "dolly-02732",
+      "kgw_score": -7.96875,
+      "clean_score": -6.96875,
+      "difference": -1.0,
+      "kgw_scored_response_tokens": 50,
+      "clean_scored_response_tokens": 68
+    },
+    {
+      "id": "dolly-13565",
+      "kgw_score": -41.5,
+      "clean_score": 16.25,
+      "difference": -57.75,
+      "kgw_scored_response_tokens": 944,
+      "clean_scored_response_tokens": 1536
+    },
+    {
+      "id": "dolly-13004",
+      "kgw_score": 34.5,
+      "clean_score": 34.25,
+      "difference": 0.25,
+      "kgw_scored_response_tokens": 279,
+      "clean_scored_response_tokens": 420
+    },
+    {
+      "id": "dolly-03460",
+      "kgw_score": -13.3125,
+      "clean_score": 8.4375,
+      "difference": -21.75,
+      "kgw_scored_response_tokens": 111,
+      "clean_scored_response_tokens": 89
+    },
+    {
+      "id": "dolly-06765",
+      "kgw_score": 16.5,
+      "clean_score": 15.625,
+      "difference": 0.875,
+      "kgw_scored_response_tokens": 99,
+      "clean_scored_response_tokens": 108
+    },
+    {
+      "id": "dolly-14666",
+      "kgw_score": 3.03125,
+      "clean_score": 8.0625,
+      "difference": -5.03125,
+      "kgw_scored_response_tokens": 382,
+      "clean_scored_response_tokens": 263
+    },
+    {
+      "id": "dolly-03251",
+      "kgw_score": 3.359375,
+      "clean_score": 4.75,
+      "difference": -1.390625,
+      "kgw_scored_response_tokens": 114,
+      "clean_scored_response_tokens": 140
+    },
+    {
+      "id": "dolly-00624",
+      "kgw_score": 5.21875,
+      "clean_score": 12.0,
+      "difference": -6.78125,
+      "kgw_scored_response_tokens": 384,
+      "clean_scored_response_tokens": 489
+    },
+    {
+      "id": "dolly-08709",
+      "kgw_score": -29.75,
+      "clean_score": -15.4375,
+      "difference": -14.3125,
+      "kgw_scored_response_tokens": 104,
+      "clean_scored_response_tokens": 74
+    },
+    {
+      "id": "dolly-13505",
+      "kgw_score": 4.78125,
+      "clean_score": -10.1875,
+      "difference": 14.96875,
+      "kgw_scored_response_tokens": 424,
+      "clean_scored_response_tokens": 141
+    },
+    {
+      "id": "dolly-01089",
+      "kgw_score": 15.625,
+      "clean_score": 15.625,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 18,
+      "clean_scored_response_tokens": 18
+    },
+    {
+      "id": "dolly-01947",
+      "kgw_score": 13.0,
+      "clean_score": 11.375,
+      "difference": 1.625,
+      "kgw_scored_response_tokens": 196,
+      "clean_scored_response_tokens": 107
+    },
+    {
+      "id": "dolly-02580",
+      "kgw_score": -19.75,
+      "clean_score": 1.359375,
+      "difference": -21.109375,
+      "kgw_scored_response_tokens": 356,
+      "clean_scored_response_tokens": 288
+    },
+    {
+      "id": "dolly-08884",
+      "kgw_score": 37.5,
+      "clean_score": 27.25,
+      "difference": 10.25,
+      "kgw_scored_response_tokens": 307,
+      "clean_scored_response_tokens": 247
+    },
+    {
+      "id": "dolly-01063",
+      "kgw_score": 10.625,
+      "clean_score": 9.9375,
+      "difference": 0.6875,
+      "kgw_scored_response_tokens": 82,
+      "clean_scored_response_tokens": 74
+    },
+    {
+      "id": "dolly-10746",
+      "kgw_score": 10.5625,
+      "clean_score": 8.625,
+      "difference": 1.9375,
+      "kgw_scored_response_tokens": 209,
+      "clean_scored_response_tokens": 185
+    },
+    {
+      "id": "dolly-12659",
+      "kgw_score": -33.75,
+      "clean_score": -36.0,
+      "difference": 2.25,
+      "kgw_scored_response_tokens": 216,
+      "clean_scored_response_tokens": 46
+    },
+    {
+      "id": "dolly-08283",
+      "kgw_score": -10.75,
+      "clean_score": -7.15625,
+      "difference": -3.59375,
+      "kgw_scored_response_tokens": 65,
+      "clean_scored_response_tokens": 130
+    },
+    {
+      "id": "dolly-00303",
+      "kgw_score": 17.25,
+      "clean_score": 30.125,
+      "difference": -12.875,
+      "kgw_scored_response_tokens": 894,
+      "clean_scored_response_tokens": 755
+    },
+    {
+      "id": "dolly-01059",
+      "kgw_score": 2.203125,
+      "clean_score": 11.6875,
+      "difference": -9.484375,
+      "kgw_scored_response_tokens": 48,
+      "clean_scored_response_tokens": 112
+    },
+    {
+      "id": "dolly-09590",
+      "kgw_score": 4.75,
+      "clean_score": 9.9375,
+      "difference": -5.1875,
+      "kgw_scored_response_tokens": 21,
+      "clean_scored_response_tokens": 60
+    },
+    {
+      "id": "dolly-00997",
+      "kgw_score": 34.5,
+      "clean_score": 27.625,
+      "difference": 6.875,
+      "kgw_scored_response_tokens": 138,
+      "clean_scored_response_tokens": 135
+    },
+    {
+      "id": "dolly-09633",
+      "kgw_score": -3.09375,
+      "clean_score": 4.5,
+      "difference": -7.59375,
+      "kgw_scored_response_tokens": 39,
+      "clean_scored_response_tokens": 37
+    },
+    {
+      "id": "dolly-04118",
+      "kgw_score": 4.03125,
+      "clean_score": 13.0625,
+      "difference": -9.03125,
+      "kgw_scored_response_tokens": 231,
+      "clean_scored_response_tokens": 205
+    },
+    {
+      "id": "dolly-00105",
+      "kgw_score": 3.03125,
+      "clean_score": 4.1875,
+      "difference": -1.15625,
+      "kgw_scored_response_tokens": 167,
+      "clean_scored_response_tokens": 114
+    },
+    {
+      "id": "dolly-00420",
+      "kgw_score": 24.25,
+      "clean_score": 24.25,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 47,
+      "clean_scored_response_tokens": 50
+    },
+    {
+      "id": "dolly-14313",
+      "kgw_score": -4.46875,
+      "clean_score": -11.125,
+      "difference": 6.65625,
+      "kgw_scored_response_tokens": 125,
+      "clean_scored_response_tokens": 65
+    },
+    {
+      "id": "dolly-11014",
+      "kgw_score": 12.625,
+      "clean_score": 15.0625,
+      "difference": -2.4375,
+      "kgw_scored_response_tokens": 236,
+      "clean_scored_response_tokens": 234
+    },
+    {
+      "id": "dolly-02678",
+      "kgw_score": 17.375,
+      "clean_score": 14.5625,
+      "difference": 2.8125,
+      "kgw_scored_response_tokens": 73,
+      "clean_scored_response_tokens": 124
+    },
+    {
+      "id": "dolly-10208",
+      "kgw_score": 11.25,
+      "clean_score": 11.5,
+      "difference": -0.25,
+      "kgw_scored_response_tokens": 498,
+      "clean_scored_response_tokens": 771
+    },
+    {
+      "id": "dolly-08008",
+      "kgw_score": 9.625,
+      "clean_score": 4.75,
+      "difference": 4.875,
+      "kgw_scored_response_tokens": 67,
+      "clean_scored_response_tokens": 36
+    },
+    {
+      "id": "dolly-08789",
+      "kgw_score": -18.375,
+      "clean_score": -18.375,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 23,
+      "clean_scored_response_tokens": 23
+    },
+    {
+      "id": "dolly-14385",
+      "kgw_score": 18.0,
+      "clean_score": 26.5,
+      "difference": -8.5,
+      "kgw_scored_response_tokens": 196,
+      "clean_scored_response_tokens": 100
+    },
+    {
+      "id": "dolly-02004",
+      "kgw_score": 2.03125,
+      "clean_score": -1.7734375,
+      "difference": 3.8046875,
+      "kgw_scored_response_tokens": 86,
+      "clean_scored_response_tokens": 83
+    },
+    {
+      "id": "dolly-02761",
+      "kgw_score": 11.3125,
+      "clean_score": 12.6875,
+      "difference": -1.375,
+      "kgw_scored_response_tokens": 442,
+      "clean_scored_response_tokens": 302
+    },
+    {
+      "id": "dolly-02186",
+      "kgw_score": 47.75,
+      "clean_score": 46.5,
+      "difference": 1.25,
+      "kgw_scored_response_tokens": 404,
+      "clean_scored_response_tokens": 417
+    },
+    {
+      "id": "dolly-05297",
+      "kgw_score": -7.71875,
+      "clean_score": 9.9375,
+      "difference": -17.65625,
+      "kgw_scored_response_tokens": 368,
+      "clean_scored_response_tokens": 324
+    },
+    {
+      "id": "dolly-00275",
+      "kgw_score": 17.875,
+      "clean_score": 34.0,
+      "difference": -16.125,
+      "kgw_scored_response_tokens": 684,
+      "clean_scored_response_tokens": 683
+    },
+    {
+      "id": "dolly-14036",
+      "kgw_score": 18.125,
+      "clean_score": 18.0,
+      "difference": 0.125,
+      "kgw_scored_response_tokens": 254,
+      "clean_scored_response_tokens": 301
+    },
+    {
+      "id": "dolly-08391",
+      "kgw_score": 1.78125,
+      "clean_score": 4.625,
+      "difference": -2.84375,
+      "kgw_scored_response_tokens": 50,
+      "clean_scored_response_tokens": 41
+    },
+    {
+      "id": "dolly-10398",
+      "kgw_score": 14.4375,
+      "clean_score": 21.75,
+      "difference": -7.3125,
+      "kgw_scored_response_tokens": 298,
+      "clean_scored_response_tokens": 296
+    },
+    {
+      "id": "dolly-00888",
+      "kgw_score": 10.0625,
+      "clean_score": 14.4375,
+      "difference": -4.375,
+      "kgw_scored_response_tokens": 646,
+      "clean_scored_response_tokens": 716
+    },
+    {
+      "id": "dolly-00054",
+      "kgw_score": -3.671875,
+      "clean_score": 13.9375,
+      "difference": -17.609375,
+      "kgw_scored_response_tokens": 94,
+      "clean_scored_response_tokens": 78
+    },
+    {
+      "id": "dolly-10415",
+      "kgw_score": -21.625,
+      "clean_score": -21.625,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 262,
+      "clean_scored_response_tokens": 197
+    },
+    {
+      "id": "dolly-08512",
+      "kgw_score": 9.125,
+      "clean_score": 9.4375,
+      "difference": -0.3125,
+      "kgw_scored_response_tokens": 73,
+      "clean_scored_response_tokens": 74
+    },
+    {
+      "id": "dolly-04865",
+      "kgw_score": -18.25,
+      "clean_score": -0.65234375,
+      "difference": -17.59765625,
+      "kgw_scored_response_tokens": 503,
+      "clean_scored_response_tokens": 317
+    },
+    {
+      "id": "dolly-14060",
+      "kgw_score": -0.875,
+      "clean_score": 9.8125,
+      "difference": -10.6875,
+      "kgw_scored_response_tokens": 516,
+      "clean_scored_response_tokens": 239
+    },
+    {
+      "id": "dolly-01174",
+      "kgw_score": 4.34375,
+      "clean_score": 7.46875,
+      "difference": -3.125,
+      "kgw_scored_response_tokens": 28,
+      "clean_scored_response_tokens": 30
+    },
+    {
+      "id": "dolly-04362",
+      "kgw_score": 10.75,
+      "clean_score": -11.0625,
+      "difference": 21.8125,
+      "kgw_scored_response_tokens": 301,
+      "clean_scored_response_tokens": 297
+    },
+    {
+      "id": "dolly-11623",
+      "kgw_score": -14.75,
+      "clean_score": -20.25,
+      "difference": 5.5,
+      "kgw_scored_response_tokens": 153,
+      "clean_scored_response_tokens": 111
+    },
+    {
+      "id": "dolly-00996",
+      "kgw_score": -34.5,
+      "clean_score": -34.5,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 42,
+      "clean_scored_response_tokens": 42
+    },
+    {
+      "id": "dolly-05906",
+      "kgw_score": 15.3125,
+      "clean_score": 14.875,
+      "difference": 0.4375,
+      "kgw_scored_response_tokens": 92,
+      "clean_scored_response_tokens": 67
+    },
+    {
+      "id": "dolly-07337",
+      "kgw_score": 17.125,
+      "clean_score": 16.125,
+      "difference": 1.0,
+      "kgw_scored_response_tokens": 96,
+      "clean_scored_response_tokens": 91
+    },
+    {
+      "id": "dolly-00844",
+      "kgw_score": 5.6875,
+      "clean_score": 15.25,
+      "difference": -9.5625,
+      "kgw_scored_response_tokens": 139,
+      "clean_scored_response_tokens": 91
+    },
+    {
+      "id": "dolly-04143",
+      "kgw_score": 25.875,
+      "clean_score": 16.25,
+      "difference": 9.625,
+      "kgw_scored_response_tokens": 328,
+      "clean_scored_response_tokens": 129
+    },
+    {
+      "id": "dolly-14859",
+      "kgw_score": 11.375,
+      "clean_score": 22.75,
+      "difference": -11.375,
+      "kgw_scored_response_tokens": 289,
+      "clean_scored_response_tokens": 287
+    },
+    {
+      "id": "dolly-13959",
+      "kgw_score": 15.0625,
+      "clean_score": 20.75,
+      "difference": -5.6875,
+      "kgw_scored_response_tokens": 94,
+      "clean_scored_response_tokens": 95
+    },
+    {
+      "id": "dolly-09819",
+      "kgw_score": 18.5,
+      "clean_score": 15.3125,
+      "difference": 3.1875,
+      "kgw_scored_response_tokens": 300,
+      "clean_scored_response_tokens": 306
+    },
+    {
+      "id": "dolly-03608",
+      "kgw_score": -5.5625,
+      "clean_score": -8.5,
+      "difference": 2.9375,
+      "kgw_scored_response_tokens": 88,
+      "clean_scored_response_tokens": 147
+    },
+    {
+      "id": "dolly-01431",
+      "kgw_score": -0.66015625,
+      "clean_score": 9.0625,
+      "difference": -9.72265625,
+      "kgw_scored_response_tokens": 219,
+      "clean_scored_response_tokens": 153
+    },
+    {
+      "id": "dolly-09058",
+      "kgw_score": 40.75,
+      "clean_score": 54.0,
+      "difference": -13.25,
+      "kgw_scored_response_tokens": 331,
+      "clean_scored_response_tokens": 486
+    },
+    {
+      "id": "dolly-01461",
+      "kgw_score": 17.125,
+      "clean_score": 12.125,
+      "difference": 5.0,
+      "kgw_scored_response_tokens": 29,
+      "clean_scored_response_tokens": 31
+    },
+    {
+      "id": "dolly-01470",
+      "kgw_score": 7.5,
+      "clean_score": 16.375,
+      "difference": -8.875,
+      "kgw_scored_response_tokens": 147,
+      "clean_scored_response_tokens": 182
+    },
+    {
+      "id": "dolly-04421",
+      "kgw_score": 17.875,
+      "clean_score": 14.5625,
+      "difference": 3.3125,
+      "kgw_scored_response_tokens": 105,
+      "clean_scored_response_tokens": 108
+    },
+    {
+      "id": "dolly-01665",
+      "kgw_score": 17.625,
+      "clean_score": 17.625,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 32,
+      "clean_scored_response_tokens": 32
+    },
+    {
+      "id": "dolly-10290",
+      "kgw_score": -32.25,
+      "clean_score": -2.796875,
+      "difference": -29.453125,
+      "kgw_scored_response_tokens": 262,
+      "clean_scored_response_tokens": 228
+    },
+    {
+      "id": "dolly-04032",
+      "kgw_score": 13.125,
+      "clean_score": 13.125,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 97,
+      "clean_scored_response_tokens": 47
+    },
+    {
+      "id": "dolly-02122",
+      "kgw_score": -2.984375,
+      "clean_score": 6.875,
+      "difference": -9.859375,
+      "kgw_scored_response_tokens": 318,
+      "clean_scored_response_tokens": 383
+    },
+    {
+      "id": "dolly-13749",
+      "kgw_score": 18.875,
+      "clean_score": 20.0,
+      "difference": -1.125,
+      "kgw_scored_response_tokens": 108,
+      "clean_scored_response_tokens": 88
+    },
+    {
+      "id": "dolly-07983",
+      "kgw_score": -10.3125,
+      "clean_score": 8.25,
+      "difference": -18.5625,
+      "kgw_scored_response_tokens": 461,
+      "clean_scored_response_tokens": 312
+    },
+    {
+      "id": "dolly-09930",
+      "kgw_score": 7.40625,
+      "clean_score": 10.1875,
+      "difference": -2.78125,
+      "kgw_scored_response_tokens": 443,
+      "clean_scored_response_tokens": 447
+    },
+    {
+      "id": "dolly-05394",
+      "kgw_score": 20.625,
+      "clean_score": 17.75,
+      "difference": 2.875,
+      "kgw_scored_response_tokens": 229,
+      "clean_scored_response_tokens": 230
+    },
+    {
+      "id": "dolly-02286",
+      "kgw_score": -3.828125,
+      "clean_score": 8.9375,
+      "difference": -12.765625,
+      "kgw_scored_response_tokens": 344,
+      "clean_scored_response_tokens": 424
+    },
+    {
+      "id": "dolly-09109",
+      "kgw_score": -7.28125,
+      "clean_score": 11.9375,
+      "difference": -19.21875,
+      "kgw_scored_response_tokens": 197,
+      "clean_scored_response_tokens": 169
+    },
+    {
+      "id": "dolly-01770",
+      "kgw_score": 34.25,
+      "clean_score": 44.25,
+      "difference": -10.0,
+      "kgw_scored_response_tokens": 407,
+      "clean_scored_response_tokens": 341
+    },
+    {
+      "id": "dolly-07027",
+      "kgw_score": 21.625,
+      "clean_score": 27.75,
+      "difference": -6.125,
+      "kgw_scored_response_tokens": 93,
+      "clean_scored_response_tokens": 95
+    },
+    {
+      "id": "dolly-04127",
+      "kgw_score": 31.625,
+      "clean_score": 37.25,
+      "difference": -5.625,
+      "kgw_scored_response_tokens": 323,
+      "clean_scored_response_tokens": 622
+    },
+    {
+      "id": "dolly-08457",
+      "kgw_score": -41.0,
+      "clean_score": -1.9921875,
+      "difference": -39.0078125,
+      "kgw_scored_response_tokens": 431,
+      "clean_scored_response_tokens": 312
+    },
+    {
+      "id": "dolly-01092",
+      "kgw_score": 19.75,
+      "clean_score": 41.0,
+      "difference": -21.25,
+      "kgw_scored_response_tokens": 280,
+      "clean_scored_response_tokens": 359
+    },
+    {
+      "id": "dolly-02223",
+      "kgw_score": 47.0,
+      "clean_score": 44.25,
+      "difference": 2.75,
+      "kgw_scored_response_tokens": 810,
+      "clean_scored_response_tokens": 695
+    },
+    {
+      "id": "dolly-04949",
+      "kgw_score": 5.46875,
+      "clean_score": 4.75,
+      "difference": 0.71875,
+      "kgw_scored_response_tokens": 426,
+      "clean_scored_response_tokens": 371
+    },
+    {
+      "id": "dolly-01517",
+      "kgw_score": 7.96875,
+      "clean_score": 7.40625,
+      "difference": 0.5625,
+      "kgw_scored_response_tokens": 35,
+      "clean_scored_response_tokens": 34
+    },
+    {
+      "id": "dolly-00956",
+      "kgw_score": -18.75,
+      "clean_score": -5.75,
+      "difference": -13.0,
+      "kgw_scored_response_tokens": 99,
+      "clean_scored_response_tokens": 86
+    },
+    {
+      "id": "dolly-12764",
+      "kgw_score": 5.15625,
+      "clean_score": 7.5,
+      "difference": -2.34375,
+      "kgw_scored_response_tokens": 68,
+      "clean_scored_response_tokens": 73
+    },
+    {
+      "id": "dolly-08887",
+      "kgw_score": 24.875,
+      "clean_score": 28.375,
+      "difference": -3.5,
+      "kgw_scored_response_tokens": 176,
+      "clean_scored_response_tokens": 166
+    },
+    {
+      "id": "dolly-01567",
+      "kgw_score": -1.1640625,
+      "clean_score": -1.1640625,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 21,
+      "clean_scored_response_tokens": 21
+    },
+    {
+      "id": "dolly-08689",
+      "kgw_score": -9.0,
+      "clean_score": -15.25,
+      "difference": 6.25,
+      "kgw_scored_response_tokens": 275,
+      "clean_scored_response_tokens": 269
+    },
+    {
+      "id": "dolly-09726",
+      "kgw_score": 6.15625,
+      "clean_score": -5.6875,
+      "difference": 11.84375,
+      "kgw_scored_response_tokens": 114,
+      "clean_scored_response_tokens": 91
+    },
+    {
+      "id": "dolly-05637",
+      "kgw_score": -16.25,
+      "clean_score": -20.875,
+      "difference": 4.625,
+      "kgw_scored_response_tokens": 74,
+      "clean_scored_response_tokens": 142
+    },
+    {
+      "id": "dolly-08454",
+      "kgw_score": -1.6953125,
+      "clean_score": 3.265625,
+      "difference": -4.9609375,
+      "kgw_scored_response_tokens": 227,
+      "clean_scored_response_tokens": 177
+    },
+    {
+      "id": "dolly-11348",
+      "kgw_score": 22.625,
+      "clean_score": 8.625,
+      "difference": 14.0,
+      "kgw_scored_response_tokens": 111,
+      "clean_scored_response_tokens": 157
+    },
+    {
+      "id": "dolly-08574",
+      "kgw_score": 35.75,
+      "clean_score": 39.75,
+      "difference": -4.0,
+      "kgw_scored_response_tokens": 371,
+      "clean_scored_response_tokens": 364
+    },
+    {
+      "id": "dolly-12588",
+      "kgw_score": 7.1875,
+      "clean_score": 9.3125,
+      "difference": -2.125,
+      "kgw_scored_response_tokens": 116,
+      "clean_scored_response_tokens": 162
+    },
+    {
+      "id": "dolly-08406",
+      "kgw_score": 33.25,
+      "clean_score": 32.5,
+      "difference": 0.75,
+      "kgw_scored_response_tokens": 253,
+      "clean_scored_response_tokens": 204
+    },
+    {
+      "id": "dolly-05364",
+      "kgw_score": 17.125,
+      "clean_score": 13.5,
+      "difference": 3.625,
+      "kgw_scored_response_tokens": 98,
+      "clean_scored_response_tokens": 70
+    },
+    {
+      "id": "dolly-07317",
+      "kgw_score": -0.578125,
+      "clean_score": 11.5,
+      "difference": -12.078125,
+      "kgw_scored_response_tokens": 296,
+      "clean_scored_response_tokens": 295
+    },
+    {
+      "id": "dolly-04141",
+      "kgw_score": -17.625,
+      "clean_score": -18.375,
+      "difference": 0.75,
+      "kgw_scored_response_tokens": 151,
+      "clean_scored_response_tokens": 155
+    },
+    {
+      "id": "dolly-02127",
+      "kgw_score": 14.0,
+      "clean_score": 14.75,
+      "difference": -0.75,
+      "kgw_scored_response_tokens": 198,
+      "clean_scored_response_tokens": 118
+    },
+    {
+      "id": "dolly-02320",
+      "kgw_score": 16.75,
+      "clean_score": 17.375,
+      "difference": -0.625,
+      "kgw_scored_response_tokens": 57,
+      "clean_scored_response_tokens": 58
+    },
+    {
+      "id": "dolly-07314",
+      "kgw_score": 11.75,
+      "clean_score": 38.25,
+      "difference": -26.5,
+      "kgw_scored_response_tokens": 251,
+      "clean_scored_response_tokens": 406
+    },
+    {
+      "id": "dolly-08212",
+      "kgw_score": -7.375,
+      "clean_score": -7.9375,
+      "difference": 0.5625,
+      "kgw_scored_response_tokens": 237,
+      "clean_scored_response_tokens": 163
+    },
+    {
+      "id": "dolly-03209",
+      "kgw_score": 28.375,
+      "clean_score": 30.625,
+      "difference": -2.25,
+      "kgw_scored_response_tokens": 81,
+      "clean_scored_response_tokens": 68
+    },
+    {
+      "id": "dolly-02887",
+      "kgw_score": 2.84375,
+      "clean_score": 15.4375,
+      "difference": -12.59375,
+      "kgw_scored_response_tokens": 557,
+      "clean_scored_response_tokens": 387
+    },
+    {
+      "id": "dolly-07399",
+      "kgw_score": -12.25,
+      "clean_score": -11.5,
+      "difference": -0.75,
+      "kgw_scored_response_tokens": 48,
+      "clean_scored_response_tokens": 47
+    },
+    {
+      "id": "dolly-06227",
+      "kgw_score": 38.0,
+      "clean_score": 43.0,
+      "difference": -5.0,
+      "kgw_scored_response_tokens": 407,
+      "clean_scored_response_tokens": 467
+    },
+    {
+      "id": "dolly-03157",
+      "kgw_score": -7.0625,
+      "clean_score": 0.70703125,
+      "difference": -7.76953125,
+      "kgw_scored_response_tokens": 335,
+      "clean_scored_response_tokens": 461
+    },
+    {
+      "id": "dolly-02859",
+      "kgw_score": -2.6875,
+      "clean_score": 12.9375,
+      "difference": -15.625,
+      "kgw_scored_response_tokens": 263,
+      "clean_scored_response_tokens": 244
+    },
+    {
+      "id": "dolly-07295",
+      "kgw_score": 16.125,
+      "clean_score": 18.0,
+      "difference": -1.875,
+      "kgw_scored_response_tokens": 418,
+      "clean_scored_response_tokens": 580
+    },
+    {
+      "id": "dolly-05033",
+      "kgw_score": 30.25,
+      "clean_score": 22.75,
+      "difference": 7.5,
+      "kgw_scored_response_tokens": 174,
+      "clean_scored_response_tokens": 256
+    },
+    {
+      "id": "dolly-12477",
+      "kgw_score": 8.875,
+      "clean_score": 8.875,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 29,
+      "clean_scored_response_tokens": 29
+    },
+    {
+      "id": "dolly-14209",
+      "kgw_score": 11.1875,
+      "clean_score": 11.375,
+      "difference": -0.1875,
+      "kgw_scored_response_tokens": 102,
+      "clean_scored_response_tokens": 102
+    },
+    {
+      "id": "dolly-00143",
+      "kgw_score": 4.0,
+      "clean_score": 19.5,
+      "difference": -15.5,
+      "kgw_scored_response_tokens": 960,
+      "clean_scored_response_tokens": 710
+    },
+    {
+      "id": "dolly-12894",
+      "kgw_score": 12.4375,
+      "clean_score": 20.75,
+      "difference": -8.3125,
+      "kgw_scored_response_tokens": 347,
+      "clean_scored_response_tokens": 355
+    },
+    {
+      "id": "dolly-01452",
+      "kgw_score": -1.4765625,
+      "clean_score": 14.375,
+      "difference": -15.8515625,
+      "kgw_scored_response_tokens": 142,
+      "clean_scored_response_tokens": 177
+    },
+    {
+      "id": "dolly-02516",
+      "kgw_score": 9.4375,
+      "clean_score": 15.4375,
+      "difference": -6.0,
+      "kgw_scored_response_tokens": 40,
+      "clean_scored_response_tokens": 41
+    },
+    {
+      "id": "dolly-02844",
+      "kgw_score": 28.625,
+      "clean_score": 31.375,
+      "difference": -2.75,
+      "kgw_scored_response_tokens": 131,
+      "clean_scored_response_tokens": 135
+    },
+    {
+      "id": "dolly-00342",
+      "kgw_score": 17.625,
+      "clean_score": 17.25,
+      "difference": 0.375,
+      "kgw_scored_response_tokens": 153,
+      "clean_scored_response_tokens": 177
+    },
+    {
+      "id": "dolly-00676",
+      "kgw_score": 28.5,
+      "clean_score": 19.75,
+      "difference": 8.75,
+      "kgw_scored_response_tokens": 277,
+      "clean_scored_response_tokens": 412
+    },
+    {
+      "id": "dolly-02434",
+      "kgw_score": 20.25,
+      "clean_score": 17.125,
+      "difference": 3.125,
+      "kgw_scored_response_tokens": 96,
+      "clean_scored_response_tokens": 81
+    },
+    {
+      "id": "dolly-11078",
+      "kgw_score": 28.625,
+      "clean_score": 37.75,
+      "difference": -9.125,
+      "kgw_scored_response_tokens": 536,
+      "clean_scored_response_tokens": 369
+    },
+    {
+      "id": "dolly-08729",
+      "kgw_score": 2.515625,
+      "clean_score": 6.34375,
+      "difference": -3.828125,
+      "kgw_scored_response_tokens": 163,
+      "clean_scored_response_tokens": 202
+    },
+    {
+      "id": "dolly-09778",
+      "kgw_score": 17.125,
+      "clean_score": 34.5,
+      "difference": -17.375,
+      "kgw_scored_response_tokens": 300,
+      "clean_scored_response_tokens": 356
+    },
+    {
+      "id": "dolly-04025",
+      "kgw_score": -21.25,
+      "clean_score": -21.25,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 21,
+      "clean_scored_response_tokens": 21
+    },
+    {
+      "id": "dolly-04687",
+      "kgw_score": -14.625,
+      "clean_score": -19.0,
+      "difference": 4.375,
+      "kgw_scored_response_tokens": 250,
+      "clean_scored_response_tokens": 264
+    },
+    {
+      "id": "dolly-14483",
+      "kgw_score": -1.484375,
+      "clean_score": 8.125,
+      "difference": -9.609375,
+      "kgw_scored_response_tokens": 183,
+      "clean_scored_response_tokens": 170
+    },
+    {
+      "id": "dolly-13126",
+      "kgw_score": 21.0,
+      "clean_score": 15.9375,
+      "difference": 5.0625,
+      "kgw_scored_response_tokens": 157,
+      "clean_scored_response_tokens": 77
+    },
+    {
+      "id": "dolly-04856",
+      "kgw_score": -3.0,
+      "clean_score": 1.875,
+      "difference": -4.875,
+      "kgw_scored_response_tokens": 492,
+      "clean_scored_response_tokens": 546
+    },
+    {
+      "id": "dolly-00370",
+      "kgw_score": 17.375,
+      "clean_score": 18.0,
+      "difference": -0.625,
+      "kgw_scored_response_tokens": 144,
+      "clean_scored_response_tokens": 127
+    },
+    {
+      "id": "dolly-01888",
+      "kgw_score": 4.40625,
+      "clean_score": 6.1875,
+      "difference": -1.78125,
+      "kgw_scored_response_tokens": 168,
+      "clean_scored_response_tokens": 140
+    },
+    {
+      "id": "dolly-09457",
+      "kgw_score": 2.0625,
+      "clean_score": -9.875,
+      "difference": 11.9375,
+      "kgw_scored_response_tokens": 38,
+      "clean_scored_response_tokens": 43
+    },
+    {
+      "id": "dolly-09465",
+      "kgw_score": 2.828125,
+      "clean_score": 6.0,
+      "difference": -3.171875,
+      "kgw_scored_response_tokens": 291,
+      "clean_scored_response_tokens": 229
+    },
+    {
+      "id": "dolly-13779",
+      "kgw_score": -3.984375,
+      "clean_score": 13.6875,
+      "difference": -17.671875,
+      "kgw_scored_response_tokens": 452,
+      "clean_scored_response_tokens": 416
+    },
+    {
+      "id": "dolly-09935",
+      "kgw_score": 12.375,
+      "clean_score": 6.15625,
+      "difference": 6.21875,
+      "kgw_scored_response_tokens": 170,
+      "clean_scored_response_tokens": 179
+    },
+    {
+      "id": "dolly-04624",
+      "kgw_score": 11.625,
+      "clean_score": 14.125,
+      "difference": -2.5,
+      "kgw_scored_response_tokens": 616,
+      "clean_scored_response_tokens": 498
+    },
+    {
+      "id": "dolly-12843",
+      "kgw_score": 20.5,
+      "clean_score": 23.25,
+      "difference": -2.75,
+      "kgw_scored_response_tokens": 93,
+      "clean_scored_response_tokens": 111
+    },
+    {
+      "id": "dolly-10839",
+      "kgw_score": 10.25,
+      "clean_score": 10.375,
+      "difference": -0.125,
+      "kgw_scored_response_tokens": 40,
+      "clean_scored_response_tokens": 51
+    },
+    {
+      "id": "dolly-03638",
+      "kgw_score": 16.125,
+      "clean_score": 19.0,
+      "difference": -2.875,
+      "kgw_scored_response_tokens": 206,
+      "clean_scored_response_tokens": 143
+    },
+    {
+      "id": "dolly-08658",
+      "kgw_score": 10.6875,
+      "clean_score": 16.0,
+      "difference": -5.3125,
+      "kgw_scored_response_tokens": 149,
+      "clean_scored_response_tokens": 416
+    },
+    {
+      "id": "dolly-10697",
+      "kgw_score": 15.1875,
+      "clean_score": 27.875,
+      "difference": -12.6875,
+      "kgw_scored_response_tokens": 499,
+      "clean_scored_response_tokens": 440
+    },
+    {
+      "id": "dolly-13422",
+      "kgw_score": 6.125,
+      "clean_score": -10.75,
+      "difference": 16.875,
+      "kgw_scored_response_tokens": 35,
+      "clean_scored_response_tokens": 41
+    },
+    {
+      "id": "dolly-13327",
+      "kgw_score": 19.25,
+      "clean_score": 27.375,
+      "difference": -8.125,
+      "kgw_scored_response_tokens": 300,
+      "clean_scored_response_tokens": 243
+    },
+    {
+      "id": "dolly-05752",
+      "kgw_score": 23.875,
+      "clean_score": 28.625,
+      "difference": -4.75,
+      "kgw_scored_response_tokens": 254,
+      "clean_scored_response_tokens": 208
+    },
+    {
+      "id": "dolly-05555",
+      "kgw_score": 28.0,
+      "clean_score": 11.75,
+      "difference": 16.25,
+      "kgw_scored_response_tokens": 764,
+      "clean_scored_response_tokens": 458
+    },
+    {
+      "id": "dolly-01162",
+      "kgw_score": -12.5625,
+      "clean_score": -1.296875,
+      "difference": -11.265625,
+      "kgw_scored_response_tokens": 476,
+      "clean_scored_response_tokens": 509
+    },
+    {
+      "id": "dolly-05827",
+      "kgw_score": -1.3515625,
+      "clean_score": -2.8125,
+      "difference": 1.4609375,
+      "kgw_scored_response_tokens": 273,
+      "clean_scored_response_tokens": 213
+    },
+    {
+      "id": "dolly-06025",
+      "kgw_score": 11.8125,
+      "clean_score": 28.0,
+      "difference": -16.1875,
+      "kgw_scored_response_tokens": 169,
+      "clean_scored_response_tokens": 149
+    },
+    {
+      "id": "dolly-06920",
+      "kgw_score": -11.0625,
+      "clean_score": 5.625,
+      "difference": -16.6875,
+      "kgw_scored_response_tokens": 377,
+      "clean_scored_response_tokens": 459
+    },
+    {
+      "id": "dolly-02421",
+      "kgw_score": -10.0,
+      "clean_score": -2.03125,
+      "difference": -7.96875,
+      "kgw_scored_response_tokens": 377,
+      "clean_scored_response_tokens": 345
+    },
+    {
+      "id": "dolly-06595",
+      "kgw_score": 20.375,
+      "clean_score": 16.625,
+      "difference": 3.75,
+      "kgw_scored_response_tokens": 117,
+      "clean_scored_response_tokens": 54
+    },
+    {
+      "id": "dolly-06438",
+      "kgw_score": 21.25,
+      "clean_score": 23.125,
+      "difference": -1.875,
+      "kgw_scored_response_tokens": 110,
+      "clean_scored_response_tokens": 130
+    },
+    {
+      "id": "dolly-06507",
+      "kgw_score": 11.3125,
+      "clean_score": 11.875,
+      "difference": -0.5625,
+      "kgw_scored_response_tokens": 238,
+      "clean_scored_response_tokens": 137
+    },
+    {
+      "id": "dolly-14464",
+      "kgw_score": 8.625,
+      "clean_score": -12.375,
+      "difference": 21.0,
+      "kgw_scored_response_tokens": 54,
+      "clean_scored_response_tokens": 60
+    },
+    {
+      "id": "dolly-09311",
+      "kgw_score": 23.625,
+      "clean_score": 23.625,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 913,
+      "clean_scored_response_tokens": 632
+    },
+    {
+      "id": "dolly-08936",
+      "kgw_score": 21.625,
+      "clean_score": 31.25,
+      "difference": -9.625,
+      "kgw_scored_response_tokens": 309,
+      "clean_scored_response_tokens": 221
+    },
+    {
+      "id": "dolly-02811",
+      "kgw_score": 6.46875,
+      "clean_score": 24.125,
+      "difference": -17.65625,
+      "kgw_scored_response_tokens": 343,
+      "clean_scored_response_tokens": 290
+    },
+    {
+      "id": "dolly-13981",
+      "kgw_score": 18.625,
+      "clean_score": 31.625,
+      "difference": -13.0,
+      "kgw_scored_response_tokens": 455,
+      "clean_scored_response_tokens": 476
+    },
+    {
+      "id": "dolly-09162",
+      "kgw_score": 5.5,
+      "clean_score": 11.5625,
+      "difference": -6.0625,
+      "kgw_scored_response_tokens": 275,
+      "clean_scored_response_tokens": 334
+    },
+    {
+      "id": "dolly-08625",
+      "kgw_score": 38.5,
+      "clean_score": 40.25,
+      "difference": -1.75,
+      "kgw_scored_response_tokens": 451,
+      "clean_scored_response_tokens": 382
+    },
+    {
+      "id": "dolly-02065",
+      "kgw_score": 12.5625,
+      "clean_score": 13.0,
+      "difference": -0.4375,
+      "kgw_scored_response_tokens": 23,
+      "clean_scored_response_tokens": 24
+    },
+    {
+      "id": "dolly-06648",
+      "kgw_score": -12.5625,
+      "clean_score": 3.703125,
+      "difference": -16.265625,
+      "kgw_scored_response_tokens": 64,
+      "clean_scored_response_tokens": 65
+    },
+    {
+      "id": "dolly-08541",
+      "kgw_score": 20.75,
+      "clean_score": 16.0,
+      "difference": 4.75,
+      "kgw_scored_response_tokens": 157,
+      "clean_scored_response_tokens": 132
+    },
+    {
+      "id": "dolly-05610",
+      "kgw_score": -17.125,
+      "clean_score": -17.125,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 22,
+      "clean_scored_response_tokens": 22
+    },
+    {
+      "id": "dolly-10067",
+      "kgw_score": 8.5625,
+      "clean_score": 4.65625,
+      "difference": 3.90625,
+      "kgw_scored_response_tokens": 21,
+      "clean_scored_response_tokens": 92
+    },
+    {
+      "id": "dolly-09344",
+      "kgw_score": 9.625,
+      "clean_score": 11.0,
+      "difference": -1.375,
+      "kgw_scored_response_tokens": 315,
+      "clean_scored_response_tokens": 242
+    },
+    {
+      "id": "dolly-10747",
+      "kgw_score": 7.375,
+      "clean_score": 8.9375,
+      "difference": -1.5625,
+      "kgw_scored_response_tokens": 417,
+      "clean_scored_response_tokens": 575
+    },
+    {
+      "id": "dolly-05605",
+      "kgw_score": 12.625,
+      "clean_score": 12.0,
+      "difference": 0.625,
+      "kgw_scored_response_tokens": 117,
+      "clean_scored_response_tokens": 125
+    },
+    {
+      "id": "dolly-14358",
+      "kgw_score": 17.375,
+      "clean_score": 15.0,
+      "difference": 2.375,
+      "kgw_scored_response_tokens": 59,
+      "clean_scored_response_tokens": 51
+    },
+    {
+      "id": "dolly-06285",
+      "kgw_score": -12.625,
+      "clean_score": -11.0625,
+      "difference": -1.5625,
+      "kgw_scored_response_tokens": 69,
+      "clean_scored_response_tokens": 69
+    },
+    {
+      "id": "dolly-14084",
+      "kgw_score": 15.5,
+      "clean_score": 2.796875,
+      "difference": 12.703125,
+      "kgw_scored_response_tokens": 175,
+      "clean_scored_response_tokens": 144
+    },
+    {
+      "id": "dolly-01386",
+      "kgw_score": 12.4375,
+      "clean_score": 11.75,
+      "difference": 0.6875,
+      "kgw_scored_response_tokens": 190,
+      "clean_scored_response_tokens": 177
+    },
+    {
+      "id": "dolly-09869",
+      "kgw_score": 0.54296875,
+      "clean_score": 0.54296875,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 19,
+      "clean_scored_response_tokens": 19
+    },
+    {
+      "id": "dolly-08121",
+      "kgw_score": 21.375,
+      "clean_score": 37.75,
+      "difference": -16.375,
+      "kgw_scored_response_tokens": 308,
+      "clean_scored_response_tokens": 422
+    },
+    {
+      "id": "dolly-02128",
+      "kgw_score": 19.75,
+      "clean_score": 26.25,
+      "difference": -6.5,
+      "kgw_scored_response_tokens": 524,
+      "clean_scored_response_tokens": 427
+    },
+    {
+      "id": "dolly-03250",
+      "kgw_score": 12.1875,
+      "clean_score": 6.9375,
+      "difference": 5.25,
+      "kgw_scored_response_tokens": 137,
+      "clean_scored_response_tokens": 125
+    },
+    {
+      "id": "dolly-01342",
+      "kgw_score": 21.75,
+      "clean_score": 27.375,
+      "difference": -5.625,
+      "kgw_scored_response_tokens": 514,
+      "clean_scored_response_tokens": 441
+    },
+    {
+      "id": "dolly-14521",
+      "kgw_score": 36.75,
+      "clean_score": 38.25,
+      "difference": -1.5,
+      "kgw_scored_response_tokens": 484,
+      "clean_scored_response_tokens": 372
+    },
+    {
+      "id": "dolly-09918",
+      "kgw_score": 29.0,
+      "clean_score": 23.25,
+      "difference": 5.75,
+      "kgw_scored_response_tokens": 368,
+      "clean_scored_response_tokens": 334
+    },
+    {
+      "id": "dolly-08340",
+      "kgw_score": 25.625,
+      "clean_score": 9.5,
+      "difference": 16.125,
+      "kgw_scored_response_tokens": 100,
+      "clean_scored_response_tokens": 68
+    },
+    {
+      "id": "dolly-03530",
+      "kgw_score": 4.53125,
+      "clean_score": 4.53125,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 43,
+      "clean_scored_response_tokens": 43
+    },
+    {
+      "id": "dolly-14476",
+      "kgw_score": 37.5,
+      "clean_score": 26.375,
+      "difference": 11.125,
+      "kgw_scored_response_tokens": 202,
+      "clean_scored_response_tokens": 152
+    },
+    {
+      "id": "dolly-04438",
+      "kgw_score": -0.330078125,
+      "clean_score": 2.125,
+      "difference": -2.455078125,
+      "kgw_scored_response_tokens": 62,
+      "clean_scored_response_tokens": 94
+    },
+    {
+      "id": "dolly-12536",
+      "kgw_score": 18.5,
+      "clean_score": 9.0625,
+      "difference": 9.4375,
+      "kgw_scored_response_tokens": 400,
+      "clean_scored_response_tokens": 403
+    },
+    {
+      "id": "dolly-04589",
+      "kgw_score": 1.25,
+      "clean_score": 1.25,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 13,
+      "clean_scored_response_tokens": 13
+    },
+    {
+      "id": "dolly-13001",
+      "kgw_score": 3.15625,
+      "clean_score": 3.15625,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 39,
+      "clean_scored_response_tokens": 39
+    },
+    {
+      "id": "dolly-03080",
+      "kgw_score": 27.75,
+      "clean_score": 11.125,
+      "difference": 16.625,
+      "kgw_scored_response_tokens": 98,
+      "clean_scored_response_tokens": 178
+    },
+    {
+      "id": "dolly-14329",
+      "kgw_score": 29.0,
+      "clean_score": 32.25,
+      "difference": -3.25,
+      "kgw_scored_response_tokens": 85,
+      "clean_scored_response_tokens": 44
+    },
+    {
+      "id": "dolly-14838",
+      "kgw_score": 29.625,
+      "clean_score": 25.5,
+      "difference": 4.125,
+      "kgw_scored_response_tokens": 424,
+      "clean_scored_response_tokens": 494
+    },
+    {
+      "id": "dolly-01028",
+      "kgw_score": 4.78125,
+      "clean_score": 2.5625,
+      "difference": 2.21875,
+      "kgw_scored_response_tokens": 73,
+      "clean_scored_response_tokens": 65
+    },
+    {
+      "id": "dolly-14916",
+      "kgw_score": 5.4375,
+      "clean_score": -11.5625,
+      "difference": 17.0,
+      "kgw_scored_response_tokens": 182,
+      "clean_scored_response_tokens": 126
+    },
+    {
+      "id": "dolly-09228",
+      "kgw_score": 24.25,
+      "clean_score": 14.625,
+      "difference": 9.625,
+      "kgw_scored_response_tokens": 352,
+      "clean_scored_response_tokens": 311
+    },
+    {
+      "id": "dolly-04333",
+      "kgw_score": -5.625,
+      "clean_score": -2.703125,
+      "difference": -2.921875,
+      "kgw_scored_response_tokens": 402,
+      "clean_scored_response_tokens": 704
+    },
+    {
+      "id": "dolly-06945",
+      "kgw_score": -8.875,
+      "clean_score": 9.25,
+      "difference": -18.125,
+      "kgw_scored_response_tokens": 38,
+      "clean_scored_response_tokens": 81
+    },
+    {
+      "id": "dolly-05443",
+      "kgw_score": 7.9375,
+      "clean_score": 9.5625,
+      "difference": -1.625,
+      "kgw_scored_response_tokens": 42,
+      "clean_scored_response_tokens": 39
+    },
+    {
+      "id": "dolly-14032",
+      "kgw_score": 25.75,
+      "clean_score": 37.0,
+      "difference": -11.25,
+      "kgw_scored_response_tokens": 198,
+      "clean_scored_response_tokens": 286
+    },
+    {
+      "id": "dolly-13783",
+      "kgw_score": -35.75,
+      "clean_score": -18.625,
+      "difference": -17.125,
+      "kgw_scored_response_tokens": 252,
+      "clean_scored_response_tokens": 343
+    },
+    {
+      "id": "dolly-10958",
+      "kgw_score": 9.4375,
+      "clean_score": 20.5,
+      "difference": -11.0625,
+      "kgw_scored_response_tokens": 159,
+      "clean_scored_response_tokens": 130
+    },
+    {
+      "id": "dolly-05489",
+      "kgw_score": -19.125,
+      "clean_score": -6.5625,
+      "difference": -12.5625,
+      "kgw_scored_response_tokens": 173,
+      "clean_scored_response_tokens": 270
+    },
+    {
+      "id": "dolly-03773",
+      "kgw_score": 5.21875,
+      "clean_score": -3.5,
+      "difference": 8.71875,
+      "kgw_scored_response_tokens": 156,
+      "clean_scored_response_tokens": 137
+    },
+    {
+      "id": "dolly-06158",
+      "kgw_score": 32.5,
+      "clean_score": 40.75,
+      "difference": -8.25,
+      "kgw_scored_response_tokens": 92,
+      "clean_scored_response_tokens": 102
+    },
+    {
+      "id": "dolly-06269",
+      "kgw_score": 25.75,
+      "clean_score": 23.0,
+      "difference": 2.75,
+      "kgw_scored_response_tokens": 373,
+      "clean_scored_response_tokens": 465
+    },
+    {
+      "id": "dolly-04686",
+      "kgw_score": 26.375,
+      "clean_score": 33.5,
+      "difference": -7.125,
+      "kgw_scored_response_tokens": 380,
+      "clean_scored_response_tokens": 341
+    },
+    {
+      "id": "dolly-04273",
+      "kgw_score": 15.5,
+      "clean_score": 9.3125,
+      "difference": 6.1875,
+      "kgw_scored_response_tokens": 72,
+      "clean_scored_response_tokens": 67
+    },
+    {
+      "id": "dolly-14700",
+      "kgw_score": 15.875,
+      "clean_score": 30.125,
+      "difference": -14.25,
+      "kgw_scored_response_tokens": 413,
+      "clean_scored_response_tokens": 534
+    },
+    {
+      "id": "dolly-12371",
+      "kgw_score": 24.625,
+      "clean_score": 22.75,
+      "difference": 1.875,
+      "kgw_scored_response_tokens": 279,
+      "clean_scored_response_tokens": 328
+    },
+    {
+      "id": "dolly-02694",
+      "kgw_score": -16.125,
+      "clean_score": -23.625,
+      "difference": 7.5,
+      "kgw_scored_response_tokens": 151,
+      "clean_scored_response_tokens": 125
+    },
+    {
+      "id": "dolly-08230",
+      "kgw_score": 17.75,
+      "clean_score": 17.75,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 17,
+      "clean_scored_response_tokens": 17
+    },
+    {
+      "id": "dolly-12027",
+      "kgw_score": 4.03125,
+      "clean_score": -0.10791015625,
+      "difference": 4.13916015625,
+      "kgw_scored_response_tokens": 53,
+      "clean_scored_response_tokens": 53
+    },
+    {
+      "id": "dolly-12861",
+      "kgw_score": -4.5,
+      "clean_score": -2.875,
+      "difference": -1.625,
+      "kgw_scored_response_tokens": 326,
+      "clean_scored_response_tokens": 215
+    },
+    {
+      "id": "dolly-04521",
+      "kgw_score": 14.875,
+      "clean_score": 13.125,
+      "difference": 1.75,
+      "kgw_scored_response_tokens": 106,
+      "clean_scored_response_tokens": 185
+    },
+    {
+      "id": "dolly-07117",
+      "kgw_score": 30.625,
+      "clean_score": 25.5,
+      "difference": 5.125,
+      "kgw_scored_response_tokens": 391,
+      "clean_scored_response_tokens": 284
+    },
+    {
+      "id": "dolly-01469",
+      "kgw_score": 17.25,
+      "clean_score": 44.0,
+      "difference": -26.75,
+      "kgw_scored_response_tokens": 432,
+      "clean_scored_response_tokens": 463
+    },
+    {
+      "id": "dolly-01239",
+      "kgw_score": 24.0,
+      "clean_score": 26.75,
+      "difference": -2.75,
+      "kgw_scored_response_tokens": 424,
+      "clean_scored_response_tokens": 373
+    },
+    {
+      "id": "dolly-03696",
+      "kgw_score": 22.125,
+      "clean_score": 32.75,
+      "difference": -10.625,
+      "kgw_scored_response_tokens": 452,
+      "clean_scored_response_tokens": 415
+    },
+    {
+      "id": "dolly-07132",
+      "kgw_score": 5.5,
+      "clean_score": 5.5,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 9,
+      "clean_scored_response_tokens": 9
+    },
+    {
+      "id": "dolly-07355",
+      "kgw_score": 1.171875,
+      "clean_score": 1.9609375,
+      "difference": -0.7890625,
+      "kgw_scored_response_tokens": 124,
+      "clean_scored_response_tokens": 108
+    },
+    {
+      "id": "dolly-14739",
+      "kgw_score": 15.625,
+      "clean_score": -12.625,
+      "difference": 28.25,
+      "kgw_scored_response_tokens": 227,
+      "clean_scored_response_tokens": 297
+    },
+    {
+      "id": "dolly-03914",
+      "kgw_score": 25.375,
+      "clean_score": 31.875,
+      "difference": -6.5,
+      "kgw_scored_response_tokens": 111,
+      "clean_scored_response_tokens": 81
+    },
+    {
+      "id": "dolly-12951",
+      "kgw_score": 21.125,
+      "clean_score": 25.375,
+      "difference": -4.25,
+      "kgw_scored_response_tokens": 381,
+      "clean_scored_response_tokens": 358
+    },
+    {
+      "id": "dolly-06771",
+      "kgw_score": 22.5,
+      "clean_score": 20.625,
+      "difference": 1.875,
+      "kgw_scored_response_tokens": 117,
+      "clean_scored_response_tokens": 122
+    },
+    {
+      "id": "dolly-10178",
+      "kgw_score": -22.75,
+      "clean_score": -22.75,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 13,
+      "clean_scored_response_tokens": 13
+    },
+    {
+      "id": "dolly-10898",
+      "kgw_score": -13.5625,
+      "clean_score": -9.25,
+      "difference": -4.3125,
+      "kgw_scored_response_tokens": 176,
+      "clean_scored_response_tokens": 210
+    },
+    {
+      "id": "dolly-12364",
+      "kgw_score": 3.015625,
+      "clean_score": -5.75,
+      "difference": 8.765625,
+      "kgw_scored_response_tokens": 191,
+      "clean_scored_response_tokens": 124
+    },
+    {
+      "id": "dolly-11987",
+      "kgw_score": 11.125,
+      "clean_score": 9.1875,
+      "difference": 1.9375,
+      "kgw_scored_response_tokens": 973,
+      "clean_scored_response_tokens": 403
+    },
+    {
+      "id": "dolly-03726",
+      "kgw_score": 0.640625,
+      "clean_score": -3.890625,
+      "difference": 4.53125,
+      "kgw_scored_response_tokens": 359,
+      "clean_scored_response_tokens": 344
+    },
+    {
+      "id": "dolly-05761",
+      "kgw_score": 20.125,
+      "clean_score": 28.375,
+      "difference": -8.25,
+      "kgw_scored_response_tokens": 669,
+      "clean_scored_response_tokens": 367
+    },
+    {
+      "id": "dolly-01939",
+      "kgw_score": -3.1875,
+      "clean_score": -3.1875,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 60,
+      "clean_scored_response_tokens": 60
+    },
+    {
+      "id": "dolly-05628",
+      "kgw_score": 11.9375,
+      "clean_score": 12.25,
+      "difference": -0.3125,
+      "kgw_scored_response_tokens": 96,
+      "clean_scored_response_tokens": 294
+    },
+    {
+      "id": "dolly-11466",
+      "kgw_score": -3.828125,
+      "clean_score": 10.5,
+      "difference": -14.328125,
+      "kgw_scored_response_tokens": 92,
+      "clean_scored_response_tokens": 30
+    },
+    {
+      "id": "dolly-04773",
+      "kgw_score": 12.0,
+      "clean_score": 12.4375,
+      "difference": -0.4375,
+      "kgw_scored_response_tokens": 128,
+      "clean_scored_response_tokens": 122
+    },
+    {
+      "id": "dolly-12245",
+      "kgw_score": 32.25,
+      "clean_score": 29.875,
+      "difference": 2.375,
+      "kgw_scored_response_tokens": 85,
+      "clean_scored_response_tokens": 97
+    },
+    {
+      "id": "dolly-14861",
+      "kgw_score": -9.1875,
+      "clean_score": -4.59375,
+      "difference": -4.59375,
+      "kgw_scored_response_tokens": 141,
+      "clean_scored_response_tokens": 155
+    },
+    {
+      "id": "dolly-00900",
+      "kgw_score": 9.0,
+      "clean_score": 8.0,
+      "difference": 1.0,
+      "kgw_scored_response_tokens": 52,
+      "clean_scored_response_tokens": 55
+    },
+    {
+      "id": "dolly-01979",
+      "kgw_score": 3.640625,
+      "clean_score": 11.375,
+      "difference": -7.734375,
+      "kgw_scored_response_tokens": 680,
+      "clean_scored_response_tokens": 362
+    },
+    {
+      "id": "dolly-01206",
+      "kgw_score": 6.375,
+      "clean_score": 6.375,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 27,
+      "clean_scored_response_tokens": 27
+    },
+    {
+      "id": "dolly-09334",
+      "kgw_score": 24.75,
+      "clean_score": 16.5,
+      "difference": 8.25,
+      "kgw_scored_response_tokens": 292,
+      "clean_scored_response_tokens": 235
+    },
+    {
+      "id": "dolly-10207",
+      "kgw_score": 41.5,
+      "clean_score": 32.75,
+      "difference": 8.75,
+      "kgw_scored_response_tokens": 52,
+      "clean_scored_response_tokens": 85
+    },
+    {
+      "id": "dolly-14970",
+      "kgw_score": 4.71875,
+      "clean_score": 5.03125,
+      "difference": -0.3125,
+      "kgw_scored_response_tokens": 114,
+      "clean_scored_response_tokens": 70
+    },
+    {
+      "id": "dolly-13410",
+      "kgw_score": 11.625,
+      "clean_score": 17.625,
+      "difference": -6.0,
+      "kgw_scored_response_tokens": 126,
+      "clean_scored_response_tokens": 56
+    },
+    {
+      "id": "dolly-07266",
+      "kgw_score": 22.125,
+      "clean_score": 28.875,
+      "difference": -6.75,
+      "kgw_scored_response_tokens": 342,
+      "clean_scored_response_tokens": 392
+    },
+    {
+      "id": "dolly-10408",
+      "kgw_score": 13.1875,
+      "clean_score": 18.625,
+      "difference": -5.4375,
+      "kgw_scored_response_tokens": 112,
+      "clean_scored_response_tokens": 107
+    },
+    {
+      "id": "dolly-13339",
+      "kgw_score": 30.25,
+      "clean_score": 25.875,
+      "difference": 4.375,
+      "kgw_scored_response_tokens": 201,
+      "clean_scored_response_tokens": 176
+    },
+    {
+      "id": "dolly-13292",
+      "kgw_score": 43.25,
+      "clean_score": 43.25,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 8,
+      "clean_scored_response_tokens": 8
+    },
+    {
+      "id": "dolly-13068",
+      "kgw_score": 24.375,
+      "clean_score": 14.0625,
+      "difference": 10.3125,
+      "kgw_scored_response_tokens": 52,
+      "clean_scored_response_tokens": 71
+    },
+    {
+      "id": "dolly-08911",
+      "kgw_score": -3.5,
+      "clean_score": 10.0625,
+      "difference": -13.5625,
+      "kgw_scored_response_tokens": 482,
+      "clean_scored_response_tokens": 548
+    },
+    {
+      "id": "dolly-13555",
+      "kgw_score": -0.419921875,
+      "clean_score": 22.625,
+      "difference": -23.044921875,
+      "kgw_scored_response_tokens": 201,
+      "clean_scored_response_tokens": 272
+    },
+    {
+      "id": "dolly-02725",
+      "kgw_score": 15.375,
+      "clean_score": 18.125,
+      "difference": -2.75,
+      "kgw_scored_response_tokens": 369,
+      "clean_scored_response_tokens": 621
+    },
+    {
+      "id": "dolly-01054",
+      "kgw_score": 29.25,
+      "clean_score": 21.75,
+      "difference": 7.5,
+      "kgw_scored_response_tokens": 346,
+      "clean_scored_response_tokens": 349
+    },
+    {
+      "id": "dolly-02628",
+      "kgw_score": -7.96875,
+      "clean_score": -3.875,
+      "difference": -4.09375,
+      "kgw_scored_response_tokens": 36,
+      "clean_scored_response_tokens": 41
+    },
+    {
+      "id": "dolly-05231",
+      "kgw_score": 23.75,
+      "clean_score": 26.25,
+      "difference": -2.5,
+      "kgw_scored_response_tokens": 420,
+      "clean_scored_response_tokens": 440
+    },
+    {
+      "id": "dolly-11030",
+      "kgw_score": 31.0,
+      "clean_score": 33.25,
+      "difference": -2.25,
+      "kgw_scored_response_tokens": 48,
+      "clean_scored_response_tokens": 53
+    },
+    {
+      "id": "dolly-05398",
+      "kgw_score": 33.75,
+      "clean_score": 31.5,
+      "difference": 2.25,
+      "kgw_scored_response_tokens": 535,
+      "clean_scored_response_tokens": 436
+    },
+    {
+      "id": "dolly-07605",
+      "kgw_score": 12.5,
+      "clean_score": 20.875,
+      "difference": -8.375,
+      "kgw_scored_response_tokens": 210,
+      "clean_scored_response_tokens": 234
+    },
+    {
+      "id": "dolly-05324",
+      "kgw_score": 19.625,
+      "clean_score": 24.375,
+      "difference": -4.75,
+      "kgw_scored_response_tokens": 326,
+      "clean_scored_response_tokens": 295
+    },
+    {
+      "id": "dolly-12579",
+      "kgw_score": 14.125,
+      "clean_score": 1.3125,
+      "difference": 12.8125,
+      "kgw_scored_response_tokens": 426,
+      "clean_scored_response_tokens": 387
+    },
+    {
+      "id": "dolly-01118",
+      "kgw_score": 1.9921875,
+      "clean_score": -12.375,
+      "difference": 14.3671875,
+      "kgw_scored_response_tokens": 485,
+      "clean_scored_response_tokens": 587
+    },
+    {
+      "id": "dolly-07971",
+      "kgw_score": 12.125,
+      "clean_score": 11.3125,
+      "difference": 0.8125,
+      "kgw_scored_response_tokens": 43,
+      "clean_scored_response_tokens": 34
+    },
+    {
+      "id": "dolly-11413",
+      "kgw_score": 18.875,
+      "clean_score": 17.5,
+      "difference": 1.375,
+      "kgw_scored_response_tokens": 16,
+      "clean_scored_response_tokens": 23
+    },
+    {
+      "id": "dolly-03239",
+      "kgw_score": 14.4375,
+      "clean_score": 18.0,
+      "difference": -3.5625,
+      "kgw_scored_response_tokens": 47,
+      "clean_scored_response_tokens": 47
+    },
+    {
+      "id": "dolly-13445",
+      "kgw_score": 15.8125,
+      "clean_score": 12.0,
+      "difference": 3.8125,
+      "kgw_scored_response_tokens": 1536,
+      "clean_scored_response_tokens": 579
+    },
+    {
+      "id": "dolly-12418",
+      "kgw_score": 18.125,
+      "clean_score": 29.125,
+      "difference": -11.0,
+      "kgw_scored_response_tokens": 314,
+      "clean_scored_response_tokens": 260
+    },
+    {
+      "id": "dolly-07936",
+      "kgw_score": -8.9375,
+      "clean_score": -4.875,
+      "difference": -4.0625,
+      "kgw_scored_response_tokens": 232,
+      "clean_scored_response_tokens": 221
+    },
+    {
+      "id": "dolly-00170",
+      "kgw_score": -13.3125,
+      "clean_score": -8.5625,
+      "difference": -4.75,
+      "kgw_scored_response_tokens": 611,
+      "clean_scored_response_tokens": 594
+    },
+    {
+      "id": "dolly-09108",
+      "kgw_score": 22.625,
+      "clean_score": 25.125,
+      "difference": -2.5,
+      "kgw_scored_response_tokens": 102,
+      "clean_scored_response_tokens": 93
+    },
+    {
+      "id": "dolly-06019",
+      "kgw_score": -2.609375,
+      "clean_score": -2.609375,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 14,
+      "clean_scored_response_tokens": 14
+    },
+    {
+      "id": "dolly-02032",
+      "kgw_score": 12.375,
+      "clean_score": 11.5,
+      "difference": 0.875,
+      "kgw_scored_response_tokens": 37,
+      "clean_scored_response_tokens": 38
+    },
+    {
+      "id": "dolly-01183",
+      "kgw_score": -5.78125,
+      "clean_score": -5.5,
+      "difference": -0.28125,
+      "kgw_scored_response_tokens": 106,
+      "clean_scored_response_tokens": 37
+    },
+    {
+      "id": "dolly-08934",
+      "kgw_score": 16.75,
+      "clean_score": 32.75,
+      "difference": -16.0,
+      "kgw_scored_response_tokens": 89,
+      "clean_scored_response_tokens": 226
+    },
+    {
+      "id": "dolly-09988",
+      "kgw_score": 3.953125,
+      "clean_score": 14.1875,
+      "difference": -10.234375,
+      "kgw_scored_response_tokens": 534,
+      "clean_scored_response_tokens": 530
+    },
+    {
+      "id": "dolly-02139",
+      "kgw_score": 21.375,
+      "clean_score": 30.75,
+      "difference": -9.375,
+      "kgw_scored_response_tokens": 463,
+      "clean_scored_response_tokens": 543
+    },
+    {
+      "id": "dolly-08401",
+      "kgw_score": 9.6875,
+      "clean_score": 32.75,
+      "difference": -23.0625,
+      "kgw_scored_response_tokens": 376,
+      "clean_scored_response_tokens": 357
+    },
+    {
+      "id": "dolly-14265",
+      "kgw_score": -14.125,
+      "clean_score": -5.84375,
+      "difference": -8.28125,
+      "kgw_scored_response_tokens": 284,
+      "clean_scored_response_tokens": 213
+    },
+    {
+      "id": "dolly-09609",
+      "kgw_score": 16.125,
+      "clean_score": 14.1875,
+      "difference": 1.9375,
+      "kgw_scored_response_tokens": 352,
+      "clean_scored_response_tokens": 328
+    },
+    {
+      "id": "dolly-10197",
+      "kgw_score": 7.3125,
+      "clean_score": 6.9375,
+      "difference": 0.375,
+      "kgw_scored_response_tokens": 22,
+      "clean_scored_response_tokens": 23
+    },
+    {
+      "id": "dolly-14697",
+      "kgw_score": 43.5,
+      "clean_score": 32.25,
+      "difference": 11.25,
+      "kgw_scored_response_tokens": 404,
+      "clean_scored_response_tokens": 393
+    },
+    {
+      "id": "dolly-07122",
+      "kgw_score": -13.75,
+      "clean_score": -2.578125,
+      "difference": -11.171875,
+      "kgw_scored_response_tokens": 437,
+      "clean_scored_response_tokens": 465
+    },
+    {
+      "id": "dolly-06600",
+      "kgw_score": 27.75,
+      "clean_score": 28.5,
+      "difference": -0.75,
+      "kgw_scored_response_tokens": 133,
+      "clean_scored_response_tokens": 105
+    },
+    {
+      "id": "dolly-13610",
+      "kgw_score": -0.62890625,
+      "clean_score": -5.28125,
+      "difference": 4.65234375,
+      "kgw_scored_response_tokens": 266,
+      "clean_scored_response_tokens": 291
+    },
+    {
+      "id": "dolly-11445",
+      "kgw_score": 2.296875,
+      "clean_score": -14.5625,
+      "difference": 16.859375,
+      "kgw_scored_response_tokens": 296,
+      "clean_scored_response_tokens": 318
+    },
+    {
+      "id": "dolly-07427",
+      "kgw_score": 10.75,
+      "clean_score": 26.375,
+      "difference": -15.625,
+      "kgw_scored_response_tokens": 713,
+      "clean_scored_response_tokens": 454
+    },
+    {
+      "id": "dolly-08999",
+      "kgw_score": 11.0625,
+      "clean_score": 11.0625,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 53,
+      "clean_scored_response_tokens": 53
+    },
+    {
+      "id": "dolly-08202",
+      "kgw_score": 8.125,
+      "clean_score": 11.75,
+      "difference": -3.625,
+      "kgw_scored_response_tokens": 181,
+      "clean_scored_response_tokens": 195
+    },
+    {
+      "id": "dolly-01593",
+      "kgw_score": 0.65234375,
+      "clean_score": 0.65234375,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 31,
+      "clean_scored_response_tokens": 31
+    },
+    {
+      "id": "dolly-00990",
+      "kgw_score": 9.1875,
+      "clean_score": 11.0625,
+      "difference": -1.875,
+      "kgw_scored_response_tokens": 33,
+      "clean_scored_response_tokens": 38
+    },
+    {
+      "id": "dolly-14972",
+      "kgw_score": 21.25,
+      "clean_score": 34.75,
+      "difference": -13.5,
+      "kgw_scored_response_tokens": 233,
+      "clean_scored_response_tokens": 389
+    },
+    {
+      "id": "dolly-05528",
+      "kgw_score": 22.125,
+      "clean_score": 22.125,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 89,
+      "clean_scored_response_tokens": 95
+    },
+    {
+      "id": "dolly-14539",
+      "kgw_score": 21.5,
+      "clean_score": 14.625,
+      "difference": 6.875,
+      "kgw_scored_response_tokens": 83,
+      "clean_scored_response_tokens": 97
+    },
+    {
+      "id": "dolly-08595",
+      "kgw_score": 21.25,
+      "clean_score": 26.875,
+      "difference": -5.625,
+      "kgw_scored_response_tokens": 45,
+      "clean_scored_response_tokens": 43
+    },
+    {
+      "id": "dolly-10519",
+      "kgw_score": -11.0,
+      "clean_score": 6.65625,
+      "difference": -17.65625,
+      "kgw_scored_response_tokens": 390,
+      "clean_scored_response_tokens": 459
+    },
+    {
+      "id": "dolly-09563",
+      "kgw_score": -22.75,
+      "clean_score": -1.453125,
+      "difference": -21.296875,
+      "kgw_scored_response_tokens": 142,
+      "clean_scored_response_tokens": 167
+    },
+    {
+      "id": "dolly-06895",
+      "kgw_score": 39.5,
+      "clean_score": 37.0,
+      "difference": 2.5,
+      "kgw_scored_response_tokens": 144,
+      "clean_scored_response_tokens": 183
+    },
+    {
+      "id": "dolly-12916",
+      "kgw_score": -6.09375,
+      "clean_score": 1.890625,
+      "difference": -7.984375,
+      "kgw_scored_response_tokens": 258,
+      "clean_scored_response_tokens": 216
+    },
+    {
+      "id": "dolly-02451",
+      "kgw_score": 23.125,
+      "clean_score": 38.5,
+      "difference": -15.375,
+      "kgw_scored_response_tokens": 337,
+      "clean_scored_response_tokens": 332
+    },
+    {
+      "id": "dolly-00636",
+      "kgw_score": -27.25,
+      "clean_score": -17.125,
+      "difference": -10.125,
+      "kgw_scored_response_tokens": 39,
+      "clean_scored_response_tokens": 63
+    },
+    {
+      "id": "dolly-06006",
+      "kgw_score": 17.5,
+      "clean_score": 12.0625,
+      "difference": 5.4375,
+      "kgw_scored_response_tokens": 174,
+      "clean_scored_response_tokens": 90
+    },
+    {
+      "id": "dolly-08319",
+      "kgw_score": 3.375,
+      "clean_score": -12.25,
+      "difference": 15.625,
+      "kgw_scored_response_tokens": 47,
+      "clean_scored_response_tokens": 94
+    },
+    {
+      "id": "dolly-13544",
+      "kgw_score": 17.0,
+      "clean_score": 23.375,
+      "difference": -6.375,
+      "kgw_scored_response_tokens": 375,
+      "clean_scored_response_tokens": 331
+    },
+    {
+      "id": "dolly-06238",
+      "kgw_score": 18.125,
+      "clean_score": 27.125,
+      "difference": -9.0,
+      "kgw_scored_response_tokens": 233,
+      "clean_scored_response_tokens": 301
+    },
+    {
+      "id": "dolly-04190",
+      "kgw_score": -7.34375,
+      "clean_score": -8.5625,
+      "difference": 1.21875,
+      "kgw_scored_response_tokens": 131,
+      "clean_scored_response_tokens": 69
+    },
+    {
+      "id": "dolly-06824",
+      "kgw_score": 9.0625,
+      "clean_score": 26.125,
+      "difference": -17.0625,
+      "kgw_scored_response_tokens": 401,
+      "clean_scored_response_tokens": 485
+    },
+    {
+      "id": "dolly-14842",
+      "kgw_score": -29.25,
+      "clean_score": 10.1875,
+      "difference": -39.4375,
+      "kgw_scored_response_tokens": 191,
+      "clean_scored_response_tokens": 68
+    },
+    {
+      "id": "dolly-13162",
+      "kgw_score": -22.625,
+      "clean_score": 2.46875,
+      "difference": -25.09375,
+      "kgw_scored_response_tokens": 92,
+      "clean_scored_response_tokens": 32
+    },
+    {
+      "id": "dolly-00803",
+      "kgw_score": -42.5,
+      "clean_score": -26.125,
+      "difference": -16.375,
+      "kgw_scored_response_tokens": 296,
+      "clean_scored_response_tokens": 286
+    },
+    {
+      "id": "dolly-01653",
+      "kgw_score": -0.3984375,
+      "clean_score": 23.875,
+      "difference": -24.2734375,
+      "kgw_scored_response_tokens": 339,
+      "clean_scored_response_tokens": 491
+    },
+    {
+      "id": "dolly-05312",
+      "kgw_score": 6.375,
+      "clean_score": 0.2490234375,
+      "difference": 6.1259765625,
+      "kgw_scored_response_tokens": 297,
+      "clean_scored_response_tokens": 312
+    },
+    {
+      "id": "dolly-10992",
+      "kgw_score": 6.0625,
+      "clean_score": 16.375,
+      "difference": -10.3125,
+      "kgw_scored_response_tokens": 485,
+      "clean_scored_response_tokens": 471
+    },
+    {
+      "id": "dolly-05352",
+      "kgw_score": 21.125,
+      "clean_score": 30.625,
+      "difference": -9.5,
+      "kgw_scored_response_tokens": 372,
+      "clean_scored_response_tokens": 352
+    },
+    {
+      "id": "dolly-03231",
+      "kgw_score": 18.625,
+      "clean_score": 32.5,
+      "difference": -13.875,
+      "kgw_scored_response_tokens": 1068,
+      "clean_scored_response_tokens": 550
+    },
+    {
+      "id": "dolly-06932",
+      "kgw_score": 17.5,
+      "clean_score": 22.375,
+      "difference": -4.875,
+      "kgw_scored_response_tokens": 140,
+      "clean_scored_response_tokens": 103
+    },
+    {
+      "id": "dolly-08607",
+      "kgw_score": 30.875,
+      "clean_score": 23.75,
+      "difference": 7.125,
+      "kgw_scored_response_tokens": 514,
+      "clean_scored_response_tokens": 555
+    },
+    {
+      "id": "dolly-09288",
+      "kgw_score": 17.125,
+      "clean_score": 17.125,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 66,
+      "clean_scored_response_tokens": 66
+    },
+    {
+      "id": "dolly-07944",
+      "kgw_score": 9.3125,
+      "clean_score": 21.375,
+      "difference": -12.0625,
+      "kgw_scored_response_tokens": 336,
+      "clean_scored_response_tokens": 340
+    },
+    {
+      "id": "dolly-13102",
+      "kgw_score": -5.875,
+      "clean_score": 6.84375,
+      "difference": -12.71875,
+      "kgw_scored_response_tokens": 86,
+      "clean_scored_response_tokens": 102
+    },
+    {
+      "id": "dolly-05388",
+      "kgw_score": 30.375,
+      "clean_score": 35.5,
+      "difference": -5.125,
+      "kgw_scored_response_tokens": 51,
+      "clean_scored_response_tokens": 42
+    },
+    {
+      "id": "dolly-14235",
+      "kgw_score": 32.25,
+      "clean_score": 41.25,
+      "difference": -9.0,
+      "kgw_scored_response_tokens": 307,
+      "clean_scored_response_tokens": 312
+    },
+    {
+      "id": "dolly-07763",
+      "kgw_score": 12.3125,
+      "clean_score": 13.5625,
+      "difference": -1.25,
+      "kgw_scored_response_tokens": 50,
+      "clean_scored_response_tokens": 71
+    },
+    {
+      "id": "dolly-10500",
+      "kgw_score": 4.78125,
+      "clean_score": 4.625,
+      "difference": 0.15625,
+      "kgw_scored_response_tokens": 78,
+      "clean_scored_response_tokens": 90
+    },
+    {
+      "id": "dolly-08355",
+      "kgw_score": -9.375,
+      "clean_score": -17.625,
+      "difference": 8.25,
+      "kgw_scored_response_tokens": 84,
+      "clean_scored_response_tokens": 62
+    },
+    {
+      "id": "dolly-00609",
+      "kgw_score": -29.25,
+      "clean_score": -26.875,
+      "difference": -2.375,
+      "kgw_scored_response_tokens": 69,
+      "clean_scored_response_tokens": 81
+    },
+    {
+      "id": "dolly-06786",
+      "kgw_score": 8.25,
+      "clean_score": 8.5,
+      "difference": -0.25,
+      "kgw_scored_response_tokens": 96,
+      "clean_scored_response_tokens": 105
+    },
+    {
+      "id": "dolly-04857",
+      "kgw_score": 9.375,
+      "clean_score": 18.75,
+      "difference": -9.375,
+      "kgw_scored_response_tokens": 309,
+      "clean_scored_response_tokens": 211
+    },
+    {
+      "id": "dolly-07633",
+      "kgw_score": 9.4375,
+      "clean_score": 13.0,
+      "difference": -3.5625,
+      "kgw_scored_response_tokens": 93,
+      "clean_scored_response_tokens": 113
+    },
+    {
+      "id": "dolly-00179",
+      "kgw_score": 6.40625,
+      "clean_score": 5.875,
+      "difference": 0.53125,
+      "kgw_scored_response_tokens": 193,
+      "clean_scored_response_tokens": 106
+    },
+    {
+      "id": "dolly-11386",
+      "kgw_score": 20.75,
+      "clean_score": 7.875,
+      "difference": 12.875,
+      "kgw_scored_response_tokens": 300,
+      "clean_scored_response_tokens": 487
+    },
+    {
+      "id": "dolly-02069",
+      "kgw_score": -18.875,
+      "clean_score": 3.8125,
+      "difference": -22.6875,
+      "kgw_scored_response_tokens": 336,
+      "clean_scored_response_tokens": 472
+    },
+    {
+      "id": "dolly-09439",
+      "kgw_score": 28.375,
+      "clean_score": 48.75,
+      "difference": -20.375,
+      "kgw_scored_response_tokens": 745,
+      "clean_scored_response_tokens": 676
+    },
+    {
+      "id": "dolly-12065",
+      "kgw_score": 28.375,
+      "clean_score": 35.0,
+      "difference": -6.625,
+      "kgw_scored_response_tokens": 1087,
+      "clean_scored_response_tokens": 589
+    },
+    {
+      "id": "dolly-00148",
+      "kgw_score": 32.75,
+      "clean_score": 40.5,
+      "difference": -7.75,
+      "kgw_scored_response_tokens": 336,
+      "clean_scored_response_tokens": 281
+    },
+    {
+      "id": "dolly-08451",
+      "kgw_score": 2.40625,
+      "clean_score": -11.6875,
+      "difference": 14.09375,
+      "kgw_scored_response_tokens": 150,
+      "clean_scored_response_tokens": 215
+    },
+    {
+      "id": "dolly-02687",
+      "kgw_score": 13.75,
+      "clean_score": 12.6875,
+      "difference": 1.0625,
+      "kgw_scored_response_tokens": 125,
+      "clean_scored_response_tokens": 185
+    },
+    {
+      "id": "dolly-08416",
+      "kgw_score": 23.625,
+      "clean_score": 24.75,
+      "difference": -1.125,
+      "kgw_scored_response_tokens": 378,
+      "clean_scored_response_tokens": 492
+    },
+    {
+      "id": "dolly-08211",
+      "kgw_score": 5.78125,
+      "clean_score": -6.40625,
+      "difference": 12.1875,
+      "kgw_scored_response_tokens": 65,
+      "clean_scored_response_tokens": 108
+    },
+    {
+      "id": "dolly-01260",
+      "kgw_score": -13.1875,
+      "clean_score": -16.375,
+      "difference": 3.1875,
+      "kgw_scored_response_tokens": 73,
+      "clean_scored_response_tokens": 72
+    },
+    {
+      "id": "dolly-12186",
+      "kgw_score": 15.75,
+      "clean_score": 15.5,
+      "difference": 0.25,
+      "kgw_scored_response_tokens": 84,
+      "clean_scored_response_tokens": 101
+    },
+    {
+      "id": "dolly-07635",
+      "kgw_score": 2.625,
+      "clean_score": -5.4375,
+      "difference": 8.0625,
+      "kgw_scored_response_tokens": 194,
+      "clean_scored_response_tokens": 195
+    },
+    {
+      "id": "dolly-10037",
+      "kgw_score": 9.9375,
+      "clean_score": -17.25,
+      "difference": 27.1875,
+      "kgw_scored_response_tokens": 84,
+      "clean_scored_response_tokens": 32
+    },
+    {
+      "id": "dolly-06110",
+      "kgw_score": 0.53515625,
+      "clean_score": 3.53125,
+      "difference": -2.99609375,
+      "kgw_scored_response_tokens": 401,
+      "clean_scored_response_tokens": 316
+    },
+    {
+      "id": "dolly-08268",
+      "kgw_score": 28.375,
+      "clean_score": 32.25,
+      "difference": -3.875,
+      "kgw_scored_response_tokens": 134,
+      "clean_scored_response_tokens": 123
+    },
+    {
+      "id": "dolly-01723",
+      "kgw_score": 8.25,
+      "clean_score": 19.875,
+      "difference": -11.625,
+      "kgw_scored_response_tokens": 325,
+      "clean_scored_response_tokens": 377
+    },
+    {
+      "id": "dolly-03319",
+      "kgw_score": 11.4375,
+      "clean_score": 26.25,
+      "difference": -14.8125,
+      "kgw_scored_response_tokens": 260,
+      "clean_scored_response_tokens": 219
+    },
+    {
+      "id": "dolly-08546",
+      "kgw_score": 21.875,
+      "clean_score": 16.125,
+      "difference": 5.75,
+      "kgw_scored_response_tokens": 96,
+      "clean_scored_response_tokens": 75
+    },
+    {
+      "id": "dolly-12885",
+      "kgw_score": 29.125,
+      "clean_score": 38.75,
+      "difference": -9.625,
+      "kgw_scored_response_tokens": 380,
+      "clean_scored_response_tokens": 404
+    },
+    {
+      "id": "dolly-03709",
+      "kgw_score": 5.46875,
+      "clean_score": 9.25,
+      "difference": -3.78125,
+      "kgw_scored_response_tokens": 133,
+      "clean_scored_response_tokens": 99
+    },
+    {
+      "id": "dolly-00852",
+      "kgw_score": 32.5,
+      "clean_score": 19.625,
+      "difference": 12.875,
+      "kgw_scored_response_tokens": 165,
+      "clean_scored_response_tokens": 228
+    },
+    {
+      "id": "dolly-05067",
+      "kgw_score": -7.875,
+      "clean_score": -7.78125,
+      "difference": -0.09375,
+      "kgw_scored_response_tokens": 60,
+      "clean_scored_response_tokens": 60
+    },
+    {
+      "id": "dolly-11665",
+      "kgw_score": 8.125,
+      "clean_score": 8.4375,
+      "difference": -0.3125,
+      "kgw_scored_response_tokens": 406,
+      "clean_scored_response_tokens": 363
+    },
+    {
+      "id": "dolly-14465",
+      "kgw_score": 11.75,
+      "clean_score": 9.0,
+      "difference": 2.75,
+      "kgw_scored_response_tokens": 56,
+      "clean_scored_response_tokens": 45
+    },
+    {
+      "id": "dolly-09375",
+      "kgw_score": 4.9375,
+      "clean_score": 4.9375,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 62,
+      "clean_scored_response_tokens": 62
+    },
+    {
+      "id": "dolly-01309",
+      "kgw_score": -5.375,
+      "clean_score": 3.671875,
+      "difference": -9.046875,
+      "kgw_scored_response_tokens": 169,
+      "clean_scored_response_tokens": 165
+    },
+    {
+      "id": "dolly-07407",
+      "kgw_score": 10.4375,
+      "clean_score": 22.75,
+      "difference": -12.3125,
+      "kgw_scored_response_tokens": 663,
+      "clean_scored_response_tokens": 381
+    },
+    {
+      "id": "dolly-09062",
+      "kgw_score": 16.5,
+      "clean_score": 47.5,
+      "difference": -31.0,
+      "kgw_scored_response_tokens": 570,
+      "clean_scored_response_tokens": 514
+    },
+    {
+      "id": "dolly-03278",
+      "kgw_score": 4.0,
+      "clean_score": 8.4375,
+      "difference": -4.4375,
+      "kgw_scored_response_tokens": 268,
+      "clean_scored_response_tokens": 228
+    },
+    {
+      "id": "dolly-05234",
+      "kgw_score": -11.8125,
+      "clean_score": -13.25,
+      "difference": 1.4375,
+      "kgw_scored_response_tokens": 162,
+      "clean_scored_response_tokens": 124
+    },
+    {
+      "id": "dolly-04853",
+      "kgw_score": 15.6875,
+      "clean_score": 34.0,
+      "difference": -18.3125,
+      "kgw_scored_response_tokens": 350,
+      "clean_scored_response_tokens": 396
+    },
+    {
+      "id": "dolly-13936",
+      "kgw_score": 42.25,
+      "clean_score": 42.25,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 363,
+      "clean_scored_response_tokens": 359
+    },
+    {
+      "id": "dolly-09420",
+      "kgw_score": -36.5,
+      "clean_score": -13.875,
+      "difference": -22.625,
+      "kgw_scored_response_tokens": 293,
+      "clean_scored_response_tokens": 226
+    },
+    {
+      "id": "dolly-12124",
+      "kgw_score": 11.6875,
+      "clean_score": 7.96875,
+      "difference": 3.71875,
+      "kgw_scored_response_tokens": 224,
+      "clean_scored_response_tokens": 298
+    },
+    {
+      "id": "dolly-02816",
+      "kgw_score": 15.375,
+      "clean_score": 17.375,
+      "difference": -2.0,
+      "kgw_scored_response_tokens": 505,
+      "clean_scored_response_tokens": 427
+    },
+    {
+      "id": "dolly-01411",
+      "kgw_score": -18.125,
+      "clean_score": -3.5,
+      "difference": -14.625,
+      "kgw_scored_response_tokens": 54,
+      "clean_scored_response_tokens": 112
+    },
+    {
+      "id": "dolly-08114",
+      "kgw_score": -15.375,
+      "clean_score": -5.46875,
+      "difference": -9.90625,
+      "kgw_scored_response_tokens": 377,
+      "clean_scored_response_tokens": 399
+    },
+    {
+      "id": "dolly-09430",
+      "kgw_score": -17.75,
+      "clean_score": -3.34375,
+      "difference": -14.40625,
+      "kgw_scored_response_tokens": 131,
+      "clean_scored_response_tokens": 92
+    },
+    {
+      "id": "dolly-10389",
+      "kgw_score": -34.75,
+      "clean_score": -10.0625,
+      "difference": -24.6875,
+      "kgw_scored_response_tokens": 185,
+      "clean_scored_response_tokens": 164
+    },
+    {
+      "id": "dolly-03119",
+      "kgw_score": -33.5,
+      "clean_score": -1.8125,
+      "difference": -31.6875,
+      "kgw_scored_response_tokens": 102,
+      "clean_scored_response_tokens": 79
+    },
+    {
+      "id": "dolly-02469",
+      "kgw_score": 10.3125,
+      "clean_score": 10.3125,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 19,
+      "clean_scored_response_tokens": 19
+    },
+    {
+      "id": "dolly-07780",
+      "kgw_score": -12.3125,
+      "clean_score": -12.5,
+      "difference": 0.1875,
+      "kgw_scored_response_tokens": 394,
+      "clean_scored_response_tokens": 518
+    },
+    {
+      "id": "dolly-03916",
+      "kgw_score": 7.3125,
+      "clean_score": 29.375,
+      "difference": -22.0625,
+      "kgw_scored_response_tokens": 442,
+      "clean_scored_response_tokens": 401
+    },
+    {
+      "id": "dolly-08222",
+      "kgw_score": 6.0625,
+      "clean_score": 7.59375,
+      "difference": -1.53125,
+      "kgw_scored_response_tokens": 250,
+      "clean_scored_response_tokens": 231
+    },
+    {
+      "id": "dolly-01615",
+      "kgw_score": 27.375,
+      "clean_score": 27.375,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 55,
+      "clean_scored_response_tokens": 51
+    },
+    {
+      "id": "dolly-12812",
+      "kgw_score": 3.8125,
+      "clean_score": 6.875,
+      "difference": -3.0625,
+      "kgw_scored_response_tokens": 54,
+      "clean_scored_response_tokens": 65
+    },
+    {
+      "id": "dolly-11437",
+      "kgw_score": 8.5625,
+      "clean_score": 13.3125,
+      "difference": -4.75,
+      "kgw_scored_response_tokens": 201,
+      "clean_scored_response_tokens": 269
+    },
+    {
+      "id": "dolly-12001",
+      "kgw_score": 22.25,
+      "clean_score": 16.0,
+      "difference": 6.25,
+      "kgw_scored_response_tokens": 86,
+      "clean_scored_response_tokens": 139
+    },
+    {
+      "id": "dolly-09442",
+      "kgw_score": 12.875,
+      "clean_score": 17.0,
+      "difference": -4.125,
+      "kgw_scored_response_tokens": 76,
+      "clean_scored_response_tokens": 131
+    },
+    {
+      "id": "dolly-11241",
+      "kgw_score": 24.625,
+      "clean_score": 38.75,
+      "difference": -14.125,
+      "kgw_scored_response_tokens": 171,
+      "clean_scored_response_tokens": 150
+    },
+    {
+      "id": "dolly-14947",
+      "kgw_score": 12.6875,
+      "clean_score": 15.6875,
+      "difference": -3.0,
+      "kgw_scored_response_tokens": 276,
+      "clean_scored_response_tokens": 222
+    },
+    {
+      "id": "dolly-03624",
+      "kgw_score": 1.328125,
+      "clean_score": 7.3125,
+      "difference": -5.984375,
+      "kgw_scored_response_tokens": 255,
+      "clean_scored_response_tokens": 117
+    },
+    {
+      "id": "dolly-14069",
+      "kgw_score": 16.125,
+      "clean_score": 15.1875,
+      "difference": 0.9375,
+      "kgw_scored_response_tokens": 299,
+      "clean_scored_response_tokens": 388
+    },
+    {
+      "id": "dolly-05632",
+      "kgw_score": -12.3125,
+      "clean_score": -18.875,
+      "difference": 6.5625,
+      "kgw_scored_response_tokens": 139,
+      "clean_scored_response_tokens": 134
+    },
+    {
+      "id": "dolly-13510",
+      "kgw_score": 8.3125,
+      "clean_score": 8.3125,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 17,
+      "clean_scored_response_tokens": 17
+    },
+    {
+      "id": "dolly-02684",
+      "kgw_score": 33.25,
+      "clean_score": 28.75,
+      "difference": 4.5,
+      "kgw_scored_response_tokens": 114,
+      "clean_scored_response_tokens": 108
+    },
+    {
+      "id": "dolly-06631",
+      "kgw_score": 12.625,
+      "clean_score": 12.125,
+      "difference": 0.5,
+      "kgw_scored_response_tokens": 251,
+      "clean_scored_response_tokens": 242
+    },
+    {
+      "id": "dolly-10153",
+      "kgw_score": 10.5625,
+      "clean_score": 12.25,
+      "difference": -1.6875,
+      "kgw_scored_response_tokens": 380,
+      "clean_scored_response_tokens": 365
+    },
+    {
+      "id": "dolly-06628",
+      "kgw_score": 20.875,
+      "clean_score": 20.125,
+      "difference": 0.75,
+      "kgw_scored_response_tokens": 194,
+      "clean_scored_response_tokens": 194
+    },
+    {
+      "id": "dolly-09735",
+      "kgw_score": -9.3125,
+      "clean_score": -10.1875,
+      "difference": 0.875,
+      "kgw_scored_response_tokens": 107,
+      "clean_scored_response_tokens": 100
+    },
+    {
+      "id": "dolly-09330",
+      "kgw_score": 18.625,
+      "clean_score": 10.0625,
+      "difference": 8.5625,
+      "kgw_scored_response_tokens": 83,
+      "clean_scored_response_tokens": 218
+    },
+    {
+      "id": "dolly-03998",
+      "kgw_score": 22.5,
+      "clean_score": 36.75,
+      "difference": -14.25,
+      "kgw_scored_response_tokens": 527,
+      "clean_scored_response_tokens": 440
+    },
+    {
+      "id": "dolly-12034",
+      "kgw_score": 22.875,
+      "clean_score": 22.875,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 28,
+      "clean_scored_response_tokens": 28
+    },
+    {
+      "id": "dolly-09039",
+      "kgw_score": 13.75,
+      "clean_score": 25.875,
+      "difference": -12.125,
+      "kgw_scored_response_tokens": 374,
+      "clean_scored_response_tokens": 340
+    },
+    {
+      "id": "dolly-11182",
+      "kgw_score": 17.5,
+      "clean_score": 16.75,
+      "difference": 0.75,
+      "kgw_scored_response_tokens": 336,
+      "clean_scored_response_tokens": 435
+    },
+    {
+      "id": "dolly-12273",
+      "kgw_score": -25.125,
+      "clean_score": -25.75,
+      "difference": 0.625,
+      "kgw_scored_response_tokens": 239,
+      "clean_scored_response_tokens": 238
+    },
+    {
+      "id": "dolly-03136",
+      "kgw_score": 38.5,
+      "clean_score": 41.25,
+      "difference": -2.75,
+      "kgw_scored_response_tokens": 352,
+      "clean_scored_response_tokens": 369
+    },
+    {
+      "id": "dolly-03067",
+      "kgw_score": 14.3125,
+      "clean_score": 14.625,
+      "difference": -0.3125,
+      "kgw_scored_response_tokens": 76,
+      "clean_scored_response_tokens": 77
+    },
+    {
+      "id": "dolly-13829",
+      "kgw_score": 3.234375,
+      "clean_score": 3.234375,
+      "difference": 0.0,
+      "kgw_scored_response_tokens": 18,
+      "clean_scored_response_tokens": 18
+    },
+    {
+      "id": "dolly-10476",
+      "kgw_score": -34.75,
+      "clean_score": -35.0,
+      "difference": 0.25,
+      "kgw_scored_response_tokens": 66,
+      "clean_scored_response_tokens": 69
+    },
+    {
+      "id": "dolly-05864",
+      "kgw_score": -12.5625,
+      "clean_score": -3.984375,
+      "difference": -8.578125,
+      "kgw_scored_response_tokens": 165,
+      "clean_scored_response_tokens": 170
+    },
+    {
+      "id": "dolly-11047",
+      "kgw_score": 5.34375,
+      "clean_score": 4.5,
+      "difference": 0.84375,
+      "kgw_scored_response_tokens": 33,
+      "clean_scored_response_tokens": 35
+    },
+    {
+      "id": "dolly-01739",
+      "kgw_score": 6.3125,
+      "clean_score": 12.875,
+      "difference": -6.5625,
+      "kgw_scored_response_tokens": 144,
+      "clean_scored_response_tokens": 145
+    },
+    {
+      "id": "dolly-00407",
+      "kgw_score": 10.0625,
+      "clean_score": 33.25,
+      "difference": -23.1875,
+      "kgw_scored_response_tokens": 317,
+      "clean_scored_response_tokens": 418
+    },
+    {
+      "id": "dolly-09175",
+      "kgw_score": 4.40625,
+      "clean_score": 19.625,
+      "difference": -15.21875,
+      "kgw_scored_response_tokens": 117,
+      "clean_scored_response_tokens": 162
+    },
+    {
+      "id": "dolly-02274",
+      "kgw_score": 15.5625,
+      "clean_score": 11.125,
+      "difference": 4.4375,
+      "kgw_scored_response_tokens": 251,
+      "clean_scored_response_tokens": 123
+    },
+    {
+      "id": "dolly-02008",
+      "kgw_score": 3.5625,
+      "clean_score": 9.9375,
+      "difference": -6.375,
+      "kgw_scored_response_tokens": 89,
+      "clean_scored_response_tokens": 77
+    },
+    {
+      "id": "dolly-02059",
+      "kgw_score": 22.5,
+      "clean_score": 18.5,
+      "difference": 4.0,
+      "kgw_scored_response_tokens": 445,
+      "clean_scored_response_tokens": 449
+    },
+    {
+      "id": "dolly-02916",
+      "kgw_score": 26.625,
+      "clean_score": 23.25,
+      "difference": 3.375,
+      "kgw_scored_response_tokens": 437,
+      "clean_scored_response_tokens": 345
+    },
+    {
+      "id": "dolly-09816",
+      "kgw_score": -0.09619140625,
+      "clean_score": -0.193359375,
+      "difference": 0.09716796875,
+      "kgw_scored_response_tokens": 341,
+      "clean_scored_response_tokens": 177
+    },
+    {
+      "id": "dolly-05810",
+      "kgw_score": 19.5,
+      "clean_score": 29.5,
+      "difference": -10.0,
+      "kgw_scored_response_tokens": 363,
+      "clean_scored_response_tokens": 261
+    },
+    {
+      "id": "dolly-00278",
+      "kgw_score": 1.46875,
+      "clean_score": 13.0,
+      "difference": -11.53125,
+      "kgw_scored_response_tokens": 592,
+      "clean_scored_response_tokens": 486
+    },
+    {
+      "id": "dolly-05355",
+      "kgw_score": 21.875,
+      "clean_score": 25.0,
+      "difference": -3.125,
+      "kgw_scored_response_tokens": 58,
+      "clean_scored_response_tokens": 62
+    },
+    {
+      "id": "dolly-14900",
+      "kgw_score": -1.015625,
+      "clean_score": -18.25,
+      "difference": 17.234375,
+      "kgw_scored_response_tokens": 188,
+      "clean_scored_response_tokens": 102
+    },
+    {
+      "id": "dolly-01353",
+      "kgw_score": -5.125,
+      "clean_score": -1.03125,
+      "difference": -4.09375,
+      "kgw_scored_response_tokens": 233,
+      "clean_scored_response_tokens": 226
+    },
+    {
+      "id": "dolly-12693",
+      "kgw_score": 26.75,
+      "clean_score": 41.75,
+      "difference": -15.0,
+      "kgw_scored_response_tokens": 325,
+      "clean_scored_response_tokens": 376
+    },
+    {
+      "id": "dolly-06970",
+      "kgw_score": 10.875,
+      "clean_score": 14.8125,
+      "difference": -3.9375,
+      "kgw_scored_response_tokens": 68,
+      "clean_scored_response_tokens": 67
+    },
+    {
+      "id": "dolly-00571",
+      "kgw_score": 16.25,
+      "clean_score": 18.875,
+      "difference": -2.625,
+      "kgw_scored_response_tokens": 451,
+      "clean_scored_response_tokens": 484
+    },
+    {
+      "id": "dolly-05634",
+      "kgw_score": 13.1875,
+      "clean_score": 40.25,
+      "difference": -27.0625,
+      "kgw_scored_response_tokens": 259,
+      "clean_scored_response_tokens": 322
+    },
+    {
+      "id": "dolly-11106",
+      "kgw_score": -21.25,
+      "clean_score": 4.6875,
+      "difference": -25.9375,
+      "kgw_scored_response_tokens": 484,
+      "clean_scored_response_tokens": 364
+    },
+    {
+      "id": "dolly-06838",
+      "kgw_score": 22.125,
+      "clean_score": 22.875,
+      "difference": -0.75,
+      "kgw_scored_response_tokens": 70,
+      "clean_scored_response_tokens": 84
+    },
+    {
+      "id": "dolly-02500",
+      "kgw_score": -9.5625,
+      "clean_score": -5.875,
+      "difference": -3.6875,
+      "kgw_scored_response_tokens": 54,
+      "clean_scored_response_tokens": 57
+    },
+    {
+      "id": "dolly-09695",
+      "kgw_score": 6.03125,
+      "clean_score": 7.03125,
+      "difference": -1.0,
+      "kgw_scored_response_tokens": 39,
+      "clean_scored_response_tokens": 38
+    },
+    {
+      "id": "dolly-05386",
+      "kgw_score": 23.625,
+      "clean_score": 37.75,
+      "difference": -14.125,
+      "kgw_scored_response_tokens": 67,
+      "clean_scored_response_tokens": 73
+    },
+    {
+      "id": "dolly-00182",
+      "kgw_score": 2.109375,
+      "clean_score": -7.25,
+      "difference": 9.359375,
+      "kgw_scored_response_tokens": 222,
+      "clean_scored_response_tokens": 230
+    },
+    {
+      "id": "dolly-03360",
+      "kgw_score": -2.328125,
+      "clean_score": -20.75,
+      "difference": 18.421875,
+      "kgw_scored_response_tokens": 341,
+      "clean_scored_response_tokens": 316
+    },
+    {
+      "id": "dolly-02991",
+      "kgw_score": 30.375,
+      "clean_score": 47.75,
+      "difference": -17.375,
+      "kgw_scored_response_tokens": 238,
+      "clean_scored_response_tokens": 296
+    },
+    {
+      "id": "dolly-06562",
+      "kgw_score": 2.734375,
+      "clean_score": 0.50390625,
+      "difference": 2.23046875,
+      "kgw_scored_response_tokens": 138,
+      "clean_scored_response_tokens": 102
+    },
+    {
+      "id": "dolly-03113",
+      "kgw_score": 7.15625,
+      "clean_score": 15.0625,
+      "difference": -7.90625,
+      "kgw_scored_response_tokens": 208,
+      "clean_scored_response_tokens": 136
+    },
+    {
+      "id": "dolly-11314",
+      "kgw_score": 25.625,
+      "clean_score": 21.875,
+      "difference": 3.75,
+      "kgw_scored_response_tokens": 174,
+      "clean_scored_response_tokens": 146
+    },
+    {
+      "id": "dolly-01356",
+      "kgw_score": 18.375,
+      "clean_score": 22.0,
+      "difference": -3.625,
+      "kgw_scored_response_tokens": 305,
+      "clean_scored_response_tokens": 434
+    },
+    {
+      "id": "dolly-01718",
+      "kgw_score": 6.03125,
+      "clean_score": 13.5,
+      "difference": -7.46875,
+      "kgw_scored_response_tokens": 233,
+      "clean_scored_response_tokens": 197
+    },
+    {
+      "id": "dolly-11440",
+      "kgw_score": -0.58984375,
+      "clean_score": 7.9375,
+      "difference": -8.52734375,
+      "kgw_scored_response_tokens": 31,
+      "clean_scored_response_tokens": 27
+    },
+    {
+      "id": "dolly-14702",
+      "kgw_score": -0.275390625,
+      "clean_score": -7.78125,
+      "difference": 7.505859375,
+      "kgw_scored_response_tokens": 107,
+      "clean_scored_response_tokens": 106
+    },
+    {
+      "id": "dolly-12236",
+      "kgw_score": 6.1875,
+      "clean_score": 22.0,
+      "difference": -15.8125,
+      "kgw_scored_response_tokens": 367,
+      "clean_scored_response_tokens": 373
+    },
+    {
+      "id": "dolly-09299",
+      "kgw_score": 2.171875,
+      "clean_score": -3.078125,
+      "difference": 5.25,
+      "kgw_scored_response_tokens": 518,
+      "clean_scored_response_tokens": 538
+    },
+    {
+      "id": "dolly-05393",
+      "kgw_score": 4.59375,
+      "clean_score": 19.625,
+      "difference": -15.03125,
+      "kgw_scored_response_tokens": 364,
+      "clean_scored_response_tokens": 513
+    },
+    {
+      "id": "dolly-13235",
+      "kgw_score": 16.875,
+      "clean_score": 17.25,
+      "difference": -0.375,
+      "kgw_scored_response_tokens": 164,
+      "clean_scored_response_tokens": 163
+    },
+    {
+      "id": "dolly-13039",
+      "kgw_score": 24.75,
+      "clean_score": 34.75,
+      "difference": -10.0,
+      "kgw_scored_response_tokens": 446,
+      "clean_scored_response_tokens": 493
+    },
+    {
+      "id": "dolly-04223",
+      "kgw_score": 6.03125,
+      "clean_score": 16.5,
+      "difference": -10.46875,
+      "kgw_scored_response_tokens": 369,
+      "clean_scored_response_tokens": 287
+    },
+    {
+      "id": "dolly-06101",
+      "kgw_score": 12.125,
+      "clean_score": 21.75,
+      "difference": -9.625,
+      "kgw_scored_response_tokens": 189,
+      "clean_scored_response_tokens": 166
+    }
+  ]
+}
