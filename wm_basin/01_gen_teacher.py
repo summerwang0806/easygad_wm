@@ -50,7 +50,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--gamma", type=float, default=DEFAULT_GAMMA)
     p.add_argument("--delta", type=float, default=DEFAULT_DELTA)
-    p.add_argument("--keys-per-chunk", type=int, default=4, help="How many keys to batch together in one llm.generate")
+    p.add_argument("--keys-per-chunk", type=int, default=1, help="Keys per llm.generate call (1 minimizes VRAM cache)")
+    p.add_argument("--kgw-cache-size", type=int, default=256, help="LRU greenlist cache entries per key (~0.3MB each)")
+    p.add_argument("--max-num-seqs", type=int, default=64, help="Cap concurrent seqs to avoid sampler VRAM spikes")
     p.add_argument("--gpu-memory-utilization", type=float, default=0.72)
     p.add_argument("--tensor-parallel-size", type=int, default=1)
     p.add_argument("--overwrite", action="store_true")
@@ -143,6 +145,7 @@ def run_bank(llm, tokenizer, args: argparse.Namespace) -> None:
                 gamma=args.gamma,
                 delta=args.delta,
                 hash_key=hk,
+                cache_size=args.kgw_cache_size,
             )
             for r, prompt in zip(rows, prompts):
                 chunk_prompts.append(prompt)
@@ -181,8 +184,12 @@ def run_bank(llm, tokenizer, args: argparse.Namespace) -> None:
             )
         for (k_idx, hk, out_path), key_rows in by_key.items():
             write_jsonl(out_path, key_rows)
+        del chunk_params, outputs, by_key
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         key_ids = [c[0] for c in chunk]
-        print(f"[bank] Finished keys {key_ids} ({len(outputs)} traces) in {elapsed:.1f}s")
+        print(f"[bank] Finished keys {key_ids} in {elapsed:.1f}s")
 
 
 def main() -> None:
@@ -195,6 +202,7 @@ def main() -> None:
         tensor_parallel_size=args.tensor_parallel_size,
         gpu_memory_utilization=args.gpu_memory_utilization,
         max_model_len=args.max_prompt_tokens + args.max_new_tokens,
+        max_num_seqs=args.max_num_seqs,
         dtype="bfloat16",
         trust_remote_code=True,
     )

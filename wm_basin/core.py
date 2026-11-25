@@ -229,24 +229,32 @@ def make_cached_kgw_processor(
     gamma: float,
     delta: float,
     hash_key: int,
-    cache_size: int = 4096,
+    cache_size: int = 256,
 ):
-    """Create a KGWLogitsProcessor with an LRU cache on CUDA green lists."""
+    """Create a KGWLogitsProcessor with a bounded int32 LRU cache on CUDA green lists.
+
+    Each cached entry is int32 (~0.3 MB for 152k vocab), so cache_size=256 caps
+    VRAM usage at ~75 MB per active key while staying bit-for-bit identical to
+    wm_data.kgw.KGWLogitsProcessor.
+    """
+    import torch
     from wm_data.kgw import KGWConfig, KGWLogitsProcessor
 
     class CachedKGWLogitsProcessor(KGWLogitsProcessor):
-        def __init__(self, vs: int, cfg: KGWConfig, maxsize: int = 4096):
+        def __init__(self, vs: int, cfg: KGWConfig, maxsize: int = 256):
             super().__init__(vs, cfg)
             self._cache: OrderedDict[tuple[int, str], Any] = OrderedDict()
             self._maxsize = maxsize
 
         def _greenlist(self, previous_token_id: int, device):
+            if self._maxsize <= 0:
+                return super()._greenlist(previous_token_id, device)
             key = (int(previous_token_id), str(device))
             cached = self._cache.get(key)
             if cached is not None:
                 self._cache.move_to_end(key)
                 return cached
-            green = super()._greenlist(previous_token_id, device)
+            green = super()._greenlist(previous_token_id, device).to(torch.int32)
             self._cache[key] = green
             if len(self._cache) > self._maxsize:
                 self._cache.popitem(last=False)
