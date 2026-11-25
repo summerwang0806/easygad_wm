@@ -251,7 +251,8 @@ def process_directory(
         print(
             f"[grads] ({idx}/{len(files)}) {fp.stem}: "
             f"used={stats['num_used_samples']}, tokens={stats['total_scored_tokens']:,}, "
-            f"norm={float(np.linalg.norm(vec)):.4f} ({time.time() - t0:.1f}s)"
+            f"norm={float(np.linalg.norm(vec)):.4f} ({time.time() - t0:.1f}s)",
+            flush=True,
         )
     print(f"[grads] Finished {in_dir.name}: newly computed {done}/{len(files)} vectors.")
 
