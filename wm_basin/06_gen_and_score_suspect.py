@@ -64,9 +64,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--max-prompt-tokens", type=int, default=2048)
     p.add_argument("--max-new-tokens", type=int, default=DEFAULT_MAX_RESPONSE_TOKENS)
     p.add_argument("--min-response-tokens", type=int, default=DEFAULT_MIN_RESPONSE_TOKENS)
-    p.add_argument("--batch-size", type=int, default=4, help="Micro-batch size for probe gradient extraction")
+    p.add_argument("--batch-size", type=int, default=1, help="Micro-batch size for probe gradient extraction (1 avoids OOM on long Dolly prompts)")
     p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--gpu-memory-utilization", type=float, default=0.75)
+    p.add_argument("--gpu-memory-utilization", type=float, default=0.25)
     p.add_argument("--only-score", action="store_true", help="Skip sampling & gradient; re-score existing grad.npy")
     p.add_argument("--overwrite", action="store_true")
     return p.parse_args()
@@ -131,6 +131,11 @@ def sample_suspect(args: argparse.Namespace, out_jsonl: Path) -> None:
     write_jsonl(out_jsonl, saved)
     print(f"[suspect] Sampled {len(saved)} responses to {out_jsonl} in {time.time() - t0:.1f}s")
 
+    if hasattr(llm, "llm_engine") and hasattr(llm.llm_engine, "engine_core"):
+        try:
+            llm.llm_engine.engine_core.shutdown()
+        except Exception:
+            pass
     del llm
     gc.collect()
     if torch.cuda.is_available():
@@ -170,6 +175,8 @@ def compute_suspect_grad(args: argparse.Namespace, responses_path: Path, grad_pa
         max_samples=None,  # use all suspect generations
         batch_size=args.batch_size,
         weighting=weighting,
+        show_progress=True,
+        desc=f"grad:{args.suspect_name}",
     )
     np.save(grad_path, vec)
     write_json(grad_path.with_suffix(".meta.json"), stats)

@@ -123,10 +123,13 @@ def extract_projected_gradient(
     max_samples: int | None = None,
     batch_size: int = 4,
     weighting: str = "token",
+    show_progress: bool = True,
+    desc: str = "extract_grad",
 ) -> tuple[np.ndarray, dict[str, int]]:
     """Accumulate mean log-prob gradient wrt LoRA params and project to proj_dim."""
     import torch
     import torch.nn.functional as F
+    from tqdm import tqdm
 
     encoded = prepare_encoded_samples(
         tokenizer,
@@ -153,7 +156,11 @@ def extract_projected_gradient(
     # Accumulate in fp32 on device for numerical stability across many micro-batches
     grad_accum = [torch.zeros_like(p, dtype=torch.float32, device=device) for p in lora_params]
 
-    for start in range(0, num_samples, batch_size):
+    starts = range(0, num_samples, batch_size)
+    if show_progress:
+        starts = tqdm(starts, total=(num_samples + batch_size - 1) // batch_size, desc=desc, unit="batch")
+
+    for start in starts:
         batch = encoded[start : start + batch_size]
         max_len = max(len(item[0]) for item in batch)
         bs = len(batch)
@@ -244,6 +251,8 @@ def process_directory(
             max_samples=max_samples,
             batch_size=args.batch_size,
             weighting=args.weighting,
+            show_progress=True,
+            desc=f"{fp.stem}",
         )
         np.save(out_npy, vec)
         write_json(out_dir / f"{fp.stem}.meta.json", stats)
