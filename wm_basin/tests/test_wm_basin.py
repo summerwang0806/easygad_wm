@@ -186,6 +186,91 @@ class TestWMBasinCore(unittest.TestCase):
             self.assertEqual(score["wm_basin"]["rank"], 1, r2.stdout + r2.stderr)
             self.assertTrue(score["flagged_at_5pct"])
 
+    def test_multi_window_100keys_tpr_and_summary(self):
+        """End-to-end test of 100-key bank + 20 disjoint windows -> TPR@5%, TPR@1%, AUROC."""
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            rng = np.random.default_rng(123)
+            d = 256
+            keys = generate_keys(total_keys=100, true_key=DEFAULT_TRUE_KEY, seed=42)
+            write_json(
+                work / "keys.json",
+                {
+                    "scheme": "kgw_simple_1",
+                    "gamma": 0.5,
+                    "delta": 3.0,
+                    "true_key": DEFAULT_TRUE_KEY,
+                    "true_key_idx": 0,
+                    "seed": 42,
+                    "num_keys": 100,
+                    "keys": keys,
+                },
+            )
+
+            task_dir = rng.normal(size=d)
+            task_dir /= np.linalg.norm(task_dir)
+            wm_dirs = rng.normal(size=(100, d))
+            wm_dirs -= np.outer(wm_dirs @ task_dir, task_dir)
+            wm_dirs /= np.linalg.norm(wm_dirs, axis=1, keepdims=True)
+
+            clean_dir = work / "grads" / "clean_pool"
+            clean_dir.mkdir(parents=True)
+            for m in range(6):
+                for t in (0.7, 1.0, 1.3):
+                    vec = 10.0 * task_dir + rng.normal(size=d) * (0.05 / np.sqrt(d))
+                    np.save(clean_dir / f"model{m}__T{t:.1f}.npy", vec.astype(np.float32))
+
+            bank_dir = work / "grads" / "bank"
+            bank_dir.mkdir(parents=True)
+            for idx, hk in enumerate(keys):
+                vec = 10.0 * task_dir + 0.5 * wm_dirs[idx]
+                np.save(bank_dir / f"key_{idx:04d}_{hk}.npy", vec.astype(np.float32))
+
+            # Dummy window files so 09_audit_multi_window.py discovers G=20 windows
+            win_dir = work / "pools" / "audit_windows"
+            win_dir.mkdir(parents=True)
+            for w in range(20):
+                (win_dir / f"window_{w:02d}.jsonl").write_text("{}\n", encoding="utf-8")
+
+            # Fit PCA
+            subprocess.run(
+                [sys.executable, str(ROOT / "wm_basin" / "05_fit_pca.py"), "--work-dir", str(work), "--q", "2", "--sweep-q", "2"],
+                check=True,
+                capture_output=True,
+            )
+
+            # Create 20 window gradients for a clean control & a watermarked student
+            neg_dir = work / "suspects_mw" / "clean_gad_ctrl"
+            pos_dir = work / "suspects_mw" / "kgw_gad_pos"
+            neg_dir.mkdir(parents=True)
+            pos_dir.mkdir(parents=True)
+            for w in range(20):
+                v_neg = 10.0 * task_dir + rng.normal(size=d) * 0.1
+                v_pos = 10.0 * task_dir + 0.35 * wm_dirs[0] + rng.normal(size=d) * 0.02
+                np.save(neg_dir / f"grad_win_{w:02d}.npy", v_neg.astype(np.float32))
+                np.save(pos_dir / f"grad_win_{w:02d}.npy", v_pos.astype(np.float32))
+                write_json(neg_dir / f"grad_win_{w:02d}.meta.json", {"num_used_samples": 100, "total_scored_tokens": 20000})
+                write_json(pos_dir / f"grad_win_{w:02d}.meta.json", {"num_used_samples": 100, "total_scored_tokens": 20000})
+
+            for name in ("clean_gad_ctrl", "kgw_gad_pos"):
+                subprocess.run(
+                    [sys.executable, str(ROOT / "wm_basin" / "09_audit_multi_window.py"), "--work-dir", str(work), "--suspect-name", name, "--only-score"],
+                    check=True,
+                    capture_output=True,
+                )
+
+            out_res = work / "results"
+            subprocess.run(
+                [sys.executable, str(ROOT / "wm_basin" / "07_summarize_results.py"), "--work-dir", str(work), "--out-dir", str(out_res)],
+                check=True,
+                capture_output=True,
+            )
+            mw_sum = json.loads((out_res / "mw_summary.json").read_text(encoding="utf-8"))
+            by_name = {r["suspect_name"]: r for r in mw_sum["multi_window_suspects"]}
+            self.assertEqual(by_name["kgw_gad_pos"]["tpr_at_5pct"], 1.0)
+            self.assertEqual(by_name["kgw_gad_pos"]["tpr_at_1pct"], 1.0)
+            self.assertGreater(by_name["kgw_gad_pos"]["auroc_vs_negatives"], 0.99)
+
 
 if __name__ == "__main__":
     unittest.main()

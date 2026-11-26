@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """Step 7: Collect all small JSON audit reports into git-friendly summary files.
 
-Reads:
-  - <work-dir>/suspects/*/score.json (+ grad.meta.json)
-  - <work-dir>/pca/pca_summary.json
-  - <work-dir>/probe/probe_meta.json
-
-Writes (lightweight, safe to commit & git push):
-  - <out-dir>/summary.json
-  - <out-dir>/summary.md
+Exports:
+  1. Single-pool summaries (from <work-dir>/suspects/*/score.json):
+       - <out-dir>/summary.json
+       - <out-dir>/summary.md
+  2. Multi-window TPR@FPR summaries (from <work-dir>/suspects_mw/*/mw_score.json, if present):
+       - <out-dir>/mw_summary.json
+       - <out-dir>/mw_summary.md  (includes Nominal TPR@5%, TPR@1%, Empirical AUROC, Mean z, Pooled Rank)
 """
 
 from __future__ import annotations
@@ -32,16 +31,25 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
-def main() -> None:
-    args = parse_args()
-    sus_root = args.work_dir / "suspects"
-    score_files = sorted(sus_root.glob("*/score.json"))
-    if not score_files:
-        raise FileNotFoundError(f"No score.json files found under {sus_root}")
+def empirical_auroc(neg_scores: list[float], pos_scores: list[float]) -> float | None:
+    """Exact Wilcoxon-Mann-Whitney AUROC (ties get 0.5) using higher=more watermarked."""
+    if not neg_scores or not pos_scores:
+        return None
+    wins = 0.0
+    for ps in pos_scores:
+        for ns in neg_scores:
+            if ps > ns:
+                wins += 1.0
+            elif ps == ns:
+                wins += 0.5
+    return wins / (len(pos_scores) * len(neg_scores))
 
-    probe_meta = read_json(args.work_dir / "probe" / "probe_meta.json") if (args.work_dir / "probe" / "probe_meta.json").exists() else {}
-    pca_summary = read_json(args.work_dir / "pca" / "pca_summary.json") if (args.work_dir / "pca" / "pca_summary.json").exists() else {}
-    proj_meta = read_json(args.work_dir / "grads" / "projector_meta.json") if (args.work_dir / "grads" / "projector_meta.json").exists() else {}
+
+def export_single_pool(args: argparse.Namespace, meta_header: dict) -> None:
+    sus_root = args.work_dir / "suspects"
+    score_files = sorted(sus_root.glob("*/score.json")) if sus_root.exists() else []
+    if not score_files:
+        return
 
     records = []
     for sf in score_files:
@@ -70,33 +78,12 @@ def main() -> None:
             }
         )
 
-    payload = {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "probe": {
-            "model": probe_meta.get("probe_model"),
-            "lora_r": probe_meta.get("lora_r"),
-            "epochs": probe_meta.get("epochs"),
-        },
-        "projector": {
-            "proj_dim": proj_meta.get("proj_dim"),
-            "proj_seed": proj_meta.get("proj_seed"),
-            "weighting": proj_meta.get("weighting"),
-        },
-        "pca": {
-            "q": pca_summary.get("q"),
-            "num_clean_cells": pca_summary.get("num_clean_cells"),
-            "num_base_models": pca_summary.get("num_base_models"),
-            "calibration_sweep": pca_summary.get("calibration_sweep", []),
-        },
-        "suspects": records,
-    }
-
+    payload = {**meta_header, "suspects": records}
     args.out_dir.mkdir(parents=True, exist_ok=True)
     write_json(args.out_dir / "summary.json", payload)
 
-    # Render clean Markdown table
     lines = [
-        "# WM-Basin Audit Summary",
+        "# WM-Basin Single-Pool Audit Summary",
         "",
         f"- **Generated (UTC)**: `{payload['generated_at_utc']}`",
         f"- **Probe**: `{payload['probe']['model']}` (LoRA `r={payload['probe']['lora_r']}`, epochs=`{payload['probe']['epochs']}`)",
@@ -117,7 +104,93 @@ def main() -> None:
     lines.append("")
     md_path = args.out_dir / "summary.md"
     md_path.write_text("\n".join(lines), encoding="utf-8")
-    print(f"[summary] Exported {len(records)} suspects -> {args.out_dir / 'summary.json'} and {md_path}")
+    print(f"[summary] Exported {len(records)} single-pool suspects -> {md_path}")
+
+
+def export_multi_window(args: argparse.Namespace, meta_header: dict) -> None:
+    mw_root = args.work_dir / "suspects_mw"
+    mw_files = sorted(mw_root.glob("*/mw_score.json")) if mw_root.exists() else []
+    if not mw_files:
+        return
+
+    raw_reports = [read_json(f) for f in mw_files]
+
+    # Collect negative control window scores (-p_rank so higher = more watermarked) for empirical AUROC
+    neg_window_scores: list[float] = []
+    for rep in raw_reports:
+        if rep.get("role") == "negative":
+            neg_window_scores.extend([-float(w["p_rank"]) for w in rep.get("windows", [])])
+
+    records = []
+    for rep in raw_reports:
+        pos_scores = [-float(w["p_rank"]) for w in rep.get("windows", [])]
+        auroc = empirical_auroc(neg_window_scores, pos_scores) if rep.get("role") != "negative" else None
+        rep_copy = dict(rep)
+        rep_copy["auroc_vs_negatives"] = auroc
+        records.append(rep_copy)
+
+    payload = {**meta_header, "multi_window_suspects": records}
+    args.out_dir.mkdir(parents=True, exist_ok=True)
+    write_json(args.out_dir / "mw_summary.json", payload)
+
+    lines = [
+        "# WM-Basin Multi-Window TPR@FPR Summary",
+        "",
+        f"- **Generated (UTC)**: `{payload['generated_at_utc']}`",
+        f"- **Probe**: `{payload['probe']['model']}` (LoRA `r={payload['probe']['lora_r']}`, epochs=`{payload['probe']['epochs']}`)",
+        f"- **Projector**: `proj_dim={payload['projector']['proj_dim']}`, `weighting={payload['projector']['weighting']}`",
+        f"- **Clean PCA**: `q={payload['pca']['q']}`, `{payload['pca']['num_clean_cells']}` cells (`{payload['pca']['num_base_models']}` base models)",
+        "",
+        "| Suspect | Role | Windows (Tokens) | **`TPR @ 5% FPR`** | **`TPR @ 1% FPR`** | **AUROC** | **Median Rank** | **Mean `z ± std`** | **Pooled Rank (`p`)** |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for r in records:
+        K = r["num_keys"]
+        G = r["num_windows"]
+        tpr5 = f"**{r['tpr_at_5pct']*100:.1f}%** ({r['hits_at_5pct']}/{G})"
+        tpr1 = f"**{r['tpr_at_1pct']*100:.1f}%** ({r['hits_at_1pct']}/{G})" if r["tpr_at_1pct"] is not None else "—"
+        auroc_str = f"`{r['auroc_vs_negatives']:.3f}`" if r["auroc_vs_negatives"] is not None else "*(neg)*"
+        pooled = r["pooled"]
+        lines.append(
+            f"| `{r['suspect_name']}` | {r['role']} | {G} ({r['total_scored_tokens']:,}) | "
+            f"{tpr5} | {tpr1} | {auroc_str} | "
+            f"`{r['median_rank']:.1f}/{K}` | `{r['mean_z_score']:+.2f} ± {r['std_z_score']:.2f}` | "
+            f"`{pooled['rank']}/{K}` (`{pooled['p_rank']:.3f}`) |"
+        )
+    lines.append("")
+    md_path = args.out_dir / "mw_summary.md"
+    md_path.write_text("\n".join(lines), encoding="utf-8")
+    print(f"[summary] Exported {len(records)} multi-window suspects -> {md_path}")
+
+
+def main() -> None:
+    args = parse_args()
+    probe_meta = read_json(args.work_dir / "probe" / "probe_meta.json") if (args.work_dir / "probe" / "probe_meta.json").exists() else {}
+    pca_summary = read_json(args.work_dir / "pca" / "pca_summary.json") if (args.work_dir / "pca" / "pca_summary.json").exists() else {}
+    proj_meta = read_json(args.work_dir / "grads" / "projector_meta.json") if (args.work_dir / "grads" / "projector_meta.json").exists() else {}
+
+    meta_header = {
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "probe": {
+            "model": probe_meta.get("probe_model"),
+            "lora_r": probe_meta.get("lora_r"),
+            "epochs": probe_meta.get("epochs"),
+        },
+        "projector": {
+            "proj_dim": proj_meta.get("proj_dim"),
+            "proj_seed": proj_meta.get("proj_seed"),
+            "weighting": proj_meta.get("weighting"),
+        },
+        "pca": {
+            "q": pca_summary.get("q"),
+            "num_clean_cells": pca_summary.get("num_clean_cells"),
+            "num_base_models": pca_summary.get("num_base_models"),
+            "calibration_sweep": pca_summary.get("calibration_sweep", []),
+        },
+    }
+
+    export_single_pool(args, meta_header)
+    export_multi_window(args, meta_header)
 
 
 if __name__ == "__main__":
