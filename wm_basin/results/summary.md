@@ -1,6 +1,6 @@
 # WM-Basin Audit Summary
 
-- **Generated (UTC)**: `2026-11-26T13:56:34.243799+00:00`
+- **Generated (UTC)**: `2026-11-26T14:19:25.978312+00:00`
 - **Probe**: `/app/public_models/Qwen2.5-0.5B` (LoRA `r=128`, epochs=`4`)
 - **Projector**: `proj_dim=131072`, `weighting=token`
 - **Clean PCA**: `q=40`, `57` cells (`19` base models)
@@ -18,3 +18,10 @@
 | `kgw_delta6_gad_on_ext` | 1554 / 413,845 | 13/40 | **1/40** | `0.0250` | `+0.26255` | `+2.60` | **DISTILLED** |
 | `kgw_delta6_warmup` | 1906 / 719,529 | 29/40 | **2/40** | `0.0500` | `-0.02784` | `+1.56` | **DISTILLED** |
 | `kgw_delta6_warmup_on_ext` | 1696 / 578,849 | 28/40 | **2/40** | `0.0500` | `-0.03102` | `+2.32` | **DISTILLED** |
+| `tp_delta3_gad_on_ext` | 1730 / 309,924 | 37/40 | **39/40** | `0.9750` | `-0.03866` | `-1.51` | No evidence |
+| `tp_delta3_warmup_on_ext` | 1794 / 394,327 | 37/40 | **33/40** | `0.8250` | `-0.08564` | `-1.02` | No evidence |
+| `tp_delta6_warmup_on_ext` | 1840 / 381,468 | 38/40 | **37/40** | `0.9250` | `-0.08222` | `-1.21` | No evidence |
+| `up_dipper_delta3_gad_on_ext` | 1595 / 229,301 | 18/40 | **7/40** | `0.1750` | `-0.00814` | `+1.08` | No evidence |
+| `up_dipper_delta3_warmup_on_ext` | 1653 / 308,659 | 26/40 | **8/40** | `0.2000` | `-0.05696` | `+1.09` | No evidence |
+| `up_dipper_delta6_gad_on_ext` | 1567 / 206,180 | 18/40 | **7/40** | `0.1750` | `-0.00153` | `+0.88` | No evidence |
+| `up_dipper_delta6_warmup_on_ext` | 1648 / 336,779 | 23/40 | **3/40** | `0.0750` | `-0.04372` | `+1.55` | No evidence |
