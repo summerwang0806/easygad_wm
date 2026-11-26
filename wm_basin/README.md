@@ -3,9 +3,9 @@
 本目录实现了论文 *Watermark Basins: Black-Box Detection of Distilled LLMs* 的黑盒检测流程，专门适配你的 EasyGAD 实验配置：
 - **教师模型**：`/app/public_models/Qwen2.5-14B-Instruct`
 - **水印方案**：KGW (`gamma=0.5, delta=3.0, simple_1`, CUDA RNG, `k*=15485863`)，直接复用 `wm_data/kgw.py`
-- **探针模型**：`/app/public_models/Qwen2.5-1.5B-Instruct`（LoRA `r=32` 预热后冻结）
+- **最佳探针模型**：`/app/public_models/Qwen2.5-0.5B` 基座版（LoRA `r=128, alpha=256, epochs=4` 预热后冻结）+ `proj_dim=131072` 随机投影
 - **学生模型**：你的微调 `Qwen2.5-0.5B` 及各类对照模型
-- **数据划分**：外部通用指令集（`yahma/alpaca-cleaned`，与 Dolly 去重）作 `X_build`；`data/dolly15k_test.parquet`（500 条 × 4 次采样）作 `X_test`
+- **数据划分**：外部通用指令集（`yahma/alpaca-cleaned`，与 Dolly 去重）划出互不重叠的 `X_build` 与同源测试集 `X_test_ext.jsonl`（500 条 × 4 次采样，推荐主用）；同时保留 `data/dolly15k_test.parquet` 作跨源测试集 `X_test.jsonl`
 
 所有脚本均支持**断点续跑**和**增量扩充**（先跑 40 密钥 + 10 Clean 模型 Pilot，确认有效后再追加到 100 密钥 + 20 Clean 模型，前面算好的全部复用）。
 
