@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-26T14:19:25.978312+00:00",
+  "generated_at_utc": "2026-11-26T14:26:22.524884+00:00",
   "probe": {
     "model": "/app/public_models/Qwen2.5-0.5B",
     "lora_r": 128,
@@ -769,6 +769,59 @@
           "hash_key": 2588286007242330036,
           "is_claimed": false,
           "cosine": -0.0172916151176795
+        }
+      ]
+    },
+    {
+      "suspect_name": "tp_delta6_gad_on_ext",
+      "suspect_model": "/app/wwx/EasyGAD/checkpoints/tp_gad_rules_g5_d6_s4_te_old_st_Qwen2.5-0.5B/gad/global_step_1813/actor/huggingface",
+      "num_keys": 40,
+      "pca_q": 40,
+      "used_samples": 1696,
+      "scored_tokens": 238571,
+      "rank": 39,
+      "p_rank": 0.975,
+      "cosine": -0.076101544134429,
+      "z_score": -1.4341849108699298,
+      "raw_rank": 39,
+      "raw_p_rank": 0.975,
+      "flagged_at_5pct": false,
+      "flagged_at_1pct": false,
+      "top5_keys": [
+        {
+          "rank": 1,
+          "key_idx": 20,
+          "hash_key": 3499381306602153760,
+          "is_claimed": false,
+          "cosine": 0.07335086026879323
+        },
+        {
+          "rank": 2,
+          "key_idx": 29,
+          "hash_key": 1586215796390323220,
+          "is_claimed": false,
+          "cosine": 0.06550845949164166
+        },
+        {
+          "rank": 3,
+          "key_idx": 24,
+          "hash_key": 992959459834560817,
+          "is_claimed": false,
+          "cosine": 0.06231672887824554
+        },
+        {
+          "rank": 4,
+          "key_idx": 13,
+          "hash_key": 2588286007242330036,
+          "is_claimed": false,
+          "cosine": 0.057964281104660745
+        },
+        {
+          "rank": 5,
+          "key_idx": 16,
+          "hash_key": 1934693691843234039,
+          "is_claimed": false,
+          "cosine": 0.047189961934622
         }
       ]
     },
