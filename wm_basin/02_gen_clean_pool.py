@@ -122,6 +122,11 @@ def generate_for_model(
             write_jsonl(out_path, saved)
             print(f"[clean_pool] Saved {out_path.name} ({len(saved)} rows) in {time.time() - t0:.1f}s")
     finally:
+        if hasattr(llm, "llm_engine") and hasattr(llm.llm_engine, "engine_core"):
+            try:
+                llm.llm_engine.engine_core.shutdown()
+            except Exception:
+                pass
         del llm
         gc.collect()
         if torch.cuda.is_available():

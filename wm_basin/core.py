@@ -49,7 +49,7 @@ PILOT_CLEAN_MODELS = [
     "Llama-3.2-1B-Instruct",
     "Llama-3.2-3B-Instruct",
     "Mistral-7B-Instruct-v0.2",
-    "gemma-4-E4B",
+    "zephyr-7b-beta",
 ]
 
 FULL_CLEAN_MODELS = PILOT_CLEAN_MODELS + [
@@ -57,12 +57,17 @@ FULL_CLEAN_MODELS = PILOT_CLEAN_MODELS + [
     "Qwen2.5-14B-Instruct",
     "Qwen3-8B",
     "Qwen3-14B",
+    "Qwen3-32B-AWQ",
+    "Llama-7b-hf",
     "Llama2-7b-hf",
+    "Llama-3-8B",
     "Llama-3.2-1B",
     "Llama-3.2-3B",
     "meta-llama--Meta-Llama-3-8B-Instruct",
+    "Llama-Guard-3-8B",
     "DeepSeek-Coder-V2-Lite-Instruct",
-    "zephyr-7b-beta",
+    "DeepSeek-R1-0528-Qwen3-8B",
+    "DeepSeek-R1-Distill-Qwen-14B",
 ]
 
 DEFAULT_CLEAN_TEMPERATURES = [0.7, 1.0, 1.3]
