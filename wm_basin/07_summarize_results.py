@@ -146,18 +146,19 @@ def export_multi_window(
         f"- **Projector**: `proj_dim={payload['projector']['proj_dim']}`, `weighting={payload['projector']['weighting']}`",
         f"- **Clean PCA**: `q={payload['pca']['q']}`, `{payload['pca']['num_clean_cells']}` cells (`{payload['pca']['num_base_models']}` base models)",
         "",
-        "| Suspect | **`TPR @ 5% FPR`** | **`TPR @ 1% FPR`** | **AUROC** | **Pooled `Rank`** | **Pooled `p_rank`** | **Pooled `z`** | **Pooled `S(k*)`** | Windows (Tokens) |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| Suspect | **`TPR @ 10% FPR`** | **`TPR @ 5% FPR`** | **`TPR @ 1% FPR`** | **AUROC** | **Pooled `Rank`** | **Pooled `p_rank`** | **Pooled `z`** | **Pooled `S(k*)`** | Windows (Tokens) |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for r in records:
         K = r["num_keys"]
         G = r["num_windows"]
+        tpr10 = f"**{r['tpr_at_10pct']*100:.1f}%**" if r.get("tpr_at_10pct") is not None else "—"
         tpr5 = f"**{r['tpr_at_5pct']*100:.1f}%**"
         tpr1 = f"**{r['tpr_at_1pct']*100:.1f}%**" if r["tpr_at_1pct"] is not None else "—"
         auroc_str = f"`{r['auroc_vs_negatives']:.3f}`" if r["auroc_vs_negatives"] is not None else "*(neg)*"
         pooled = r["pooled"]
         lines.append(
-            f"| `{r['suspect_name']}` | {tpr5} | {tpr1} | {auroc_str} | "
+            f"| `{r['suspect_name']}` | {tpr10} | {tpr5} | {tpr1} | {auroc_str} | "
             f"`{pooled['rank']}/{K}` | `{pooled['p_rank']:.3f}` | `{pooled['z_score']:+.2f}` | "
             f"`{pooled['claimed_score']:+.4f}` | {G} ({r['total_scored_tokens']:,}) |"
         )
