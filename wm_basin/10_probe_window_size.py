@@ -195,7 +195,7 @@ def evaluate_window_size(
         win_tokens[w] = w_sum
         win_vecs[w] = (grads[sl].astype(np.float64) * weights[sl, None]).sum(axis=0) / w_sum
 
-    win_res = subspace.project_residual(win_vecs)
+    win_res = subspace.project_out(win_vecs)
 
     ranks = []
     p_ranks = []
@@ -251,7 +251,7 @@ def main() -> None:
     keys_info = read_json(args.work_dir / "keys.json")
     bank_dir = args.work_dir / "grads" / "bank"
     bank_vecs = [np.load(bank_dir / f"key_{idx:04d}_{hk}.npy") for idx, hk in enumerate(keys_info["keys"])]
-    bank_res = subspace.project_residual(np.stack(bank_vecs, axis=0))
+    bank_res = subspace.project_out(np.stack(bank_vecs, axis=0))
     claimed_idx = int(keys_info["true_key_idx"])
     num_keys = len(keys_info["keys"])
 
