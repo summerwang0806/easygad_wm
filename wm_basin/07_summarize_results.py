@@ -5,9 +5,9 @@ Exports:
   1. Single-pool summaries (from <work-dir>/suspects/*/score.json):
        - <out-dir>/summary.json
        - <out-dir>/summary.md
-  2. Multi-window TPR@FPR summaries (from <work-dir>/suspects_mw/*/mw_score.json, if present):
-       - <out-dir>/mw_summary.json
-       - <out-dir>/mw_summary.md  (includes Nominal TPR@5%, TPR@1%, Empirical AUROC, Mean z, Pooled Rank)
+  2. Multi-window TPR@FPR summaries (auto-detects both suspects_mw and suspects_mw100):
+       - <out-dir>/mw_summary.json & mw_summary.md        (from suspects_mw/)
+       - <out-dir>/mw100_summary.json & mw100_summary.md  (from suspects_mw100/)
 """
 
 from __future__ import annotations
@@ -107,8 +107,13 @@ def export_single_pool(args: argparse.Namespace, meta_header: dict) -> None:
     print(f"[summary] Exported {len(records)} single-pool suspects -> {md_path}")
 
 
-def export_multi_window(args: argparse.Namespace, meta_header: dict) -> None:
-    mw_root = args.work_dir / "suspects_mw"
+def export_multi_window(
+    args: argparse.Namespace,
+    meta_header: dict,
+    subdir: str = "suspects_mw",
+    prefix: str = "mw",
+) -> None:
+    mw_root = args.work_dir / subdir
     mw_files = sorted(mw_root.glob("*/mw_score.json")) if mw_root.exists() else []
     if not mw_files:
         return
@@ -129,38 +134,37 @@ def export_multi_window(args: argparse.Namespace, meta_header: dict) -> None:
         rep_copy["auroc_vs_negatives"] = auroc
         records.append(rep_copy)
 
-    payload = {**meta_header, "multi_window_suspects": records}
+    payload = {**meta_header, "suspects_subdir": subdir, "multi_window_suspects": records}
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    write_json(args.out_dir / "mw_summary.json", payload)
+    write_json(args.out_dir / f"{prefix}_summary.json", payload)
 
     lines = [
-        "# WM-Basin Multi-Window TPR@FPR Summary",
+        f"# WM-Basin Multi-Window TPR@FPR Summary (`{subdir}`)",
         "",
         f"- **Generated (UTC)**: `{payload['generated_at_utc']}`",
         f"- **Probe**: `{payload['probe']['model']}` (LoRA `r={payload['probe']['lora_r']}`, epochs=`{payload['probe']['epochs']}`)",
         f"- **Projector**: `proj_dim={payload['projector']['proj_dim']}`, `weighting={payload['projector']['weighting']}`",
         f"- **Clean PCA**: `q={payload['pca']['q']}`, `{payload['pca']['num_clean_cells']}` cells (`{payload['pca']['num_base_models']}` base models)",
         "",
-        "| Suspect | Role | Windows (Tokens) | **`TPR @ 5% FPR`** | **`TPR @ 1% FPR`** | **AUROC** | **Median Rank** | **Mean `z ± std`** | **Pooled Rank (`p`)** |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|",
+        "| Suspect | **`TPR @ 5% FPR`** | **`TPR @ 1% FPR`** | **AUROC** | **Pooled `Rank`** | **Pooled `p_rank`** | **Pooled `z`** | **Pooled `S(k*)`** | Windows (Tokens) |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for r in records:
         K = r["num_keys"]
         G = r["num_windows"]
-        tpr5 = f"**{r['tpr_at_5pct']*100:.1f}%** ({r['hits_at_5pct']}/{G})"
-        tpr1 = f"**{r['tpr_at_1pct']*100:.1f}%** ({r['hits_at_1pct']}/{G})" if r["tpr_at_1pct"] is not None else "—"
+        tpr5 = f"**{r['tpr_at_5pct']*100:.1f}%**"
+        tpr1 = f"**{r['tpr_at_1pct']*100:.1f}%**" if r["tpr_at_1pct"] is not None else "—"
         auroc_str = f"`{r['auroc_vs_negatives']:.3f}`" if r["auroc_vs_negatives"] is not None else "*(neg)*"
         pooled = r["pooled"]
         lines.append(
-            f"| `{r['suspect_name']}` | {r['role']} | {G} ({r['total_scored_tokens']:,}) | "
-            f"{tpr5} | {tpr1} | {auroc_str} | "
-            f"`{r['median_rank']:.1f}/{K}` | `{r['mean_z_score']:+.2f} ± {r['std_z_score']:.2f}` | "
-            f"`{pooled['rank']}/{K}` (`{pooled['p_rank']:.3f}`) |"
+            f"| `{r['suspect_name']}` | {tpr5} | {tpr1} | {auroc_str} | "
+            f"`{pooled['rank']}/{K}` | `{pooled['p_rank']:.3f}` | `{pooled['z_score']:+.2f}` | "
+            f"`{pooled['claimed_score']:+.4f}` | {G} ({r['total_scored_tokens']:,}) |"
         )
     lines.append("")
-    md_path = args.out_dir / "mw_summary.md"
+    md_path = args.out_dir / f"{prefix}_summary.md"
     md_path.write_text("\n".join(lines), encoding="utf-8")
-    print(f"[summary] Exported {len(records)} multi-window suspects -> {md_path}")
+    print(f"[summary] Exported {len(records)} multi-window suspects ({subdir}) -> {md_path}")
 
 
 def main() -> None:
@@ -190,7 +194,8 @@ def main() -> None:
     }
 
     export_single_pool(args, meta_header)
-    export_multi_window(args, meta_header)
+    export_multi_window(args, meta_header, subdir="suspects_mw", prefix="mw")
+    export_multi_window(args, meta_header, subdir="suspects_mw100", prefix="mw100")
 
 
 if __name__ == "__main__":

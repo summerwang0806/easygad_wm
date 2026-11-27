@@ -2,16 +2,20 @@
 """Step 9: Audit a suspect across G disjoint prompt windows to compute TPR@5%FPR & TPR@1%FPR.
 
 Protocol:
-  1. Loads the suspect model ONCE in vLLM (KGW OFF) and samples responses on each
-     disjoint window_00.jsonl .. window_{G-1}.jsonl (skips already-sampled windows).
-  2. Loads the frozen probe ONCE and extracts one projected gradient vector per window
+  1. Optionally imports exact-prompt cached responses from an earlier multi-window run
+     via `--reuse-responses-from suspects_mw` (zero wasted generation when expanding
+     20 x 1,000 -> 100 x 450!).
+  2. Loads the suspect model ONCE in vLLM (KGW OFF) and samples remaining missing
+     prompts in large chunks (`--gen-chunk-windows 10`) for high A100 throughput,
+     checkpointing each window atomically to `responses_win_XX.jsonl`.
+  3. Loads the frozen probe ONCE and extracts one projected gradient vector per window
      (skips already-computed window gradients).
-  3. Scores every window independently against the K-key reference bank (e.g. K=100)
+  4. Scores every window independently against the K-key reference bank (e.g. K=200)
      to report exact, trick-free:
        - TPR @ 5% FPR  (fraction of disjoint windows with p_rank <= 0.05)
        - TPR @ 1% FPR  (fraction of disjoint windows with p_rank <= 0.01, when K >= 100)
        - Window mean/median rank, mean z-score +/- std
-       - Pooled full-budget rank & p_rank across all G windows combined.
+       - Pooled full-budget rank, p_rank, z-score, and S(k*) across all G windows combined.
 """
 
 from __future__ import annotations
@@ -19,6 +23,7 @@ from __future__ import annotations
 import argparse
 import gc
 import importlib.util
+import json
 import os
 import sys
 import time
@@ -61,6 +66,15 @@ def _import_extract_module():
     return mod
 
 
+def _win_tag(w_idx: int, num_windows: int) -> str:
+    width = max(2, len(str(max(1, num_windows) - 1)))
+    return f"{w_idx:0{width}d}"
+
+
+def _messages_key(messages: list[dict]) -> str:
+    return json.dumps(messages, ensure_ascii=False, sort_keys=True)
+
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Multi-window disjoint WM-Basin audit for TPR@FPR")
     p.add_argument("--work-dir", type=Path, default=Path("wm_basin_work"))
@@ -73,14 +87,22 @@ def parse_args() -> argparse.Namespace:
         help="Tag as 'negative' for clean/base controls so summary script can also compute empirical AUROC",
     )
     p.add_argument("--windows-dir", type=Path, default=None, help="Defaults to <work-dir>/pools/audit_windows")
+    p.add_argument("--suspects-subdir", type=str, default="suspects_mw", help="Subdir under work-dir (e.g. suspects_mw100)")
+    p.add_argument(
+        "--reuse-responses-from",
+        type=str,
+        default=None,
+        help="Optional earlier subdir under work-dir (e.g. suspects_mw) to reuse exact-prompt responses from",
+    )
     p.add_argument("--num-windows", type=int, default=None, help="Optional cap on number of windows to evaluate")
-    p.add_argument("--num-samples-per-prompt", type=int, default=1, help="1 x 1000 unique prompts = 1000 responses/window")
+    p.add_argument("--num-samples-per-prompt", type=int, default=1, help="Samples per unique prompt (default: 1)")
+    p.add_argument("--gen-chunk-windows", type=int, default=10, help="Number of windows batched per vLLM generate call")
     p.add_argument("--temperature", type=float, default=1.0)
     p.add_argument("--top-p", type=float, default=0.95)
     p.add_argument("--max-prompt-tokens", type=int, default=1024)
     p.add_argument("--max-new-tokens", type=int, default=DEFAULT_MAX_RESPONSE_TOKENS)
     p.add_argument("--min-response-tokens", type=int, default=DEFAULT_MIN_RESPONSE_TOKENS)
-    p.add_argument("--batch-size", type=int, default=4, help="Probe gradient micro-batch size")
+    p.add_argument("--batch-size", type=int, default=16, help="Probe gradient micro-batch size (default: 16)")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--gpu-memory-utilization", type=float, default=0.55)
     p.add_argument("--only-score", action="store_true", help="Skip sampling & gradient; re-score existing window grads")
@@ -88,27 +110,102 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
+def load_reuse_cache(work_dir: Path, reuse_subdir: str | None, suspect_name: str) -> dict[tuple[str, int], dict]:
+    if not reuse_subdir:
+        return {}
+    src_dir = work_dir / reuse_subdir / suspect_name
+    if not src_dir.exists():
+        return {}
+    cache: dict[tuple[str, int], dict] = {}
+    for fp in sorted(src_dir.glob("responses_win_*.jsonl")):
+        for row in read_jsonl(fp):
+            s_idx = int(row.get("sample_idx", 0))
+            key = (_messages_key(row["messages"]), s_idx)
+            if key not in cache:
+                cache[key] = row
+    return cache
+
+
 def sample_missing_windows(
     args: argparse.Namespace,
     window_files: list[Path],
     sus_dir: Path,
 ) -> None:
-    pending = []
+    num_windows = len(window_files)
+    pending: list[tuple[int, Path, Path]] = []
     for w_idx, wf in enumerate(window_files):
-        resp_path = sus_dir / f"responses_win_{w_idx:02d}.jsonl"
+        resp_path = sus_dir / f"responses_win_{_win_tag(w_idx, num_windows)}.jsonl"
         if not resp_path.exists() or args.overwrite:
             pending.append((w_idx, wf, resp_path))
 
     if not pending:
-        print(f"[mw:{args.suspect_name}] All {len(window_files)} window responses exist, skipping vLLM.")
+        print(f"[mw:{args.suspect_name}] All {num_windows} window responses exist, skipping vLLM.", flush=True)
+        return
+
+    # 1. Try reusing exact-prompt responses from an earlier run (e.g. suspects_mw)
+    reuse_cache = load_reuse_cache(args.work_dir, args.reuse_responses_from, args.suspect_name)
+    reused_rows_total = 0
+    reused_full_windows = 0
+    still_pending: list[tuple[int, Path, Path, list[dict], dict[tuple[int, int], dict]]] = []
+
+    for w_idx, wf, resp_path in pending:
+        rows = read_jsonl(wf)
+        cached_map: dict[tuple[int, int], dict] = {}
+        if reuse_cache:
+            for s_idx in range(args.num_samples_per_prompt):
+                for r_pos, r in enumerate(rows):
+                    hit = reuse_cache.get((_messages_key(r["messages"]), s_idx))
+                    if hit is not None:
+                        cached_map[(s_idx, r_pos)] = {
+                            "id": f"{r['id']}__s{s_idx}",
+                            "window_idx": w_idx,
+                            "prompt_idx": r["prompt_idx"],
+                            "sample_idx": s_idx,
+                            "messages": r["messages"],
+                            "response": hit["response"],
+                            "num_tokens": hit.get("num_tokens", 0),
+                            "suspect_name": args.suspect_name,
+                            "kgw_enabled_during_generation": False,
+                            "reused_from": args.reuse_responses_from,
+                        }
+        expected_total = len(rows) * args.num_samples_per_prompt
+        if len(cached_map) == expected_total:
+            saved = [
+                cached_map[(s_idx, r_pos)]
+                for s_idx in range(args.num_samples_per_prompt)
+                for r_pos in range(len(rows))
+            ]
+            write_jsonl(resp_path, saved)
+            reused_full_windows += 1
+            reused_rows_total += len(saved)
+        else:
+            reused_rows_total += len(cached_map)
+            still_pending.append((w_idx, wf, resp_path, rows, cached_map))
+
+    if reuse_cache:
+        print(
+            f"[mw:{args.suspect_name}] Reused {reused_rows_total:,} cached responses from {args.reuse_responses_from} "
+            f"({reused_full_windows} full windows completed instantly; {len(still_pending)} windows need vLLM).",
+            flush=True,
+        )
+
+    if not still_pending:
         return
     if not args.suspect_model:
-        raise ValueError(f"--suspect-model is required to sample {len(pending)} missing windows")
+        raise ValueError(f"--suspect-model is required to sample {len(still_pending)} missing windows")
 
     import torch
     from vllm import LLM, SamplingParams
 
-    print(f"[mw:{args.suspect_name}] Loading suspect in vLLM for {len(pending)} windows: {args.suspect_model}", flush=True)
+    missing_prompts_total = sum(
+        len(rows) * args.num_samples_per_prompt - len(cached_map)
+        for _, _, _, rows, cached_map in still_pending
+    )
+    print(
+        f"[mw:{args.suspect_name}] Loading suspect in vLLM for {len(still_pending)} windows "
+        f"({missing_prompts_total:,} new prompts): {args.suspect_model}",
+        flush=True,
+    )
     llm = LLM(
         model=args.suspect_model,
         gpu_memory_utilization=args.gpu_memory_utilization,
@@ -119,50 +216,62 @@ def sample_missing_windows(
     tokenizer = llm.get_tokenizer()
 
     try:
-        for w_idx, wf, resp_path in pending:
-            rows = read_jsonl(wf)
-            base_prompts = [render_prompt_with_fallback(tokenizer, r["messages"], args.max_prompt_tokens) for r in rows]
+        chunk_sz = max(1, int(args.gen_chunk_windows))
+        for start in range(0, len(still_pending), chunk_sz):
+            group = still_pending[start : start + chunk_sz]
             all_prompts: list[str] = []
             all_params: list[SamplingParams] = []
-            all_meta: list[tuple[dict, int]] = []
+            all_slots: list[tuple[int, int, int, dict]] = []  # (group_pos, s_idx, r_pos, row)
 
-            for s_idx in range(args.num_samples_per_prompt):
-                for r, prompt in zip(rows, base_prompts):
-                    all_prompts.append(prompt)
-                    all_params.append(
-                        SamplingParams(
-                            n=1,
-                            temperature=args.temperature,
-                            top_p=args.top_p,
-                            max_tokens=args.max_new_tokens,
-                            repetition_penalty=1.0,
-                            seed=args.seed + w_idx * 1_000_003 + s_idx * 100_003 + r["prompt_idx"],
-                            skip_special_tokens=True,
+            for g_pos, (w_idx, _, _, rows, cached_map) in enumerate(group):
+                for s_idx in range(args.num_samples_per_prompt):
+                    for r_pos, r in enumerate(rows):
+                        if (s_idx, r_pos) in cached_map:
+                            continue
+                        prompt = render_prompt_with_fallback(tokenizer, r["messages"], args.max_prompt_tokens)
+                        all_prompts.append(prompt)
+                        all_params.append(
+                            SamplingParams(
+                                n=1,
+                                temperature=args.temperature,
+                                top_p=args.top_p,
+                                max_tokens=args.max_new_tokens,
+                                repetition_penalty=1.0,
+                                seed=args.seed + w_idx * 1_000_003 + s_idx * 100_003 + r["prompt_idx"],
+                                skip_special_tokens=True,
+                            )
                         )
-                    )
-                    all_meta.append((r, s_idx))
+                        all_slots.append((g_pos, s_idx, r_pos, r))
 
             t0 = time.time()
             outputs = llm.generate(all_prompts, sampling_params=all_params, use_tqdm=True)
-            saved = []
-            for (r, s_idx), req in zip(all_meta, outputs):
-                saved.append(
-                    {
-                        "id": f"{r['id']}__s{s_idx}",
-                        "window_idx": w_idx,
-                        "prompt_idx": r["prompt_idx"],
-                        "sample_idx": s_idx,
-                        "messages": r["messages"],
-                        "response": req.outputs[0].text,
-                        "num_tokens": len(req.outputs[0].token_ids),
-                        "suspect_name": args.suspect_name,
-                        "kgw_enabled_during_generation": False,
-                    }
-                )
-            write_jsonl(resp_path, saved)
+            for (g_pos, s_idx, r_pos, r), req in zip(all_slots, outputs):
+                w_idx, _, _, _, cached_map = group[g_pos]
+                cached_map[(s_idx, r_pos)] = {
+                    "id": f"{r['id']}__s{s_idx}",
+                    "window_idx": w_idx,
+                    "prompt_idx": r["prompt_idx"],
+                    "sample_idx": s_idx,
+                    "messages": r["messages"],
+                    "response": req.outputs[0].text,
+                    "num_tokens": len(req.outputs[0].token_ids),
+                    "suspect_name": args.suspect_name,
+                    "kgw_enabled_during_generation": False,
+                }
+
+            for w_idx, _, resp_path, rows, cached_map in group:
+                saved = [
+                    cached_map[(s_idx, r_pos)]
+                    for s_idx in range(args.num_samples_per_prompt)
+                    for r_pos in range(len(rows))
+                ]
+                write_jsonl(resp_path, saved)
+
+            w_lo = _win_tag(group[0][0], num_windows)
+            w_hi = _win_tag(group[-1][0], num_windows)
             print(
-                f"[mw:{args.suspect_name}] Window {w_idx:02d}/{len(window_files)-1}: "
-                f"sampled {len(saved)} responses in {time.time() - t0:.1f}s",
+                f"[mw:{args.suspect_name}] Windows {w_lo}..{w_hi}/{num_windows-1}: "
+                f"sampled {len(all_prompts):,} new responses in {time.time() - t0:.1f}s",
                 flush=True,
             )
     finally:
@@ -184,16 +293,18 @@ def extract_missing_window_grads(
 ) -> None:
     pending = []
     for w_idx in range(num_windows):
-        grad_path = sus_dir / f"grad_win_{w_idx:02d}.npy"
-        resp_path = sus_dir / f"responses_win_{w_idx:02d}.jsonl"
+        tag = _win_tag(w_idx, num_windows)
+        grad_path = sus_dir / f"grad_win_{tag}.npy"
+        resp_path = sus_dir / f"responses_win_{tag}.jsonl"
         if not grad_path.exists() or args.overwrite:
-            pending.append((w_idx, resp_path, grad_path))
+            pending.append((w_idx, tag, resp_path, grad_path))
 
     if not pending:
-        print(f"[mw:{args.suspect_name}] All {num_windows} window gradients exist, skipping probe.")
+        print(f"[mw:{args.suspect_name}] All {num_windows} window gradients exist, skipping probe.", flush=True)
         return
 
     import torch
+    from tqdm import tqdm
 
     extract_mod = _import_extract_module()
     proj_meta_path = args.work_dir / "grads" / "projector_meta.json"
@@ -213,9 +324,11 @@ def extract_missing_window_grads(
     model, tokenizer, lora_params, _ = extract_mod.load_frozen_probe(args.work_dir)
     projector = BlockRademacherProjector(proj_dim=proj_dim, seed=proj_seed, block_size=block_size)
 
+    t_all = time.time()
     try:
-        for w_idx, resp_path, grad_path in pending:
-            t0 = time.time()
+        for idx_p, (w_idx, tag, resp_path, grad_path) in enumerate(
+            tqdm(pending, desc=f"grad:{args.suspect_name}", unit="win"), 1
+        ):
             rows = read_jsonl(resp_path)
             vec, stats = extract_mod.extract_projected_gradient(
                 model=model,
@@ -229,16 +342,18 @@ def extract_missing_window_grads(
                 max_samples=None,
                 batch_size=args.batch_size,
                 weighting=weighting,
-                show_progress=True,
-                desc=f"{args.suspect_name}:w{w_idx:02d}",
+                show_progress=False,
+                desc=f"{args.suspect_name}:w{tag}",
             )
             np.save(grad_path, vec)
             write_json(grad_path.with_suffix(".meta.json"), stats)
-            print(
-                f"[mw:{args.suspect_name}] Window {w_idx:02d} grad: "
-                f"used={stats['num_used_samples']}, tokens={stats['total_scored_tokens']:,} ({time.time() - t0:.1f}s)",
-                flush=True,
-            )
+            if idx_p % 10 == 0 or idx_p == len(pending):
+                print(
+                    f"[mw:{args.suspect_name}] Extracted {idx_p}/{len(pending)} window grads "
+                    f"(last w{tag}: used={stats['num_used_samples']}, tokens={stats['total_scored_tokens']:,}, "
+                    f"elapsed={time.time() - t_all:.1f}s)",
+                    flush=True,
+                )
     finally:
         del model
         gc.collect()
@@ -274,8 +389,9 @@ def score_all_windows(
     win_weights = []
 
     for w_idx in range(num_windows):
-        grad_path = sus_dir / f"grad_win_{w_idx:02d}.npy"
-        meta_path = sus_dir / f"grad_win_{w_idx:02d}.meta.json"
+        tag = _win_tag(w_idx, num_windows)
+        grad_path = sus_dir / f"grad_win_{tag}.npy"
+        meta_path = sus_dir / f"grad_win_{tag}.meta.json"
         vec = np.load(grad_path).astype(np.float64)
         gm = read_json(meta_path) if meta_path.exists() else {}
         tok_w = int(gm.get("total_scored_tokens", 1))
@@ -365,7 +481,7 @@ def main() -> None:
     if args.num_windows is not None:
         win_files = win_files[: args.num_windows]
 
-    sus_dir = args.work_dir / "suspects_mw" / args.suspect_name
+    sus_dir = args.work_dir / args.suspects_subdir / args.suspect_name
     sus_dir.mkdir(parents=True, exist_ok=True)
 
     if not args.only_score:

@@ -46,6 +46,7 @@ def _import_step0():
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Build disjoint multi-window audit prompt pools")
     p.add_argument("--work-dir", type=Path, default=Path("wm_basin_work"))
+    p.add_argument("--windows-dir", type=Path, default=None, help="Output dir (default: <work-dir>/pools/audit_windows)")
     p.add_argument("--dolly-train", type=Path, default=Path("data/dolly15k_train.parquet"))
     p.add_argument("--dolly-test", type=Path, default=Path("data/dolly15k_test.parquet"))
     p.add_argument("--alpaca-path", type=str, default=None)
@@ -62,9 +63,10 @@ def main() -> None:
     if args.num_windows < 2 or args.prompts_per_window < 10:
         raise ValueError("Need >=2 windows and >=10 prompts per window")
 
-    out_dir = args.work_dir / "pools" / "audit_windows"
+    out_dir = args.windows_dir or (args.work_dir / "pools" / "audit_windows")
     manifest_path = out_dir / "manifest.json"
-    expected_files = [out_dir / f"window_{w:02d}.jsonl" for w in range(args.num_windows)]
+    width = max(2, len(str(args.num_windows - 1)))
+    expected_files = [out_dir / f"window_{w:0{width}d}.jsonl" for w in range(args.num_windows)]
     if manifest_path.exists() and all(f.exists() for f in expected_files) and not args.overwrite:
         print(f"[windows] All {args.num_windows} audit windows already exist in {out_dir}. Pass --overwrite to rebuild.")
         return
@@ -115,19 +117,20 @@ def main() -> None:
     for w in range(args.num_windows):
         start = w * args.prompts_per_window
         chunk = selected[start : start + args.prompts_per_window]
+        w_tag = f"{w:0{width}d}"
         rows = []
         for idx, item in enumerate(chunk):
             rows.append(
                 {
-                    "id": f"mw-w{w:02d}-{idx:04d}",
+                    "id": f"mw-w{w_tag}-{idx:04d}",
                     "window_idx": w,
                     "prompt_idx": idx,
-                    "pool": f"audit_window_{w:02d}",
+                    "pool": f"audit_window_{w_tag}",
                     "source": item["source"],
                     "messages": item["messages"],
                 }
             )
-        fp = out_dir / f"window_{w:02d}.jsonl"
+        fp = out_dir / f"window_{w_tag}.jsonl"
         write_jsonl(fp, rows)
         win_records.append(
             {
