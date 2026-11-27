@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 MODE="${1:-all}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -58,7 +59,7 @@ run_list() {
       --suspect-name "${name}" \
       --suspect-model "${path}" \
       --gpu-memory-utilization "${gpu_util}" \
-      --batch-size 16 \
+      --batch-size 6 \
       --gen-chunk-windows 10
   done
 }

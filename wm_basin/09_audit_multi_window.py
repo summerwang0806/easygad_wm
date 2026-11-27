@@ -102,7 +102,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--max-prompt-tokens", type=int, default=1024)
     p.add_argument("--max-new-tokens", type=int, default=DEFAULT_MAX_RESPONSE_TOKENS)
     p.add_argument("--min-response-tokens", type=int, default=DEFAULT_MIN_RESPONSE_TOKENS)
-    p.add_argument("--batch-size", type=int, default=16, help="Probe gradient micro-batch size (default: 16)")
+    p.add_argument("--batch-size", type=int, default=6, help="Probe gradient micro-batch size (default: 6)")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--gpu-memory-utilization", type=float, default=0.55)
     p.add_argument("--only-score", action="store_true", help="Skip sampling & gradient; re-score existing window grads")
