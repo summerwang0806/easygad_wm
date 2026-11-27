@@ -1,6 +1,6 @@
 # WM-Basin Single-Pool Audit Summary
 
-- **Generated (UTC)**: `2026-11-26T23:08:28.290219+00:00`
+- **Generated (UTC)**: `2026-11-27T13:20:31.886524+00:00`
 - **Probe**: `/app/public_models/Qwen2.5-0.5B` (LoRA `r=128`, epochs=`4`)
 - **Projector**: `proj_dim=131072`, `weighting=token`
 - **Clean PCA**: `q=40`, `57` cells (`19` base models)
