@@ -127,7 +127,46 @@ DEFAULT_MODELS: dict[str, dict[str, str]] = {
         "group": "delta6",
         "label": "TP (δ=6) GAD",
     },
+    # Two-stage Clean/KGW GAD switch controls (dolly15k_qwen2_5_14b_kgw_train.parquet: gamma=0.25, delta=2.0)
+    "kgwwarmup_cleangad_warmup": {
+        "path": "/app/wwx/EasyGAD/checkpoints/kgw_gad_05b_kgwwarmup_cleangad_control/warmup/global_step_1813/actor/huggingface",
+        "group": "gad_switch",
+        "label": "KGW-Warmup (pre-CleanGAD)",
+    },
+    "kgwwarmup_cleangad_gad": {
+        "path": "/app/wwx/EasyGAD/checkpoints/kgw_gad_05b_kgwwarmup_cleangad_control/gad/global_step_1813/actor/huggingface",
+        "group": "gad_switch",
+        "label": "KGW-Warmup → Clean-GAD",
+    },
+    "cleanwarmup_kgwgad_warmup": {
+        "path": "/app/wwx/EasyGAD/checkpoints/kgw_gad_05b_cleanwarmup_kgwgad_control/warmup/global_step_1813/actor/huggingface",
+        "group": "gad_switch",
+        "label": "Clean-Warmup (pre-KGWGAD)",
+    },
+    "cleanwarmup_kgwgad_gad": {
+        "path": "/app/wwx/EasyGAD/checkpoints/kgw_gad_05b_cleanwarmup_kgwgad_control/gad/global_step_1813/actor/huggingface",
+        "group": "gad_switch",
+        "label": "Clean-Warmup → KGW-GAD",
+    },
 }
+
+
+def resolve_checkpoint_path(raw_path: str) -> str:
+    """Resolve checkpoint path; if global_step_1813 differs, auto-pick latest global_step_*/actor/huggingface."""
+    p = Path(raw_path)
+    if p.exists():
+        return str(p)
+    # Try parent stage dir (e.g. .../warmup or .../gad) for latest global_step_*
+    stage_dir = p.parents[1] if len(p.parents) >= 2 else p.parent
+    if stage_dir.exists():
+        cands = sorted(
+            stage_dir.glob("global_step_*/actor/huggingface"),
+            key=lambda x: int(x.parents[1].name.split("_")[-1]) if x.parents[1].name.split("_")[-1].isdigit() else -1,
+        )
+        if cands:
+            print(f"[basin] Auto-resolved {raw_path} -> {cands[-1]}", flush=True)
+            return str(cands[-1])
+    return raw_path
 
 
 def neg_log10_p_from_z(z: float) -> float:
@@ -148,6 +187,7 @@ def neg_log10_p_from_z(z: float) -> float:
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Map & plot 3D/2D/1D Watermark Basins (Chang et al. Fig. 3)")
     p.add_argument("--work-dir", type=Path, default=Path("wm_basin_work"))
+    p.add_argument("--cache-subdir", type=str, default="basin_grids", help="Cache subdir under work-dir")
     p.add_argument("--out-dir", type=Path, default=Path("wm_basin/results/basin_plots"))
     p.add_argument(
         "--teacher-model",
@@ -197,7 +237,8 @@ def load_cpu_state_fp32(model_path: str) -> dict[str, Any]:
     import torch
     from transformers import AutoModelForCausalLM
 
-    m = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float32, trust_remote_code=True)
+    resolved = resolve_checkpoint_path(model_path)
+    m = AutoModelForCausalLM.from_pretrained(resolved, torch_dtype=torch.float32, trust_remote_code=True)
     sd = {name: p.detach().cpu().clone() for name, p in m.named_parameters() if p.is_floating_point()}
     del m
     gc.collect()
@@ -461,7 +502,8 @@ def compute_model_basin(
     from transformers import AutoModelForCausalLM
 
     t0 = time.time()
-    model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, trust_remote_code=True).to(device)
+    resolved_path = resolve_checkpoint_path(model_path)
+    model = AutoModelForCausalLM.from_pretrained(resolved_path, torch_dtype=torch.bfloat16, trust_remote_code=True).to(device)
     model.eval()
     name_to_param = dict(model.named_parameters())
     gpu_params = [name_to_param[k] for k in param_keys]
@@ -661,6 +703,10 @@ def plot_group_overview(
     z_cap = max(float(nlp_2d.max()), 5.0)
 
     style_map = {
+        "kgwwarmup_cleangad_warmup": ("#d62728", "*", 175),
+        "kgwwarmup_cleangad_gad": ("#9467bd", "P", 115),
+        "cleanwarmup_kgwgad_warmup": ("#2ca02c", "s", 85),
+        "cleanwarmup_kgwgad_gad": ("#ff7f0e", "D", 95),
         "kgw": ("#d62728", "*", 170),
         "up_dipper": ("#ff7f0e", "D", 75),
         "tp": ("#1f77b4", "X", 95),
@@ -676,6 +722,34 @@ def plot_group_overview(
 
     fig, axes = plt.subplots(1, 3, figsize=(17.0, 5.0), dpi=220)
 
+    # Non-overlapping staggered callout offsets (in points) for each model role
+    def pick_offset(mname: str) -> tuple[int, int]:
+        if mname == "kgwwarmup_cleangad_warmup":
+            return (38, 28)
+        if mname == "kgwwarmup_cleangad_gad":
+            return (34, -36)
+        if mname == "cleanwarmup_kgwgad_warmup":
+            return (-24, 34)
+        if mname == "cleanwarmup_kgwgad_gad":
+            return (22, -62)
+        if mname.startswith("kgw") and "gad" in mname:
+            return (34, 24)
+        if mname.startswith("kgw") and "warmup" in mname:
+            return (26, -30)
+        if mname.startswith("up_dipper") and "warmup" in mname:
+            return (52, 56)
+        if mname.startswith("up_dipper") and "gad" in mname:
+            return (16, -62)
+        if mname.startswith("tp") and "warmup" in mname:
+            return (-38, 30)
+        if mname.startswith("tp") and "gad" in mname:
+            return (-44, -22)
+        if mname.startswith("clean"):
+            return (0, 22)
+        if mname.startswith("base"):
+            return (-40, -52)
+        return (10, 10)
+
     # Panel A: 2D contour of canonical KGW-GAD + projected positions of all models
     ax = axes[0]
     levels = np.linspace(0.0, z_cap, 18)
@@ -688,6 +762,8 @@ def plot_group_overview(
         p = projections[mname]
         color, marker, sz = pick_style(mname)
         lbl = DEFAULT_MODELS.get(mname, {}).get("label", mname)
+        short_lbl = lbl.replace(f" (δ={group_name[-1]})", "")
+        dx, dy = pick_offset(mname)
         ax.scatter(
             [p["along_wm"]],
             [p["along_task"]],
@@ -697,16 +773,19 @@ def plot_group_overview(
             edgecolors="black",
             linewidths=0.8,
             zorder=8,
-            label=lbl,
+            label=short_lbl,
         )
         ax.annotate(
-            lbl.replace(f" (δ={group_name[-1]})", ""),
+            short_lbl,
             (p["along_wm"], p["along_task"]),
-            xytext=(5, 4),
+            xytext=(dx, dy),
             textcoords="offset points",
-            fontsize=7.5,
+            fontsize=7.3,
             fontweight="bold",
-            bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.72),
+            ha="center",
+            va="center",
+            bbox=dict(boxstyle="round,pad=0.2", fc="white", ec=color, lw=0.8, alpha=0.88),
+            arrowprops=dict(arrowstyle="-", color="black", lw=0.8, alpha=0.75, shrinkA=0, shrinkB=3),
             zorder=9,
         )
     ax.axhline(0.0, color="white", linestyle="--", linewidth=0.7, alpha=0.7)
@@ -811,18 +890,33 @@ def plot_group_gallery(
 
 def main() -> None:
     args = parse_args()
-    cache_dir = args.work_dir / "basin_grids"
+    cache_dir = args.work_dir / args.cache_subdir
     out_dir = args.out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
     cache_dir.mkdir(parents=True, exist_ok=True)
 
-    target_models = list(DEFAULT_MODELS.keys()) if args.models == ["ALL"] else args.models
+    if args.models == ["ALL"]:
+        target_models = [k for k, v in DEFAULT_MODELS.items() if v["group"] != "gad_switch"]
+    elif args.models == ["GAD_SWITCH"]:
+        target_models = [
+            "kgwwarmup_cleangad_warmup",
+            "kgwwarmup_cleangad_gad",
+            "cleanwarmup_kgwgad_warmup",
+            "cleanwarmup_kgwgad_gad",
+            "clean_gad_control",
+            "base_qwen25_05b",
+        ]
+    else:
+        target_models = args.models
     for m in target_models:
         if m not in DEFAULT_MODELS:
             raise ValueError(f"Unknown model name '{m}'. Choices: {list(DEFAULT_MODELS.keys())}")
 
-    # Determine which delta groups are needed
-    need_delta6 = any(DEFAULT_MODELS[m]["group"] in ("delta6", "control") for m in target_models)
+    # Determine which groups are needed
+    need_gad_switch = any(DEFAULT_MODELS[m]["group"] == "gad_switch" for m in target_models)
+    need_delta6 = any(DEFAULT_MODELS[m]["group"] == "delta6" for m in target_models) or (
+        not need_gad_switch and any(DEFAULT_MODELS[m]["group"] == "control" for m in target_models)
+    )
     need_delta3 = any(DEFAULT_MODELS[m]["group"] == "delta3" for m in target_models)
     groups_to_run: list[tuple[str, str, list[str]]] = []
     if need_delta6:
@@ -849,6 +943,16 @@ def main() -> None:
             "base_qwen25_05b",
         ]
         groups_to_run.append(("delta3", "kgw_delta3_gad", [m for m in d3_members if m in target_models]))
+    if need_gad_switch:
+        gs_members = [
+            "kgwwarmup_cleangad_warmup",
+            "kgwwarmup_cleangad_gad",
+            "cleanwarmup_kgwgad_warmup",
+            "cleanwarmup_kgwgad_gad",
+            "clean_gad_control",
+            "base_qwen25_05b",
+        ]
+        groups_to_run.append(("gad_switch", "kgwwarmup_cleangad_warmup", [m for m in gs_members if m in target_models]))
 
     summary_json_path = out_dir / "basin_geometry_summary.json"
     summary: dict[str, Any] = {"groups": {}, "models": {}}
