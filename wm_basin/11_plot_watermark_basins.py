@@ -227,6 +227,15 @@ def parse_args() -> argparse.Namespace:
         default=3.0,
         help="1D slice radius as multiple of max(||Delta_wm||, ||Delta_task||)",
     )
+    p.add_argument(
+        "--own-axis",
+        action="store_true",
+        help=(
+            "Compute each model's OWN Eq. (1) non-task residual axis u_res^(m) = unit((theta_m - theta_base)_perp) "
+            "instead of sharing KGW's watermark axis. Prevents injecting KGW weights into Clean/TP models and yields "
+            "direct 3D/1D visual contrast (steep peak for KGW, lower hill for UP, flat zero for TP & Clean)."
+        ),
+    )
     p.add_argument("--only-plot", action="store_true", help="Re-render all plots from saved .npz caches (CPU only)")
     p.add_argument("--overwrite", action="store_true", help="Recompute existing .npz grid caches")
     return p.parse_args()
@@ -290,6 +299,51 @@ def build_orthogonal_axes(
         "ortho_dot": ortho_check,
     }
     return u_wm, u_task, meta
+
+
+def build_random_ortho_axis(
+    u_task: dict[str, Any],
+    template_u: dict[str, Any],
+    keys: list[str],
+    seed: int = 20261129,
+) -> dict[str, Any]:
+    """Build a deterministic unit vector orthogonal to u_task with the same per-layer norm profile as template_u."""
+    import torch
+
+    gen = torch.Generator(device="cpu")
+    gen.manual_seed(seed)
+    vec = {}
+    for k in keys:
+        t = template_u[k]
+        r = torch.randn(t.shape, generator=gen, dtype=torch.float32)
+        t_norm = float(t.norm().item())
+        r_norm = float(r.norm().item())
+        vec[k] = r * (t_norm / max(r_norm, 1e-12))
+    # Orthogonalize against u_task
+    proj = flat_dot(vec, u_task, keys)
+    for k in keys:
+        vec[k] = vec[k] - proj * u_task[k]
+    nrm = flat_norm(vec, keys)
+    return {k: (vec[k] / max(nrm, 1e-12)).contiguous() for k in keys}
+
+
+def build_own_residual_axis(
+    model_sd: dict[str, Any],
+    base_sd: dict[str, Any],
+    u_task: dict[str, Any],
+    template_u: dict[str, Any],
+    keys: list[str],
+    fallback_seed: int = 20261129,
+) -> tuple[dict[str, Any], float, bool]:
+    """Compute a model's OWN Eq. (1) non-task residual unit axis without peeking at KGW."""
+    d_total = {k: model_sd[k] - base_sd[k] for k in keys}
+    proj = flat_dot(d_total, u_task, keys)
+    d_res = {k: d_total[k] - proj * u_task[k] for k in keys}
+    nrm = flat_norm(d_res, keys)
+    if nrm < 1e-4:
+        return build_random_ortho_axis(u_task, template_u, keys, seed=fallback_seed), 0.0, True
+    u_res = {k: (d_res[k] / nrm).contiguous() for k in keys}
+    return u_res, nrm, False
 
 
 def project_model_displacement(
@@ -888,6 +942,110 @@ def plot_group_gallery(
     plt.close(fig)
 
 
+def plot_own_axis_comparison(
+    group_name: str,
+    all_model_data: dict[str, dict[str, Any]],
+    member_names: list[str],
+    out_path: Path,
+) -> None:
+    """Publication 2xN comparison (Top: 3D Watermark Basins, Bottom: 1D Slices) on a UNIFIED Z/Y scale."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib import cm
+
+    avail = [m for m in member_names if m in all_model_data]
+    if not avail:
+        return
+
+    z_cap = max(
+        [
+            max(
+                float(all_model_data[m]["nlp_2d"].max()),
+                float(all_model_data[m]["nlp_wm_1d"].max()),
+                float(all_model_data[m]["nlp_task_1d"].max()),
+            )
+            for m in avail
+        ]
+        + [10.0]
+    )
+
+    ncols = len(avail)
+    fig = plt.figure(figsize=(4.4 * ncols, 8.2), dpi=220)
+
+    for idx, mname in enumerate(avail):
+        d = all_model_data[mname]
+        t_wm = d["t_wm_grid"]
+        t_task = d["t_task_grid"]
+        nlp_2d = d["nlp_2d"]
+        sc = d["slice_coords"]
+        nlp_w = d["nlp_wm_1d"]
+        nlp_t = d["nlp_task_1d"]
+        c_nlp = float(d["center_nlp"])
+        c_z = float(d["center_z"])
+        lbl = DEFAULT_MODELS.get(mname, {}).get("label", mname)
+        W, T = np.meshgrid(t_wm, t_task)
+
+        # Row 1: 3D surface on UNIFIED z_cap
+        ax3d = fig.add_subplot(2, ncols, idx + 1, projection="3d")
+        ax3d.plot_surface(
+            W,
+            T,
+            nlp_2d,
+            cmap=cm.coolwarm,
+            vmin=0.0,
+            vmax=z_cap,
+            linewidth=0.12,
+            edgecolor=(0.2, 0.2, 0.2, 0.2),
+            antialiased=True,
+            alpha=0.95,
+        )
+        ax3d.scatter(
+            [0.0],
+            [0.0],
+            [c_nlp + 0.025 * z_cap],
+            color="#d62728",
+            s=85,
+            marker="*",
+            zorder=10,
+            edgecolors="black",
+            linewidths=0.5,
+        )
+        ax3d.set_zlim(0.0, z_cap * 1.05)
+        ax3d.view_init(elev=27, azim=-55)
+        ax3d.set_xlabel("own residual $w_m$", fontsize=8.5, labelpad=4)
+        ax3d.set_ylabel("task dir. $d_{\\mathrm{task}}$", fontsize=8.5, labelpad=4)
+        if idx == 0:
+            ax3d.set_zlabel("$-\\log_{10} p$", fontsize=9, labelpad=3)
+        ax3d.set_title(f"{lbl}\ncenter $-\\log_{{10}}p={c_nlp:.2f}$ ($z={c_z:+.2f}$)", fontsize=10, fontweight="bold", pad=6)
+
+        # Row 2: 1D slices on UNIFIED y_cap
+        ax1d = fig.add_subplot(2, ncols, ncols + idx + 1)
+        ax1d.plot(sc, nlp_w, color="#d62728", linewidth=2.2, label="own residual $\\hat{\\Delta}_{\\mathrm{res}}^{(m)}$")
+        ax1d.plot(sc, nlp_t, color="#2ca02c", linewidth=2.0, label="task dir. $\\hat{\\Delta}_{\\mathrm{task}}$")
+        ax1d.axhline(1.301, color="gray", linestyle=":", linewidth=1.2, label="$p=0.05$")
+        ax1d.axvline(0.0, color="black", linestyle="--", linewidth=0.8, alpha=0.45)
+        ax1d.set_ylim(-0.02 * z_cap, z_cap * 1.08)
+        ax1d.set_xlabel("Perturbation magnitude ($L_2$)", fontsize=9)
+        if idx == 0:
+            ax1d.set_ylabel("$-\\log_{10} p$", fontsize=9.5)
+        ax1d.grid(True, linestyle="--", alpha=0.35)
+        if idx == 0:
+            ax1d.legend(loc="upper left", fontsize=8, framealpha=0.9)
+
+    fig.suptitle(
+        f"Own-Axis Watermark Basin Comparison ({group_name} — Unified Scale, Zero Watermark Injection)",
+        fontsize=13,
+        fontweight="bold",
+        y=0.985,
+    )
+    plt.tight_layout(rect=[0, 0, 1, 0.955])
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=220)
+    plt.close(fig)
+
+
 def main() -> None:
     args = parse_args()
     cache_dir = args.work_dir / args.cache_subdir
@@ -1042,7 +1200,7 @@ def main() -> None:
             group_projections = g_prev.get("projections", {})
 
         group_data: dict[str, dict[str, Any]] = {}
-        for mname in members:
+        for m_idx, mname in enumerate(members):
             # Controls share delta6 axes when both groups run, or get group-tagged cache
             cache_file = cache_dir / f"{group_name}__{mname}.npz"
             if cache_file.exists() and not args.overwrite:
@@ -1052,10 +1210,33 @@ def main() -> None:
                 if args.only_plot:
                     print(f"[basin:{group_name}/{mname}] Missing cache {cache_file}, skipping in --only-plot mode.")
                     continue
+                if args.own_axis:
+                    if mname == "base_qwen25_05b":
+                        msd_own = base_sd
+                    elif mname == "clean_gad_control":
+                        msd_own = ctrl_sd
+                    else:
+                        msd_own = load_cpu_state_fp32(DEFAULT_MODELS[mname]["path"])
+                    axis_u_wm, res_nrm, used_rand = build_own_residual_axis(
+                        msd_own,
+                        base_sd,
+                        u_task_cpu,
+                        u_wm_cpu,
+                        param_keys,
+                        fallback_seed=20261129 + m_idx * 97,
+                    )
+                    if mname not in ("base_qwen25_05b", "clean_gad_control"):
+                        del msd_own
+                        gc.collect()
+                    mode_note = "random-ortho control" if used_rand else f"own residual ||Delta_res||={res_nrm:.3f}"
+                    print(f"[own-axis:{group_name}/{mname}] Using {mode_note}", flush=True)
+                else:
+                    axis_u_wm = u_wm_cpu
+
                 data = compute_model_basin(
                     model_name=f"{group_name}/{mname}",
                     model_path=DEFAULT_MODELS[mname]["path"],
-                    u_wm_cpu=u_wm_cpu,
+                    u_wm_cpu=axis_u_wm,
                     u_task_cpu=u_task_cpu,
                     param_keys=param_keys,
                     scorer=scorer,
@@ -1068,8 +1249,23 @@ def main() -> None:
                 )
             group_data[mname] = data
 
+        # Compute unified scale across the group when --own-axis is enabled so heights are directly comparable
+        unified_vmax = None
+        if args.own_axis and group_data:
+            unified_vmax = max(
+                [
+                    max(
+                        float(d["nlp_2d"].max()),
+                        float(d["nlp_wm_1d"].max()),
+                        float(d["nlp_task_1d"].max()),
+                    )
+                    for d in group_data.values()
+                ]
+                + [10.0]
+            )
+
+        for mname, data in group_data.items():
             # Render individual Figure 3 (3D + 2D + 1D) for every model!
-            # Avoid duplicate filenames for controls by tagging with group when delta3
             if DEFAULT_MODELS[mname]["group"] == "control" and group_name == "delta3" and need_delta6:
                 fig_name = f"basin_{mname}_on_delta3.png"
             else:
@@ -1077,9 +1273,10 @@ def main() -> None:
             plot_single_model_figure3(
                 model_name=mname,
                 label=DEFAULT_MODELS[mname]["label"],
-                group_tag=group_name,
+                group_tag=f"{group_name} own-axis" if args.own_axis else group_name,
                 data=data,
                 out_path=out_dir / fig_name,
+                vmax=unified_vmax,
             )
 
             # Record geometry metrics
@@ -1101,6 +1298,13 @@ def main() -> None:
                 "plot_file": fig_name,
             }
 
+        if args.own_axis:
+            plot_own_axis_comparison(
+                group_name=group_name,
+                all_model_data=group_data,
+                member_names=members,
+                out_path=out_dir / f"comparison_3d_1d_{group_name}.png",
+            )
         if ref_model in group_data:
             plot_group_overview(
                 group_name=group_name,
