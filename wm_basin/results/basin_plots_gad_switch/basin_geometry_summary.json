@@ -1,0 +1,174 @@
+{
+  "groups": {
+    "gad_switch": {
+      "ref_model": "kgwwarmup_cleangad_warmup",
+      "axes_meta": {
+        "norm_task": 1.3621426168921145,
+        "norm_total": 1.0888359247210009,
+        "norm_wm": 1.031688476989929,
+        "proj_total_on_task": 0.34811286016341475,
+        "ortho_dot": 1.224944225383593e-08
+      },
+      "projections": {
+        "kgwwarmup_cleangad_warmup": {
+          "along_wm": 0.0,
+          "along_task": 0.0,
+          "orthogonal_l2": 0.0,
+          "total_l2": 0.0
+        },
+        "kgwwarmup_cleangad_gad": {
+          "along_wm": -0.01280917643722397,
+          "along_task": 0.008726337284205849,
+          "orthogonal_l2": 0.8973930166292636,
+          "total_l2": 0.8975268521099341
+        },
+        "cleanwarmup_kgwgad_warmup": {
+          "along_wm": -0.8261185004052402,
+          "along_task": 0.4142345240713118,
+          "orthogonal_l2": 0.6627398351313715,
+          "total_l2": 1.1372273768751553
+        },
+        "cleanwarmup_kgwgad_gad": {
+          "along_wm": -0.8345144900707298,
+          "along_task": 0.4221314287716419,
+          "orthogonal_l2": 1.0923347466033857,
+          "total_l2": 1.4379862919833
+        },
+        "clean_gad_control": {
+          "along_wm": -1.0316885245013119,
+          "along_task": 1.0140297810063283,
+          "orthogonal_l2": 0.0,
+          "total_l2": 1.4465951247958588
+        },
+        "base_qwen25_05b": {
+          "along_wm": -1.031688507723374,
+          "along_task": -0.34811286859190566,
+          "orthogonal_l2": 0.0,
+          "total_l2": 1.0888359247210009
+        }
+      }
+    }
+  },
+  "models": {
+    "gad_switch/kgwwarmup_cleangad_warmup": {
+      "model": "kgwwarmup_cleangad_warmup",
+      "group": "gad_switch",
+      "label": "KGW-Warmup (pre-CleanGAD)",
+      "center_neg_log10_p": 5.092577429319408,
+      "center_z": 4.3122464279843085,
+      "center_green": 3723,
+      "center_total": 14008,
+      "max_2d_neg_log10_p": 66.11944580078125,
+      "wm_width_at_p05_L2": 21.79428187027383,
+      "task_width_at_p05_L2": 20.976996300138563,
+      "anisotropy_ratio": 0.9625,
+      "projection": {
+        "along_wm": 0.0,
+        "along_task": 0.0,
+        "orthogonal_l2": 0.0,
+        "total_l2": 0.0
+      },
+      "plot_file": "basin_kgwwarmup_cleangad_warmup.png"
+    },
+    "gad_switch/kgwwarmup_cleangad_gad": {
+      "model": "kgwwarmup_cleangad_gad",
+      "group": "gad_switch",
+      "label": "KGW-Warmup → Clean-GAD",
+      "center_neg_log10_p": 3.2240259166050502,
+      "center_z": 3.2403097200380735,
+      "center_green": 3774,
+      "center_total": 14422,
+      "max_2d_neg_log10_p": 67.24405670166016,
+      "wm_width_at_p05_L2": 21.79428187027383,
+      "task_width_at_p05_L2": 18.525139589732756,
+      "anisotropy_ratio": 0.85,
+      "projection": {
+        "along_wm": -0.01280917643722397,
+        "along_task": 0.008726337284205849,
+        "orthogonal_l2": 0.8973930166292636,
+        "total_l2": 0.8975268521099341
+      },
+      "plot_file": "basin_kgwwarmup_cleangad_gad.png"
+    },
+    "gad_switch/cleanwarmup_kgwgad_warmup": {
+      "model": "cleanwarmup_kgwgad_warmup",
+      "group": "gad_switch",
+      "label": "Clean-Warmup (pre-KGWGAD)",
+      "center_neg_log10_p": 1.2602390105654981,
+      "center_z": 1.5988780402359373,
+      "center_green": 3589,
+      "center_total": 14028,
+      "max_2d_neg_log10_p": 59.32421875,
+      "wm_width_at_p05_L2": 21.79428187027383,
+      "task_width_at_p05_L2": 10.35228388838007,
+      "anisotropy_ratio": 0.475,
+      "projection": {
+        "along_wm": -0.8261185004052402,
+        "along_task": 0.4142345240713118,
+        "orthogonal_l2": 0.6627398351313715,
+        "total_l2": 1.1372273768751553
+      },
+      "plot_file": "basin_cleanwarmup_kgwgad_warmup.png"
+    },
+    "gad_switch/cleanwarmup_kgwgad_gad": {
+      "model": "cleanwarmup_kgwgad_gad",
+      "group": "gad_switch",
+      "label": "Clean-Warmup → KGW-GAD",
+      "center_neg_log10_p": 1.0811100812548,
+      "center_z": 1.385406874478661,
+      "center_green": 3648,
+      "center_total": 14305,
+      "max_2d_neg_log10_p": 55.33717727661133,
+      "wm_width_at_p05_L2": 21.79428187027383,
+      "task_width_at_p05_L2": 17.707854019597487,
+      "anisotropy_ratio": 0.8125,
+      "projection": {
+        "along_wm": -0.8345144900707298,
+        "along_task": 0.4221314287716419,
+        "orthogonal_l2": 1.0923347466033857,
+        "total_l2": 1.4379862919833
+      },
+      "plot_file": "basin_cleanwarmup_kgwgad_gad.png"
+    },
+    "gad_switch/clean_gad_control": {
+      "model": "clean_gad_control",
+      "group": "gad_switch",
+      "label": "Clean-GAD",
+      "center_neg_log10_p": 0.7304051630953703,
+      "center_z": 0.8926023640123474,
+      "center_green": 3665,
+      "center_total": 14474,
+      "max_2d_neg_log10_p": 64.50904083251953,
+      "wm_width_at_p05_L2": 21.79428187027383,
+      "task_width_at_p05_L2": 21.79428187027383,
+      "anisotropy_ratio": 1.0,
+      "projection": {
+        "along_wm": -1.0316885245013119,
+        "along_task": 1.0140297810063283,
+        "orthogonal_l2": 0.0,
+        "total_l2": 1.4465951247958588
+      },
+      "plot_file": "basin_clean_gad_control.png"
+    },
+    "gad_switch/base_qwen25_05b": {
+      "model": "base_qwen25_05b",
+      "group": "gad_switch",
+      "label": "Base 0.5B",
+      "center_neg_log10_p": 0.8301286834140772,
+      "center_z": 1.045625357017112,
+      "center_green": 3577,
+      "center_total": 14093,
+      "max_2d_neg_log10_p": 63.55129623413086,
+      "wm_width_at_p05_L2": 21.79428187027383,
+      "task_width_at_p05_L2": 18.79756811311118,
+      "anisotropy_ratio": 0.8624999999999999,
+      "projection": {
+        "along_wm": -1.031688507723374,
+        "along_task": -0.34811286859190566,
+        "orthogonal_l2": 0.0,
+        "total_l2": 1.0888359247210009
+      },
+      "plot_file": "basin_base_qwen25_05b.png"
+    }
+  }
+}

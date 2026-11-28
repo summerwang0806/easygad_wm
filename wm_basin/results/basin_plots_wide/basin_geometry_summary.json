@@ -1,0 +1,290 @@
+{
+  "groups": {
+    "delta6": {
+      "ref_model": "kgw_delta6_gad",
+      "axes_meta": {
+        "norm_task": 1.3621426168921145,
+        "norm_total": 1.5719374427558925,
+        "norm_wm": 1.545569273594196,
+        "proj_total_on_task": 0.2867105593448353,
+        "ortho_dot": 3.8846862121951045e-09
+      },
+      "projections": {
+        "kgw_delta6_gad": {
+          "along_wm": 0.0,
+          "along_task": 0.0,
+          "orthogonal_l2": 0.0,
+          "total_l2": 0.0
+        },
+        "kgw_delta6_warmup": {
+          "along_wm": -0.5135907777914911,
+          "along_task": -0.01048379564812338,
+          "orthogonal_l2": 0.7343760509257087,
+          "total_l2": 0.896210679012976
+        },
+        "up_dipper_delta6_warmup": {
+          "along_wm": -1.2785463946317048,
+          "along_task": -0.11429555394342167,
+          "orthogonal_l2": 1.1979543245336015,
+          "total_l2": 1.7558015037428696
+        },
+        "tp_delta6_gad": {
+          "along_wm": -1.4529485274546374,
+          "along_task": -0.16546734668683274,
+          "orthogonal_l2": 1.5591928818784666,
+          "total_l2": 2.1376438686443207
+        },
+        "clean_gad_control": {
+          "along_wm": -1.5455692556385843,
+          "along_task": 1.075432083310708,
+          "orthogonal_l2": 0.0,
+          "total_l2": 1.8829069253413675
+        }
+      }
+    },
+    "delta3": {
+      "ref_model": "kgw_delta3_gad",
+      "axes_meta": {
+        "norm_task": 1.3621426168921145,
+        "norm_total": 1.4427371481193736,
+        "norm_wm": 1.4037891588071654,
+        "proj_total_on_task": 0.33296618825976093,
+        "ortho_dot": 1.497864756019663e-08
+      },
+      "projections": {
+        "kgw_delta3_gad": {
+          "along_wm": 0.0,
+          "along_task": 0.0,
+          "orthogonal_l2": 0.0,
+          "total_l2": 0.0
+        },
+        "kgw_delta3_warmup": {
+          "along_wm": -0.5645148857669501,
+          "along_task": -0.011025183183597234,
+          "orthogonal_l2": 0.6953625382549862,
+          "total_l2": 0.895727453260824
+        },
+        "up_dipper_delta3_warmup": {
+          "along_wm": -1.1851833806493035,
+          "along_task": -0.14919434441425683,
+          "orthogonal_l2": 1.1844971007014766,
+          "total_l2": 1.6822461115255152
+        },
+        "tp_delta3_gad": {
+          "along_wm": -1.1602463868934545,
+          "along_task": -0.14474279896557848,
+          "orthogonal_l2": 1.357900066897837,
+          "total_l2": 1.7919304528448796
+        },
+        "clean_gad_control": {
+          "along_wm": -1.4037891549648958,
+          "along_task": 1.0291764532757015,
+          "orthogonal_l2": 0.0,
+          "total_l2": 1.7406401458348117
+        }
+      }
+    }
+  },
+  "models": {
+    "delta6/kgw_delta6_gad": {
+      "model": "kgw_delta6_gad",
+      "group": "delta6",
+      "label": "KGW (δ=6) GAD",
+      "center_neg_log10_p": 6.022795567560953,
+      "center_z": 4.764020723267302,
+      "center_green": 7494,
+      "center_total": 14416,
+      "max_2d_neg_log10_p": 52.9846076965332,
+      "wm_width_at_p05_L2": 20.710628266162225,
+      "task_width_at_p05_L2": 24.110880668069456,
+      "anisotropy_ratio": 1.164179104477612,
+      "projection": {
+        "along_wm": 0.0,
+        "along_task": 0.0,
+        "orthogonal_l2": 0.0,
+        "total_l2": 0.0
+      },
+      "plot_file": "basin_kgw_delta6_gad.png"
+    },
+    "delta6/kgw_delta6_warmup": {
+      "model": "kgw_delta6_warmup",
+      "group": "delta6",
+      "label": "KGW (δ=6) Warmup",
+      "center_neg_log10_p": 11.618659541580522,
+      "center_z": 6.910999816114188,
+      "center_green": 7361,
+      "center_total": 13907,
+      "max_2d_neg_log10_p": 61.32048034667969,
+      "wm_width_at_p05_L2": 23.18353910391294,
+      "task_width_at_p05_L2": 24.729108377507135,
+      "anisotropy_ratio": 1.0666666666666667,
+      "projection": {
+        "along_wm": -0.5135907777914911,
+        "along_task": -0.01048379564812338,
+        "orthogonal_l2": 0.7343760509257087,
+        "total_l2": 0.896210679012976
+      },
+      "plot_file": "basin_kgw_delta6_warmup.png"
+    },
+    "delta6/up_dipper_delta6_warmup": {
+      "model": "up_dipper_delta6_warmup",
+      "group": "delta6",
+      "label": "UP-DIPPER (δ=6) Warmup",
+      "center_neg_log10_p": 2.181080200198458,
+      "center_z": 2.4788399544105797,
+      "center_green": 6846,
+      "center_total": 13405,
+      "max_2d_neg_log10_p": 54.96905517578125,
+      "wm_width_at_p05_L2": 20.710628266162225,
+      "task_width_at_p05_L2": 22.8744252491941,
+      "anisotropy_ratio": 1.1044776119402986,
+      "projection": {
+        "along_wm": -1.2785463946317048,
+        "along_task": -0.11429555394342167,
+        "orthogonal_l2": 1.1979543245336015,
+        "total_l2": 1.7558015037428696
+      },
+      "plot_file": "basin_up_dipper_delta6_warmup.png"
+    },
+    "delta6/tp_delta6_gad": {
+      "model": "tp_delta6_gad",
+      "group": "delta6",
+      "label": "TP (δ=6) GAD",
+      "center_neg_log10_p": 0.03352793320543146,
+      "center_z": -1.444521581451097,
+      "center_green": 6840,
+      "center_total": 13850,
+      "max_2d_neg_log10_p": 47.84672927856445,
+      "wm_width_at_p05_L2": 10.818984915159373,
+      "task_width_at_p05_L2": 0.9273415641565173,
+      "anisotropy_ratio": 0.08571428571428567,
+      "projection": {
+        "along_wm": -1.4529485274546374,
+        "along_task": -0.16546734668683274,
+        "orthogonal_l2": 1.5591928818784666,
+        "total_l2": 2.1376438686443207
+      },
+      "plot_file": "basin_tp_delta6_gad.png"
+    },
+    "delta6/clean_gad_control": {
+      "model": "clean_gad_control",
+      "group": "delta6",
+      "label": "Clean-GAD",
+      "center_neg_log10_p": 0.5877348201591,
+      "center_z": 0.648336270662296,
+      "center_green": 7276,
+      "center_total": 14474,
+      "max_2d_neg_log10_p": 54.02103805541992,
+      "wm_width_at_p05_L2": 17.619489718973835,
+      "task_width_at_p05_L2": 20.092400556724545,
+      "anisotropy_ratio": 1.1403508771929822,
+      "projection": {
+        "along_wm": -1.5455692556385843,
+        "along_task": 1.075432083310708,
+        "orthogonal_l2": 0.0,
+        "total_l2": 1.8829069253413675
+      },
+      "plot_file": "basin_clean_gad_control.png"
+    },
+    "delta3/kgw_delta3_gad": {
+      "model": "kgw_delta3_gad",
+      "group": "delta3",
+      "label": "KGW (δ=3) GAD",
+      "center_neg_log10_p": 3.652306539337317,
+      "center_z": 3.511627028316295,
+      "center_green": 7397,
+      "center_total": 14373,
+      "max_2d_neg_log10_p": 35.685546875,
+      "wm_width_at_p05_L2": 16.003196410401685,
+      "task_width_at_p05_L2": 19.93380605506175,
+      "anisotropy_ratio": 1.2456140350877194,
+      "projection": {
+        "along_wm": 0.0,
+        "along_task": 0.0,
+        "orthogonal_l2": 0.0,
+        "total_l2": 0.0
+      },
+      "plot_file": "basin_kgw_delta3_gad.png"
+    },
+    "delta3/kgw_delta3_warmup": {
+      "model": "kgw_delta3_warmup",
+      "group": "delta3",
+      "label": "KGW (δ=3) Warmup",
+      "center_neg_log10_p": 6.220454760953009,
+      "center_z": 4.855001566018085,
+      "center_green": 7276,
+      "center_total": 13978,
+      "max_2d_neg_log10_p": 39.27512741088867,
+      "wm_width_at_p05_L2": 16.003196410401685,
+      "task_width_at_p05_L2": 22.179868709153215,
+      "anisotropy_ratio": 1.3859649122807018,
+      "projection": {
+        "along_wm": -0.5645148857669501,
+        "along_task": -0.011025183183597234,
+        "orthogonal_l2": 0.6953625382549862,
+        "total_l2": 0.895727453260824
+      },
+      "plot_file": "basin_kgw_delta3_warmup.png"
+    },
+    "delta3/up_dipper_delta3_warmup": {
+      "model": "up_dipper_delta3_warmup",
+      "group": "delta3",
+      "label": "UP-DIPPER (δ=3) Warmup",
+      "center_neg_log10_p": 1.3069873287867284,
+      "center_z": 1.6514945207647558,
+      "center_green": 6854,
+      "center_total": 13516,
+      "max_2d_neg_log10_p": 31.090850830078125,
+      "wm_width_at_p05_L2": 15.441680746878818,
+      "task_width_at_p05_L2": 21.61835304563035,
+      "anisotropy_ratio": 1.4000000000000004,
+      "projection": {
+        "along_wm": -1.1851833806493035,
+        "along_task": -0.14919434441425683,
+        "orthogonal_l2": 1.1844971007014766,
+        "total_l2": 1.6822461115255152
+      },
+      "plot_file": "basin_up_dipper_delta3_warmup.png"
+    },
+    "delta3/tp_delta3_gad": {
+      "model": "tp_delta3_gad",
+      "group": "delta3",
+      "label": "TP (δ=3) GAD",
+      "center_neg_log10_p": 0.4691127787317133,
+      "center_z": 0.4137268261149867,
+      "center_green": 7038,
+      "center_total": 14027,
+      "max_2d_neg_log10_p": 35.17241668701172,
+      "wm_width_at_p05_L2": 10.388039775173024,
+      "task_width_at_p05_L2": 20.214563886823182,
+      "anisotropy_ratio": 1.945945945945946,
+      "projection": {
+        "along_wm": -1.1602463868934545,
+        "along_task": -0.14474279896557848,
+        "orthogonal_l2": 1.357900066897837,
+        "total_l2": 1.7919304528448796
+      },
+      "plot_file": "basin_tp_delta3_gad.png"
+    },
+    "delta3/clean_gad_control": {
+      "model": "clean_gad_control",
+      "group": "delta3",
+      "label": "Clean-GAD",
+      "center_neg_log10_p": 0.5877348201591,
+      "center_z": 0.648336270662296,
+      "center_green": 7276,
+      "center_total": 14474,
+      "max_2d_neg_log10_p": 35.1544303894043,
+      "wm_width_at_p05_L2": 14.318649419833086,
+      "task_width_at_p05_L2": 22.179868709153215,
+      "anisotropy_ratio": 1.5490196078431375,
+      "projection": {
+        "along_wm": -1.4037891549648958,
+        "along_task": 1.0291764532757015,
+        "orthogonal_l2": 0.0,
+        "total_l2": 1.7406401458348117
+      },
+      "plot_file": "basin_clean_gad_control_on_delta3.png"
+    }
+  }
+}
